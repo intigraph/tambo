@@ -1,6 +1,8 @@
 //! Opt-in published-release delivery for binary tools selected by a reviewed plan.
 //! Source-managed services and source bundles retain their own update contracts.
+mod rollback;
 mod transaction;
+pub use rollback::rollback_seeds;
 
 use std::{
     env, fs,
@@ -243,13 +245,19 @@ pub fn update(plan: &Plan, tool: ToolName, state_path: &Path, check_only: bool) 
     }
     if let ToolName::Member(name) = tool {
         let m = crate::members::get(name).context("unknown stack member")?;
-        return update_member(m, state_path, check_only);
+        return update_member(plan, m, state_path, check_only);
     }
     update_binary(Some(plan), Some(tool), state_path, check_only, None, None)
 }
 
 /// Take the release-update state lock and finish any interrupted swap.
 fn lock_state(state_path: &Path) -> Result<fs::File> {
+    let lock = lock_state_unrecovered(state_path)?;
+    transaction::recover(state_path)?;
+    Ok(lock)
+}
+
+fn lock_state_unrecovered(state_path: &Path) -> Result<fs::File> {
     let state_dir = state_path
         .parent()
         .filter(|p| !p.as_os_str().is_empty())
@@ -261,7 +269,6 @@ fn lock_state(state_path: &Path) -> Result<fs::File> {
         .write(true)
         .open(state_dir.join("release-update.lock"))?;
     FileExt::try_lock_exclusive(&lock).context("another release update holds the state lock")?;
-    transaction::recover(state_path)?;
     Ok(lock)
 }
 
@@ -274,7 +281,12 @@ fn lock_state(state_path: &Path) -> Result<fs::File> {
 /// PATH runs (the same copy the built-in tools update), with the same backup,
 /// transaction and rollback-on-failed-verify. Every run ends in a functional
 /// verify of that copy, so "verified" in the output is always a fresh proof.
-fn update_member(m: &crate::members::Manifest, state_path: &Path, check_only: bool) -> Result<()> {
+fn update_member(
+    plan: &Plan,
+    m: &crate::members::Manifest,
+    state_path: &Path,
+    check_only: bool,
+) -> Result<()> {
     let _lock = lock_state(state_path)?;
     let tool_id = m.name.as_str();
     if held() {
@@ -379,6 +391,17 @@ fn update_member(m: &crate::members::Manifest, state_path: &Path, check_only: bo
         },
     );
     state.write(state_path)?;
+    if tool_id == "seeds" {
+        rollback::record(
+            plan,
+            state_path,
+            &destination,
+            &backup,
+            &old_hash,
+            &before,
+            &after,
+        )?;
+    }
     emission::queue_transition(state_path, tool_id, "release-updated", &after)?;
     transaction::finish(state_path)?;
     println!(

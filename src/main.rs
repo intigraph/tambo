@@ -180,6 +180,18 @@ enum Commands {
         #[arg(long)]
         check: bool,
     },
+    /// Restore Seeds from the receipt of its last successful release update
+    #[cfg(unix)]
+    RollbackSeeds {
+        #[arg(long)]
+        plan: PathBuf,
+        #[arg(long)]
+        state: PathBuf,
+        #[arg(long)]
+        current_sha256: String,
+        #[arg(long)]
+        prior_sha256: String,
+    },
     /// Register the rig crew through shantytown and its Quipu tooling manifest
     ProjectSettings {
         /// Shantytown store root (otherwise st uses its normal discovery)
@@ -512,6 +524,20 @@ fn main() -> Result<()> {
         } => {
             let tool = serde_json::from_value(serde_json::Value::String(tool))?;
             caboodle::release_update::update(&Plan::read(&plan)?, tool, &state, check)?;
+        }
+        #[cfg(unix)]
+        Commands::RollbackSeeds {
+            plan,
+            state,
+            current_sha256,
+            prior_sha256,
+        } => {
+            caboodle::release_update::rollback_seeds(
+                &Plan::read(&plan)?,
+                &state,
+                &current_sha256,
+                &prior_sha256,
+            )?;
         }
         Commands::ProjectSettings {
             plan,
