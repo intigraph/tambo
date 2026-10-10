@@ -42,7 +42,13 @@ pub(super) fn recover(state: &Path) -> Result<()> {
     if !journal.exists() {
         return Ok(());
     }
-    let pending: Pending = serde_json::from_slice(&fs::read(&journal)?)?;
+    let bytes = fs::read(&journal)?;
+    let value: serde_json::Value = serde_json::from_slice(&bytes)?;
+    if value.get("artifacts").is_some() {
+        let pair: PairPending = serde_json::from_slice(&bytes)?;
+        return restore_pair(state, &pair);
+    }
+    let pending: Pending = serde_json::from_slice(&bytes)?;
     if hash(&pending.backup)? != pending.sha256 {
         bail!("pending rollback backup checksum mismatch; refusing recovery");
     }
@@ -62,5 +68,70 @@ pub(super) fn recover(state: &Path) -> Result<()> {
         pending.tool,
         pending.backup.display()
     );
+    Ok(())
+}
+
+/// Paired releases share the SAME lock and pending journal as single binaries.
+/// Keep the old format readable; a pair must restore all artifacts and exact state.
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct PairPending {
+    pub artifacts: Vec<Pending>,
+    pub previous_state: Option<Vec<u8>>,
+}
+
+pub(super) fn begin_pair(state: &Path, pending: &PairPending) -> Result<()> {
+    if pending.artifacts.len() != 2 {
+        bail!("paired release must contain exactly two artifacts");
+    }
+    let target = journal(state);
+    let file = tempfile::NamedTempFile::new_in(state.parent().context("state directory")?)?;
+    fs::write(file.path(), serde_json::to_vec(pending)?)?;
+    file.as_file().sync_all()?;
+    file.persist(target).map_err(|e| e.error)?;
+    fs::File::open(state.parent().context("state directory")?)?.sync_all()?;
+    Ok(())
+}
+
+fn restore_pair(state: &Path, pending: &PairPending) -> Result<()> {
+    if pending.artifacts.len() != 2
+        || pending.artifacts[0].destination == pending.artifacts[1].destination
+    {
+        bail!("invalid paired release journal");
+    }
+    // Validate ALL backup bytes before restoring any of them.
+    for artifact in &pending.artifacts {
+        for path in [&artifact.backup, &artifact.destination] {
+            if !fs::symlink_metadata(path)?.file_type().is_file() {
+                bail!("paired recovery requires regular non-symlink files");
+            }
+        }
+        if hash(&artifact.backup)? != artifact.sha256 {
+            bail!("paired rollback backup checksum mismatch; refusing recovery");
+        }
+    }
+    for artifact in &pending.artifacts {
+        atomic_copy(&artifact.backup, &artifact.destination)?;
+        if hash(&artifact.destination)? != artifact.sha256 {
+            bail!("paired rollback read-back mismatch");
+        }
+        fs::File::open(artifact.destination.parent().context("binary directory")?)?.sync_all()?;
+    }
+    match &pending.previous_state {
+        Some(bytes) => {
+            let file = tempfile::NamedTempFile::new_in(state.parent().context("state directory")?)?;
+            fs::write(file.path(), bytes)?;
+            file.as_file().sync_all()?;
+            file.persist(state).map_err(|e| e.error)?;
+        }
+        None => match fs::remove_file(state) {
+            Ok(()) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => return Err(e.into()),
+        },
+    }
+    fs::File::open(state.parent().context("state directory")?)?.sync_all()?;
+    finish(state)?;
+    println!("quipu: restored interrupted/failed paired release and prior state");
     Ok(())
 }

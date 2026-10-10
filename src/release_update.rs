@@ -1,5 +1,6 @@
 //! Opt-in published-release delivery for binary tools selected by a reviewed plan.
 //! Source-managed services and source bundles retain their own update contracts.
+mod quipu;
 mod rollback;
 mod transaction;
 pub use rollback::rollback_seeds;
@@ -263,6 +264,12 @@ pub fn update(plan: &Plan, tool: ToolName, state_path: &Path, check_only: bool) 
     if let ToolName::Member(name) = tool {
         let m = crate::members::get(name).context("unknown stack member")?;
         return update_member(plan, m, state_path, check_only);
+    }
+    if tool == ToolName::Quipu {
+        return quipu::update(plan, state_path, check_only);
+    }
+    if tool == ToolName::Camayoc {
+        bail!("camayoc has no published checksummed release; release update refused");
     }
     update_binary(Some(plan), Some(tool), state_path, check_only, None, None)
 }
