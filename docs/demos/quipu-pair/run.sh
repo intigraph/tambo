@@ -41,6 +41,15 @@ export HOME="$root" CARGO_HOME="$root/cargo" XDG_CONFIG_HOME="$root/config" XDG_
 export PATH="$root/cargo/bin:/usr/bin:/bin"
 unset QUIPU_AUTH_TOKEN QUIPU_AUTH_TOKEN_FILE CABOODLE_HOLD_FILE
 cd "$root"
+cat > caboodle-intent.toml <<'INTENT'
+intended_use = "inspect reviewed paired release metadata"
+[[anticipated_questions]]
+question = "does the isolated fixture retain its marker?"
+answer_shape = "one marker"
+seed_intent = "isolated fixture marker"
+sparql = "SELECT ?s WHERE { ?s ?p ?o }"
+expected = "fixture-marker"
+INTENT
 "$AFTER_BINARY" plan --profile kg > /dev/null
 printf 'Same synthetic pair: CLI/server 0.11.1; reviewed publication metadata 0.12.0\n\n'
 printf 'BEFORE: '
