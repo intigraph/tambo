@@ -1,4 +1,4 @@
-Script started on 2026-10-10 19:26:08-04:00 [COMMAND="sh docs/demos/quipu-pair/run.sh" <not executed on terminal>]
+Script started on 2026-10-10 19:35:49-04:00 [COMMAND="sh docs/demos/quipu-pair/run.sh" <not executed on terminal>]
 Same synthetic pair: CLI/server 0.11.1; reviewed publication metadata 0.12.0
 
 BEFORE: caboodle 0.2.14 (02c7f76bc05d)
@@ -8,10 +8,10 @@ error: invalid value 'quipu' for '--tool <TOOL>': possible values: bobbin, yupan
 For more information, try '--help'.
 Observed: refused at tool selection
 
-AFTER: caboodle 0.2.14 (0addc618c8fa)
+AFTER: caboodle 0.2.14 (655b9af21e00)
 $ caboodle update-release --tool quipu --check
 quipu: reviewed pin 0.12.0, installed quipu 0.11.1; paired assets available, checksum/functional proof not run
 
 Control: no artifact download, backup, state write or executable replacement
 
-Script done on 2026-10-10 19:26:08-04:00 [COMMAND_EXIT_CODE="0"]
+Script done on 2026-10-10 19:35:49-04:00 [COMMAND_EXIT_CODE="0"]

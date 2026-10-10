@@ -15,7 +15,7 @@ BEFORE_BINARY=/path/to/baseline/caboodle AFTER_BINARY=/path/to/candidate/caboodl
 ```
 
 The recorded baseline is Caboodle 0.2.14 (`02c7f76bc05d`), an installed binary.
-The candidate is source revision `0addc618c8fa`, based on `2b9635e`; later
+The candidate is source revision `655b9af`, based on `2b9635e`; later
 fixture-intent/recording changes and later durability corrections preserve this
 metadata-only behavior. The recording does not demonstrate the directory
 barrier corrections; those have separate ordered fault controls.
