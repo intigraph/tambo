@@ -202,10 +202,27 @@ fn selected_path(binary: &str) -> Result<PathBuf> {
 }
 
 fn held() -> bool {
-    env::var_os("CABOODLE_HOLD_FILE")
+    let path = env::var_os("CABOODLE_HOLD_FILE")
         .map(PathBuf::from)
-        .or_else(|| env::var_os("HOME").map(|h| PathBuf::from(h).join(".caboodle/hold")))
-        .is_some_and(|p| p.exists())
+        .or_else(|| {
+            env::var_os("HOME")
+                .filter(|home| !home.is_empty())
+                .map(|home| PathBuf::from(home).join(".caboodle/hold"))
+        });
+    hold_entry_blocks(path.as_deref())
+}
+
+/// A hold is a directory entry, even if its symlink target is absent.
+/// Unknown paths or metadata errors cannot establish that the hold is absent.
+fn hold_entry_blocks(path: Option<&Path>) -> bool {
+    let Some(path) = path.filter(|path| !path.as_os_str().is_empty()) else {
+        return true;
+    };
+    match fs::symlink_metadata(path) {
+        Ok(_) => true,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => false,
+        Err(_) => true,
+    }
 }
 
 /// Guard the older reviewed-pin updater after a release-tracking install.
@@ -798,5 +815,32 @@ mod tests {
         atomic_copy(&source, &target).unwrap();
         assert_eq!(fs::read_to_string(original).unwrap(), "old");
         assert_eq!(fs::read_to_string(target).unwrap(), "new");
+    }
+    #[test]
+    fn hold_entries_block_regular_directory_and_dangling_symlink() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("hold");
+        assert!(
+            !hold_entry_blocks(Some(&path)),
+            "absent-entry positive control"
+        );
+        fs::write(&path, "hold").unwrap();
+        assert!(hold_entry_blocks(Some(&path)));
+        fs::remove_file(&path).unwrap();
+        fs::create_dir(&path).unwrap();
+        assert!(hold_entry_blocks(Some(&path)));
+        fs::remove_dir(&path).unwrap();
+        std::os::unix::fs::symlink(dir.path().join("missing-target"), &path).unwrap();
+        assert!(hold_entry_blocks(Some(&path)), "dangling entry must block");
+    }
+    #[test]
+    fn unknown_hold_path_and_metadata_errors_fail_closed() {
+        assert!(hold_entry_blocks(None));
+        assert!(hold_entry_blocks(Some(Path::new(""))));
+        let dir = tempfile::tempdir().unwrap();
+        let parent = dir.path().join("not-a-directory");
+        fs::write(&parent, "control").unwrap();
+        assert!(fs::symlink_metadata(parent.join("hold")).is_err());
+        assert!(hold_entry_blocks(Some(&parent.join("hold"))));
     }
 }

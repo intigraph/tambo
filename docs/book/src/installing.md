@@ -372,7 +372,9 @@ caboodle rollback-seeds --plan crew.toml --state state.json \
 The successful update records a Seeds receipt bound to the plan, state bytes,
 paths, versions and both artifact hashes. Missing receipts, changed state,
 wrong hashes, corrupt backups, symlinks, held updates and lock contention refuse
-before replacing Seeds. Other tools retain their state. A successful rollback
+before replacing Seeds. A hold is any directory entry, including a dangling
+symlink. Unknown hold-path configuration or metadata errors block execution;
+only a definitely absent entry permits it. Other tools retain their state. A successful rollback
 runs the existing isolated functional verifier and consumes the receipt.
 A failed rollback verifier restores the current artifact and retains the state.
 An interrupted rollback uses normal release journal recovery, restoring the
