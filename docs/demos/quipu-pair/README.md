@@ -16,8 +16,9 @@ BEFORE_BINARY=/path/to/baseline/caboodle AFTER_BINARY=/path/to/candidate/caboodl
 
 The recorded baseline is Caboodle 0.2.14 (`02c7f76bc05d`), an installed binary.
 The candidate is source revision `0addc618c8fa`, based on `2b9635e`; later
-fixture-intent/recording/caption-only changes preserve the demonstrated
-production code.
+fixture-intent/recording changes and later durability corrections preserve this
+metadata-only behavior. The recording does not demonstrate the directory
+barrier corrections; those have separate ordered fault controls.
 This is synthetic metadata inspection, not a production update or archive
 execution. The separate isolated library controls exercise paired replacement,
 failed proof and interruption recovery with fixture artifacts. Server startup

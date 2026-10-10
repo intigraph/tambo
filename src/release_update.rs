@@ -1,5 +1,6 @@
 //! Opt-in published-release delivery for binary tools selected by a reviewed plan.
 //! Source-managed services and source bundles retain their own update contracts.
+mod durable;
 mod quipu;
 mod rollback;
 mod transaction;
@@ -180,15 +181,17 @@ pub(crate) fn checksum(body: &str, archive: &str) -> Result<String> {
 
 fn atomic_copy(source: &Path, target: &Path) -> Result<()> {
     let parent = target.parent().context("destination has no parent")?;
-    fs::create_dir_all(parent)?;
+    durable::create_dirs(parent)?;
     let temporary = tempfile::NamedTempFile::new_in(parent)?;
     fs::copy(source, temporary.path())?;
     temporary.as_file().sync_all()?;
+    durable::checkpoint("copy-file-synced", target)?;
     if hash(source)? != hash(temporary.path())? {
         bail!("staged copy checksum differs");
     }
     temporary.persist(target).map_err(|e| e.error)?;
-    Ok(())
+    durable::checkpoint("copy-renamed", target)?;
+    durable::sync_dir(parent)
 }
 
 fn selected_path(binary: &str) -> Result<PathBuf> {

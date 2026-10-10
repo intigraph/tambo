@@ -1,5 +1,5 @@
 //! Durable rollback point for an updater interrupted between rename and verification.
-use super::{atomic_copy, hash};
+use super::{atomic_copy, durable, hash};
 use crate::model::State;
 use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
@@ -21,26 +21,38 @@ fn journal(state: &Path) -> PathBuf {
 }
 
 pub(super) fn begin(state: &Path, pending: &Pending) -> Result<()> {
-    let target = journal(state);
-    let parent = target
-        .parent()
-        .filter(|p| !p.as_os_str().is_empty())
-        .unwrap_or_else(|| Path::new("."));
-    let file = tempfile::NamedTempFile::new_in(parent)?;
-    fs::write(file.path(), serde_json::to_vec(pending)?)?;
-    file.as_file().sync_all()?;
-    file.persist(target).map_err(|e| e.error)?;
-    Ok(())
+    durable::write(&journal(state), &serde_json::to_vec(pending)?)
 }
 
 pub(super) fn finish(state: &Path) -> Result<()> {
-    fs::remove_file(journal(state)).context("clear completed release transaction")
+    let target = journal(state);
+    let bytes = fs::read(&target)?;
+    fs::remove_file(&target).context("clear completed release transaction")?;
+    let cleared = (|| {
+        durable::checkpoint("journal-unlinked", &target)?;
+        durable::sync_dir(durable::parent(&target))?;
+        durable::checkpoint("journal-clear-durable", &target)
+    })();
+    if let Err(error) = cleared {
+        // Do not certify an unlink whose persistence is unknown. Retain the
+        // exact pending record when possible, so a later invocation recovers.
+        let retained = durable::write(&target, &bytes);
+        return Err(error).context(format!(
+            "journal clear durability uncertain; pending retention: {retained:?}"
+        ));
+    }
+    Ok(())
 }
 
 pub(super) fn recover(state: &Path) -> Result<()> {
     let journal = journal(state);
-    if !journal.exists() {
-        return Ok(());
+    match fs::symlink_metadata(&journal) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(error) => return Err(error).context("cannot establish pending release journal state"),
+        Ok(metadata) if metadata.file_type().is_file() => {}
+        Ok(_) => {
+            bail!("pending release journal must be a regular non-symlink file; refusing recovery")
+        }
     }
     let bytes = fs::read(&journal)?;
     let value: serde_json::Value = serde_json::from_slice(&bytes)?;
@@ -62,7 +74,9 @@ pub(super) fn recover(state: &Path) -> Result<()> {
     let mut previous = State::read(state)?;
     previous.tools.remove(&pending.tool);
     previous.write(state)?;
-    fs::remove_file(journal)?;
+    fs::File::open(state)?.sync_all()?;
+    durable::sync_dir(durable::parent(state))?;
+    finish(state)?;
     println!(
         "{}: recovered interrupted update from {}",
         pending.tool,
@@ -85,12 +99,8 @@ pub(super) fn begin_pair(state: &Path, pending: &PairPending) -> Result<()> {
         bail!("paired release must contain exactly two artifacts");
     }
     let target = journal(state);
-    let file = tempfile::NamedTempFile::new_in(state.parent().context("state directory")?)?;
-    fs::write(file.path(), serde_json::to_vec(pending)?)?;
-    file.as_file().sync_all()?;
-    file.persist(target).map_err(|e| e.error)?;
-    fs::File::open(state.parent().context("state directory")?)?.sync_all()?;
-    Ok(())
+    durable::write(&target, &serde_json::to_vec(pending)?)?;
+    durable::checkpoint("pair-journal-durable", &target)
 }
 
 fn restore_pair(state: &Path, pending: &PairPending) -> Result<()> {
@@ -115,23 +125,231 @@ fn restore_pair(state: &Path, pending: &PairPending) -> Result<()> {
         if hash(&artifact.destination)? != artifact.sha256 {
             bail!("paired rollback read-back mismatch");
         }
-        fs::File::open(artifact.destination.parent().context("binary directory")?)?.sync_all()?;
+        durable::sync_dir(durable::parent(&artifact.destination))?;
     }
     match &pending.previous_state {
-        Some(bytes) => {
-            let file = tempfile::NamedTempFile::new_in(state.parent().context("state directory")?)?;
-            fs::write(file.path(), bytes)?;
-            file.as_file().sync_all()?;
-            file.persist(state).map_err(|e| e.error)?;
-        }
+        Some(bytes) => durable::write(state, bytes)?,
         None => match fs::remove_file(state) {
             Ok(()) => {}
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
             Err(e) => return Err(e.into()),
         },
     }
-    fs::File::open(state.parent().context("state directory")?)?.sync_all()?;
+    durable::sync_dir(durable::parent(state))?;
     finish(state)?;
     println!("quipu: restored interrupted/failed paired release and prior state");
     Ok(())
+}
+
+#[cfg(test)]
+mod journal_tests {
+    use super::*;
+
+    #[test]
+    fn dangling_or_nonregular_pending_journals_refuse_and_remain() {
+        let root = tempfile::tempdir().unwrap();
+        let state = root.path().join("state.json");
+        let journal = state.with_extension("release-pending.json");
+        std::os::unix::fs::symlink(root.path().join("missing"), &journal).unwrap();
+        assert!(recover(&state)
+            .unwrap_err()
+            .to_string()
+            .contains("regular non-symlink"));
+        assert!(fs::symlink_metadata(&journal)
+            .unwrap()
+            .file_type()
+            .is_symlink());
+        fs::remove_file(&journal).unwrap();
+        fs::create_dir(&journal).unwrap();
+        assert!(recover(&state).is_err());
+        assert!(journal.is_dir());
+        fs::remove_dir(&journal).unwrap();
+        recover(&state).unwrap();
+    }
+}
+
+#[cfg(test)]
+mod ordered_tests {
+    use super::super::durable::probe;
+    use super::*;
+
+    fn fixture(root: &Path) -> (PathBuf, PairPending) {
+        let state = root.join("state.json");
+        fs::write(&state, b"prior exact state").unwrap();
+        let bin = root.join("bin");
+        fs::create_dir(&bin).unwrap();
+        let mut artifacts = Vec::new();
+        for (name, bytes) in [
+            ("quipu", b"prior CLI".as_slice()),
+            ("quipu-server", b"prior server".as_slice()),
+        ] {
+            let destination = bin.join(name);
+            fs::write(&destination, bytes).unwrap();
+            let backup = root
+                .join("release-backups")
+                .join(name)
+                .join(hash(&destination).unwrap());
+            artifacts.push(Pending {
+                tool: "quipu".into(),
+                sha256: hash(&destination).unwrap(),
+                destination,
+                backup,
+            });
+        }
+        (
+            state,
+            PairPending {
+                artifacts,
+                previous_state: Some(b"prior exact state".to_vec()),
+            },
+        )
+    }
+
+    #[test]
+    fn new_ancestors_and_backup_renames_are_synced_before_journal_and_clear_before_success() {
+        let root = tempfile::tempdir().unwrap();
+        let (state, pair) = fixture(root.path());
+        probe::start(None);
+        for a in &pair.artifacts {
+            atomic_copy(&a.destination, &a.backup).unwrap();
+        }
+        begin_pair(&state, &pair).unwrap();
+        finish(&state).unwrap();
+        let trace = probe::take().events;
+        let journal_at = trace
+            .iter()
+            .position(|(s, _)| *s == "pair-journal-durable")
+            .unwrap();
+        for (i, (stage, path)) in trace.iter().enumerate() {
+            if *stage == "directory-created" {
+                assert!(trace[i + 1..journal_at]
+                    .iter()
+                    .any(|(s, p)| *s == "directory-synced" && p == path));
+                assert!(trace[i + 1..journal_at]
+                    .iter()
+                    .any(|(s, p)| *s == "directory-synced" && p == durable::parent(path)));
+            }
+            if *stage == "copy-renamed" {
+                assert!(i < journal_at);
+                assert!(trace[i + 1..journal_at]
+                    .iter()
+                    .any(|(s, p)| *s == "directory-synced" && p == durable::parent(path)));
+            }
+        }
+        assert_eq!(
+            trace.iter().filter(|(s, _)| *s == "copy-renamed").count(),
+            2
+        );
+        let unlink = trace
+            .iter()
+            .position(|(s, _)| *s == "journal-unlinked")
+            .unwrap();
+        let cleared = trace
+            .iter()
+            .position(|(s, _)| *s == "journal-clear-durable")
+            .unwrap();
+        assert!(journal_at < unlink && unlink < cleared);
+        assert!(trace[unlink + 1..cleared]
+            .iter()
+            .any(|(s, p)| *s == "directory-synced" && p == durable::parent(&state)));
+    }
+
+    #[test]
+    fn failed_ancestor_or_backup_barrier_never_arms_journal_and_retry_syncs_residue() {
+        for fault in ["ancestor", "backup"] {
+            let root = tempfile::tempdir().unwrap();
+            let (state, pair) = fixture(root.path());
+            let path = if fault == "ancestor" {
+                root.path().join("release-backups")
+            } else {
+                durable::parent(&pair.artifacts[0].backup).to_path_buf()
+            };
+            probe::start(Some(("directory-sync", path.clone())));
+            assert!(
+                atomic_copy(&pair.artifacts[0].destination, &pair.artifacts[0].backup).is_err()
+            );
+            let trace = probe::take().events;
+            assert!(!state.with_extension("release-pending.json").exists());
+            assert!(!trace.iter().any(|(s, _)| *s == "pair-journal-durable"));
+            // The failed mkdir's entry now EXISTS. It must still be synced on retry.
+            probe::start(None);
+            for a in &pair.artifacts {
+                atomic_copy(&a.destination, &a.backup).unwrap();
+            }
+            begin_pair(&state, &pair).unwrap();
+            let trace = probe::take().events;
+            let ready = trace
+                .iter()
+                .position(|(s, _)| *s == "pair-journal-durable")
+                .unwrap();
+            assert!(trace[..ready]
+                .iter()
+                .any(|(s, p)| *s == "directory-synced" && p == &path));
+        }
+    }
+
+    #[test]
+    fn failed_clear_barrier_retains_exact_journal_for_later_recovery_not_success() {
+        let root = tempfile::tempdir().unwrap();
+        let (state, pair) = fixture(root.path());
+        for a in &pair.artifacts {
+            atomic_copy(&a.destination, &a.backup).unwrap();
+        }
+        begin_pair(&state, &pair).unwrap();
+        let original = fs::read(journal(&state)).unwrap();
+        for a in &pair.artifacts {
+            fs::write(&a.destination, b"new unconfirmed").unwrap();
+        }
+        fs::write(&state, b"new unconfirmed state").unwrap();
+        probe::start(Some(("directory-sync", root.path().to_path_buf())));
+        assert!(finish(&state)
+            .unwrap_err()
+            .to_string()
+            .contains("durability uncertain"));
+        let trace = probe::take().events;
+        assert!(!trace.iter().any(|(s, _)| *s == "journal-clear-durable"));
+        assert_eq!(fs::read(journal(&state)).unwrap(), original);
+        recover(&state).unwrap();
+        for a in &pair.artifacts {
+            assert_eq!(hash(&a.destination).unwrap(), a.sha256);
+        }
+        assert_eq!(fs::read(&state).unwrap(), b"prior exact state");
+        assert!(!journal(&state).exists());
+    }
+
+    #[test]
+    fn old_single_artifact_journal_recovers_without_paired_fields() {
+        let root = tempfile::tempdir().unwrap();
+        let state = root.path().join("state.json");
+        let mut value = State::read(&state).unwrap();
+        value.tools.insert(
+            "bobbin".into(),
+            crate::model::ToolState {
+                version: "keeper".into(),
+                applied: true,
+                verified: true,
+            },
+        );
+        value.tools.insert(
+            "seeds".into(),
+            crate::model::ToolState {
+                version: "unconfirmed".into(),
+                applied: true,
+                verified: true,
+            },
+        );
+        value.write(&state).unwrap();
+        let destination = root.path().join("sd");
+        let backup = root.path().join("backup");
+        fs::write(&destination, b"new").unwrap();
+        fs::write(&backup, b"old").unwrap();
+        let legacy = serde_json::json!({"tool":"seeds","destination":destination,"backup":backup,"sha256":hash(&backup).unwrap()});
+        fs::write(journal(&state), serde_json::to_vec(&legacy).unwrap()).unwrap();
+        recover(&state).unwrap();
+        assert_eq!(fs::read(&destination).unwrap(), b"old");
+        let restored = State::read(&state).unwrap();
+        assert_eq!(restored.tools["bobbin"].version, "keeper");
+        assert!(!restored.tools.contains_key("seeds"));
+        assert!(!journal(&state).exists());
+    }
 }

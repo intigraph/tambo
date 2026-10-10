@@ -175,7 +175,11 @@ Both executables are backed up before either is replaced. The existing release
 lock and pending journal protect the pair; failed installed verification or an
 interrupted swap restores both prior binaries and the exact prior state. A
 corrupt backup retains the journal and refuses recovery before changing either
-file. Existing single-binary journals and Seeds rollback remain supported.
+file. Backup file renames and every ancestor directory entry are synced before
+the pair journal becomes durable; its removal is synced before success. A failed
+clear barrier reports uncertain completion and attempts to retain the exact
+pending record for later recovery. Failed retention remains an error, never a
+claim that completion or restoration is proved. Existing single-binary journals and Seeds rollback remain supported.
 This does not extend `rollback-seeds` to other tools.
 
 Verification performs the existing negative/positive client and vocabulary

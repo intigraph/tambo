@@ -235,7 +235,7 @@ fn update_at(plan: &Plan, state_path: &Path, check: bool, pin: &Pin) -> Result<(
     let result = (|| -> Result<()> {
         for i in 0..2 {
             atomic_copy(&candidates[i], &paths[i])?;
-            fs::File::open(paths[i].parent().unwrap())?.sync_all()?;
+            durable::sync_dir(durable::parent(&paths[i]))?;
         }
         if [hash(&paths[0])?, hash(&paths[1])?] != new_hashes || versions(&paths)? != after {
             bail!("installed Quipu pair read-back mismatch");
@@ -251,13 +251,16 @@ fn update_at(plan: &Plan, state_path: &Path, check: bool, pin: &Pin) -> Result<(
         );
         state.write(state_path)?;
         fs::File::open(state_path)?.sync_all()?;
-        emission::queue_transition(
+        durable::sync_dir(durable::parent(state_path))?;
+        durable::create_dirs(&durable::parent(state_path).join("episodes"))?;
+        let event = emission::queue_transition(
             state_path,
             "quipu",
             "release-updated",
             &format!("{}; {}", after[0].0, after[1].0),
         )?;
-        transaction::finish(state_path)?;
+        fs::File::open(&event)?.sync_all()?;
+        durable::sync_dir(durable::parent(&event))?;
         Ok(())
     })();
     if let Err(error) = result {
@@ -266,6 +269,7 @@ fn update_at(plan: &Plan, state_path: &Path, check: bool, pin: &Pin) -> Result<(
         return Err(error)
             .context("Quipu release verification failed; previous pair/state restored");
     }
+    transaction::finish(state_path).context("verified Quipu pair, but durable journal completion is uncertain; no success or restoration claimed")?;
     println!("quipu: installed and verified reviewed paired pin {} (CLI roundtrip and server command contract; no service restart)", pin.version);
     Ok(())
 }
