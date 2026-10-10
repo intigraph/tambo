@@ -357,3 +357,30 @@ profile also needs Go 1.22+. Rust is only needed for the source builds above.
 **Accounts and servers.** None. Nothing talks to a private network, and no
 token is needed to install. A token (`QUIPU_AUTH_TOKEN`) matters only when you
 send install records to a remote quipu with `flush-episodes`.
+
+## Seeds successful-update rollback
+
+`rollback-seeds` restores only the prior Seeds artifact retained by the last
+successful `update-release --tool seeds`. It requires the same selected plan,
+state file, executable path and exact current/prior SHA256 values:
+
+```bash
+caboodle rollback-seeds --plan crew.toml --state state.json \
+  --current-sha256 <installed-sha256> --prior-sha256 <retained-prior-sha256>
+```
+
+The successful update records a Seeds receipt bound to the plan, state bytes,
+paths, versions and both artifact hashes. Missing receipts, changed state,
+wrong hashes, corrupt backups, symlinks, held updates and lock contention refuse
+before replacing Seeds. A hold is any directory entry, including a dangling
+symlink. Unknown hold-path configuration or metadata errors block execution;
+only a definitely absent entry permits it. Other tools retain their state. A successful rollback
+runs the existing isolated functional verifier and consumes the receipt.
+A failed rollback verifier restores the current artifact and retains the state.
+An interrupted rollback uses normal release journal recovery, restoring the
+current artifact and invalidating only Seeds verification; it must earn fresh
+proof before a later operation. This is not a general downgrade override.
+
+Legacy updates without this receipt do not qualify. A private implementation
+or test does not authorize publication or adoption; follow the applicable review
+and deployment contract before using it on an installed tool.

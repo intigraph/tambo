@@ -1,6 +1,8 @@
 //! Opt-in published-release delivery for binary tools selected by a reviewed plan.
 //! Source-managed services and source bundles retain their own update contracts.
+mod rollback;
 mod transaction;
+pub use rollback::rollback_seeds;
 
 use std::{
     env, fs,
@@ -200,10 +202,27 @@ fn selected_path(binary: &str) -> Result<PathBuf> {
 }
 
 fn held() -> bool {
-    env::var_os("CABOODLE_HOLD_FILE")
+    let path = env::var_os("CABOODLE_HOLD_FILE")
         .map(PathBuf::from)
-        .or_else(|| env::var_os("HOME").map(|h| PathBuf::from(h).join(".caboodle/hold")))
-        .is_some_and(|p| p.exists())
+        .or_else(|| {
+            env::var_os("HOME")
+                .filter(|home| !home.is_empty())
+                .map(|home| PathBuf::from(home).join(".caboodle/hold"))
+        });
+    hold_entry_blocks(path.as_deref())
+}
+
+/// A hold is a directory entry, even if its symlink target is absent.
+/// Unknown paths or metadata errors cannot establish that the hold is absent.
+fn hold_entry_blocks(path: Option<&Path>) -> bool {
+    let Some(path) = path.filter(|path| !path.as_os_str().is_empty()) else {
+        return true;
+    };
+    match fs::symlink_metadata(path) {
+        Ok(_) => true,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => false,
+        Err(_) => true,
+    }
 }
 
 /// Guard the older reviewed-pin updater after a release-tracking install.
@@ -243,13 +262,19 @@ pub fn update(plan: &Plan, tool: ToolName, state_path: &Path, check_only: bool) 
     }
     if let ToolName::Member(name) = tool {
         let m = crate::members::get(name).context("unknown stack member")?;
-        return update_member(m, state_path, check_only);
+        return update_member(plan, m, state_path, check_only);
     }
     update_binary(Some(plan), Some(tool), state_path, check_only, None, None)
 }
 
 /// Take the release-update state lock and finish any interrupted swap.
 fn lock_state(state_path: &Path) -> Result<fs::File> {
+    let lock = lock_state_unrecovered(state_path)?;
+    transaction::recover(state_path)?;
+    Ok(lock)
+}
+
+fn lock_state_unrecovered(state_path: &Path) -> Result<fs::File> {
     let state_dir = state_path
         .parent()
         .filter(|p| !p.as_os_str().is_empty())
@@ -261,7 +286,6 @@ fn lock_state(state_path: &Path) -> Result<fs::File> {
         .write(true)
         .open(state_dir.join("release-update.lock"))?;
     FileExt::try_lock_exclusive(&lock).context("another release update holds the state lock")?;
-    transaction::recover(state_path)?;
     Ok(lock)
 }
 
@@ -274,7 +298,12 @@ fn lock_state(state_path: &Path) -> Result<fs::File> {
 /// PATH runs (the same copy the built-in tools update), with the same backup,
 /// transaction and rollback-on-failed-verify. Every run ends in a functional
 /// verify of that copy, so "verified" in the output is always a fresh proof.
-fn update_member(m: &crate::members::Manifest, state_path: &Path, check_only: bool) -> Result<()> {
+fn update_member(
+    plan: &Plan,
+    m: &crate::members::Manifest,
+    state_path: &Path,
+    check_only: bool,
+) -> Result<()> {
     let _lock = lock_state(state_path)?;
     let tool_id = m.name.as_str();
     if held() {
@@ -379,6 +408,17 @@ fn update_member(m: &crate::members::Manifest, state_path: &Path, check_only: bo
         },
     );
     state.write(state_path)?;
+    if tool_id == "seeds" {
+        rollback::record(
+            plan,
+            state_path,
+            &destination,
+            &backup,
+            &old_hash,
+            &before,
+            &after,
+        )?;
+    }
     emission::queue_transition(state_path, tool_id, "release-updated", &after)?;
     transaction::finish(state_path)?;
     println!(
@@ -775,5 +815,32 @@ mod tests {
         atomic_copy(&source, &target).unwrap();
         assert_eq!(fs::read_to_string(original).unwrap(), "old");
         assert_eq!(fs::read_to_string(target).unwrap(), "new");
+    }
+    #[test]
+    fn hold_entries_block_regular_directory_and_dangling_symlink() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("hold");
+        assert!(
+            !hold_entry_blocks(Some(&path)),
+            "absent-entry positive control"
+        );
+        fs::write(&path, "hold").unwrap();
+        assert!(hold_entry_blocks(Some(&path)));
+        fs::remove_file(&path).unwrap();
+        fs::create_dir(&path).unwrap();
+        assert!(hold_entry_blocks(Some(&path)));
+        fs::remove_dir(&path).unwrap();
+        std::os::unix::fs::symlink(dir.path().join("missing-target"), &path).unwrap();
+        assert!(hold_entry_blocks(Some(&path)), "dangling entry must block");
+    }
+    #[test]
+    fn unknown_hold_path_and_metadata_errors_fail_closed() {
+        assert!(hold_entry_blocks(None));
+        assert!(hold_entry_blocks(Some(Path::new(""))));
+        let dir = tempfile::tempdir().unwrap();
+        let parent = dir.path().join("not-a-directory");
+        fs::write(&parent, "control").unwrap();
+        assert!(fs::symlink_metadata(parent.join("hold")).is_err());
+        assert!(hold_entry_blocks(Some(&parent.join("hold"))));
     }
 }
