@@ -1745,3 +1745,9 @@ mod auth_config_tests {
         assert!(curl_auth_header_line("tok\r").is_err());
     }
 }
+
+/// Verify one embedded release member without installing it.
+pub fn verify_member(name: &str) -> Result<()> {
+    let member = crate::members::get(name).context("unknown reviewed member")?;
+    manifest::verify_release_member(member)
+}

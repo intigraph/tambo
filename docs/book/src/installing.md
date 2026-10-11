@@ -384,3 +384,15 @@ proof before a later operation. This is not a general downgrade override.
 Legacy updates without this receipt do not qualify. A private implementation
 or test does not authorize publication or adoption; follow the applicable review
 and deployment contract before using it on an installed tool.
+
+Maintainers can verify an embedded Rust release member before publishing a pin:
+
+```bash
+caboodle verify-member seeds
+```
+
+This stages the archive pinned by that Caboodle checkout, checks its digest,
+identity and version, and runs the manifest's functional steps in temporary
+roots. It does not install a managed program. The `caboodle-verify` CI job runs
+this command against the PR checkout; Seeds pin automation requires that exact
+check to complete successfully, alongside the rest of CI.

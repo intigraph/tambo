@@ -257,6 +257,38 @@ pub(crate) fn stage(m: &Manifest) -> Result<(tempfile::TempDir, PathBuf)> {
     Ok((root, unpack))
 }
 
+/// Stage the reviewed release and run its identity, version and functional
+/// contract in temporary roots. This never installs a managed program.
+pub(crate) fn verify_release_member(m: &Manifest) -> Result<()> {
+    if m.kind != Kind::RustRelease {
+        bail!("standalone release verification supports rust-release members only");
+    }
+    let (_root, unpack) = stage(m)?;
+    verify_staged_member(m, &unpack)
+}
+
+fn verify_staged_member(m: &Manifest, unpack: &Path) -> Result<()> {
+    let resolved = m
+        .programs
+        .iter()
+        .map(|program| {
+            let path = find_program(unpack, &program.name).context("release program missing")?;
+            identify(&path, program)?;
+            Ok((program.name.as_str(), path))
+        })
+        .collect::<Result<Vec<_>>>()?;
+    let first = &resolved[0].1;
+    let root = tempfile::tempdir()?;
+    let mut argv = vec![first.to_string_lossy().into_owned()];
+    argv.extend(m.version_argv.iter().cloned());
+    let output = hermetic_via(root.path(), None, &argv, None)?;
+    let reported = String::from_utf8_lossy(&output.stdout);
+    if !reports_version(reported.trim(), &m.version) {
+        bail!("{} release reports an unexpected version", m.name);
+    }
+    verify_resolved(m, &resolved)
+}
+
 impl Adapter for ManifestAdapter {
     fn name(&self) -> ToolName {
         ToolName::Member(self.0.name.as_str())
@@ -732,5 +764,32 @@ mod python_tests {
             .unwrap_err()
             .to_string();
         assert!(err.contains("cannot evaluate"), "{err}");
+    }
+}
+
+#[cfg(test)]
+mod release_verification_tests {
+    use super::*;
+
+    #[test]
+    fn staged_member_requires_identity_version_and_functional_roundtrip() {
+        let mut manifest = Manifest::parse(include_str!(
+            "../../tests/fixtures/members/fixture-demo.toml"
+        ))
+        .unwrap();
+        let root = tempfile::tempdir().unwrap();
+        let archive = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/releases/fixture-demo-v0.1.0-x86_64-unknown-linux-gnu.tar.gz");
+        let unpack = materialize(&manifest, &archive, &root.path().join("unpack")).unwrap();
+        verify_staged_member(&manifest, &unpack).unwrap();
+        manifest.programs[0].identity_contains = "foreign identity".to_owned();
+        assert!(verify_staged_member(&manifest, &unpack).is_err());
+        manifest.programs[0].identity_contains =
+            "fixture-demo is the caboodle fixture stack member".to_owned();
+        manifest.version = "0.1.1".to_owned();
+        assert!(verify_staged_member(&manifest, &unpack).is_err());
+        manifest.version = "0.1.0".to_owned();
+        manifest.verify[2].present = Some("missing-positive-control".to_owned());
+        assert!(verify_staged_member(&manifest, &unpack).is_err());
     }
 }
