@@ -4,7 +4,7 @@ use anyhow::{bail, Context, Result};
 use serde::Deserialize;
 
 use crate::{
-    adapter::adapter,
+    adapter::adapter_for_plan,
     configuration,
     crew::{self, CrewEvidence},
     embedding, emission,
@@ -73,7 +73,12 @@ pub fn apply(plan: &Plan, state_path: &Path, skip_install: bool) -> Result<State
     let mut state = State::read(state_path)?;
     let mut failures = Vec::new();
     for &name in &plan.tools {
-        let adapter = adapter(name, plan.quipu_flavor);
+        if name == crate::model::ToolName::Quipu && plan.external_quipu {
+            // A failed external path/version probe cannot retain an earlier proof.
+            state.tools.remove(name.as_str());
+            state.write(state_path)?;
+        }
+        let adapter = adapter_for_plan(name, plan)?;
         let desired = adapter.desired_version();
         // aegis-5ctwu3: PRESENCE IS NOT CONVERGENCE. Until this match looked at
         // `is_current`, a binary that merely EXISTED was reported "applied" and
@@ -135,7 +140,10 @@ pub fn apply(plan: &Plan, state_path: &Path, skip_install: bool) -> Result<State
                 }
                 }
 
-                Err(error) if !skip_install => {
+                Err(error)
+                    if !skip_install
+                        && !(name == crate::model::ToolName::Quipu && plan.external_quipu) =>
+                {
                     eprintln!("{}: not installed ({error:#}); installing", name.as_str());
                     adapter
                     .install()
@@ -159,7 +167,9 @@ pub fn apply(plan: &Plan, state_path: &Path, skip_install: bool) -> Result<State
         // shell ran the older release. Apply is the step that says done; it
         // checks what PATH runs, as verify does.
         let version = version.and_then(|version| {
-            check_path_resolution(name)?;
+            if !(name == crate::model::ToolName::Quipu && plan.external_quipu) {
+                check_path_resolution(name)?;
+            }
             Ok(version)
         });
         let version = match version {
@@ -404,7 +414,12 @@ pub fn verify(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
         println!("hook bundle {line}");
     }
     for &name in &plan.tools {
-        let adapter = adapter(name, plan.quipu_flavor);
+        if name == crate::model::ToolName::Quipu && plan.external_quipu {
+            // A failed external path/version probe cannot retain an earlier proof.
+            state.tools.remove(name.as_str());
+            state.write(state_path)?;
+        }
+        let adapter = adapter_for_plan(name, plan)?;
         let version = adapter
             .version()
             .with_context(|| format!("{} version read-back", name.as_str()))?;
@@ -428,7 +443,9 @@ pub fn verify(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
                 )
             }
         })?;
-        check_path_resolution(name)?;
+        if !(name == crate::model::ToolName::Quipu && plan.external_quipu) {
+            check_path_resolution(name)?;
+        }
         state.tools.insert(
             name.as_str().to_owned(),
             ToolState {
@@ -497,12 +514,29 @@ pub fn verify(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
 
 /// Compare the running toolchain to the releases reviewed by this Caboodle
 /// build. Returns true only when every selected tool is current.
+fn reviewed_drift_status(installed: &str, desired: &str) -> &'static str {
+    match crate::release_update::behind_reviewed(installed, desired) {
+        Some(true) => "update available",
+        Some(false) if crate::release_update::behind_reviewed(desired, installed) == Some(true) => {
+            "ahead of reviewed pin; downgrade refused"
+        }
+        Some(false) | None => "version drift; review required",
+    }
+}
+
 pub fn check_updates(plan: &Plan) -> Result<bool> {
     plan.validate()?;
     let mut current = true;
     for &name in &plan.tools {
-        let adapter = adapter(name, plan.quipu_flavor);
+        let adapter = adapter_for_plan(name, plan)?;
         let desired = adapter.desired_version();
+        if name == crate::model::ToolName::Quipu && plan.external_quipu {
+            println!(
+                "quipu: externally owned; release convergence not assessed ({})",
+                adapter.version()?
+            );
+            continue;
+        }
         match adapter.version() {
             Ok(installed) if adapter.is_current(&installed) => {
                 println!("{}: current ({installed})", name.as_str());
@@ -510,8 +544,9 @@ pub fn check_updates(plan: &Plan) -> Result<bool> {
             Ok(installed) => {
                 current = false;
                 println!(
-                    "{}: update available (installed: {installed}; reviewed: {desired})",
-                    name.as_str()
+                    "{}: {} (installed: {installed}; reviewed: {desired})",
+                    name.as_str(),
+                    reviewed_drift_status(&installed, &desired)
                 );
             }
             Err(error) => {
@@ -535,7 +570,14 @@ pub fn update(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
     plan.validate()?;
     let mut state = State::read(state_path)?;
     for &name in &plan.tools {
-        let adapter = adapter(name, plan.quipu_flavor);
+        let adapter = adapter_for_plan(name, plan)?;
+        if name == crate::model::ToolName::Quipu && plan.external_quipu {
+            println!(
+                "quipu: externally owned; update skipped ({})",
+                adapter.version()?
+            );
+            continue;
+        }
         let before = adapter.version().ok();
         if before
             .as_deref()
@@ -669,9 +711,27 @@ fn seed_self_test_store() -> Result<(tempfile::TempDir, std::path::PathBuf)> {
 
 #[cfg(test)]
 mod convergence_tests {
-    use super::{decide_convergence, Convergence};
+    use super::{decide_convergence, reviewed_drift_status, Convergence};
 
     const REVIEWED: &str = "bobbin 0.16.2";
+
+    #[test]
+    fn reviewed_drift_never_proposes_a_downgrade_or_unknown_replacement() {
+        assert_eq!(
+            reviewed_drift_status("sd 0.1.4 (seeds)", "seeds 0.0.4"),
+            "ahead of reviewed pin; downgrade refused"
+        );
+        assert_eq!(
+            reviewed_drift_status("sd 0.0.3", "seeds 0.0.4"),
+            "update available"
+        );
+        for installed in ["sd dev", "sd 0.0.4", "sd 0.0.4-rc1"] {
+            assert_eq!(
+                reviewed_drift_status(installed, "seeds 0.0.4"),
+                "version drift; review required"
+            );
+        }
+    }
 
     #[test]
     fn current_is_left_alone_even_under_skip_install() {

@@ -238,6 +238,16 @@ rm "${CARGO_HOME:-$HOME/.cargo}/bin/caboodle"
 rm -r .caboodle
 ```
 
+## Reviewed-pin drift
+
+`caboodle check-updates` proposes an update only when the installed version is
+older than the reviewed pin. A newer version is reported as ahead of the pin;
+an unparseable or same-version identity mismatch is reported as version drift.
+These reports remain nonzero because the installation differs from the review.
+`caboodle update` refuses a reviewed-pin downgrade before replacing the tool.
+There is no `--allow-downgrade` escape: a deliberate rollback requires a separately
+reviewed installation, rather than a normal stack update.
+
 ## Opt-in published binary updates
 
 After the initial install and plan review, track published stable releases for a
@@ -282,7 +292,19 @@ a timer or claim that another host or a long-running process has updated.
 `caboodle update-self` applies the same release, checksum, downgrade, backup and
 interruption-recovery controls to Caboodle itself. Its post-install contract
 requires the new binary's version and `update-release --help` to answer correctly.
-Use `update-self --check` to inspect metadata. Bootstrap from a published release
+Self-update supports Linux x86_64, macOS x86_64, and macOS arm64, selecting the
+matching published archive and its `.sha256` asset. Other platforms refuse before
+release lookup. The extracted executable is written as a new file rather than
+restoring archive metadata, so archive extended attributes are not installed.
+Event consumers can select an exact stable release with `update-self --tag v0.2.14`.
+To bind the download to evidence obtained before installation, also supply
+`--archive-sha256` and `--binary-sha256`. Both values must be lowercase SHA256
+digests; both flags require the exact tag and each other. CABOODLE compares the
+archive before extraction and the executable before running it or replacing the
+installed copy. A mismatch leaves the previous installer and state intact.
+
+Use `update-self --check` to inspect metadata; it does not download artifacts or
+prove either supplied hash. Bootstrap from a published release
 before scheduling this command; a same-version source build with different bytes
 is deliberately refused rather than silently overwritten. It replaces the copy
 PATH runs; when you invoke a different copy by its full path, it says that copy
@@ -335,3 +357,30 @@ profile also needs Go 1.22+. Rust is only needed for the source builds above.
 **Accounts and servers.** None. Nothing talks to a private network, and no
 token is needed to install. A token (`QUIPU_AUTH_TOKEN`) matters only when you
 send install records to a remote quipu with `flush-episodes`.
+
+## Seeds successful-update rollback
+
+`rollback-seeds` restores only the prior Seeds artifact retained by the last
+successful `update-release --tool seeds`. It requires the same selected plan,
+state file, executable path and exact current/prior SHA256 values:
+
+```bash
+caboodle rollback-seeds --plan crew.toml --state state.json \
+  --current-sha256 <installed-sha256> --prior-sha256 <retained-prior-sha256>
+```
+
+The successful update records a Seeds receipt bound to the plan, state bytes,
+paths, versions and both artifact hashes. Missing receipts, changed state,
+wrong hashes, corrupt backups, symlinks, held updates and lock contention refuse
+before replacing Seeds. A hold is any directory entry, including a dangling
+symlink. Unknown hold-path configuration or metadata errors block execution;
+only a definitely absent entry permits it. Other tools retain their state. A successful rollback
+runs the existing isolated functional verifier and consumes the receipt.
+A failed rollback verifier restores the current artifact and retains the state.
+An interrupted rollback uses normal release journal recovery, restoring the
+current artifact and invalidating only Seeds verification; it must earn fresh
+proof before a later operation. This is not a general downgrade override.
+
+Legacy updates without this receipt do not qualify. A private implementation
+or test does not authorize publication or adoption; follow the applicable review
+and deployment contract before using it on an installed tool.
