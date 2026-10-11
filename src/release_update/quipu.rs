@@ -126,6 +126,7 @@ fn update_at(plan: &Plan, state_path: &Path, check: bool, pin: &Pin) -> Result<(
         return Ok(());
     }
     let paths = owned_pair()?;
+    crate::adapter::preflight_owned_quipu_alias()?;
     let before = versions(&paths)?;
     let wanted = stable_version(&pin.version)?;
     if before[0].1 > wanted {
@@ -191,6 +192,7 @@ fn update_at(plan: &Plan, state_path: &Path, check: bool, pin: &Pin) -> Result<(
     let mut state = State::read(state_path)?;
     if prior_hashes == new_hashes {
         crate::adapter::verify_quipu_pair(&paths[0], &paths[1])?;
+        crate::adapter::ensure_owned_quipu_alias()?;
         println!("quipu: current paired release and freshly verified");
         return Ok(());
     }
@@ -241,6 +243,9 @@ fn update_at(plan: &Plan, state_path: &Path, check: bool, pin: &Pin) -> Result<(
             bail!("installed Quipu pair read-back mismatch");
         }
         crate::adapter::verify_quipu_pair(&paths[0], &paths[1])?;
+        // The relative link remains valid if a later error restores the prior
+        // pair; the supported command follows the owned canonical executable.
+        crate::adapter::ensure_owned_quipu_alias()?;
         state.tools.insert(
             "quipu".into(),
             ToolState {
