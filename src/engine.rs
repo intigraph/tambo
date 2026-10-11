@@ -167,6 +167,15 @@ pub fn apply(plan: &Plan, state_path: &Path, skip_install: bool) -> Result<State
         // shell ran the older release. Apply is the step that says done; it
         // checks what PATH runs, as verify does.
         let version = version.and_then(|version| {
+            if name == crate::model::ToolName::Quipu && !plan.external_quipu {
+                // A current pair needs only its missing alias, never a downgrade
+                // to the older reviewed release just to add a command name.
+                if skip_install {
+                    crate::adapter::verify_existing_quipu_alias()?;
+                } else {
+                    crate::adapter::ensure_existing_quipu_alias()?;
+                }
+            }
             if !(name == crate::model::ToolName::Quipu && plan.external_quipu) {
                 check_path_resolution(name)?;
             }
@@ -583,6 +592,9 @@ pub fn update(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
             .as_deref()
             .is_some_and(|installed| adapter.is_current(installed))
         {
+            if name == crate::model::ToolName::Quipu {
+                crate::adapter::ensure_existing_quipu_alias()?;
+            }
             println!("{}: current", name.as_str());
             continue;
         }
