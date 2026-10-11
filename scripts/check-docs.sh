@@ -6,4 +6,4 @@ site=$(mktemp -d)
 trap 'rm -rf "$site"' EXIT HUP INT TERM
 # Match Pages' /caboodle/ base, including the generated 404 page's root link.
 mdbook build docs/book --dest-dir "$site/caboodle"
-lychee --config .lychee.toml --root-dir "$site" README.md "$site/caboodle/**/*.html"
+scripts/check-doc-links.sh --root-dir "$site" README.md "$site/caboodle/**/*.html"
