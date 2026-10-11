@@ -1,5 +1,7 @@
 //! Opt-in published-release delivery for binary tools selected by a reviewed plan.
 //! Source-managed services and source bundles retain their own update contracts.
+mod durable;
+mod quipu;
 mod rollback;
 mod transaction;
 pub use rollback::rollback_seeds;
@@ -179,15 +181,17 @@ pub(crate) fn checksum(body: &str, archive: &str) -> Result<String> {
 
 fn atomic_copy(source: &Path, target: &Path) -> Result<()> {
     let parent = target.parent().context("destination has no parent")?;
-    fs::create_dir_all(parent)?;
+    durable::create_dirs(parent)?;
     let temporary = tempfile::NamedTempFile::new_in(parent)?;
     fs::copy(source, temporary.path())?;
     temporary.as_file().sync_all()?;
+    durable::checkpoint("copy-file-synced", target)?;
     if hash(source)? != hash(temporary.path())? {
         bail!("staged copy checksum differs");
     }
     temporary.persist(target).map_err(|e| e.error)?;
-    Ok(())
+    durable::checkpoint("copy-renamed", target)?;
+    durable::sync_dir(parent)
 }
 
 fn selected_path(binary: &str) -> Result<PathBuf> {
@@ -263,6 +267,12 @@ pub fn update(plan: &Plan, tool: ToolName, state_path: &Path, check_only: bool) 
     if let ToolName::Member(name) = tool {
         let m = crate::members::get(name).context("unknown stack member")?;
         return update_member(plan, m, state_path, check_only);
+    }
+    if tool == ToolName::Quipu {
+        return quipu::update(plan, state_path, check_only);
+    }
+    if tool == ToolName::Camayoc {
+        bail!("camayoc has no published checksummed release; release update refused");
     }
     update_binary(Some(plan), Some(tool), state_path, check_only, None, None)
 }

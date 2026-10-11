@@ -126,7 +126,7 @@ The table covers the current source tree; published binaries may lag new command
 | `install` | Apply then verify; all apply and verify options. |
 | `check-updates` | Compare reviewed pins; `--plan`. |
 | `update` | Converge reviewed pins; `--plan`, `--state`, `--creel-doctor`, `--creel-admission`. |
-| `update-release` | Unix published release update; `--tool`, `--check`, `--plan`, `--state`. |
+| `update-release` | Unix release update; `--tool`, `--check`, `--plan`, `--state`. Quipu tracks a reviewed paired archive pin; Camayoc/Shantytown refuse without checksummed publications. |
 | `update-self` | Unix self-update; `--check`, `--state`. |
 | `bump-member` | Maintainers: re-pin a `members/*.toml` to its published release; manifest argument, `--tag`, `--probe-wrapper`. |
 | `project-settings` | Rig registration; `--root`, `--agent`, `--registry`; or `--policy-only` with `--plan`, `--output`. |
@@ -155,3 +155,41 @@ environment variables and observability targets.
 | crew | Several named coding agents that work together, run by shantytown (terminal) or creel (browser). |
 | bead, `br` | An issue in [beads](https://github.com/Dicklesworthstone/beads_rust), a git-friendly issue tracker agents use as memory. |
 | MCP | Model Context Protocol, how an agent calls a tool's server. |
+
+### Quipu paired release updates
+
+`caboodle update-release --tool quipu --plan caboodle-plan.toml` selects the
+exact version and per-target SHA256 in `release-pins/quipu.toml`, rather than
+implicitly trusting the latest release or its downloaded checksum. The
+publication must provide the expected archive and checksum exactly once; both
+the archive bytes and published sum must agree with the reviewed digest.
+
+The plan must select a local `release`-flavor Quipu. Both `quipu` and
+`quipu-server` must be regular files selected by PATH in `CARGO_HOME/bin`
+(default `$HOME/.cargo/bin`), with matching versions. External servers, LanceDB
+source builds, shadowed paths, symlinks, downgrades, mixed versions and equal
+versions with different bytes are refused. The install does not restart any
+service or load data into a running store.
+
+Both executables are backed up before either is replaced. The existing release
+lock and pending journal protect the pair; failed installed verification or an
+interrupted swap restores both prior binaries and the exact prior state. A
+corrupt backup retains the journal and refuses recovery before changing either
+file. Backup file renames and every ancestor directory entry are synced before
+the pair journal becomes durable; its removal is synced before success. A failed
+clear barrier reports uncertain completion and attempts to retain the exact
+pending record for later recovery. Failed retention remains an error, never a
+claim that completion or restoration is proved. Existing single-binary journals and Seeds rollback remain supported.
+This does not extend `rollback-seeds` to other tools.
+
+Verification performs the existing negative/positive client and vocabulary
+round trips in temporary stores and checks the server version/help contract.
+It does **not** prove a running server, service restart, database migration or
+host delivery. `--check` inspects publication metadata without downloading or
+replacing executables and explicitly reports that checksum/functional proof
+has not run. Source pin updates still require review; no automatic pin writer
+or host schedule is introduced by this command.
+
+Camayoc has no published release, and Shantytown's wheel release lacks a
+checksum asset. Their explicit refusals preserve these missing trust anchors;
+source bundles and wheels are not guessed into standalone binaries.

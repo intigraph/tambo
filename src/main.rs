@@ -172,8 +172,9 @@ enum Commands {
         plan: PathBuf,
         #[arg(long, default_value = ".caboodle/state.json")]
         state: PathBuf,
-        /// bobbin, yupana or desire-path track the newest published release; a
-        /// stack member (members/*.toml) tracks its reviewed pin
+        /// bobbin, yupana or desire-path track the newest published release;
+        /// quipu and stack members track reviewed pins. Camayoc/Shantytown
+        /// refuse until checksummed publications exist
         #[arg(long, value_parser = update_release_tool)]
         tool: String,
         /// Inspect release/version metadata without downloading or replacing binaries
@@ -315,7 +316,15 @@ impl From<ProfileArg> for Profile {
 /// `update-release --tool`: the release-tracked built-ins, or any embedded member.
 #[cfg(unix)]
 fn update_release_tool(value: &str) -> Result<String, String> {
-    if ["bobbin", "yupana", "desire-path"].contains(&value)
+    if [
+        "bobbin",
+        "yupana",
+        "desire-path",
+        "quipu",
+        "camayoc",
+        "shantytown",
+    ]
+    .contains(&value)
         || caboodle::members::get(value).is_some()
     {
         Ok(value.to_owned())
@@ -325,7 +334,7 @@ fn update_release_tool(value: &str) -> Result<String, String> {
             .map(|m| m.name.as_str())
             .collect();
         Err(format!(
-            "possible values: bobbin, yupana, desire-path, or a stack member ({})",
+            "possible values: bobbin, yupana, desire-path, quipu, camayoc, shantytown, or a stack member ({})",
             members.join(", ")
         ))
     }
@@ -522,6 +531,11 @@ fn main() -> Result<()> {
             tool,
             check,
         } => {
+            if tool == "shantytown" {
+                anyhow::bail!(
+                    "shantytown publishes a wheel without a checksum asset; release update refused"
+                );
+            }
             let tool = serde_json::from_value(serde_json::Value::String(tool))?;
             caboodle::release_update::update(&Plan::read(&plan)?, tool, &state, check)?;
         }

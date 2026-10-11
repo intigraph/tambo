@@ -3097,3 +3097,74 @@ fn verify_asserts_the_hook_bundles_without_a_crew_plan_and_before_the_tools() {
         ))
         .stderr(predicate::str::contains("VERSION SKEW"));
 }
+
+#[test]
+fn missing_publication_contracts_refuse_without_network() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    for (tool, reason) in [
+        ("camayoc", "no published checksummed release"),
+        ("shantytown", "wheel without a checksum asset"),
+    ] {
+        command(root.path(), &bin)
+            .args(["plan", "--profile", "kg"])
+            .assert()
+            .success();
+        command(root.path(), &bin)
+            .args(["update-release", "--tool", tool])
+            .assert()
+            .failure()
+            .stderr(predicate::str::contains(reason));
+    }
+}
+
+#[test]
+fn quipu_release_check_selects_reviewed_pair_without_download_or_swap() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("cargo-home/bin");
+    fs::create_dir_all(&bin).unwrap();
+    for binary in ["quipu", "quipu-server"] {
+        fake_tool(
+            &bin,
+            binary,
+            &format!("test \"$1\" = --version; echo '{binary} 0.11.1'"),
+        );
+    }
+    let target = if cfg!(all(target_os = "macos", target_arch = "aarch64")) {
+        "aarch64-apple-darwin"
+    } else if cfg!(all(target_os = "macos", target_arch = "x86_64")) {
+        "x86_64-apple-darwin"
+    } else if cfg!(all(target_os = "linux", target_arch = "aarch64")) {
+        "aarch64-unknown-linux-gnu"
+    } else {
+        "x86_64-unknown-linux-gnu"
+    };
+    let archive = format!("quipu-quipu-ai-v0.12.0-{target}.tar.gz");
+    fs::write(root.path().join("metadata"),serde_json::json!({"tag_name":"quipu-ai-v0.12.0","draft":false,"prerelease":false,"assets":[{"name":archive},{"name":format!("{archive}.sha256") }]}).to_string()).unwrap();
+    fake_tool(
+        &bin,
+        "curl",
+        r#"
+for arg do
+  case "$arg" in https://api.github.com/repos/scbrown/quipu/releases/tags/quipu-ai-v0.12.0) cat "$HOME/metadata"; exit 0;; esac
+done
+echo 'unexpected download/network in check-only' >&2; exit 99
+"#,
+    );
+    command(root.path(), &bin)
+        .args(["plan", "--profile", "kg"])
+        .assert()
+        .success();
+    let before = fs::read(bin.join("quipu")).unwrap();
+    command(root.path(), &bin)
+        .args(["update-release", "--tool", "quipu", "--check"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(
+            "checksum/functional proof not run",
+        ));
+    assert_eq!(fs::read(bin.join("quipu")).unwrap(), before);
+    assert!(!root.path().join(".caboodle/release-backups").exists());
+    assert!(!root.path().join(".caboodle/state.json").exists());
+}

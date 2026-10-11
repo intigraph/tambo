@@ -1,0 +1,9 @@
+# Reviewed release archive digests; installs never trust a downloaded sum alone.
+# The archive contains BOTH quipu and quipu-server. Update tag and all hashes
+# together in a reviewed source PR, after hashing the published artifacts.
+version = "0.12.0"
+[sha256]
+aarch64-apple-darwin = "8ba56faeab6784acbb8dc032001c199b6bba7b83e22d61c237f30c65b03c4c1b"
+aarch64-unknown-linux-gnu = "e0855f2ae36dca6e6ec493df2398c7c2b4e2b66d76d31395898f7c3866420818"
+x86_64-apple-darwin = "753fd1c4cac005f38704c9a2a21d021988af4fb7ec2ac654e33f7cbc0cbc91f9"
+x86_64-unknown-linux-gnu = "e3feec42e151047247bb0477769d5f33a59c080a0a53e5a8e7bceb90001de7fd"

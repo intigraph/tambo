@@ -494,7 +494,22 @@ impl Adapter for Quipu {
     }
 }
 
-fn quipu_release_target() -> Result<&'static str> {
+/// Prove exactly the selected pair, using a throwaway client store, never a live server.
+pub(crate) fn verify_quipu_pair(client: &Path, server: &Path) -> Result<()> {
+    Quipu {
+        flavor: QuipuFlavor::Release,
+        external: Some((client.to_path_buf(), server.to_path_buf())),
+    }
+    .verify()?;
+    let help = checked(server, ["--help"], None)?;
+    let help = String::from_utf8_lossy(&help.stdout);
+    if !help.contains("--db") || !help.contains("--bind") {
+        bail!("Quipu server omitted isolated database/bind command contract");
+    }
+    Ok(())
+}
+
+pub(crate) fn quipu_release_target() -> Result<&'static str> {
     quipu_release_target_for(env::consts::ARCH, env::consts::OS)
 }
 
