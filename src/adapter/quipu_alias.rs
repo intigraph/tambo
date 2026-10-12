@@ -55,9 +55,12 @@ pub(crate) fn ensure(bin: &Path) -> Result<()> {
         #[cfg(not(unix))]
         return Err("relative qp aliases currently require a Unix host".into());
     }
-    if fs::read_link(&alias).ok().as_deref() != Some(Path::new("quipu"))
-        || fs::canonicalize(&alias).ok() != fs::canonicalize(&target).ok()
-    {
+    let link = fs::read_link(&alias).map_err(|e| format!("read {}: {e}", alias.display()))?;
+    let resolved_alias =
+        fs::canonicalize(&alias).map_err(|e| format!("resolve {}: {e}", alias.display()))?;
+    let resolved_target =
+        fs::canonicalize(&target).map_err(|e| format!("resolve {}: {e}", target.display()))?;
+    if link != Path::new("quipu") || resolved_alias != resolved_target {
         return Err("qp alias identity read-back failed".into());
     }
     Ok(())

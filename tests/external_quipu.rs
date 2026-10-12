@@ -36,6 +36,7 @@ case "$verb" in
 esac
 "#;
     tool(&external, "quipu", body);
+    std::os::unix::fs::symlink("quipu", external.join("qp")).unwrap();
     tool(&external, "quipu-server", "echo 'quipu-server 0.11.1'");
     tool(&managed, "quipu", "echo 'quipu 0.3.27'");
     tool(&managed, "quipu-server", "echo 'quipu-server 0.3.27'");
