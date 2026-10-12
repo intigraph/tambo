@@ -126,6 +126,7 @@ fn update_at(plan: &Plan, state_path: &Path, check: bool, pin: &Pin) -> Result<(
         return Ok(());
     }
     let paths = owned_pair()?;
+    crate::adapter::preflight_owned_quipu_alias()?;
     let before = versions(&paths)?;
     let wanted = stable_version(&pin.version)?;
     if before[0].1 > wanted {
@@ -191,6 +192,7 @@ fn update_at(plan: &Plan, state_path: &Path, check: bool, pin: &Pin) -> Result<(
     let mut state = State::read(state_path)?;
     if prior_hashes == new_hashes {
         crate::adapter::verify_quipu_pair(&paths[0], &paths[1])?;
+        crate::adapter::ensure_owned_quipu_alias()?;
         println!("quipu: current paired release and freshly verified");
         return Ok(());
     }
@@ -241,6 +243,9 @@ fn update_at(plan: &Plan, state_path: &Path, check: bool, pin: &Pin) -> Result<(
             bail!("installed Quipu pair read-back mismatch");
         }
         crate::adapter::verify_quipu_pair(&paths[0], &paths[1])?;
+        // The relative link remains valid if a later error restores the prior
+        // pair; the supported command follows the owned canonical executable.
+        crate::adapter::ensure_owned_quipu_alias()?;
         state.tools.insert(
             "quipu".into(),
             ToolState {
@@ -397,6 +402,7 @@ else exit 8; fi
             "0.11.1"
         };
         script(&bin.join("quipu"), &client(old, false));
+        std::os::unix::fs::symlink("quipu", bin.join("qp")).unwrap();
         let old_server = if mode == "mixed-installed" {
             "0.11.0"
         } else {
@@ -544,6 +550,11 @@ case "$url" in
                 assert_eq!(fs::read(&paths[1]).unwrap(), prior_bytes[1]);
                 assert_eq!(fs::read(&state_path).unwrap(), state_before);
             }
+            assert_eq!(fs::read_link(bin.join("qp")).unwrap(), Path::new("quipu"));
+            assert_eq!(
+                fs::read(bin.join("qp")).unwrap(),
+                fs::read(&paths[0]).unwrap()
+            );
             return;
         }
         if mode == "failed-state" {
@@ -568,6 +579,18 @@ case "$url" in
             )]),
         };
         let result = update_at(&plan, &state_path, false, &pin);
+        assert_eq!(fs::read_link(bin.join("qp")).unwrap(), Path::new("quipu"));
+        use std::os::unix::fs::MetadataExt;
+        let alias_meta = fs::metadata(bin.join("qp")).unwrap();
+        let client_meta = fs::metadata(&paths[0]).unwrap();
+        assert_eq!(
+            (alias_meta.dev(), alias_meta.ino()),
+            (client_meta.dev(), client_meta.ino())
+        );
+        assert_eq!(
+            text(bin.join("qp").to_str().unwrap(), &["--version"]).unwrap(),
+            text(paths[0].to_str().unwrap(), &["--version"]).unwrap()
+        );
         if mode == "success" {
             result.unwrap();
             assert_eq!(versions(&paths).unwrap()[0].1, (0, 12, 0));

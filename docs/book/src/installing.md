@@ -174,6 +174,17 @@ Set `CABOODLE_ALLOW_SOURCE_FALLBACK=1` only when the Quipu release artifact is
 unavailable and the environment has enough time and memory for a Rust build.
 The normal setup path never compiles Quipu from source.
 
+Owned Quipu installs provide `qp` as a relative link to `quipu`. Both command
+names execute the same CLI; `quipu` remains supported. Apply repairs a missing
+alias on a current pair without reinstalling or downgrading that pair. Existing
+conflicting `qp` files in the destination or on PATH cause refusal. Verification
+checks the link, executable identity and matching version output without creating
+files. `--skip-install` requires the alias to be present already.
+
+An externally owned Quipu must provide its own command alias; Caboodle verifies
+it but does not create it. A paired release update retains the alias across a
+CLI replacement or rollback because the link follows the canonical `quipu` path.
+
 ## Stack knowledge packs
 
 `packs/` carries quipu knowledge packs for working with the stack:
