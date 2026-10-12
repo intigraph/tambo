@@ -104,6 +104,8 @@ enum Commands {
         #[arg(long)]
         creel_admission: Option<PathBuf>,
     },
+    /// Verify one embedded release member in temporary roots without installing it
+    VerifyMember { member: String },
     /// Apply and verify a previously reviewed plan
     Install {
         #[arg(short, long, default_value = "caboodle-plan.toml")]
@@ -440,6 +442,10 @@ fn main() -> Result<()> {
                     creel_admission,
                 },
             )?;
+        }
+        Commands::VerifyMember { member } => {
+            caboodle::adapter::verify_member(&member)?;
+            println!("{member}: reviewed release functional verification passed");
         }
         Commands::Install {
             plan,

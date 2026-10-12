@@ -205,7 +205,8 @@ exec {} "$@""#,
     env::set_var("FAKE_RELEASE", &wheel);
 
     // 4. MUTANT: a member that ignores stdin stores nothing, and verify is red.
-    //    This is the arm that proves stdin reached the program in arm 1.
+    //    Drain but discard stdin so a fast exit cannot race the parent write.
+    //    This arm still proves the marker reached the program in arm 1.
     let deaf = root.path().join("deaf");
     script(
         &deaf,
@@ -213,7 +214,7 @@ exec {} "$@""#,
         r#"case "$1" in
   --help) echo 'fixture-wheel is the caboodle python-wheel fixture stack member' ;;
   list) cat "$HOME/.fixture-wheel" 2>/dev/null; true ;;
-  add) echo "$2" >> "$HOME/.fixture-wheel" ;;
+  add) cat >/dev/null; echo "$2" >> "$HOME/.fixture-wheel" ;;
 esac"#,
     );
     set_path(&system, &[&deaf]);
