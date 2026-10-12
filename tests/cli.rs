@@ -132,6 +132,12 @@ fi
 exit 2
 "#,
     );
+    // Valid installed Quipu fixtures carry both supported command names.
+    if fs::symlink_metadata(bin.join("qp")).is_ok() {
+        assert_eq!(fs::read_link(bin.join("qp")).unwrap(), Path::new("quipu"));
+    } else {
+        std::os::unix::fs::symlink("quipu", bin.join("qp")).unwrap();
+    }
     fake_tool(
         bin,
         "quipu-server",
@@ -3205,4 +3211,60 @@ echo 'unexpected download/network in check-only' >&2; exit 99
     assert_eq!(fs::read(bin.join("quipu")).unwrap(), before);
     assert!(!root.path().join(".caboodle/release-backups").exists());
     assert!(!root.path().join(".caboodle/state.json").exists());
+}
+
+#[test]
+fn current_quipu_update_repairs_alias_without_replacing_binaries() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    fs::remove_file(bin.join("qp")).unwrap();
+    let client = fs::read(bin.join("quipu")).unwrap();
+    let server = fs::read(bin.join("quipu-server")).unwrap();
+    command(root.path(), &bin)
+        .args(["plan", "--profile", "kg"])
+        .assert()
+        .success();
+    for _ in 0..2 {
+        command(root.path(), &bin)
+            .arg("update")
+            .assert()
+            .success()
+            .stdout(predicate::str::contains("quipu: current"));
+        assert_eq!(fs::read_link(bin.join("qp")).unwrap(), Path::new("quipu"));
+        use std::os::unix::fs::MetadataExt;
+        assert_eq!(
+            fs::metadata(bin.join("qp")).unwrap().ino(),
+            fs::metadata(bin.join("quipu")).unwrap().ino()
+        );
+        assert_eq!(fs::read(bin.join("quipu")).unwrap(), client);
+        assert_eq!(fs::read(bin.join("quipu-server")).unwrap(), server);
+    }
+}
+
+#[test]
+fn skip_install_refuses_missing_alias_and_preserves_foreign_alias() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    command(root.path(), &bin)
+        .args(["plan", "--profile", "kg"])
+        .assert()
+        .success();
+    fs::remove_file(bin.join("qp")).unwrap();
+    command(root.path(), &bin)
+        .args(["install", "--skip-install"])
+        .assert()
+        .failure();
+    assert!(fs::symlink_metadata(bin.join("qp")).is_err());
+    fake_tool(&bin, "qp", "echo foreign-qp");
+    let foreign = fs::read(bin.join("qp")).unwrap();
+    command(root.path(), &bin)
+        .arg("update")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("qp collision"));
+    assert_eq!(fs::read(bin.join("qp")).unwrap(), foreign);
 }

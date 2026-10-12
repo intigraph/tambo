@@ -13,6 +13,7 @@ use serde_json::{json, Value};
 use crate::model::{QuipuFlavor, ToolName};
 
 mod manifest;
+mod quipu_alias;
 pub(crate) use manifest::{
     find_program, identify_member, prove_release, release_target, single_program, stage, verify_at,
 };
@@ -79,7 +80,7 @@ pub fn source_install_command(name: ToolName) -> Option<String> {
 /// Executables a tool puts on PATH, in the order a shell would look them up.
 pub fn programs(name: ToolName) -> &'static [&'static str] {
     match name {
-        ToolName::Quipu => &["quipu", "quipu-server"],
+        ToolName::Quipu => &["qp", "quipu", "quipu-server"],
         ToolName::Camayoc => &[],
         ToolName::Bobbin => &["bobbin"],
         ToolName::Yupana => &["yupana"],
@@ -380,14 +381,27 @@ impl Adapter for Quipu {
         if self.external.is_some() {
             bail!("external Quipu is not owned by Caboodle; installation refused");
         }
+        preflight_owned_quipu_alias()?;
         match self.flavor {
             QuipuFlavor::Release => install_quipu_release(),
             // The published archive is the reviewed `full` build. LanceDB is
             // an explicit non-default flavor and still needs a source build
             // until Quipu publishes a separately identifiable artifact.
             QuipuFlavor::Lancedb => {
-                checked("cargo", quipu_install_args(self.flavor), None)?;
-                Ok(())
+                let mut args: Vec<OsString> = quipu_install_args(self.flavor)
+                    .iter()
+                    .map(OsString::from)
+                    .collect();
+                args.push("--root".into());
+                args.push(
+                    owned_quipu_bin()?
+                        .parent()
+                        .context("cargo bin has no root")?
+                        .as_os_str()
+                        .into(),
+                );
+                checked("cargo", args, None)?;
+                ensure_owned_quipu_alias()
             }
         }
     }
@@ -427,6 +441,19 @@ impl Adapter for Quipu {
     }
 
     fn verify(&self) -> Result<()> {
+        let client = self
+            .external
+            .as_ref()
+            .map(|(c, _)| c.clone())
+            .map(Ok)
+            .unwrap_or_else(selected_quipu_client)?;
+        verify_quipu_alias(&client)?;
+        self.verify_core()
+    }
+}
+
+impl Quipu {
+    fn verify_core(&self) -> Result<()> {
         if self.flavor == QuipuFlavor::Lancedb {
             verify_quipu_lancedb_feature()?;
         }
@@ -500,7 +527,7 @@ pub(crate) fn verify_quipu_pair(client: &Path, server: &Path) -> Result<()> {
         flavor: QuipuFlavor::Release,
         external: Some((client.to_path_buf(), server.to_path_buf())),
     }
-    .verify()?;
+    .verify_core()?;
     let help = checked(server, ["--help"], None)?;
     let help = String::from_utf8_lossy(&help.stdout);
     if !help.contains("--db") || !help.contains("--bind") {
@@ -572,6 +599,65 @@ fn install_quipu_release() -> Result<()> {
         }
         fs::copy(&source, bin.join(program))
             .with_context(|| format!("install checksummed Quipu binary {program}"))?;
+    }
+    ensure_owned_quipu_alias()
+}
+
+fn owned_quipu_bin() -> Result<PathBuf> {
+    env::var_os("CARGO_HOME")
+        .map(PathBuf::from)
+        .or_else(|| env::var_os("HOME").map(|h| PathBuf::from(h).join(".cargo")))
+        .map(|root| root.join("bin"))
+        .context("HOME or CARGO_HOME is required for owned Quipu installation")
+}
+
+pub(crate) fn preflight_owned_quipu_alias() -> Result<()> {
+    quipu_alias::preflight(&owned_quipu_bin()?).map_err(anyhow::Error::msg)
+}
+
+pub(crate) fn ensure_owned_quipu_alias() -> Result<()> {
+    quipu_alias::ensure(&owned_quipu_bin()?).map_err(anyhow::Error::msg)
+}
+
+fn selected_quipu_client() -> Result<PathBuf> {
+    let owned = cargo_program("quipu");
+    if owned.is_file() {
+        return Ok(owned);
+    }
+    which_all("quipu", env::var_os("PATH").as_deref())
+        .into_iter()
+        .next()
+        .context("Quipu CLI is not on PATH")
+}
+
+pub(crate) fn ensure_existing_quipu_alias() -> Result<()> {
+    let client = selected_quipu_client()?;
+    let bin = client
+        .parent()
+        .context("selected Quipu CLI has no directory")?;
+    quipu_alias::ensure(bin).map_err(anyhow::Error::msg)
+}
+
+pub(crate) fn verify_existing_quipu_alias() -> Result<()> {
+    verify_quipu_alias(&selected_quipu_client()?)
+}
+
+fn verify_quipu_alias(client: &Path) -> Result<()> {
+    let bin = client.parent().context("Quipu CLI has no directory")?;
+    let alias = bin.join("qp");
+    if fs::read_link(&alias).ok().as_deref() != Some(Path::new("quipu")) {
+        bail!(
+            "Quipu verification requires relative qp -> quipu in {}",
+            bin.display()
+        );
+    }
+    if alias.canonicalize()? != client.canonicalize()? {
+        bail!("qp and quipu do not resolve to the same executable");
+    }
+    if read_version(alias.to_str().context("qp path is not UTF-8")?)?
+        != read_version(client.to_str().context("Quipu path is not UTF-8")?)?
+    {
+        bail!("qp and quipu version outputs disagree");
     }
     Ok(())
 }
