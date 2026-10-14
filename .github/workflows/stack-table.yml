@@ -5,6 +5,7 @@ on:
     paths:
       - README.md
       - docs/stack-table.md
+      - docs/stack/README-TEMPLATE.md
       - scripts/check-stack-table.py
       - scripts/test-stack-table.py
       - .github/workflows/stack-table.yml
@@ -12,6 +13,7 @@ on:
     paths:
       - README.md
       - docs/stack-table.md
+      - docs/stack/README-TEMPLATE.md
       - scripts/check-stack-table.py
       - scripts/test-stack-table.py
       - .github/workflows/stack-table.yml
@@ -31,7 +33,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python3 scripts/check-stack-table.py
+      - run: python3 scripts/check-stack-table.py README.md docs/stack/README-TEMPLATE.md
       - run: python3 scripts/test-stack-table.py
       - name: Compare published tables
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
