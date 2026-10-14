@@ -111,6 +111,8 @@ enum Commands {
         #[arg(long)]
         creel_admission: Option<PathBuf>,
     },
+    /// Verify one embedded release member in temporary roots without installing it
+    VerifyMember { member: String },
     /// Apply and verify a previously reviewed plan
     Install {
         #[arg(short, long, default_value = "caboodle-plan.toml")]
@@ -147,6 +149,15 @@ enum Commands {
         state: PathBuf,
         #[arg(long)]
         check: bool,
+        /// Select this exact published stable installer tag instead of latest.
+        #[arg(long)]
+        tag: Option<String>,
+        /// Bind the downloaded archive to pre-install release evidence.
+        #[arg(long, requires_all = ["tag", "binary_sha256"])]
+        archive_sha256: Option<String>,
+        /// Bind candidate bytes before executing or replacing the installer.
+        #[arg(long, requires_all = ["tag", "archive_sha256"])]
+        binary_sha256: Option<String>,
     },
     /// Maintainers: re-pin a stack member manifest to its published release,
     /// recording the digests the release publishes after hashing each asset
@@ -170,13 +181,26 @@ enum Commands {
         plan: PathBuf,
         #[arg(long, default_value = ".caboodle/state.json")]
         state: PathBuf,
-        /// bobbin, yupana or desire-path track the newest published release; a
-        /// stack member (members/*.toml) tracks its reviewed pin
+        /// bobbin, yupana or desire-path track the newest published release;
+        /// quipu and stack members track reviewed pins. Camayoc/Shantytown
+        /// refuse until checksummed publications exist
         #[arg(long, value_parser = update_release_tool)]
         tool: String,
         /// Inspect release/version metadata without downloading or replacing binaries
         #[arg(long)]
         check: bool,
+    },
+    /// Restore Seeds from the receipt of its last successful release update
+    #[cfg(unix)]
+    RollbackSeeds {
+        #[arg(long)]
+        plan: PathBuf,
+        #[arg(long)]
+        state: PathBuf,
+        #[arg(long)]
+        current_sha256: String,
+        #[arg(long)]
+        prior_sha256: String,
     },
     /// Register the rig crew through shantytown and its Quipu tooling manifest
     ProjectSettings {
@@ -301,7 +325,15 @@ impl From<ProfileArg> for Profile {
 /// `update-release --tool`: the release-tracked built-ins, or any embedded member.
 #[cfg(unix)]
 fn update_release_tool(value: &str) -> Result<String, String> {
-    if ["bobbin", "yupana", "desire-path"].contains(&value)
+    if [
+        "bobbin",
+        "yupana",
+        "desire-path",
+        "quipu",
+        "camayoc",
+        "shantytown",
+    ]
+    .contains(&value)
         || caboodle::members::get(value).is_some()
     {
         Ok(value.to_owned())
@@ -311,7 +343,7 @@ fn update_release_tool(value: &str) -> Result<String, String> {
             .map(|m| m.name.as_str())
             .collect();
         Err(format!(
-            "possible values: bobbin, yupana, desire-path, or a stack member ({})",
+            "possible values: bobbin, yupana, desire-path, quipu, camayoc, shantytown, or a stack member ({})",
             members.join(", ")
         ))
     }
@@ -421,6 +453,10 @@ fn main() -> Result<()> {
                 },
             )?;
         }
+        Commands::VerifyMember { member } => {
+            caboodle::adapter::verify_member(&member)?;
+            println!("{member}: reviewed release functional verification passed");
+        }
         Commands::Install {
             plan,
             state,
@@ -461,9 +497,24 @@ fn main() -> Result<()> {
             )?;
         }
         #[cfg(unix)]
-        Commands::UpdateSelf { state, check } => {
-            caboodle::release_update::update_self(&state, check)?;
-        }
+        Commands::UpdateSelf {
+            state,
+            check,
+            tag,
+            archive_sha256,
+            binary_sha256,
+        } => match (tag, archive_sha256, binary_sha256) {
+            (Some(tag), Some(archive), Some(binary)) => {
+                caboodle::release_update::update_self_pinned(
+                    &state, check, &tag, &archive, &binary,
+                )?
+            }
+            (Some(tag), None, None) => {
+                caboodle::release_update::update_self_at(&state, check, &tag)?
+            }
+            (None, None, None) => caboodle::release_update::update_self(&state, check)?,
+            _ => anyhow::bail!("installer artifact binding requires tag and both SHA256 values"),
+        },
         #[cfg(unix)]
         Commands::BumpMember {
             manifest,
@@ -496,8 +547,27 @@ fn main() -> Result<()> {
             tool,
             check,
         } => {
+            if tool == "shantytown" {
+                anyhow::bail!(
+                    "shantytown publishes a wheel without a checksum asset; release update refused"
+                );
+            }
             let tool = serde_json::from_value(serde_json::Value::String(tool))?;
             caboodle::release_update::update(&Plan::read(&plan)?, tool, &state, check)?;
+        }
+        #[cfg(unix)]
+        Commands::RollbackSeeds {
+            plan,
+            state,
+            current_sha256,
+            prior_sha256,
+        } => {
+            caboodle::release_update::rollback_seeds(
+                &Plan::read(&plan)?,
+                &state,
+                &current_sha256,
+                &prior_sha256,
+            )?;
         }
         Commands::ProjectSettings {
             plan,

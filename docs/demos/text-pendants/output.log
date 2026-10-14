@@ -1,0 +1,12 @@
+Script started on 2026-10-14 02:48:28-04:00 [COMMAND="python3 scripts/probe-text-pendants.py" <not executed on terminal>]
+BASE 8cec4fd3e07c1b3da98563879c1ecbb6a6ecdff5
+stack-map SQLite payload bytes 221184 facts 54
+stack-operations SQLite payload bytes 221184 facts 37
+CANDIDATE text directories
+stack-map members 4 triples 54 graph_hash sha256:1313fb139aa9e473e7eccce0a89384fbd353f151e5442d11c26f5dabe416f736
+legacy directory aliases True
+stack-operations members 4 triples 37 graph_hash sha256:33e81d931820da7227d04182072e04d51da1e770f9199b66a058d68cc147d44c
+legacy directory aliases True
+LIMIT: source format/graph counts only; native admission, promotion and deployment are separate.
+
+Script done on 2026-10-14 02:48:28-04:00 [COMMAND_EXIT_CODE="0"]

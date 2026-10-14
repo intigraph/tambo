@@ -1,0 +1,17 @@
+Script started on 2026-10-11 12:15:29-04:00 [COMMAND="bash docs/demos/seeds-023/run.sh" <not executed on terminal>]
+BEFORE: reviewed base 5ca4a12 member manifest
+Seeds pin: 0.2.2
+Targets: 4
+aarch64-apple-darwin eebef1c77403ef96a1de8e3864ccc3c460cec62df7b8b59be5de6f502731a899
+aarch64-unknown-linux-gnu 2a520c002bf56da6c340f0a239108973072c5117a9813c2cb8d55da840c02f40
+x86_64-apple-darwin 723fa5ca984589b3aef9adfea3c55ecd616a01ce02c23ae42ea84e72dba83603
+x86_64-unknown-linux-gnu 8c1884a70897659292b585a3f7f367734d01077a18f874fa1914b477cc2f7403
+AFTER: candidate member manifest
+Seeds pin: 0.2.3
+Targets: 4
+aarch64-apple-darwin 1786783fd22a955efcee34fc5474f184408336084d2a99c0f45400ccbca26bef
+aarch64-unknown-linux-gnu aff1a74305b279d6fc6226d6c99fa3408d644d5ba505fc841e451a924ea798df
+x86_64-apple-darwin 9d34f4b5c871b0091452c95b0956dabbe7fca7200508d1eaa684cce237605eeb
+x86_64-unknown-linux-gnu 03dc23bdb4e919294bd17b4a85cc734838690459ce8c441e32b88a52d2d7ba57
+
+Script done on 2026-10-11 12:15:29-04:00 [COMMAND_EXIT_CODE="0"]

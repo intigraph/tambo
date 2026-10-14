@@ -145,6 +145,12 @@ fi
 exit 2
 "#,
     );
+    // Valid installed Quipu fixtures carry both supported command names.
+    if fs::symlink_metadata(bin.join("qp")).is_ok() {
+        assert_eq!(fs::read_link(bin.join("qp")).unwrap(), Path::new("quipu"));
+    } else {
+        std::os::unix::fs::symlink("quipu", bin.join("qp")).unwrap();
+    }
     fake_tool(
         bin,
         "quipu-server",
@@ -680,6 +686,30 @@ fn check_updates_is_green_when_reviewed_versions_run_and_red_on_drift() {
         .failure()
         .stdout(predicate::str::contains("bobbin: update available"))
         .stderr(predicate::str::contains("pending reviewed updates"));
+}
+
+#[test]
+fn check_updates_reports_ahead_without_proposing_an_update_or_touching_the_tool() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    command(root.path(), &bin)
+        .args(["plan", "--profile", "retrieval"])
+        .assert()
+        .success();
+    fake_tool(&bin, "bobbin", "echo 'bobbin 0.99.0'");
+    let before = fs::read(bin.join("bobbin")).unwrap();
+    command(root.path(), &bin)
+        .arg("check-updates")
+        .assert()
+        .failure()
+        .stdout(predicate::str::contains(
+            "bobbin: ahead of reviewed pin; downgrade refused",
+        ))
+        .stdout(predicate::str::contains("bobbin: update available").not());
+    assert_eq!(fs::read(bin.join("bobbin")).unwrap(), before);
+    assert!(!root.path().join(".caboodle/state.json").exists());
 }
 
 #[test]
@@ -1927,17 +1957,86 @@ fn published_release_missing_assets_and_ambiguous_identity_never_install() {
 
 #[test]
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+fn local_source_builds_refuse_equal_releases_but_accept_newer_ones() {
+    for (base, suffix, check) in [
+        ("0.25.3", "abcdef012345", false),
+        ("0.25.3", "abcdef012345.dirty", true),
+        ("0.25.2", "abcdef012345", false),
+        ("0.25.2", "abcdef012345.dirty", false),
+    ] {
+        let root = tempfile::tempdir().unwrap();
+        let bin = root.path().join("bin");
+        fs::create_dir(&bin).unwrap();
+        release_fixture(root.path(), &bin, false, false);
+        let script = fs::read_to_string(bin.join("bobbin")).unwrap();
+        fs::write(
+            bin.join("bobbin"),
+            script.replace("0.25.2", &format!("{base}+local.{suffix}")),
+        )
+        .unwrap();
+        let before = fs::read(bin.join("bobbin")).unwrap();
+        let mut cmd = command(root.path(), &bin);
+        cmd.args(["update-release", "--tool", "bobbin"]);
+        if check {
+            cmd.arg("--check");
+        }
+        if base == "0.25.3" {
+            cmd.assert()
+                .failure()
+                .stderr(predicate::str::contains("local source build installed"));
+            assert_eq!(fs::read(bin.join("bobbin")).unwrap(), before);
+            assert!(!root.path().join(".caboodle/state.json").exists());
+        } else {
+            cmd.assert().success();
+            assert_ne!(fs::read(bin.join("bobbin")).unwrap(), before);
+        }
+    }
+}
+
+#[test]
+#[cfg(any(
+    all(target_os = "linux", target_arch = "x86_64"),
+    all(
+        target_os = "macos",
+        any(target_arch = "x86_64", target_arch = "aarch64")
+    )
+))]
 fn published_release_can_update_the_installer_itself() {
+    self_update_fixture(false, None, None);
+    self_update_fixture(true, None, None);
+    self_update_fixture(false, Some("v0.2.1"), None);
+    self_update_fixture(true, Some("v0.2.1"), None);
+    self_update_fixture(false, Some("v0.2.2"), None);
+    self_update_fixture(false, Some("v0.2.1"), Some("verified"));
+    self_update_fixture(false, Some("v0.2.1"), Some("archive-mismatch"));
+    self_update_fixture(false, Some("v0.2.1"), Some("binary-mismatch"));
+}
+
+#[cfg(any(
+    all(target_os = "linux", target_arch = "x86_64"),
+    all(
+        target_os = "macos",
+        any(target_arch = "x86_64", target_arch = "aarch64")
+    )
+))]
+fn self_update_fixture(bad_checksum: bool, requested_tag: Option<&str>, binding: Option<&str>) {
     let root = tempfile::tempdir().unwrap();
     let bin = root.path().join("bin");
     fs::create_dir(&bin).unwrap();
-    release_fixture(root.path(), &bin, false, false);
+    install_fakes(root.path(), &bin);
     fake_tool(&bin, "caboodle", "echo 'caboodle 0.2.0'");
+    let before = fs::read(bin.join("caboodle")).unwrap();
     let stage = root.path().join("self-stage");
     fs::create_dir(&stage).unwrap();
-    fake_tool(&stage, "caboodle", "if [ \"$1\" = --version ]; then echo 'caboodle 0.2.1'; else echo '--tool bobbin yupana desire-path'; fi");
-    let name = "caboodle-v0.2.1-x86_64-unknown-linux-gnu.tar.gz";
-    let archive = root.path().join(name);
+    fake_tool(&stage, "caboodle", "touch \"$HOME/candidate-executed\"; if [ \"$1\" = --version ]; then echo 'caboodle 0.2.1'; else echo '--tool bobbin yupana desire-path'; fi");
+    let triple = match (std::env::consts::OS, std::env::consts::ARCH) {
+        ("linux", "x86_64") => "x86_64-unknown-linux-gnu",
+        ("macos", "x86_64") => "x86_64-apple-darwin",
+        ("macos", "aarch64") => "aarch64-apple-darwin",
+        _ => unreachable!(),
+    };
+    let name = format!("caboodle-v0.2.1-{triple}.tar.gz");
+    let archive = root.path().join(&name);
     assert!(std::process::Command::new("tar")
         .arg("-czf")
         .arg(&archive)
@@ -1948,7 +2047,11 @@ fn published_release_can_update_the_installer_itself() {
         .unwrap()
         .success());
     use sha2::{Digest, Sha256};
-    let digest = format!("{:x}", Sha256::digest(fs::read(&archive).unwrap()));
+    let digest = if bad_checksum {
+        "0".repeat(64)
+    } else {
+        format!("{:x}", Sha256::digest(fs::read(&archive).unwrap()))
+    };
     fs::write(
         root.path().join(format!("{name}.sha256")),
         format!("{digest}  {name}\n"),
@@ -1964,19 +2067,119 @@ while [ "$#" -gt 0 ]; do
  case "$1" in --output|-o) shift; output=$1 ;; https://*) url=$1 ;; esac
  shift
 done
-case "$url" in */releases/latest) cat "$HOME/latest.json" ;; *) cp "$HOME/${url##*/}" "$output" ;; esac
+printf '%s\n' "$url" >> "$HOME/release-requests.log"
+case "$url" in */releases/latest|*/releases/tags/*) cat "$HOME/latest.json" ;; *) cp "$HOME/${url##*/}" "$output" ;; esac
 "#,
     );
-    command(root.path(), &bin)
-        .arg("update-self")
-        .assert()
-        .success()
-        .stdout(predicate::str::contains(
-            "caboodle: installed and verified v0.2.1",
+    let mut updater = command(root.path(), &bin);
+    updater.arg("update-self");
+    if let Some(tag) = requested_tag {
+        updater.args(["--tag", tag]);
+    }
+    if let Some(binding) = binding {
+        let archive_hash = if binding == "archive-mismatch" {
+            "0".repeat(64)
+        } else {
+            format!("{:x}", Sha256::digest(fs::read(&archive).unwrap()))
+        };
+        let binary_hash = if binding == "binary-mismatch" {
+            "0".repeat(64)
+        } else {
+            format!(
+                "{:x}",
+                Sha256::digest(fs::read(stage.join("caboodle")).unwrap())
+            )
+        };
+        updater.args([
+            "--archive-sha256",
+            &archive_hash,
+            "--binary-sha256",
+            &binary_hash,
+        ]);
+        if binding != "verified" {
+            let expected = if binding == "archive-mismatch" {
+                "release archive differs from pre-install artifact evidence"
+            } else {
+                "installer candidate differs from pre-install artifact evidence"
+            };
+            updater
+                .assert()
+                .failure()
+                .stderr(predicate::str::contains(expected));
+            assert_eq!(fs::read(bin.join("caboodle")).unwrap(), before);
+            assert!(!root.path().join(".caboodle/state.json").exists());
+            assert!(!root.path().join(".caboodle/release-backups").exists());
+            assert!(!root.path().join("candidate-executed").exists());
+            return;
+        }
+    }
+    if requested_tag == Some("v0.2.2") {
+        updater.assert().failure().stderr(predicate::str::contains(
+            "published metadata tag differs from requested installer release",
         ));
+        assert_eq!(fs::read(bin.join("caboodle")).unwrap(), before);
+        assert!(!root.path().join(".caboodle/state.json").exists());
+        assert!(!root.path().join(".caboodle/release-backups").exists());
+        return;
+    }
+    if bad_checksum {
+        updater
+            .assert()
+            .failure()
+            .stderr(predicate::str::contains("SHA256 mismatch"));
+        assert_eq!(fs::read(bin.join("caboodle")).unwrap(), before);
+        assert!(!root.path().join(".caboodle/state.json").exists());
+        return;
+    }
+    updater.assert().success().stdout(predicate::str::contains(
+        "caboodle: installed and verified v0.2.1",
+    ));
+    if requested_tag.is_some() {
+        let requests = fs::read_to_string(root.path().join("release-requests.log")).unwrap();
+        assert!(requests.contains("/releases/tags/v0.2.1"));
+        assert!(!requests.contains("/releases/latest"));
+    }
     assert!(fs::read_to_string(root.path().join(".caboodle/state.json"))
         .unwrap()
         .contains("caboodle 0.2.1"));
+    let backup = fs::read_dir(root.path().join(".caboodle/release-backups/caboodle"))
+        .unwrap()
+        .next()
+        .unwrap()
+        .unwrap()
+        .path();
+    assert_eq!(fs::read(backup).unwrap(), before);
+    assert!(root.path().join("candidate-executed").exists());
+}
+
+#[test]
+#[cfg(unix)]
+fn installer_artifact_binding_requires_exact_tag_and_both_valid_hashes() {
+    let root = tempfile::tempdir().unwrap();
+    for arguments in [
+        vec!["--archive-sha256", "invalid"],
+        vec!["--tag", "v0.2.1", "--binary-sha256", "invalid"],
+        vec![
+            "--tag",
+            "v0.2.1",
+            "--archive-sha256",
+            "invalid",
+            "--binary-sha256",
+            "invalid",
+        ],
+    ] {
+        Command::cargo_bin("caboodle")
+            .unwrap()
+            .current_dir(root.path())
+            .env_clear()
+            .env("HOME", root.path())
+            .env("PATH", root.path())
+            .arg("update-self")
+            .args(arguments)
+            .assert()
+            .failure();
+        assert_eq!(fs::read_dir(root.path()).unwrap().count(), 0);
+    }
 }
 
 #[test]
@@ -3032,6 +3235,27 @@ fn live_credential_failure_invalidates_prior_verification_without_echoing_tokens
 }
 
 #[test]
+fn missing_publication_contracts_refuse_without_network() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    for (tool, reason) in [
+        ("camayoc", "no published checksummed release"),
+        ("shantytown", "wheel without a checksum asset"),
+    ] {
+        command(root.path(), &bin)
+            .args(["plan", "--profile", "kg"])
+            .assert()
+            .success();
+        command(root.path(), &bin)
+            .args(["update-release", "--tool", tool])
+            .assert()
+            .failure()
+            .stderr(predicate::str::contains(reason));
+    }
+}
+
+#[test]
 fn issued_credential_provisioning_proves_acceptance_and_refuses_rotation() {
     let root = tempfile::tempdir().unwrap();
     let bin = root.path().join("bin");
@@ -3122,4 +3346,110 @@ fn credential_diagnostic_names_an_environment_override_without_echoing_it() {
         .stdout(predicate::str::contains(
             "source: default ~/.config/quipu/token",
         ));
+}
+
+#[test]
+fn quipu_release_check_selects_reviewed_pair_without_download_or_swap() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("cargo-home/bin");
+    fs::create_dir_all(&bin).unwrap();
+    for binary in ["quipu", "quipu-server"] {
+        fake_tool(
+            &bin,
+            binary,
+            &format!("test \"$1\" = --version; echo '{binary} 0.11.1'"),
+        );
+    }
+    let target = if cfg!(all(target_os = "macos", target_arch = "aarch64")) {
+        "aarch64-apple-darwin"
+    } else if cfg!(all(target_os = "macos", target_arch = "x86_64")) {
+        "x86_64-apple-darwin"
+    } else if cfg!(all(target_os = "linux", target_arch = "aarch64")) {
+        "aarch64-unknown-linux-gnu"
+    } else {
+        "x86_64-unknown-linux-gnu"
+    };
+    let archive = format!("quipu-quipu-ai-v0.12.0-{target}.tar.gz");
+    fs::write(root.path().join("metadata"),serde_json::json!({"tag_name":"quipu-ai-v0.12.0","draft":false,"prerelease":false,"assets":[{"name":archive},{"name":format!("{archive}.sha256") }]}).to_string()).unwrap();
+    fake_tool(
+        &bin,
+        "curl",
+        r#"
+for arg do
+  case "$arg" in https://api.github.com/repos/scbrown/quipu/releases/tags/quipu-ai-v0.12.0) cat "$HOME/metadata"; exit 0;; esac
+done
+echo 'unexpected download/network in check-only' >&2; exit 99
+"#,
+    );
+    command(root.path(), &bin)
+        .args(["plan", "--profile", "kg"])
+        .assert()
+        .success();
+    let before = fs::read(bin.join("quipu")).unwrap();
+    command(root.path(), &bin)
+        .args(["update-release", "--tool", "quipu", "--check"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(
+            "checksum/functional proof not run",
+        ));
+    assert_eq!(fs::read(bin.join("quipu")).unwrap(), before);
+    assert!(!root.path().join(".caboodle/release-backups").exists());
+    assert!(!root.path().join(".caboodle/state.json").exists());
+}
+
+#[test]
+fn current_quipu_update_repairs_alias_without_replacing_binaries() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    fs::remove_file(bin.join("qp")).unwrap();
+    let client = fs::read(bin.join("quipu")).unwrap();
+    let server = fs::read(bin.join("quipu-server")).unwrap();
+    command(root.path(), &bin)
+        .args(["plan", "--profile", "kg"])
+        .assert()
+        .success();
+    for _ in 0..2 {
+        command(root.path(), &bin)
+            .arg("update")
+            .assert()
+            .success()
+            .stdout(predicate::str::contains("quipu: current"));
+        assert_eq!(fs::read_link(bin.join("qp")).unwrap(), Path::new("quipu"));
+        use std::os::unix::fs::MetadataExt;
+        assert_eq!(
+            fs::metadata(bin.join("qp")).unwrap().ino(),
+            fs::metadata(bin.join("quipu")).unwrap().ino()
+        );
+        assert_eq!(fs::read(bin.join("quipu")).unwrap(), client);
+        assert_eq!(fs::read(bin.join("quipu-server")).unwrap(), server);
+    }
+}
+
+#[test]
+fn skip_install_refuses_missing_alias_and_preserves_foreign_alias() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    command(root.path(), &bin)
+        .args(["plan", "--profile", "kg"])
+        .assert()
+        .success();
+    fs::remove_file(bin.join("qp")).unwrap();
+    command(root.path(), &bin)
+        .args(["install", "--skip-install"])
+        .assert()
+        .failure();
+    assert!(fs::symlink_metadata(bin.join("qp")).is_err());
+    fake_tool(&bin, "qp", "echo foreign-qp");
+    let foreign = fs::read(bin.join("qp")).unwrap();
+    command(root.path(), &bin)
+        .arg("update")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("qp collision"));
+    assert_eq!(fs::read(bin.join("qp")).unwrap(), foreign);
 }

@@ -1,0 +1,4 @@
+{"version": 2, "width": 100, "height": 24, "timestamp": 1791683195, "env": {"TERM": "xterm-256color"}}
+[0.099, "o", "$ Existing CLI: caboodle verify-member --help\nerror: unrecognized subcommand 'verify-member'\n\n  tip: some similar subcommands exist: 'verify-questions', 'verify'\n\nUsage: caboodle <COMMAND>\n\nFor more information, try '--help'.\nexit=2\n"]
+[0.1, "o", "$ Candidate CLI: caboodle verify-member --help\nVerify one embedded release member in temporary roots without installing it\n\nUsage: caboodle verify-member <MEMBER>\n\nArguments:\n  <MEMBER>  \n\nOptions:\n  -h, --help  Print help\nexit=0\n"]
+[0.501, "o", "$ Unknown member refusal: caboodle verify-member unknown-member\nError: unknown reviewed member\nexit=1\n"]

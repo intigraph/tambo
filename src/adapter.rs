@@ -13,6 +13,7 @@ use serde_json::{json, Value};
 use crate::model::{QuipuFlavor, ToolName};
 
 mod manifest;
+mod quipu_alias;
 pub(crate) use manifest::{
     find_program, identify_member, prove_release, release_target, single_program, stage, verify_at,
 };
@@ -79,7 +80,7 @@ pub fn source_install_command(name: ToolName) -> Option<String> {
 /// Executables a tool puts on PATH, in the order a shell would look them up.
 pub fn programs(name: ToolName) -> &'static [&'static str] {
     match name {
-        ToolName::Quipu => &["quipu", "quipu-server"],
+        ToolName::Quipu => &["qp", "quipu", "quipu-server"],
         ToolName::Camayoc => &[],
         ToolName::Bobbin => &["bobbin"],
         ToolName::Yupana => &["yupana"],
@@ -197,6 +198,7 @@ pub fn adapter(name: ToolName, quipu_flavor: QuipuFlavor) -> Box<dyn Adapter> {
     match name {
         ToolName::Quipu => Box::new(Quipu {
             flavor: quipu_flavor,
+            external: None,
         }),
         ToolName::Camayoc => Box::new(Camayoc),
         ToolName::Bobbin => Box::new(Bobbin),
@@ -207,6 +209,26 @@ pub fn adapter(name: ToolName, quipu_flavor: QuipuFlavor) -> Box<dyn Adapter> {
                 .expect("a Member name is only minted for an embedded manifest"),
         )),
     }
+}
+
+/// Resolve external binaries once so identity and round trips use the same files.
+pub fn adapter_for_plan(name: ToolName, plan: &crate::model::Plan) -> Result<Box<dyn Adapter>> {
+    if name != ToolName::Quipu || !plan.external_quipu {
+        return Ok(adapter(name, plan.quipu_flavor));
+    }
+    let path = env::var_os("PATH");
+    let resolve = |name| -> Result<PathBuf> {
+        which_all(name, path.as_deref())
+            .into_iter()
+            .next()
+            .with_context(|| format!("external Quipu requires {name} on PATH"))?
+            .canonicalize()
+            .with_context(|| format!("resolve external {name}"))
+    };
+    Ok(Box::new(Quipu {
+        flavor: plan.quipu_flavor,
+        external: Some((resolve("quipu")?, resolve("quipu-server")?)),
+    }))
 }
 
 fn output<P, I, S>(program: P, args: I, cwd: Option<&Path>) -> Result<Output>
@@ -318,6 +340,7 @@ fn require_minimum_version(output: &str, minimum: (u64, u64, u64), program: &str
 
 struct Quipu {
     flavor: QuipuFlavor,
+    external: Option<(PathBuf, PathBuf)>,
 }
 
 const QUIPU_VERSION: &str = "0.9.0";
@@ -355,14 +378,30 @@ impl Adapter for Quipu {
     }
 
     fn install(&self) -> Result<()> {
+        if self.external.is_some() {
+            bail!("external Quipu is not owned by Caboodle; installation refused");
+        }
+        preflight_owned_quipu_alias()?;
         match self.flavor {
             QuipuFlavor::Release => install_quipu_release(),
             // The published archive is the reviewed `full` build. LanceDB is
             // an explicit non-default flavor and still needs a source build
             // until Quipu publishes a separately identifiable artifact.
             QuipuFlavor::Lancedb => {
-                checked("cargo", quipu_install_args(self.flavor), None)?;
-                Ok(())
+                let mut args: Vec<OsString> = quipu_install_args(self.flavor)
+                    .iter()
+                    .map(OsString::from)
+                    .collect();
+                args.push("--root".into());
+                args.push(
+                    owned_quipu_bin()?
+                        .parent()
+                        .context("cargo bin has no root")?
+                        .as_os_str()
+                        .into(),
+                );
+                checked("cargo", args, None)?;
+                ensure_owned_quipu_alias()
             }
         }
     }
@@ -371,17 +410,58 @@ impl Adapter for Quipu {
         // `cargo install` writes these binaries under CARGO_HOME, which may be
         // later on PATH than a legacy Quipu install. Read back the location we
         // actually update so a successful install cannot be reported as stale.
-        let client = read_cargo_version("quipu")?;
+        let client = if let Some((client, _)) = &self.external {
+            read_version(
+                client
+                    .to_str()
+                    .context("external Quipu path is not UTF-8")?,
+            )?
+        } else {
+            read_cargo_version("quipu")?
+        };
         require_minimum_version(&client, (0, 3, 27), "quipu")?;
-        let server = read_cargo_version("quipu-server")?;
+        let server = if let Some((_, server)) = &self.external {
+            read_version(
+                server
+                    .to_str()
+                    .context("external server path is not UTF-8")?,
+            )?
+        } else {
+            read_cargo_version("quipu-server")?
+        };
         require_minimum_version(&server, (0, 3, 27), "quipu-server")?;
-        Ok(format!("{client}; {server}"))
+        Ok(match &self.external {
+            Some((c, s)) => format!(
+                "{client}; {server}; external executables: {} | {}",
+                c.display(),
+                s.display()
+            ),
+            None => format!("{client}; {server}"),
+        })
     }
 
     fn verify(&self) -> Result<()> {
+        let client = self
+            .external
+            .as_ref()
+            .map(|(c, _)| c.clone())
+            .map(Ok)
+            .unwrap_or_else(selected_quipu_client)?;
+        verify_quipu_alias(&client)?;
+        self.verify_core()
+    }
+}
+
+impl Quipu {
+    fn verify_core(&self) -> Result<()> {
         if self.flavor == QuipuFlavor::Lancedb {
             verify_quipu_lancedb_feature()?;
         }
+        let client = self
+            .external
+            .as_ref()
+            .map(|(client, _)| client.as_path())
+            .unwrap_or_else(|| Path::new("quipu"));
         let root = tempfile::tempdir().context("create quipu verification directory")?;
         let db = root.path().join("verify.db");
         let episode = root.path().join("episode.json");
@@ -398,7 +478,7 @@ impl Adapter for Quipu {
             "SELECT ?s ?label WHERE {{ ?s <http://www.w3.org/2000/01/rdf-schema#label> ?label . FILTER(?label = \"{marker}\") }}"
         );
         let before = checked(
-            "quipu",
+            client,
             [
                 OsStr::new("read"),
                 OsStr::new(&query),
@@ -412,7 +492,7 @@ impl Adapter for Quipu {
         }
 
         checked(
-            "quipu",
+            client,
             [
                 OsStr::new("episode"),
                 episode.as_os_str(),
@@ -422,7 +502,7 @@ impl Adapter for Quipu {
             None,
         )?;
         let after = checked(
-            "quipu",
+            client,
             [
                 OsStr::new("read"),
                 OsStr::new(&query),
@@ -436,12 +516,27 @@ impl Adapter for Quipu {
         }
         // The stack's shared vocabulary rides with Quipu: the pinned Quechua
         // release must load and resolve a term, with an absent-term control.
-        crate::vocabulary::verify().context("Quechua vocabulary verification")?;
+        crate::vocabulary::verify_at(client).context("Quechua vocabulary verification")?;
         Ok(())
     }
 }
 
-fn quipu_release_target() -> Result<&'static str> {
+/// Prove exactly the selected pair, using a throwaway client store, never a live server.
+pub(crate) fn verify_quipu_pair(client: &Path, server: &Path) -> Result<()> {
+    Quipu {
+        flavor: QuipuFlavor::Release,
+        external: Some((client.to_path_buf(), server.to_path_buf())),
+    }
+    .verify_core()?;
+    let help = checked(server, ["--help"], None)?;
+    let help = String::from_utf8_lossy(&help.stdout);
+    if !help.contains("--db") || !help.contains("--bind") {
+        bail!("Quipu server omitted isolated database/bind command contract");
+    }
+    Ok(())
+}
+
+pub(crate) fn quipu_release_target() -> Result<&'static str> {
     quipu_release_target_for(env::consts::ARCH, env::consts::OS)
 }
 
@@ -504,6 +599,65 @@ fn install_quipu_release() -> Result<()> {
         }
         fs::copy(&source, bin.join(program))
             .with_context(|| format!("install checksummed Quipu binary {program}"))?;
+    }
+    ensure_owned_quipu_alias()
+}
+
+fn owned_quipu_bin() -> Result<PathBuf> {
+    env::var_os("CARGO_HOME")
+        .map(PathBuf::from)
+        .or_else(|| env::var_os("HOME").map(|h| PathBuf::from(h).join(".cargo")))
+        .map(|root| root.join("bin"))
+        .context("HOME or CARGO_HOME is required for owned Quipu installation")
+}
+
+pub(crate) fn preflight_owned_quipu_alias() -> Result<()> {
+    quipu_alias::preflight(&owned_quipu_bin()?).map_err(anyhow::Error::msg)
+}
+
+pub(crate) fn ensure_owned_quipu_alias() -> Result<()> {
+    quipu_alias::ensure(&owned_quipu_bin()?).map_err(anyhow::Error::msg)
+}
+
+fn selected_quipu_client() -> Result<PathBuf> {
+    let owned = cargo_program("quipu");
+    if owned.is_file() {
+        return Ok(owned);
+    }
+    which_all("quipu", env::var_os("PATH").as_deref())
+        .into_iter()
+        .next()
+        .context("Quipu CLI is not on PATH")
+}
+
+pub(crate) fn ensure_existing_quipu_alias() -> Result<()> {
+    let client = selected_quipu_client()?;
+    let bin = client
+        .parent()
+        .context("selected Quipu CLI has no directory")?;
+    quipu_alias::ensure(bin).map_err(anyhow::Error::msg)
+}
+
+pub(crate) fn verify_existing_quipu_alias() -> Result<()> {
+    verify_quipu_alias(&selected_quipu_client()?)
+}
+
+fn verify_quipu_alias(client: &Path) -> Result<()> {
+    let bin = client.parent().context("Quipu CLI has no directory")?;
+    let alias = bin.join("qp");
+    if fs::read_link(&alias).ok().as_deref() != Some(Path::new("quipu")) {
+        bail!(
+            "Quipu verification requires relative qp -> quipu in {}",
+            bin.display()
+        );
+    }
+    if alias.canonicalize()? != client.canonicalize()? {
+        bail!("qp and quipu do not resolve to the same executable");
+    }
+    if read_version(alias.to_str().context("qp path is not UTF-8")?)?
+        != read_version(client.to_str().context("Quipu path is not UTF-8")?)?
+    {
+        bail!("qp and quipu version outputs disagree");
     }
     Ok(())
 }
@@ -1676,4 +1830,10 @@ mod auth_config_tests {
         assert!(curl_auth_header_line("tok\nurl = \"http://elsewhere\"").is_err());
         assert!(curl_auth_header_line("tok\r").is_err());
     }
+}
+
+/// Verify one embedded release member without installing it.
+pub fn verify_member(name: &str) -> Result<()> {
+    let member = crate::members::get(name).context("unknown reviewed member")?;
+    manifest::verify_release_member(member)
 }

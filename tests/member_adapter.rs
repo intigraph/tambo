@@ -74,6 +74,13 @@ printf 200"#,
         demo.version().is_err(),
         "control: not installed before install"
     );
+    caboodle::adapter::verify_member("fixture-demo").expect("verify without installing");
+    assert!(
+        !installed.exists(),
+        "standalone verification installed a managed program"
+    );
+    assert!(caboodle::adapter::verify_member("unknown-member").is_err());
+    fs::remove_file(&log).unwrap();
     demo.install().expect("install from the fake release");
     assert!(installed.is_file());
     assert_eq!(
@@ -110,6 +117,9 @@ printf 200"#,
     bytes.push(0);
     fs::write(&tampered, bytes).unwrap();
     env::set_var("FAKE_RELEASE", &tampered);
+    assert!(
+        err(caboodle::adapter::verify_member("fixture-demo")).contains("release checksum mismatch")
+    );
     assert!(err(demo.install()).contains("release checksum mismatch"));
     assert!(!installed.exists());
     env::set_var("FAKE_RELEASE", &release);

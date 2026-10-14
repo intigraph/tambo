@@ -29,7 +29,7 @@ walks through the same workflow.**
 - Review one plan, then resume installation if it is interrupted.
 - Know each tool passed a functional check before you rely on it.
 
-[Why Caboodle, and how it compares to installing by hand](https://scbrown.github.io/caboodle/introduction.html#why-use-it).
+[What the quipu stack is, and three ways to start](https://scbrown.github.io/caboodle/introduction.html).
 
 ## Install
 

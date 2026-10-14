@@ -1,6 +1,10 @@
 //! Opt-in published-release delivery for binary tools selected by a reviewed plan.
 //! Source-managed services and source bundles retain their own update contracts.
+mod durable;
+mod quipu;
+mod rollback;
 mod transaction;
+pub use rollback::rollback_seeds;
 
 use std::{
     env, fs,
@@ -46,12 +50,20 @@ pub(crate) fn stable_version(raw: &str) -> Result<(u64, u64, u64)> {
 }
 
 fn installed_version(output: &str) -> Result<(u64, u64, u64)> {
-    stable_version(
-        output
-            .split_whitespace()
-            .nth(1)
-            .context("binary omitted version")?,
-    )
+    let raw = output
+        .split_whitespace()
+        .nth(1)
+        .context("binary omitted version")?;
+    let base = if let Some((base, identity)) = raw.split_once("+local.") {
+        let sha = identity.strip_suffix(".dirty").unwrap_or(identity);
+        if sha.len() != 12 || !sha.bytes().all(|b| b.is_ascii_hexdigit()) {
+            bail!("invalid local source build identity: {raw}");
+        }
+        base
+    } else {
+        raw
+    };
+    stable_version(base)
 }
 
 /// Is `installed` strictly OLDER than `reviewed`? `None` when either string
@@ -71,7 +83,32 @@ fn names(
     tool: Option<ToolName>,
     tag: &str,
 ) -> Result<(&'static str, &'static str, String, String)> {
-    if env::consts::OS != "linux" || env::consts::ARCH != "x86_64" {
+    names_for_platform(tool, tag, env::consts::OS, env::consts::ARCH)
+}
+
+fn names_for_platform(
+    tool: Option<ToolName>,
+    tag: &str,
+    os: &str,
+    arch: &str,
+) -> Result<(&'static str, &'static str, String, String)> {
+    stable_version(tag)?;
+    if tool.is_none() {
+        let target = match (os, arch) {
+            ("linux", "x86_64") => "x86_64-unknown-linux-gnu",
+            ("macos", "x86_64") => "x86_64-apple-darwin",
+            ("macos", "aarch64") => "aarch64-apple-darwin",
+            _ => bail!("Caboodle self-update has no published target for {os}/{arch}"),
+        };
+        let archive = format!("caboodle-{tag}-{target}.tar.gz");
+        return Ok((
+            "caboodle",
+            "caboodle",
+            archive.clone(),
+            format!("{archive}.sha256"),
+        ));
+    }
+    if os != "linux" || arch != "x86_64" {
         bail!("release-update currently supports Linux x86_64 only");
     }
     stable_version(tag)?;
@@ -152,15 +189,17 @@ pub(crate) fn checksum(body: &str, archive: &str) -> Result<String> {
 
 fn atomic_copy(source: &Path, target: &Path) -> Result<()> {
     let parent = target.parent().context("destination has no parent")?;
-    fs::create_dir_all(parent)?;
+    durable::create_dirs(parent)?;
     let temporary = tempfile::NamedTempFile::new_in(parent)?;
     fs::copy(source, temporary.path())?;
     temporary.as_file().sync_all()?;
+    durable::checkpoint("copy-file-synced", target)?;
     if hash(source)? != hash(temporary.path())? {
         bail!("staged copy checksum differs");
     }
     temporary.persist(target).map_err(|e| e.error)?;
-    Ok(())
+    durable::checkpoint("copy-renamed", target)?;
+    durable::sync_dir(parent)
 }
 
 fn selected_path(binary: &str) -> Result<PathBuf> {
@@ -175,10 +214,27 @@ fn selected_path(binary: &str) -> Result<PathBuf> {
 }
 
 fn held() -> bool {
-    env::var_os("CABOODLE_HOLD_FILE")
+    let path = env::var_os("CABOODLE_HOLD_FILE")
         .map(PathBuf::from)
-        .or_else(|| env::var_os("HOME").map(|h| PathBuf::from(h).join(".caboodle/hold")))
-        .is_some_and(|p| p.exists())
+        .or_else(|| {
+            env::var_os("HOME")
+                .filter(|home| !home.is_empty())
+                .map(|home| PathBuf::from(home).join(".caboodle/hold"))
+        });
+    hold_entry_blocks(path.as_deref())
+}
+
+/// A hold is a directory entry, even if its symlink target is absent.
+/// Unknown paths or metadata errors cannot establish that the hold is absent.
+fn hold_entry_blocks(path: Option<&Path>) -> bool {
+    let Some(path) = path.filter(|path| !path.as_os_str().is_empty()) else {
+        return true;
+    };
+    match fs::symlink_metadata(path) {
+        Ok(_) => true,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => false,
+        Err(_) => true,
+    }
 }
 
 /// Guard the older reviewed-pin updater after a release-tracking install.
@@ -210,18 +266,33 @@ pub fn guard_reviewed_update(tool: ToolName, desired: &str) -> Result<()> {
 /// Update one selected binary, preserving every other adapter's state and gate.
 pub fn update(plan: &Plan, tool: ToolName, state_path: &Path, check_only: bool) -> Result<()> {
     plan.validate()?;
+    if tool == ToolName::Quipu && plan.external_quipu {
+        bail!("external Quipu is not owned by Caboodle; release update refused");
+    }
     if !plan.tools.contains(&tool) {
         bail!("tool is not selected by the reviewed plan");
     }
     if let ToolName::Member(name) = tool {
         let m = crate::members::get(name).context("unknown stack member")?;
-        return update_member(m, state_path, check_only);
+        return update_member(plan, m, state_path, check_only);
     }
-    update_binary(Some(plan), Some(tool), state_path, check_only)
+    if tool == ToolName::Quipu {
+        return quipu::update(plan, state_path, check_only);
+    }
+    if tool == ToolName::Camayoc {
+        bail!("camayoc has no published checksummed release; release update refused");
+    }
+    update_binary(Some(plan), Some(tool), state_path, check_only, None, None)
 }
 
 /// Take the release-update state lock and finish any interrupted swap.
 fn lock_state(state_path: &Path) -> Result<fs::File> {
+    let lock = lock_state_unrecovered(state_path)?;
+    transaction::recover(state_path)?;
+    Ok(lock)
+}
+
+fn lock_state_unrecovered(state_path: &Path) -> Result<fs::File> {
     let state_dir = state_path
         .parent()
         .filter(|p| !p.as_os_str().is_empty())
@@ -233,7 +304,6 @@ fn lock_state(state_path: &Path) -> Result<fs::File> {
         .write(true)
         .open(state_dir.join("release-update.lock"))?;
     FileExt::try_lock_exclusive(&lock).context("another release update holds the state lock")?;
-    transaction::recover(state_path)?;
     Ok(lock)
 }
 
@@ -246,7 +316,12 @@ fn lock_state(state_path: &Path) -> Result<fs::File> {
 /// PATH runs (the same copy the built-in tools update), with the same backup,
 /// transaction and rollback-on-failed-verify. Every run ends in a functional
 /// verify of that copy, so "verified" in the output is always a fresh proof.
-fn update_member(m: &crate::members::Manifest, state_path: &Path, check_only: bool) -> Result<()> {
+fn update_member(
+    plan: &Plan,
+    m: &crate::members::Manifest,
+    state_path: &Path,
+    check_only: bool,
+) -> Result<()> {
     let _lock = lock_state(state_path)?;
     let tool_id = m.name.as_str();
     if held() {
@@ -351,6 +426,17 @@ fn update_member(m: &crate::members::Manifest, state_path: &Path, check_only: bo
         },
     );
     state.write(state_path)?;
+    if tool_id == "seeds" {
+        rollback::record(
+            plan,
+            state_path,
+            &destination,
+            &backup,
+            &old_hash,
+            &before,
+            &after,
+        )?;
+    }
     emission::queue_transition(state_path, tool_id, "release-updated", &after)?;
     transaction::finish(state_path)?;
     println!(
@@ -362,7 +448,43 @@ fn update_member(m: &crate::members::Manifest, state_path: &Path, check_only: bo
 
 /// Update Caboodle itself from a published checksummed release.
 pub fn update_self(state_path: &Path, check_only: bool) -> Result<()> {
-    update_binary(None, None, state_path, check_only)
+    update_binary(None, None, state_path, check_only, None, None)
+}
+
+/// Event-driven callers select the exact published installer release.
+pub fn update_self_at(state_path: &Path, check_only: bool, tag: &str) -> Result<()> {
+    update_binary(None, None, state_path, check_only, Some(tag), None)
+}
+
+/// Bind an exact installer release to independently obtained artifact evidence.
+pub fn update_self_pinned(
+    state_path: &Path,
+    check_only: bool,
+    tag: &str,
+    archive_sha256: &str,
+    binary_sha256: &str,
+) -> Result<()> {
+    update_binary(
+        None,
+        None,
+        state_path,
+        check_only,
+        Some(tag),
+        Some((archive_sha256, binary_sha256)),
+    )
+}
+
+fn release_path(tag: Option<&str>) -> Result<String> {
+    match tag {
+        None => Ok("releases/latest".into()),
+        Some(tag) => {
+            if !tag.starts_with('v') {
+                bail!("installer tag must be an exact stable v-prefixed version");
+            }
+            stable_version(tag)?;
+            Ok(format!("releases/tags/{tag}"))
+        }
+    }
 }
 
 fn update_binary(
@@ -370,7 +492,24 @@ fn update_binary(
     tool: Option<ToolName>,
     state_path: &Path,
     check_only: bool,
+    requested_tag: Option<&str>,
+    expected_artifacts: Option<(&str, &str)>,
 ) -> Result<()> {
+    let endpoint = release_path(requested_tag)?;
+    if let Some((archive, binary)) = expected_artifacts {
+        if requested_tag.is_none() || tool.is_some() {
+            bail!("artifact binding requires an exact installer release");
+        }
+        for hash in [archive, binary] {
+            if hash.len() != 64
+                || !hash
+                    .bytes()
+                    .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+            {
+                bail!("installer artifact binding requires lowercase SHA256 values");
+            }
+        }
+    }
     let tool_id = tool.map_or("caboodle", |t| t.as_str());
     let (repo, binary, _, _) = names(tool, "v0.0.0")?;
     let _lock = lock_state(state_path)?;
@@ -401,10 +540,13 @@ fn update_binary(
             "=https",
             "-H",
             "Accept: application/vnd.github+json",
-            &format!("https://api.github.com/repos/scbrown/{repo}/releases/latest"),
+            &format!("https://api.github.com/repos/scbrown/{repo}/{endpoint}"),
         ],
     )?;
     let release: Release = serde_json::from_str(&raw).context("parse published release")?;
+    if requested_tag.is_some_and(|tag| tag != release.tag_name) {
+        bail!("published metadata tag differs from requested installer release");
+    }
     if release.draft || release.prerelease {
         bail!("refusing draft/prerelease");
     }
@@ -422,6 +564,9 @@ fn update_binary(
         );
         return Ok(());
     }
+    if installed == wanted && before.contains("+local.") {
+        bail!("local source build installed ({before}); refusing same-version replacement by {}; publish a newer release to converge", release.tag_name);
+    }
     if check_only {
         println!("{}: published {}, installed {before}; assets available, install/functional proof not run", tool_id, release.tag_name);
         return Ok(());
@@ -435,8 +580,12 @@ fn update_binary(
     );
     download_https(&format!("{base}/{archive_name}"), &archive)?;
     download_https(&format!("{base}/{sums_name}"), &sums)?;
-    if hash(&archive)? != checksum(&fs::read_to_string(sums)?, &archive_name)? {
+    let archive_hash = hash(&archive)?;
+    if archive_hash != checksum(&fs::read_to_string(sums)?, &archive_name)? {
         bail!("release archive SHA256 mismatch");
+    }
+    if expected_artifacts.is_some_and(|(expected, _)| expected != archive_hash) {
+        bail!("release archive differs from pre-install artifact evidence");
     }
     // Extract only the one named executable; never unpack archive paths onto disk.
     let members = text(
@@ -470,12 +619,23 @@ fn update_binary(
     fs::write(&candidate, output.stdout)?;
     use std::os::unix::fs::PermissionsExt;
     fs::set_permissions(&candidate, fs::Permissions::from_mode(0o755))?;
+    let new_hash = hash(&candidate)?;
+    if expected_artifacts.is_some_and(|(_, expected)| expected != new_hash) {
+        bail!("installer candidate differs from pre-install artifact evidence");
+    }
     let after = text(candidate.to_str().unwrap(), &[version_arg])?;
-    if installed_version(&after)? != wanted {
+    // Published candidates must still be plain stable releases. Local metadata
+    // is recognized only on the installed side, never on a downloaded artifact.
+    if stable_version(
+        after
+            .split_whitespace()
+            .nth(1)
+            .context("candidate omitted version")?,
+    )? != wanted
+    {
         bail!("candidate version differs from published release");
     }
     let old_hash = hash(&destination)?;
-    let new_hash = hash(&candidate)?;
     let mut state = State::read(state_path)?;
     if old_hash == new_hash
         && state
@@ -586,6 +746,25 @@ mod tests {
     use super::*;
 
     #[test]
+    fn exact_installer_tag_selects_only_its_safe_release_path() {
+        assert_eq!(release_path(None).unwrap(), "releases/latest");
+        assert_eq!(
+            release_path(Some("v0.2.1")).unwrap(),
+            "releases/tags/v0.2.1"
+        );
+        for bad in [
+            "",
+            "0.2.1",
+            "v01.2.1",
+            "v0.2.1-rc1",
+            "../latest",
+            "v0.2.1?x=1",
+        ] {
+            assert!(release_path(Some(bad)).is_err(), "{bad}");
+        }
+    }
+
+    #[test]
     fn behind_reviewed_reports_direction_and_refuses_to_guess() {
         assert_eq!(behind_reviewed("bobbin 0.1.0", "bobbin 0.16.2"), Some(true));
         assert_eq!(
@@ -602,6 +781,29 @@ mod tests {
         assert_eq!(behind_reviewed("bobbin", "bobbin 0.16.2"), None);
     }
     #[test]
+    fn self_update_uses_only_published_platform_archives() {
+        for (os, arch, triple) in [
+            ("linux", "x86_64", "x86_64-unknown-linux-gnu"),
+            ("macos", "x86_64", "x86_64-apple-darwin"),
+            ("macos", "aarch64", "aarch64-apple-darwin"),
+        ] {
+            let (repo, binary, archive, sums) =
+                names_for_platform(None, "v0.2.13", os, arch).unwrap();
+            assert_eq!((repo, binary), ("caboodle", "caboodle"));
+            assert_eq!(archive, format!("caboodle-v0.2.13-{triple}.tar.gz"));
+            assert_eq!(sums, format!("{archive}.sha256"));
+        }
+        for (os, arch) in [
+            ("linux", "aarch64"),
+            ("windows", "x86_64"),
+            ("macos", "arm"),
+        ] {
+            assert!(names_for_platform(None, "v0.2.13", os, arch).is_err());
+        }
+        // Do not infer the other tools' asset layouts from Caboodle's layout.
+        assert!(names_for_platform(Some(ToolName::Bobbin), "v0.2.13", "macos", "aarch64").is_err());
+    }
+    #[test]
     fn stable_versions_are_numeric_and_ambiguous_inputs_refused() {
         assert!(stable_version("v0.16.3").unwrap() > stable_version("0.9.9").unwrap());
         for bad in [
@@ -614,6 +816,24 @@ mod tests {
         ] {
             assert!(stable_version(bad).is_err(), "{bad}");
         }
+    }
+    #[test]
+    fn local_identity_is_comparable_only_with_a_valid_stamp() {
+        for suffix in ["abcdef012345", "abcdef012345.dirty"] {
+            let installed = format!("yupana 0.12.0+local.{suffix}");
+            assert_eq!(installed_version(&installed).unwrap(), (0, 12, 0));
+            assert_eq!(behind_reviewed(&installed, "yupana 0.12.1"), Some(true));
+            assert_eq!(behind_reviewed(&installed, "yupana 0.12.0"), Some(false));
+        }
+        for bad in [
+            "unknown",
+            "abcdef012345.extra",
+            "abcdef01234",
+            "abcdef012345.dirty.dirty",
+        ] {
+            assert!(installed_version(&format!("yupana 0.12.0+local.{bad}")).is_err());
+        }
+        assert!(stable_version("0.12.0+local.abcdef012345").is_err());
     }
     #[test]
     fn checksum_requires_unique_exact_filename() {
@@ -642,5 +862,32 @@ mod tests {
         atomic_copy(&source, &target).unwrap();
         assert_eq!(fs::read_to_string(original).unwrap(), "old");
         assert_eq!(fs::read_to_string(target).unwrap(), "new");
+    }
+    #[test]
+    fn hold_entries_block_regular_directory_and_dangling_symlink() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("hold");
+        assert!(
+            !hold_entry_blocks(Some(&path)),
+            "absent-entry positive control"
+        );
+        fs::write(&path, "hold").unwrap();
+        assert!(hold_entry_blocks(Some(&path)));
+        fs::remove_file(&path).unwrap();
+        fs::create_dir(&path).unwrap();
+        assert!(hold_entry_blocks(Some(&path)));
+        fs::remove_dir(&path).unwrap();
+        std::os::unix::fs::symlink(dir.path().join("missing-target"), &path).unwrap();
+        assert!(hold_entry_blocks(Some(&path)), "dangling entry must block");
+    }
+    #[test]
+    fn unknown_hold_path_and_metadata_errors_fail_closed() {
+        assert!(hold_entry_blocks(None));
+        assert!(hold_entry_blocks(Some(Path::new(""))));
+        let dir = tempfile::tempdir().unwrap();
+        let parent = dir.path().join("not-a-directory");
+        fs::write(&parent, "control").unwrap();
+        assert!(fs::symlink_metadata(parent.join("hold")).is_err());
+        assert!(hold_entry_blocks(Some(&parent.join("hold"))));
     }
 }

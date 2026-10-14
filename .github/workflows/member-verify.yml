@@ -1,0 +1,22 @@
+name: Member release verification
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  caboodle-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --locked
+      - name: Verify the Seeds release pinned by this checkout
+        run: |
+          VERIFY_HOME=$(mktemp -d)
+          trap 'rm -rf "$VERIFY_HOME"' EXIT
+          HOME="$VERIFY_HOME" target/debug/caboodle verify-member seeds

@@ -3,13 +3,12 @@
 # Rebuild the stack knowledge packs in packs/ from their Turtle sources in
 # packs/src/.
 #
-# A .pendant.db is an ordinary quipu SQLite store with a one-row pack_manifest
-# table — the checked-in packs are the built artifact, this script is what
-# makes them regenerable rather than hand-blessed. The Turtle sources are the
-# review surface; the packs are what `quipu unpack` consumes.
+# Each packs/<name>/pendant directory is a standard inspectable text share.
+# Scratch SQLite stores are private build inputs and are never checked in.
+# Consumers use `quipu import` on the directory or its published archive.
 #
 # Not byte-reproducible across runs: quipu stamps the pack with its creation
-# time, so a rebuild with identical sources produces a new content_hash. That
+# source identity, so a rebuild with identical sources can change its manifest. That
 # is why this script is run by hand when packs/src/ changes, not by CI on
 # every push — a hash that churns without a source change is noise dressed as
 # a diff.
@@ -24,12 +23,19 @@ command -v "$quipu" >/dev/null 2>&1 || {
 }
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-out_dir="$root/packs"
+out_dir=${PACKS_OUTPUT_DIR:-"$root/packs"}
 src_dir="$root/packs/src"
-work=$(mktemp -d)
+mkdir -p "$out_dir"
+work=$(mktemp -d "$out_dir/.stack-pendants.XXXXXX")
 trap 'rm -rf "$work"' EXIT HUP INT TERM
 
-version=${PACK_VERSION:-0.1.0}
+for name in stack-map stack-operations; do
+    target="$out_dir/$name/pendant"
+    if [ -L "$target" ] || { [ -e "$target" ] && [ ! -d "$target" ]; }; then
+        printf '%s\n' "refusing non-directory output: $target" >&2
+        exit 1
+    fi
+done
 
 # Outward packs are refused unless a block-tier identifier-policy catalogue is
 # loaded in the producing store (quipu >= 0.9.1). The catalogue lives in its own
@@ -45,7 +51,7 @@ build_pack() {
     name=$1
     graph="https://caboodle.dev/graph/$name"
     src="$src_dir/$name.ttl"
-    out="$out_dir/$name.pendant.db"
+    out="$work/$name-pendant"
     test -f "$src" || { printf '%s\n' "missing source: $src" >&2; exit 1; }
 
     # knot writes to the scratch store's ROOT; graph import lifts that ROOT
@@ -53,14 +59,42 @@ build_pack() {
     "$quipu" knot "$src" --db "$work/$name-scratch.db"
     "$quipu" graph import "$work/$name-scratch.db" --as "$graph" --db "$work/asm.db"
     load_identifier_policy "$work/asm.db"
-    rm -f "$out"
-    "$quipu" pack "$graph" --out "$out" \
-        --name "caboodle-$name" --version "$version" --db "$work/asm.db"
-    # A pack that cannot verify must never land in the repo.
-    "$quipu" pack --verify "$out"
+    "$quipu" share --graph "$graph" --output "$out" --pack-dir pendant \
+        --no-shapes --no-queries --db "$work/asm.db"
+    # Native import verifies hashes and bundle identity before accepting data.
+    # This is an isolated scratch store, never an installed consumer.
+    "$quipu" import "$out" --db "$work/$name-verify.db" > "$work/$name-verification.json"
+    python3 - "$out/manifest.json" "$work/$name-verification.json" <<'PY'
+import json, sys
+manifest, result = [json.load(open(path)) for path in sys.argv[1:]]
+assert result['share_id'] == manifest['share_id']
+assert result['graph_hash'] == manifest['graph_hash']
+assert result['outcome'] in ('staged', 'quarantined')
+assert result['attestation']['tier'] == 'transport'
+print('Bundle hashes verified; receiver outcome:', result['outcome'])
+# Quarantine is preserved: integrity is not vocabulary or promotion approval.
+PY
 }
 
 build_pack stack-map
 build_pack stack-operations
 
-printf '%s\n' "packs rebuilt in $out_dir (version $version)"
+# Publish only after BOTH bundles verify. Existing output survives a failed
+# assembly or verification; each replacement uses same-filesystem renames.
+for name in stack-map stack-operations; do
+    parent="$out_dir/$name"
+    target="$parent/pendant"
+    backup="$work/$name-old"
+    mkdir -p "$parent"
+    if [ -L "$target" ] || { [ -e "$target" ] && [ ! -d "$target" ]; }; then
+        printf '%s\n' "refusing non-directory output: $target" >&2
+        exit 1
+    fi
+    if [ -d "$target" ]; then mv "$target" "$backup"; fi
+    if ! mv "$work/$name-pendant" "$target"; then
+        if [ -d "$backup" ]; then mv "$backup" "$target"; fi
+        exit 1
+    fi
+done
+
+printf '%s\n' "text pendants rebuilt in $out_dir"

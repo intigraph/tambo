@@ -9,7 +9,13 @@ trap 'rm -rf "$fixture"' EXIT HUP INT TERM
 archive="caboodle-v$version-$target.tar.gz"
 
 cargo build --release --locked --manifest-path "$repo_root/Cargo.toml"
-tar -czf "$fixture/$archive" -C "$repo_root/target/release" caboodle
+target_dir=$(cargo metadata --format-version 1 --no-deps --manifest-path "$repo_root/Cargo.toml" |
+    python3 -c 'import json, sys; print(json.load(sys.stdin)["target_directory"])')
+# Cargo may route artifacts outside the source tree. Test an owned copy rather
+# than assuming target/release or retaining a mutable build-output alias.
+mkdir -p "$fixture/program"
+cp "$target_dir/release/caboodle" "$fixture/program/caboodle"
+tar -czf "$fixture/$archive" -C "$fixture/program" caboodle
 (cd "$fixture" && sha256sum "$archive" > "$archive.sha256")
 (cd "$repo_root" && scripts/check-release-assets.sh "v$version" "$fixture")
 
