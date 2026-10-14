@@ -737,8 +737,33 @@ fn update_binary(
                 );
             }
         }
+        post_install_repair(&destination);
     }
     Ok(())
+}
+
+/// Run the NEW installer's own repairs (aegis-61f). This process is the old
+/// build, so anything it did itself would lag one release. A failure here is
+/// reported, never fatal: the verified swap above is already complete.
+fn post_install_repair(installed: &Path) {
+    match std::process::Command::new(installed)
+        .arg("post-install-repair")
+        .output()
+    {
+        Ok(out) if out.status.success() => {
+            for line in String::from_utf8_lossy(&out.stdout).lines() {
+                println!("caboodle: {line}");
+            }
+        }
+        Ok(out) => println!(
+            "caboodle: note: post-install repair failed ({}): {}; the update itself is complete",
+            out.status,
+            String::from_utf8_lossy(&out.stderr).trim()
+        ),
+        Err(error) => println!(
+            "caboodle: note: post-install repair could not run: {error}; the update itself is complete"
+        ),
+    }
 }
 
 #[cfg(test)]
