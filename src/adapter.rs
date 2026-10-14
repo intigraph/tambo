@@ -619,6 +619,27 @@ pub(crate) fn ensure_owned_quipu_alias() -> Result<()> {
     quipu_alias::ensure(&owned_quipu_bin()?).map_err(anyhow::Error::msg)
 }
 
+/// Post-install self-healing for the owned Quipu directory only; an externally
+/// installed Quipu elsewhere is never touched (aegis-61f).
+#[cfg(unix)]
+pub fn repair_owned_quipu_alias() -> Result<String> {
+    use quipu_alias::Repair;
+    let bin = owned_quipu_bin()?;
+    let qp = bin.join("qp");
+    Ok(
+        match quipu_alias::repair(&bin).map_err(anyhow::Error::msg)? {
+            Repair::NoQuipu => format!("no owned quipu in {}; nothing to repair", bin.display()),
+            Repair::Current => format!("{} -> quipu already current", qp.display()),
+            Repair::Created => format!("created {} -> quipu", qp.display()),
+            Repair::Retargeted => format!("retargeted {} -> quipu", qp.display()),
+            Repair::ForeignPreserved => format!(
+                "{} is not a symlink; preserved it, qp NOT repaired",
+                qp.display()
+            ),
+        },
+    )
+}
+
 fn selected_quipu_client() -> Result<PathBuf> {
     let owned = cargo_program("quipu");
     if owned.is_file() {

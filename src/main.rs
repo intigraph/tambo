@@ -159,6 +159,11 @@ enum Commands {
         #[arg(long, requires_all = ["tag", "archive_sha256"])]
         binary_sha256: Option<String>,
     },
+    /// Internal: update-self runs this on the NEWLY installed binary so its
+    /// own repairs apply on the first natural update (aegis-61f).
+    #[cfg(unix)]
+    #[command(hide = true)]
+    PostInstallRepair,
     /// Maintainers: re-pin a stack member manifest to its published release,
     /// recording the digests the release publishes after hashing each asset
     /// (review and merge the result; installs never read the release's sums)
@@ -515,6 +520,13 @@ fn main() -> Result<()> {
             (None, None, None) => caboodle::release_update::update_self(&state, check)?,
             _ => anyhow::bail!("installer artifact binding requires tag and both SHA256 values"),
         },
+        #[cfg(unix)]
+        Commands::PostInstallRepair => {
+            println!(
+                "post-install repair: {}",
+                caboodle::adapter::repair_owned_quipu_alias()?
+            );
+        }
         #[cfg(unix)]
         Commands::BumpMember {
             manifest,

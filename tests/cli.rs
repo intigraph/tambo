@@ -2002,14 +2002,15 @@ fn local_source_builds_refuse_equal_releases_but_accept_newer_ones() {
     )
 ))]
 fn published_release_can_update_the_installer_itself() {
-    self_update_fixture(false, None, None);
-    self_update_fixture(true, None, None);
-    self_update_fixture(false, Some("v0.2.1"), None);
-    self_update_fixture(true, Some("v0.2.1"), None);
-    self_update_fixture(false, Some("v0.2.2"), None);
-    self_update_fixture(false, Some("v0.2.1"), Some("verified"));
-    self_update_fixture(false, Some("v0.2.1"), Some("archive-mismatch"));
-    self_update_fixture(false, Some("v0.2.1"), Some("binary-mismatch"));
+    self_update_fixture(false, None, None, false);
+    self_update_fixture(true, None, None, false);
+    self_update_fixture(false, Some("v0.2.1"), None, false);
+    self_update_fixture(true, Some("v0.2.1"), None, false);
+    self_update_fixture(false, Some("v0.2.2"), None, false);
+    self_update_fixture(false, Some("v0.2.1"), Some("verified"), false);
+    self_update_fixture(false, Some("v0.2.1"), Some("archive-mismatch"), false);
+    self_update_fixture(false, Some("v0.2.1"), Some("binary-mismatch"), false);
+    self_update_fixture(false, None, None, true);
 }
 
 #[cfg(any(
@@ -2019,7 +2020,12 @@ fn published_release_can_update_the_installer_itself() {
         any(target_arch = "x86_64", target_arch = "aarch64")
     )
 ))]
-fn self_update_fixture(bad_checksum: bool, requested_tag: Option<&str>, binding: Option<&str>) {
+fn self_update_fixture(
+    bad_checksum: bool,
+    requested_tag: Option<&str>,
+    binding: Option<&str>,
+    repair_fails: bool,
+) {
     let root = tempfile::tempdir().unwrap();
     let bin = root.path().join("bin");
     fs::create_dir(&bin).unwrap();
@@ -2028,7 +2034,10 @@ fn self_update_fixture(bad_checksum: bool, requested_tag: Option<&str>, binding:
     let before = fs::read(bin.join("caboodle")).unwrap();
     let stage = root.path().join("self-stage");
     fs::create_dir(&stage).unwrap();
-    fake_tool(&stage, "caboodle", "touch \"$HOME/candidate-executed\"; if [ \"$1\" = --version ]; then echo 'caboodle 0.2.1'; else echo '--tool bobbin yupana desire-path'; fi");
+    fake_tool(&stage, "caboodle", "touch \"$HOME/candidate-executed\"; if [ \"$1\" = post-install-repair ]; then echo \"$*\" >> \"$HOME/post-install.log\"; if [ -e \"$HOME/fail-repair\" ]; then echo boom >&2; exit 3; fi; echo 'post-install repair: qp ok'; elif [ \"$1\" = --version ]; then echo 'caboodle 0.2.1'; else echo '--tool bobbin yupana desire-path'; fi");
+    if repair_fails {
+        fs::write(root.path().join("fail-repair"), b"").unwrap();
+    }
     let triple = match (std::env::consts::OS, std::env::consts::ARCH) {
         ("linux", "x86_64") => "x86_64-unknown-linux-gnu",
         ("macos", "x86_64") => "x86_64-apple-darwin",
@@ -2131,9 +2140,18 @@ case "$url" in */releases/latest|*/releases/tags/*) cat "$HOME/latest.json" ;; *
         assert!(!root.path().join(".caboodle/state.json").exists());
         return;
     }
-    updater.assert().success().stdout(predicate::str::contains(
-        "caboodle: installed and verified v0.2.1",
-    ));
+    let repair_line = if repair_fails {
+        "caboodle: note: post-install repair failed"
+    } else {
+        "caboodle: post-install repair: qp ok"
+    };
+    updater
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(
+            "caboodle: installed and verified v0.2.1",
+        ))
+        .stdout(predicate::str::contains(repair_line));
     if requested_tag.is_some() {
         let requests = fs::read_to_string(root.path().join("release-requests.log")).unwrap();
         assert!(requests.contains("/releases/tags/v0.2.1"));
@@ -2150,6 +2168,12 @@ case "$url" in */releases/latest|*/releases/tags/*) cat "$HOME/latest.json" ;; *
         .path();
     assert_eq!(fs::read(backup).unwrap(), before);
     assert!(root.path().join("candidate-executed").exists());
+    // aegis-61f: the NEW binary runs its own repairs once, and a failing repair
+    // is reported without undoing the verified swap above.
+    assert_eq!(
+        fs::read_to_string(root.path().join("post-install.log")).unwrap(),
+        "post-install-repair\n"
+    );
 }
 
 #[test]

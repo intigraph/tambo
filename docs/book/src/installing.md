@@ -185,6 +185,16 @@ An externally owned Quipu must provide its own command alias; Caboodle verifies
 it but does not create it. A paired release update retains the alias across a
 CLI replacement or rollback because the link follows the canonical `quipu` path.
 
+Hosts that only ever run `update-self` (such as a scheduled installer consumer)
+never run apply, so `update-self` also heals the alias. After a verified swap it
+runs the newly installed binary once to repair the owned directory
+(`$CARGO_HOME/bin`, default `~/.cargo/bin`). That pass creates a missing `qp`, or
+re-points a `qp` symlink with the wrong or a dangling target. A regular file or
+directory named `qp` is foreign: it is reported and left in place. A failed
+repair is reported but never fails the update. Because the old binary performs
+the swap, the first release carrying this behaviour repairs on the update after
+it.
+
 ## Stack knowledge packs
 
 `packs/` carries quipu knowledge packs for working with the stack:

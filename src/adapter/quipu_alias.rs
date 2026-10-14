@@ -66,6 +66,65 @@ pub(crate) fn ensure(bin: &Path) -> Result<()> {
     Ok(())
 }
 
+/// What a post-install repair found and did to `qp` beside an owned `quipu`.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum Repair {
+    NoQuipu,
+    Current,
+    Created,
+    Retargeted,
+    ForeignPreserved,
+}
+
+/// Self-healing for hosts that never run member apply (aegis-61f). Unlike
+/// `ensure`, a symlink with the wrong target (or a dangling one) is replaced,
+/// because a link named qp beside our quipu is ours to correct. Anything else
+/// (a regular file, a directory) is foreign: it is reported and left alone.
+#[cfg(unix)]
+pub(crate) fn repair(bin: &Path) -> Result<Repair> {
+    let target = bin.join("quipu");
+    if !target.is_file() {
+        return Ok(Repair::NoQuipu);
+    }
+    let alias = bin.join("qp");
+    let outcome = match fs::symlink_metadata(&alias) {
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            std::os::unix::fs::symlink("quipu", &alias)
+                .map_err(|e| format!("create {}: {e}", alias.display()))?;
+            Repair::Created
+        }
+        Err(e) => return Err(format!("cannot inspect {}: {e}", alias.display())),
+        Ok(meta) if !meta.file_type().is_symlink() => return Ok(Repair::ForeignPreserved),
+        Ok(_) if fs::read_link(&alias).ok().as_deref() == Some(Path::new("quipu")) => {
+            Repair::Current
+        }
+        Ok(_) => {
+            // Build the new link beside the old one and rename over it, so qp
+            // is never absent and never a half-written file. Never clear the
+            // staging name first: whatever is already there is not provably
+            // ours, so creation refuses (AlreadyExists) and the repair fails.
+            let staged = bin.join(format!(".qp.caboodle-{}", std::process::id()));
+            std::os::unix::fs::symlink("quipu", &staged)
+                .map_err(|e| format!("stage {}: {e}", staged.display()))?;
+            fs::rename(&staged, &alias).map_err(|e| {
+                let _ = fs::remove_file(&staged);
+                format!("replace {}: {e}", alias.display())
+            })?;
+            Repair::Retargeted
+        }
+    };
+    let resolved_alias =
+        fs::canonicalize(&alias).map_err(|e| format!("resolve {}: {e}", alias.display()))?;
+    let resolved_target =
+        fs::canonicalize(&target).map_err(|e| format!("resolve {}: {e}", target.display()))?;
+    if fs::read_link(&alias).ok().as_deref() != Some(Path::new("quipu"))
+        || resolved_alias != resolved_target
+    {
+        return Err("qp alias identity read-back failed".into());
+    }
+    Ok(outcome)
+}
+
 #[cfg(all(test, unix))]
 mod tests {
     use super::*;
@@ -119,5 +178,68 @@ mod tests {
         assert!(!dir.join("qp").exists());
         fs::remove_dir_all(dir).unwrap();
         fs::remove_dir_all(foreign).unwrap();
+    }
+
+    #[test]
+    fn repair_creates_then_leaves_a_current_alias() {
+        let dir = fixture();
+        assert_eq!(repair(&dir).unwrap(), Repair::NoQuipu);
+        assert!(fs::symlink_metadata(dir.join("qp")).is_err());
+        fs::write(dir.join("quipu"), b"q").unwrap();
+        assert_eq!(repair(&dir).unwrap(), Repair::Created);
+        assert_eq!(repair(&dir).unwrap(), Repair::Current);
+        assert_eq!(fs::read_link(dir.join("qp")).unwrap(), Path::new("quipu"));
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn repair_retargets_wrong_and_dangling_links_only() {
+        let dir = fixture();
+        fs::write(dir.join("quipu"), b"q").unwrap();
+        fs::write(dir.join("other"), b"o").unwrap();
+        for wrong in ["other", "missing", "/bin/sh"] {
+            let _ = fs::remove_file(dir.join("qp"));
+            symlink(wrong, dir.join("qp")).unwrap();
+            assert_eq!(repair(&dir).unwrap(), Repair::Retargeted);
+            assert_eq!(fs::read_link(dir.join("qp")).unwrap(), Path::new("quipu"));
+            assert_eq!(fs::read(dir.join("other")).unwrap(), b"o");
+        }
+        let leftovers: Vec<_> = fs::read_dir(&dir)
+            .unwrap()
+            .map(|e| e.unwrap().file_name())
+            .filter(|n| n.to_string_lossy().starts_with(".qp."))
+            .collect();
+        assert!(
+            leftovers.is_empty(),
+            "staged link left behind: {leftovers:?}"
+        );
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn repair_refuses_rather_than_delete_a_foreign_staging_file() {
+        let dir = fixture();
+        fs::write(dir.join("quipu"), b"q").unwrap();
+        symlink("missing", dir.join("qp")).unwrap();
+        let staged = dir.join(format!(".qp.caboodle-{}", std::process::id()));
+        fs::write(&staged, b"foreign marker").unwrap();
+        assert!(repair(&dir).is_err());
+        assert_eq!(fs::read(&staged).unwrap(), b"foreign marker");
+        assert_eq!(fs::read_link(dir.join("qp")).unwrap(), Path::new("missing"));
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn repair_never_touches_a_foreign_file_or_directory() {
+        let dir = fixture();
+        fs::write(dir.join("quipu"), b"q").unwrap();
+        fs::write(dir.join("qp"), b"foreign").unwrap();
+        assert_eq!(repair(&dir).unwrap(), Repair::ForeignPreserved);
+        assert_eq!(fs::read(dir.join("qp")).unwrap(), b"foreign");
+        fs::remove_file(dir.join("qp")).unwrap();
+        fs::create_dir(dir.join("qp")).unwrap();
+        assert_eq!(repair(&dir).unwrap(), Repair::ForeignPreserved);
+        assert!(dir.join("qp").is_dir());
+        fs::remove_dir_all(dir).unwrap();
     }
 }
