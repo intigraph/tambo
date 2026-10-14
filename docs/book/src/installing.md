@@ -189,22 +189,43 @@ CLI replacement or rollback because the link follows the canonical `quipu` path.
 
 `packs/` carries quipu knowledge packs for working with the stack:
 
-- `stack-map.pendant.db` — what each tool is, where it lives, and how the
+- `stack-map/pendant/` — what each tool is, where it lives, and how the
   pieces relate.
-- `stack-operations.pendant.db` — how each repo builds, tests, and proves
+- `stack-operations/pendant/` — how each repo builds, tests, and proves
   itself, and the git discipline that binds them.
 
 A pendant is the artifact once called a qpack (named for the khipu's pendant
 cords, each a self-contained record hanging from the primary cord). The old
-`packs/stack-map.qpack.db` and `packs/stack-operations.qpack.db` paths remain
-as symlinks to the `.pendant.db` files for one release, then go away.
+Each directory contains `manifest.json`, `manifest.ttl`, canonical `export.nt`
+and `shapes.ttl`. SQLite databases are scratch build inputs, not repository
+artifacts. The former `.pendant.db` and `.qpack.db` paths remain symlinks to
+these directories, so directory-based imports can retain their old paths.
+They are **directory aliases**, not binary SQLite packs. Use `quipu import`,
+not `quipu unpack` or `quipu pack --verify`, for these new artifacts. Previously
+published binary packs retain their original binary consumer commands.
+Alias removal is separate from this conversion and is not scheduled before
+the release after the announced 0.14 deprecation.
 
-Each pack is an ordinary quipu SQLite store with a one-row manifest. Attach
-one to any quipu database with `quipu unpack`, or prove one with
-`quipu pack --verify`. The Turtle sources live in `packs/src/` and are the
-review surface; `scripts/build-stack-packs.sh` rebuilds the artifacts from
-them (run by hand when the sources change — packs stamp their creation time,
-so a rebuild without a source change is hash churn, not content).
+```bash
+quipu import packs/stack-map/pendant --db scratch.db
+quipu import packs/stack-operations/pendant --db scratch.db
+```
+
+Import verifies the bundle's hashes and stages or quarantines its graph; it
+does not promote it automatically. These shares intentionally contain no
+domain shapes or stored queries. An empty receiver quarantines `stack-map`
+because `https://caboodle.dev/ns#StackComponent` is outside its local vocabulary.
+Configure reviewed receiver shapes for that class before expecting admission.
+Hash integrity alone is not vocabulary, shape or producer certification.
+
+The Turtle sources in `packs/src/` remain the review surface.
+`scripts/build-stack-packs.sh` rebuilds and verifies both bundles before
+replacing output; a failed build or native verification preserves existing
+bundles. Rebuild by hand when sources change: creation time and source identity
+can change manifests without changing the semantic graph. Python 3 and Quipu
+with text-share support are required. `PACKS_OUTPUT_DIR` selects an isolated
+output root for experiments; `python3 scripts/test-stack-pendants.py` exercises
+native integrity, quarantine, tamper refusal and failure preservation.
 
 ### Shipping a pack from a repository
 
