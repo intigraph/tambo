@@ -1,0 +1,24 @@
+Script started on 2026-10-14 19:24:46-04:00 [COMMAND="python3 demo.py" <not executed on terminal>]
+Same proposed overview, including its lead paragraph:
+The Quipu stack is built around a governed, bitemporal knowledge store: shared
+facts, decisions and work history your agents can query. Quipu can check writes
+against your rules, records where each fact came from, and answers what was true
+when.
+
+BEFORE: table-only parser
+$ python3 check-before.py --canonical overview.md README.md
+FAIL: overview.md: marked block is not a complete stack table
+exit=1
+
+AFTER: entire overview checked
+$ python3 check-after.py --canonical overview.md README.md
+PASS: README.md sha256=972cdec51bad0d62e90f8e3342531b2d301332546668e9b574f1469ed683ab44
+checked=1 failed=0
+exit=0
+
+CONTROL: change only the lead wording
+FAIL: README.md: stack table differs from docs/stack-table.md
+checked=1 failed=1
+exit=1
+
+Script done on 2026-10-14 19:24:46-04:00 [COMMAND_EXIT_CODE="0"]
