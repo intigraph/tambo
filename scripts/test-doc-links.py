@@ -75,6 +75,29 @@ class DocumentationLinks(unittest.TestCase):
         self.assertNotEqual(rc, 0)
         self.assertEqual(result["errors"], 1)
 
+    def test_own_pages_anchor_uses_fresh_build(self):
+        site = self.root / "site" / "caboodle"
+        site.mkdir(parents=True)
+        page = site / "introduction.html"
+        page.write_text('<h2 id="why-use-it">Why use it</h2>')
+        link = "https://scbrown.github.io/caboodle/introduction.html#why-use-it"
+        rc, result = self.check([link])
+        self.assertEqual(rc, 0, result)
+        self.assertEqual((result["successful"], result["remaps"], result["excludes"]), (1, 1, 0))
+        page.write_text('<h2 id="new-heading">New heading</h2>')
+        rc, result = self.check([link])
+        self.assertNotEqual(rc, 0, result)
+        self.assertEqual((result["errors"], result["excludes"]), (1, 0))
+
+    def test_other_pages_books_are_not_remapped(self):
+        rc, result = self.check([
+            "https://other.github.io/caboodle/missing.html",
+            "https://scbrown.github.io/other/missing.html",
+            "https://scbrown.github.io/caboodle-other/missing.html",
+        ])
+        self.assertEqual(rc, 0, result)
+        self.assertEqual((result["remaps"], result["excludes"]), (0, 3))
+
     def test_other_owner_repo_and_branch_are_not_remapped(self):
         # Offline is a scope probe, not evidence that remote links pass.
         # An overbroad remap would turn these missing paths into file errors.
