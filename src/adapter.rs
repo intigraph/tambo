@@ -636,6 +636,10 @@ pub fn repair_owned_quipu_alias() -> Result<String> {
                 "{} is not a symlink; preserved it, qp NOT repaired",
                 qp.display()
             ),
+            Repair::PackageManaged(package) => format!(
+                "quipu in {} is managed by apt (package {package}); qp left to the package",
+                bin.display()
+            ),
         },
     )
 }

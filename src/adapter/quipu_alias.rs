@@ -74,6 +74,9 @@ pub(crate) enum Repair {
     Created,
     Retargeted,
     ForeignPreserved,
+    /// quipu resolves to a file a package manager installed; its package owns
+    /// the aliases, so nothing here is repaired (aegis-g2t).
+    PackageManaged(String),
 }
 
 /// Self-healing for hosts that never run member apply (aegis-61f). Unlike
@@ -82,9 +85,18 @@ pub(crate) enum Repair {
 /// (a regular file, a directory) is foreign: it is reported and left alone.
 #[cfg(unix)]
 pub(crate) fn repair(bin: &Path) -> Result<Repair> {
+    repair_with(bin, crate::apt_owned::owner)
+}
+
+#[cfg(unix)]
+fn repair_with(bin: &Path, package_owner: impl Fn(&Path) -> Option<String>) -> Result<Repair> {
     let target = bin.join("quipu");
     if !target.is_file() {
         return Ok(Repair::NoQuipu);
+    }
+    // is_file() follows symlinks, so ask dpkg about the RESOLVED quipu.
+    if let Some(package) = package_owner(&target) {
+        return Ok(Repair::PackageManaged(package));
     }
     let alias = bin.join("qp");
     let outcome = match fs::symlink_metadata(&alias) {
@@ -241,5 +253,24 @@ mod tests {
         assert_eq!(repair(&dir).unwrap(), Repair::ForeignPreserved);
         assert!(dir.join("qp").is_dir());
         fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn repair_leaves_a_package_managed_quipu_alone() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join("quipu"), "binary").unwrap();
+        let resolved = std::fs::canonicalize(dir.path().join("quipu")).unwrap();
+        let owner =
+            |p: &Path| (std::fs::canonicalize(p).ok()? == resolved).then(|| "quipu".to_string());
+        assert_eq!(
+            repair_with(dir.path(), owner).unwrap(),
+            Repair::PackageManaged("quipu".into())
+        );
+        assert!(
+            std::fs::symlink_metadata(dir.path().join("qp")).is_err(),
+            "no qp created"
+        );
+        // Not package-owned: the ordinary repair still creates the alias.
+        assert_eq!(repair_with(dir.path(), |_| None).unwrap(), Repair::Created);
     }
 }
