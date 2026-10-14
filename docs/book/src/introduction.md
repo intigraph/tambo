@@ -1,18 +1,23 @@
-# quipu stack — memory your agents have to earn.
+# The Quipu stack — shared knowledge with rules and history
 
-*Cords are entities. Knots are facts. The keeper decides what a knot may claim.*
+The Quipu stack is built around a governed, bitemporal knowledge store: shared
+facts, decisions and work history your agents can query. Quipu can check writes
+against your rules, records where each fact came from, and answers what was true
+when. *Bitemporal* means keeping both when a fact was recorded and, when supplied,
+when it was true.
 
-Memory your coding agents have to earn: a local-first knowledge graph that
-refuses bad facts at write time, plus the code context, crew harness, and
-installer around it.
+**Caboodle installs and configures this stack**, then proves the selected tools
+work. [Quipu](https://scbrown.github.io/quipu/) holds the knowledge. Camayoc
+prepares knowledge and vocabulary for it. Bobbin searches code and can include
+knowledge from Quipu; Yupana shows code impact and can read policies from Quipu.
+Desire Path turns agent mistakes into feature requests and also works on its
+own. Seeds tracks work items in the Quipu knowledge base. You can use the tools
+separately or connect them around the same store.
 
-[Quipu](https://scbrown.github.io/quipu/) is the store: a governed, bitemporal
-knowledge graph. Camayoc prepares knowledge for it, Bobbin returns knowledge
-and repository context to the next agent turn. Yupana enforces code policies
-and shows the blast radius before an edit. Desire Path turns your agents'
-hallucinations into feature requests. Seeds is a work item tracker backed by
-the Quipu knowledge base. **Caboodle is the installer**: install the tools, prove they
-work, and prepare their observability configuration.
+Write refusal is configurable, not automatic in every installation: enable
+Quipu's write checks for the rules you want enforced. See
+[Quipu's configuration reference](https://scbrown.github.io/quipu/getting-started/configuration.html)
+for the settings and their defaults.
 
 ![The quipu stack loop: agents send activity to Camayoc, which sends tagged, quarantined episodes to Quipu. Quipu supplies knowledge to Bobbin, which feeds the next agent turn. Yupana enforces code policies and contributes committed structure to Quipu and code context to Bobbin. Desire Path turns hallucinations into feature requests. Seeds tracks work items in the Quipu knowledge base. Caboodle installs, proves, and observes the tools.](images/stack-loop.svg)
 
