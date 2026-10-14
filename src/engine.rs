@@ -538,7 +538,7 @@ pub fn verify(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
 
 /// Compare the running toolchain to the releases reviewed by this Caboodle
 /// build. Returns true only when every selected tool is current.
-fn reviewed_drift_status(installed: &str, desired: &str) -> &'static str {
+pub(crate) fn reviewed_drift_status(installed: &str, desired: &str) -> &'static str {
     match crate::release_update::behind_reviewed(installed, desired) {
         Some(true) => "update available",
         Some(false) if crate::release_update::behind_reviewed(desired, installed) == Some(true) => {

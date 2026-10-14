@@ -29,13 +29,36 @@ pub struct CrewEvidence {
 
 pub fn apply(selection: &CrewSelection, state: &mut State, skip_install: bool) -> Result<()> {
     if selects_shantytown(selection.mode) {
-        if skip_install && shantytown_version().is_err() {
-            bail!("Shantytown is not installed and --skip-install was selected");
+        let installed = shantytown_installed();
+        match shantytown_convergence(installed.as_deref()) {
+            Convergence::Current => {}
+            Convergence::Decline => {
+                // Never install the older reviewed pin over a newer or
+                // unrecognised st (aegis-fv4): that is a downgrade on a guess.
+                println!(
+                    "shantytown: {} (installed: {}); reviewed: st {SHANTYTOWN_VERSION}; not installed",
+                    crate::engine::reviewed_drift_status(
+                        installed.as_deref().unwrap_or_default(),
+                        &format!("st {SHANTYTOWN_VERSION}")
+                    ),
+                    installed.as_deref().unwrap_or_default()
+                );
+                return apply_creel(selection, state, skip_install);
+            }
+            Convergence::Install => {
+                if skip_install {
+                    bail!("Shantytown is not installed and --skip-install was selected");
+                }
+                install_shantytown()?;
+            }
         }
-        install_shantytown()?;
         record(state, "shantytown", shantytown_version()?, false);
         println!("shantytown: applied");
     }
+    apply_creel(selection, state, skip_install)
+}
+
+fn apply_creel(selection: &CrewSelection, state: &mut State, skip_install: bool) -> Result<()> {
     if selects_creel(selection.mode) {
         if skip_install && !creel_root()?.join("REVISION").is_file() {
             bail!("Creel is not installed and --skip-install was selected");
@@ -72,9 +95,19 @@ pub fn verify(selection: &CrewSelection, evidence: &CrewEvidence, state: &mut St
 pub fn check_updates(selection: &CrewSelection) -> bool {
     let mut current = true;
     if selects_shantytown(selection.mode) {
-        match shantytown_version() {
-            Ok(version) => println!("shantytown: current ({version})"),
-            Err(error) => {
+        match (shantytown_version(), shantytown_installed()) {
+            (Ok(version), _) => println!("shantytown: current ({version})"),
+            (Err(_), Some(installed)) => {
+                current = false;
+                println!(
+                    "shantytown: {} (installed: {installed}); reviewed: st {SHANTYTOWN_VERSION}",
+                    crate::engine::reviewed_drift_status(
+                        &installed,
+                        &format!("st {SHANTYTOWN_VERSION}")
+                    )
+                );
+            }
+            (Err(error), None) => {
                 current = false;
                 println!(
                     "shantytown: missing or drifted ({error:#}); reviewed: st {SHANTYTOWN_VERSION}"
@@ -161,6 +194,34 @@ fn install_shantytown() -> Result<()> {
         )?;
     }
     link_binary(&root.join("bin/st"), "st")
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum Convergence {
+    Current,
+    Install,
+    Decline,
+}
+
+/// Absent -> install; exactly the reviewed pin -> current; strictly older ->
+/// converge upward; newer or not comparable -> decline (aegis-fv4).
+fn shantytown_convergence(installed: Option<&str>) -> Convergence {
+    let Some(installed) = installed else {
+        return Convergence::Install;
+    };
+    if installed.starts_with(&format!("st {SHANTYTOWN_VERSION}")) {
+        return Convergence::Current;
+    }
+    match crate::release_update::behind_reviewed(installed, &format!("st {SHANTYTOWN_VERSION}")) {
+        Some(true) => Convergence::Install,
+        Some(false) | None => Convergence::Decline,
+    }
+}
+
+/// What `st --version` reports, whatever its version; `None` when st cannot run.
+fn shantytown_installed() -> Option<String> {
+    let output = checked("st", ["--version"], None).ok()?;
+    Some(String::from_utf8_lossy(&output.stdout).trim().to_owned())
 }
 
 fn shantytown_version() -> Result<String> {
@@ -383,4 +444,29 @@ fn validate_admission(path: &Path) -> Result<()> {
 fn read_json<T: for<'de> Deserialize<'de>>(path: &Path, label: &str) -> Result<T> {
     let body = fs::read_to_string(path).with_context(|| format!("read {label} contract"))?;
     serde_json::from_str(&body).with_context(|| format!("parse {label} contract"))
+}
+
+#[cfg(test)]
+mod convergence_tests {
+    use super::{shantytown_convergence, Convergence};
+
+    #[test]
+    fn shantytown_never_converges_downward_or_on_a_guess() {
+        assert_eq!(shantytown_convergence(None), Convergence::Install);
+        assert_eq!(
+            shantytown_convergence(Some("st 0.4.0")),
+            Convergence::Current
+        );
+        assert_eq!(
+            shantytown_convergence(Some("st 0.3.9")),
+            Convergence::Install
+        );
+        for ahead_or_unknown in ["st 0.7.0 (a9a0136-dirty)", "st 0.5.0", "st dev", "st"] {
+            assert_eq!(
+                shantytown_convergence(Some(ahead_or_unknown)),
+                Convergence::Decline,
+                "{ahead_or_unknown}"
+            );
+        }
+    }
 }

@@ -308,6 +308,22 @@ pub struct Plan {
     /// changes the user's Claude configuration.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub quipu_mcp: Option<QuipuMcp>,
+    /// Per-host exclusions selected with `--host-profile` (aegis-fv4).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub host_profiles: Vec<HostProfile>,
+}
+
+/// A host on which another lane owns part of the plan. Selecting it drops
+/// that part for the run and says so; an excluded runtime is never reported
+/// as verified (aegis-fv4).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct HostProfile {
+    pub name: String,
+    /// The lane that owns the crew runtimes on this host. When set, the
+    /// plan's `[crew]` is excluded on this host.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub crew_excluded_owner: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -544,6 +560,7 @@ impl Plan {
             intent: None,
             embedding_model: None,
             quipu_mcp: None,
+            host_profiles: Vec::new(),
         }
     }
 
@@ -621,7 +638,49 @@ impl Plan {
             (_, Some(_)) => bail!("[crew] is only valid with profile = \"crew\" or \"everything\""),
             (_, None) => {}
         }
+        let mut names = std::collections::HashSet::new();
+        for host in &self.host_profiles {
+            if host.name.trim().is_empty() || !names.insert(host.name.as_str()) {
+                bail!("host profile names must be non-empty and unique");
+            }
+            if host
+                .crew_excluded_owner
+                .as_deref()
+                .is_some_and(|owner| owner.trim().is_empty())
+            {
+                bail!(
+                    "host profile {}: crew_excluded_owner must name the owning lane",
+                    host.name
+                );
+            }
+        }
         Ok(())
+    }
+
+    /// Apply a named host profile. Returns the plan to run and the exclusion
+    /// lines to print. An unknown name refuses rather than running everything.
+    pub fn for_host(mut self, host: Option<&str>) -> Result<(Self, Vec<String>)> {
+        let Some(host) = host else {
+            return Ok((self, Vec::new()));
+        };
+        let profile = self
+            .host_profiles
+            .iter()
+            .find(|p| p.name == host)
+            .cloned()
+            .with_context(|| format!("plan has no host profile named {host}"))?;
+        let mut excluded = Vec::new();
+        if let Some(owner) = profile.crew_excluded_owner {
+            if self.profile == Profile::Crew {
+                bail!("host profile {host} excludes crew, but this plan's profile IS crew");
+            }
+            if self.crew.take().is_some() {
+                excluded.push(format!(
+                    "crew: EXCLUDED on host profile {host}; owned by {owner}; not installed or verified by caboodle"
+                ));
+            }
+        }
+        Ok((self, excluded))
     }
 }
 
@@ -736,5 +795,46 @@ mod self_test_question_tests {
         user.self_test = false;
         user.question = "q".to_owned();
         assert!(!toml::to_string(&user).unwrap().contains("self_test"));
+    }
+}
+
+#[cfg(test)]
+mod host_profile_tests {
+    use super::{CrewMode, HostProfile, Plan, Profile};
+
+    fn plan() -> Plan {
+        let mut plan = Plan::for_profile(Profile::Everything);
+        plan.crew = Plan::for_crew(CrewMode::Both).crew;
+        plan.host_profiles = vec![HostProfile {
+            name: "mac".into(),
+            crew_excluded_owner: Some("st-peer-autopull".into()),
+        }];
+        plan
+    }
+
+    #[test]
+    fn host_profile_drops_crew_and_names_the_owner() {
+        let (selected, lines) = plan().for_host(Some("mac")).unwrap();
+        assert!(selected.crew.is_none());
+        assert_eq!(lines.len(), 1);
+        assert!(lines[0].contains("EXCLUDED") && lines[0].contains("st-peer-autopull"));
+        let (unchanged, none) = plan().for_host(None).unwrap();
+        assert!(unchanged.crew.is_some() && none.is_empty());
+        assert!(plan().for_host(Some("nonesuch")).is_err());
+    }
+
+    #[test]
+    fn host_profiles_must_be_named_uniquely_and_own_what_they_exclude() {
+        let mut duplicate = plan();
+        duplicate
+            .host_profiles
+            .push(duplicate.host_profiles[0].clone());
+        assert!(duplicate.validate().is_err());
+        let mut ownerless = plan();
+        ownerless.host_profiles[0].crew_excluded_owner = Some(" ".into());
+        assert!(ownerless.validate().is_err());
+        let mut crew_only = Plan::for_crew(CrewMode::Both);
+        crew_only.host_profiles = plan().host_profiles;
+        assert!(crew_only.for_host(Some("mac")).is_err());
     }
 }
