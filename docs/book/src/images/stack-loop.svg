@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" role="img" aria-labelledby="title description">
+  <title id="title">The quipu stack: knowledge returns to the next agent turn</title>
+  <desc id="description">Agents send activity to Camayoc. Camayoc sends tagged, quarantined episodes to Quipu. Quipu sends knowledge to Bobbin; Bobbin feeds the next agent turn. Yupana supplies committed structure to Quipu and code context to Bobbin. Caboodle installs, proves and observes the four tools.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="#a5c9c1"/></marker>
+  </defs>
+  <rect width="960" height="460" rx="20" fill="#20252b"/>
+  <rect x="40" y="180" width="895" height="260" rx="16" fill="none" stroke="#8b969f" stroke-dasharray="5 6"/>
+  <g fill="none" stroke="#a5c9c1" stroke-width="2" marker-end="url(#arrow)">
+    <path d="M165 125V200"/>
+    <path d="M280 245H395"/>
+    <path d="M510 290V360"/>
+    <path d="M395 395H20V82H50"/>
+    <path d="M820 360V245H625"/>
+    <path d="M715 395H625"/>
+    <path d="M820 125V180" stroke-dasharray="5 6"/>
+  </g>
+  <g font-family="system-ui, sans-serif" text-anchor="middle">
+    <g fill="#29373d" stroke="#5f9690">
+      <rect x="50" y="40" width="230" height="85" rx="12"/>
+      <rect x="50" y="200" width="230" height="90" rx="12"/>
+      <rect x="395" y="360" width="230" height="70" rx="12"/>
+      <rect x="715" y="360" width="210" height="70" rx="12"/>
+    </g>
+    <rect x="395" y="200" width="230" height="90" rx="12" fill="#493c32" stroke="#bd9872" stroke-width="2"/>
+    <rect x="715" y="40" width="210" height="85" rx="12" fill="#3e3540" stroke="#b692ac"/>
+    <g fill="#f4f0e9" font-size="23" font-weight="600">
+      <text x="165" y="72">agents</text>
+      <text x="165" y="233">camayoc</text>
+      <text x="510" y="233">quipu</text>
+      <text x="510" y="389">bobbin</text>
+      <text x="820" y="389">yupana</text>
+      <text x="820" y="72">caboodle</text>
+    </g>
+    <g fill="#d7dde0" font-size="15">
+      <text x="165" y="95">Claude Code · Codex</text>
+      <text x="165" y="114">run by shantytown / creel</text>
+      <text x="165" y="258">the knowledge keeper</text>
+      <text x="165" y="279">tagged · quarantined</text>
+      <text x="510" y="258">governed bitemporal graph</text>
+      <text x="510" y="279">facts must pass the gate</text>
+      <text x="510" y="413">context for the next turn</text>
+      <text x="820" y="413">live code graph · edit guard</text>
+      <text x="820" y="100">install + prove + observe</text>
+      <text x="203" y="164">activity</text>
+      <text x="338" y="224">episodes</text>
+      <text x="561" y="333">knowledge</text>
+      <text x="165" y="383">next agent turn</text>
+      <text x="779" y="318">promote committed</text>
+      <text x="779" y="338">structure</text>
+      <text x="670" y="430" font-size="12">code context</text>
+    </g>
+  </g>
+</svg>
