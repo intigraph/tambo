@@ -100,9 +100,10 @@ pub(crate) fn repair(bin: &Path) -> Result<Repair> {
         }
         Ok(_) => {
             // Build the new link beside the old one and rename over it, so qp
-            // is never absent and never a half-written file.
+            // is never absent and never a half-written file. Never clear the
+            // staging name first: whatever is already there is not provably
+            // ours, so creation refuses (AlreadyExists) and the repair fails.
             let staged = bin.join(format!(".qp.caboodle-{}", std::process::id()));
-            let _ = fs::remove_file(&staged);
             std::os::unix::fs::symlink("quipu", &staged)
                 .map_err(|e| format!("stage {}: {e}", staged.display()))?;
             fs::rename(&staged, &alias).map_err(|e| {
@@ -212,6 +213,19 @@ mod tests {
             leftovers.is_empty(),
             "staged link left behind: {leftovers:?}"
         );
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn repair_refuses_rather_than_delete_a_foreign_staging_file() {
+        let dir = fixture();
+        fs::write(dir.join("quipu"), b"q").unwrap();
+        symlink("missing", dir.join("qp")).unwrap();
+        let staged = dir.join(format!(".qp.caboodle-{}", std::process::id()));
+        fs::write(&staged, b"foreign marker").unwrap();
+        assert!(repair(&dir).is_err());
+        assert_eq!(fs::read(&staged).unwrap(), b"foreign marker");
+        assert_eq!(fs::read_link(dir.join("qp")).unwrap(), Path::new("missing"));
         fs::remove_dir_all(dir).unwrap();
     }
 
