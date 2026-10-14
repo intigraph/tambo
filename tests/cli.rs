@@ -3477,3 +3477,54 @@ fn skip_install_refuses_missing_alias_and_preserves_foreign_alias() {
         .stderr(predicate::str::contains("qp collision"));
     assert_eq!(fs::read(bin.join("qp")).unwrap(), foreign);
 }
+
+#[test]
+fn update_self_refuses_an_apt_owned_binary_and_keeps_the_symlink() {
+    use std::os::unix::fs::symlink;
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    let usr = root.path().join("usr-bin");
+    fs::create_dir_all(&bin).unwrap();
+    fs::create_dir_all(&usr).unwrap();
+    let packaged = usr.join("caboodle");
+    fs::write(&packaged, "#!/bin/sh\necho 'caboodle 0.0.1'\n").unwrap();
+    fs::set_permissions(&packaged, fs::Permissions::from_mode(0o755)).unwrap();
+    symlink(&packaged, bin.join("caboodle")).unwrap();
+    let resolved = fs::canonicalize(&packaged).unwrap();
+    for (owned, query) in [
+        (
+            true,
+            format!(
+                "#!/bin/sh\n[ \"$2\" = '{0}' ] && echo 'caboodle: {0}' && exit 0\nexit 1\n",
+                resolved.display()
+            ),
+        ),
+        (false, "#!/bin/sh\nexit 1\n".to_string()),
+    ] {
+        let fake = root.path().join("dpkg-query");
+        fs::write(&fake, query).unwrap();
+        fs::set_permissions(&fake, fs::Permissions::from_mode(0o755)).unwrap();
+        let assert = Command::cargo_bin("caboodle")
+            .unwrap()
+            .current_dir(root.path())
+            .env_clear()
+            .env("HOME", root.path())
+            .env("PATH", &bin)
+            .env("CABOODLE_DPKG_QUERY", &fake)
+            .args(["update-self", "--check"])
+            .assert()
+            .failure();
+        let stderr = String::from_utf8_lossy(&assert.get_output().stderr).to_string();
+        assert_eq!(
+            stderr.contains("managed by apt (package caboodle)"),
+            owned,
+            "{stderr}"
+        );
+        // The user path stays a symlink to the packaged binary, untouched.
+        assert_eq!(fs::read_link(bin.join("caboodle")).unwrap(), packaged);
+        assert_eq!(
+            fs::read_to_string(&packaged).unwrap(),
+            "#!/bin/sh\necho 'caboodle 0.0.1'\n"
+        );
+    }
+}

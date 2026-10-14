@@ -331,6 +331,7 @@ fn update_member(
     let program = crate::adapter::single_program(m)?;
     let version_args: Vec<&str> = m.version_argv.iter().map(String::as_str).collect();
     let destination = selected_path(&program.name)?;
+    crate::apt_owned::refuse_replacement(tool_id, &destination)?;
     crate::adapter::identify_member(m, &destination)?;
     let before = text(
         destination.to_str().context("binary path is not UTF-8")?,
@@ -518,6 +519,7 @@ fn update_binary(
         return Ok(());
     }
     let destination = selected_path(binary)?;
+    crate::apt_owned::refuse_replacement(tool_id, &destination)?;
     let version_arg = if tool == Some(ToolName::DesirePath) {
         "version"
     } else {
