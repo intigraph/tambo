@@ -34,20 +34,17 @@ design is in the [book](introduction.md).
 
 ## Related projects
 
+{{#include ../../stack-table.md:table}}
+
+### Supporting projects
+
 | repo | what it is |
 |---|---|
-| [quipu](https://github.com/scbrown/quipu) | AI-native knowledge graph with strict ontology enforcement |
-| [bobbin](https://github.com/scbrown/bobbin) | repo indexing and context injection for AI agents |
-| [camayoc](https://github.com/scbrown/camayoc) | bootstrap ontology, knowledge ingress, knowledge packs |
-| [yupana](https://github.com/scbrown/yupana) | structural code intelligence — impact before you touch |
-| [desire-path](https://github.com/scbrown/desire-path) | turn AI hallucinations into feature requests |
-| [seeds](https://github.com/scbrown/seeds) | beads-compatible work tracker (`sd`) on a quipu graph, with fact-level history |
 | [shantytown](https://github.com/scbrown/shantytown) | a small harness for running a crew of coding agents |
 | [creel](https://github.com/scbrown/creel) | parallel agent bursts, entirely in the browser |
 | [shanty](https://github.com/scbrown/shanty) | a terminal multiplexer wrapper that makes tmux feel like home |
 | [skein](https://github.com/scbrown/skein) | portable agentic skills — shell + HTTP only |
 | [beads](https://github.com/Dicklesworthstone/beads_rust) | issue tracking as agent memory — `br`, SQLite + JSONL |
-| [shuttle](https://github.com/scbrown/shuttle) | workflow engine — signed runs, windowed export, frozen history |
 | [quechua](https://github.com/scbrown/quechua) | the stack's shared vocabulary; caboodle pins a release by digest and loads it into Quipu ([catalog](https://scbrown.github.io/quechua/ns)) |
 
 See [the corpus](corpus.md) for share import and [profiles](profiles.md) for

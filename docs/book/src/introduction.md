@@ -8,11 +8,13 @@ installer around it.
 
 [Quipu](https://scbrown.github.io/quipu/) is the store: a governed, bitemporal
 knowledge graph. Camayoc prepares knowledge for it, Bobbin returns knowledge
-and repository context to the next agent turn, and Yupana contributes live
-code structure. **Caboodle is the installer**: install the tools, prove they
+and repository context to the next agent turn. Yupana enforces code policies
+and shows the blast radius before an edit. Desire Path turns your agents'
+hallucinations into feature requests. Seeds is a work item tracker backed by
+the Quipu knowledge base. **Caboodle is the installer**: install the tools, prove they
 work, and prepare their observability configuration.
 
-![The quipu stack loop: agents send activity to Camayoc, which sends tagged, quarantined episodes to Quipu. Quipu supplies knowledge to Bobbin, which feeds the next agent turn. Yupana contributes committed structure to Quipu and code context to Bobbin. Caboodle installs, proves, and observes the tools.](images/stack-loop.svg)
+![The quipu stack loop: agents send activity to Camayoc, which sends tagged, quarantined episodes to Quipu. Quipu supplies knowledge to Bobbin, which feeds the next agent turn. Yupana enforces code policies and contributes committed structure to Quipu and code context to Bobbin. Desire Path turns hallucinations into feature requests. Seeds tracks work items in the Quipu knowledge base. Caboodle installs, proves, and observes the tools.](images/stack-loop.svg)
 
 ## Three ways in
 
@@ -55,8 +57,10 @@ Explore [Skein](https://github.com/scbrown/skein),
 [Shuttle](https://github.com/scbrown/shuttle),
 [Creel](https://github.com/scbrown/creel),
 [Shanty](https://github.com/scbrown/shanty),
-[Desire Path](https://github.com/scbrown/desire-path), and
-[Yupana on its own](https://github.com/scbrown/yupana).
+[Desire Path](https://github.com/scbrown/desire-path) for turning hallucinations
+into feature requests, and
+[Yupana](https://github.com/scbrown/yupana) for policy enforcement and code impact.
+[Seeds](https://github.com/scbrown/seeds) tracks work items in the Quipu knowledge base.
 Agents can run under [Shantytown](https://github.com/scbrown/shantytown) or Creel.
 
 Work-tracking dependencies include the

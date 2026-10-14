@@ -17,15 +17,22 @@ not the bootstrap shell installer above it or external package managers.
 
 ## Release install
 
-Review the installer first, then run the same file you reviewed:
+Run the checksummed release installer in one line:
 
 ```bash
-curl -fsSLo /tmp/caboodle-install.sh \
-  https://raw.githubusercontent.com/scbrown/caboodle/main/scripts/install.sh
-less /tmp/caboodle-install.sh
-sh /tmp/caboodle-install.sh
-caboodle --version
+curl -fsSL https://raw.githubusercontent.com/scbrown/caboodle/main/scripts/install.sh | bash
 ```
+
+Pin a release by setting the version on the receiving shell:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/scbrown/caboodle/main/scripts/install.sh | CABOODLE_VERSION=vX.Y.Z bash
+```
+
+The script still verifies the release archive's SHA256 checksum before replacing
+the binary. Read the [installer source](https://github.com/scbrown/caboodle/blob/main/scripts/install.sh)
+when inspecting the bootstrap. After installation, `caboodle --version` reads
+back the installed release.
 
 Supported release targets are Linux x86_64, macOS x86_64, and macOS arm64.
 The default destination is `${CARGO_HOME:-$HOME/.cargo}/bin/caboodle`; override
