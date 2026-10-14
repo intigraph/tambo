@@ -762,6 +762,64 @@ fn package_owned_tools_are_judged_by_receipt_and_never_installed_by_caboodle() {
 }
 
 #[test]
+fn brew_delivers_members_from_the_stack_tap_and_never_downgrades() {
+    // aegis-6f1: a stateful fake brew. `installed` holds the brew-installed
+    // bobbin version (absent = not installed); `stable` is the tap's version.
+    let brew_body = r#"echo "$*" >> "$HOME/brew.log"
+state="$HOME/brew-installed"; stable=$(cat "$HOME/brew-stable")
+case "$*" in
+  "info --json=v2 --installed scbrown/tap/bobbin")
+    if [ -f "$state" ]; then printf '{"formulae":[{"tap":"scbrown/tap","installed":[{"version":"%s"}]}]}' "$(cat "$state")"; else printf '{"formulae":[]}'; fi; exit 0;;
+  "info --json=v2 scbrown/tap/bobbin")
+    printf '{"formulae":[{"tap":"scbrown/tap","versions":{"stable":"%s"}}]}' "$stable"; exit 0;;
+  "install scbrown/tap/bobbin"|"upgrade scbrown/tap/bobbin") echo "$stable" > "$state"; exit 0;;
+  info*) printf '{"formulae":[]}'; exit 0;;
+esac
+exit 1"#;
+    // (installed by brew, tap stable, bobbin on PATH, expected stdout, brew verb expected)
+    for (installed, stable, path_bobbin, expect, verb) in [
+        (None, "0.27.3", None, "bobbin: delivered by brew (scbrown/tap/bobbin 0.27.3) and verified", Some("install")),
+        (Some("0.28.0"), "0.28.0", None, "bobbin: ahead of reviewed pin; downgrade refused (package-owned: brew scbrown/tap/bobbin 0.28.0;", None),
+        (Some("0.20.0"), "0.27.3", None, "bobbin: delivered by brew (scbrown/tap/bobbin 0.27.3) and verified", Some("upgrade")),
+        (None, "0.20.0", None, "bobbin: current", None),
+        (None, "0.27.3", Some("0.99.0"), "bobbin: installed bobbin 0.99.0 is newer than scbrown/tap 0.27.3; not installed by brew", None),
+    ] {
+        let root = tempfile::tempdir().unwrap();
+        let bin = root.path().join("bin");
+        fs::create_dir(&bin).unwrap();
+        install_fakes(root.path(), &bin);
+        command(root.path(), &bin)
+            .args(["plan", "--profile", "retrieval"])
+            .assert()
+            .success();
+        if let Some(version) = path_bobbin {
+            let fake = fs::read_to_string(bin.join("bobbin")).unwrap();
+            fs::write(bin.join("bobbin"), fake.replace("bobbin 0.27.3", &format!("bobbin {version}"))).unwrap();
+        }
+        fs::write(root.path().join("brew-stable"), stable).unwrap();
+        if let Some(version) = installed {
+            fs::write(root.path().join("brew-installed"), version).unwrap();
+        }
+        fake_tool(root.path(), "brew", brew_body);
+        let out = command(root.path(), &bin)
+            .env("CABOODLE_BREW", root.path().join("brew"))
+            .arg("update")
+            .output()
+            .unwrap();
+        let stdout = String::from_utf8_lossy(&out.stdout);
+        assert!(stdout.contains(expect), "case {installed:?}/{stable}: {stdout}\n{}", String::from_utf8_lossy(&out.stderr));
+        let log = fs::read_to_string(root.path().join("brew.log")).unwrap_or_default();
+        for v in ["install", "upgrade"] {
+            assert_eq!(
+                log.contains(&format!("{v} scbrown/tap/bobbin")),
+                verb == Some(v),
+                "case {installed:?}/{stable}: brew {v}?\n{log}"
+            );
+        }
+    }
+}
+
+#[test]
 fn check_updates_reads_quipu_from_cargo_home_before_a_shadowing_path() {
     let root = tempfile::tempdir().unwrap();
     let bin = root.path().join("bin");

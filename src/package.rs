@@ -73,6 +73,110 @@ pub fn apt_receipt(program: &str) -> Option<Receipt> {
     })
 }
 
+/// The Homebrew tap that publishes the stack (aegis-em2). A formula installed
+/// from any other tap is package-owned but never driven by caboodle.
+pub const STACK_TAP: &str = "scbrown/tap";
+
+/// The stack formula for a member tool. caboodle-self is NOT here: on the Mac
+/// its installer lane owns it until the caboodle cutover (aegis-6f1 (a)).
+#[must_use]
+pub fn brew_formula(tool: ToolName) -> Option<&'static str> {
+    match tool {
+        ToolName::Bobbin => Some("bobbin"),
+        ToolName::DesirePath => Some("desire-path"),
+        ToolName::Quipu => Some("quipu"),
+        ToolName::Yupana => Some("yupana"),
+        ToolName::Member("seeds") => Some("seeds"),
+        _ => None,
+    }
+}
+
+/// The brew executable, only where caboodle may drive it: macOS by default,
+/// or any host that names one explicitly in CABOODLE_BREW (tests use a fake).
+#[must_use]
+pub fn brew_program() -> Option<std::ffi::OsString> {
+    if let Some(explicit) = env::var_os("CABOODLE_BREW") {
+        return Some(explicit);
+    }
+    cfg!(target_os = "macos").then(|| "brew".into())
+}
+
+/// `brew info --json=v2 --installed <tap>/<formula>`: the installed version,
+/// and only when the formula really comes from the stack tap.
+fn brew_info(brew: &std::ffi::OsStr, formula: &str) -> Option<String> {
+    let out = Command::new(brew)
+        .args([
+            "info",
+            "--json=v2",
+            "--installed",
+            &format!("{STACK_TAP}/{formula}"),
+        ])
+        .output()
+        .ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    let info: serde_json::Value = serde_json::from_slice(&out.stdout).ok()?;
+    let entry = info.get("formulae")?.as_array()?.first()?;
+    if entry.get("tap")?.as_str()? != STACK_TAP {
+        return None;
+    }
+    let version = entry
+        .get("installed")?
+        .as_array()?
+        .first()?
+        .get("version")?
+        .as_str()?;
+    // Homebrew marks rebuilds as `<version>_<n>`; the pin names the upstream.
+    Some(version.split('_').next()?.to_owned())
+}
+
+/// The brew receipt for a member tool installed from the stack tap.
+#[must_use]
+pub fn brew_receipt(tool: ToolName) -> Option<Receipt> {
+    let formula = brew_formula(tool)?;
+    let version = brew_info(&brew_program()?, formula)?;
+    Some(Receipt {
+        manager: "brew",
+        package: format!("{STACK_TAP}/{formula}"),
+        version,
+    })
+}
+
+/// The tap's current stable version for a member, when brew can read it.
+#[must_use]
+pub fn brew_available(tool: ToolName) -> Option<String> {
+    let formula = brew_formula(tool)?;
+    let out = Command::new(brew_program()?)
+        .args(["info", "--json=v2", &format!("{STACK_TAP}/{formula}")])
+        .output()
+        .ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    let info: serde_json::Value = serde_json::from_slice(&out.stdout).ok()?;
+    let entry = info.get("formulae")?.as_array()?.first()?;
+    if entry.get("tap")?.as_str()? != STACK_TAP {
+        return None;
+    }
+    Some(entry.get("versions")?.get("stable")?.as_str()?.to_owned())
+}
+
+/// Install or upgrade a member from the stack tap. Brew runs as the user (no
+/// root), so caboodle drives it directly (aegis-6f1 ruling).
+pub fn brew_converge(tool: ToolName, upgrade: bool) -> anyhow::Result<()> {
+    let formula = brew_formula(tool).ok_or_else(|| anyhow::anyhow!("no stack formula"))?;
+    let brew = brew_program().ok_or_else(|| anyhow::anyhow!("brew is not available"))?;
+    let verb = if upgrade { "upgrade" } else { "install" };
+    let status = Command::new(&brew)
+        .args([verb, &format!("{STACK_TAP}/{formula}")])
+        .status()?;
+    if !status.success() {
+        anyhow::bail!("brew {verb} {STACK_TAP}/{formula} failed ({status})");
+    }
+    Ok(())
+}
+
 /// How a package-owned tool stands against its reviewed pin.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Standing {
@@ -107,6 +211,15 @@ mod tests {
         assert_eq!(upstream_version("0.13.0-2"), "0.13.0");
         assert_eq!(upstream_version("1:0.13.0-2"), "0.13.0");
         assert_eq!(upstream_version("0.12.1-3"), "0.12.1");
+    }
+
+    #[test]
+    fn caboodle_self_and_untapped_tools_have_no_stack_formula() {
+        assert_eq!(brew_formula(ToolName::Bobbin), Some("bobbin"));
+        assert_eq!(brew_formula(ToolName::DesirePath), Some("desire-path"));
+        assert_eq!(brew_formula(ToolName::Member("seeds")), Some("seeds"));
+        assert_eq!(brew_formula(ToolName::Camayoc), None);
+        assert_eq!(brew_formula(ToolName::Member("shuttle")), None);
     }
 
     #[test]
