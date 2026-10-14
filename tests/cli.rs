@@ -1502,6 +1502,70 @@ fn crew_apply_never_downgrades_a_newer_shantytown() {
 }
 
 #[test]
+fn crew_apply_refuses_to_replace_a_present_st_whose_version_fails() {
+    // Review falsifier (aegis-fv4): a PRESENT st that cannot report its version
+    // is unknown, not missing. It must never be replaced by the older pin.
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    let st = bin.join("st");
+    let fake = fs::read_to_string(&st).unwrap();
+    assert!(fake.contains("echo 'st 0.4.0 (test)'; exit 0"));
+    fs::write(
+        &st,
+        fake.replace("echo 'st 0.4.0 (test)'; exit 0", "echo broken >&2; exit 42"),
+    )
+    .unwrap();
+    fake_tool(&bin, "curl", "echo \"$*\" >> \"$HOME/curl.log\"; exit 22");
+    command(root.path(), &bin)
+        .args(["plan", "--profile", "crew", "--crew", "shantytown"])
+        .assert()
+        .success();
+    command(root.path(), &bin)
+        .arg("apply")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(
+            "shantytown: present but its version is unreadable",
+        ))
+        .stdout(predicate::str::contains(
+            "refusing to replace it; not installed",
+        ));
+    let downloads = fs::read_to_string(root.path().join("curl.log")).unwrap_or_default();
+    assert!(!downloads.contains("shantytown"), "{downloads}");
+    assert!(fs::symlink_metadata(root.path().join(".cargo/bin/st")).is_err());
+}
+
+#[test]
+fn crew_apply_installs_shantytown_only_when_st_is_confirmed_absent() {
+    // Positive control: with NO st anywhere on PATH, apply does try to install
+    // the reviewed wheel (the download is made to fail and is logged).
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    fs::remove_file(bin.join("st")).unwrap();
+    fake_tool(&bin, "curl", "echo \"$*\" >> \"$HOME/curl.log\"; exit 22");
+    let path = format!("{}:/usr/bin:/bin", bin.display());
+    command(root.path(), &bin)
+        .env("PATH", &path)
+        .args(["plan", "--profile", "crew", "--crew", "shantytown"])
+        .assert()
+        .success();
+    command(root.path(), &bin)
+        .env("PATH", &path)
+        .arg("apply")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "shantytown-0.4.0-py3-none-any.whl",
+        ));
+    let downloads = fs::read_to_string(root.path().join("curl.log")).unwrap_or_default();
+    assert!(downloads.contains("shantytown"), "{downloads}");
+}
+
+#[test]
 fn host_profile_excludes_crew_explicitly_and_refuses_unknown_names() {
     let root = tempfile::tempdir().unwrap();
     let bin = root.path().join("bin");
