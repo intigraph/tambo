@@ -548,6 +548,33 @@ fn reviewed_drift_status(installed: &str, desired: &str) -> &'static str {
     }
 }
 
+/// A tool whose binary a package manager owns is judged by its package receipt
+/// and never installed by caboodle (aegis-6f1, option A): the package lane is
+/// its only writer. Returns the line to print and whether it is current.
+fn package_owned_status(name: crate::model::ToolName, desired: &str) -> Option<(String, bool)> {
+    use crate::package::{apt_receipt, primary_program, standing, Standing};
+    let receipt = apt_receipt(&primary_program(name)?)?;
+    let status = standing(&receipt.version, desired);
+    let verdict = match status {
+        Standing::Current => "current",
+        Standing::Ahead => "ahead of reviewed pin; downgrade refused",
+        Standing::Behind => {
+            "behind reviewed pin; delivered by the package lane, not installed by caboodle"
+        }
+        Standing::Unknown => "version drift; review required",
+    };
+    Some((
+        format!(
+            "{}: {verdict} (package-owned: {} {} {}; reviewed: {desired})",
+            name.as_str(),
+            receipt.manager,
+            receipt.package,
+            receipt.version
+        ),
+        status == Standing::Current,
+    ))
+}
+
 pub fn check_updates(plan: &Plan) -> Result<bool> {
     plan.validate()?;
     let mut current = true;
@@ -559,6 +586,11 @@ pub fn check_updates(plan: &Plan) -> Result<bool> {
                 "quipu: externally owned; release convergence not assessed ({})",
                 adapter.version()?
             );
+            continue;
+        }
+        if let Some((line, is_current)) = package_owned_status(name, &desired) {
+            current &= is_current;
+            println!("{line}");
             continue;
         }
         match adapter.version() {
@@ -600,6 +632,10 @@ pub fn update(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
                 "quipu: externally owned; update skipped ({})",
                 adapter.version()?
             );
+            continue;
+        }
+        if let Some((line, _)) = package_owned_status(name, &adapter.desired_version()) {
+            println!("{line}");
             continue;
         }
         let before = adapter.version().ok();
