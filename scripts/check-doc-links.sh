@@ -5,5 +5,27 @@
 set -eu
 cd "$(dirname "$0")/.."
 repo_uri=$(python3 -c 'from pathlib import Path; print(Path.cwd().as_uri())')
+# check-docs.sh supplies the fresh build root. Keep the original argv intact.
+root_dir=
+expect_root=false
+for arg do
+  if [ "$expect_root" = true ]; then
+    root_dir=$arg
+    expect_root=false
+  else
+    case "$arg" in
+      --root-dir) expect_root=true ;;
+      --root-dir=*) root_dir=${arg#--root-dir=} ;;
+    esac
+  fi
+done
+if [ "$expect_root" = true ]; then
+  echo 'Missing --root-dir value' >&2
+  exit 2
+fi
+if [ -n "$root_dir" ]; then
+  book_uri=$(python3 -c 'from pathlib import Path; import sys; print((Path(sys.argv[1]).resolve() / "caboodle").as_uri())' "$root_dir")
+  set -- --remap "^https://scbrown\\.github\\.io/caboodle/ ${book_uri}/" "$@"
+fi
 exec lychee --config .lychee.toml \
   --remap "^https://github\\.com/scbrown/caboodle/blob/main/ ${repo_uri}/" "$@"
