@@ -1,0 +1,6 @@
+# Canonical text pendant members use the Quipu semantic merge driver when configured.
+**/pendant/export.nt merge=quipu
+**/pendant/shapes.ttl merge=quipu
+**/pendant/manifest.json merge=quipu
+**/pendant/manifest.ttl merge=quipu
+*.nt diff=quipu

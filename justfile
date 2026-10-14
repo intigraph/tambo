@@ -21,6 +21,7 @@ check:
     cargo clippy --all-targets --all-features -- -D warnings
     cargo test --all-features
     scripts/test-release-install.sh
+    python3 scripts/test-stack-pendants.py
 
 # Build the mdBook (requires mdbook)
 book:

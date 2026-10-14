@@ -1,0 +1,54 @@
+<https://caboodle.dev/stack/bobbin> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://caboodle.dev/ns#StackComponent> .
+<https://caboodle.dev/stack/bobbin> <http://www.w3.org/2000/01/rdf-schema#comment> "Semantic code indexing and retrieval — chunks code, generates embeddings into LanceDB, and serves search, context injection, and RAG over MCP." .
+<https://caboodle.dev/stack/bobbin> <http://www.w3.org/2000/01/rdf-schema#label> "bobbin" .
+<https://caboodle.dev/stack/bobbin> <https://caboodle.dev/ns#language> "Rust" .
+<https://caboodle.dev/stack/bobbin> <https://caboodle.dev/ns#readsFrom> <https://caboodle.dev/stack/quipu> .
+<https://caboodle.dev/stack/bobbin> <https://caboodle.dev/ns#repository> <https://github.com/scbrown/bobbin> .
+<https://caboodle.dev/stack/bobbin> <https://caboodle.dev/ns#roleInStack> "retrieval index" .
+<https://caboodle.dev/stack/caboodle> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://caboodle.dev/ns#StackComponent> .
+<https://caboodle.dev/stack/caboodle> <http://www.w3.org/2000/01/rdf-schema#comment> "The whole kit — an AI-installable install wizard that installs the stack, proves it works with paired negative controls, and watches it run." .
+<https://caboodle.dev/stack/caboodle> <http://www.w3.org/2000/01/rdf-schema#label> "caboodle" .
+<https://caboodle.dev/stack/caboodle> <https://caboodle.dev/ns#installs> <https://caboodle.dev/stack/bobbin> .
+<https://caboodle.dev/stack/caboodle> <https://caboodle.dev/ns#installs> <https://caboodle.dev/stack/camayoc> .
+<https://caboodle.dev/stack/caboodle> <https://caboodle.dev/ns#installs> <https://caboodle.dev/stack/quipu> .
+<https://caboodle.dev/stack/caboodle> <https://caboodle.dev/ns#installs> <https://caboodle.dev/stack/shantytown> .
+<https://caboodle.dev/stack/caboodle> <https://caboodle.dev/ns#installs> <https://caboodle.dev/stack/yupana> .
+<https://caboodle.dev/stack/caboodle> <https://caboodle.dev/ns#language> "Rust" .
+<https://caboodle.dev/stack/caboodle> <https://caboodle.dev/ns#observes> <https://caboodle.dev/stack/prometheus> .
+<https://caboodle.dev/stack/caboodle> <https://caboodle.dev/ns#repository> <https://github.com/scbrown/caboodle> .
+<https://caboodle.dev/stack/camayoc> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://caboodle.dev/ns#StackComponent> .
+<https://caboodle.dev/stack/camayoc> <http://www.w3.org/2000/01/rdf-schema#comment> "The knot-keeper: bootstrap ontology, knowledge ingress discipline, and knowledge-pack production. Owns what facts MEAN and how they earn their way into the graph; runs the governed RML executor for structured sources." .
+<https://caboodle.dev/stack/camayoc> <http://www.w3.org/2000/01/rdf-schema#label> "camayoc" .
+<https://caboodle.dev/stack/camayoc> <https://caboodle.dev/ns#language> "Python" .
+<https://caboodle.dev/stack/camayoc> <https://caboodle.dev/ns#repository> <https://github.com/scbrown/camayoc> .
+<https://caboodle.dev/stack/camayoc> <https://caboodle.dev/ns#roleInStack> "ingress keeper" .
+<https://caboodle.dev/stack/camayoc> <https://caboodle.dev/ns#writesTo> <https://caboodle.dev/stack/quipu> .
+<https://caboodle.dev/stack/creel> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://caboodle.dev/ns#StackComponent> .
+<https://caboodle.dev/stack/creel> <http://www.w3.org/2000/01/rdf-schema#comment> "A static page that runs agent loops in browser tabs — no server, no build step, in-page MCP backends, durable state pushed to creel-state." .
+<https://caboodle.dev/stack/creel> <http://www.w3.org/2000/01/rdf-schema#label> "creel" .
+<https://caboodle.dev/stack/creel> <https://caboodle.dev/ns#language> "JavaScript" .
+<https://caboodle.dev/stack/creel> <https://caboodle.dev/ns#repository> <https://github.com/scbrown/creel> .
+<https://caboodle.dev/stack/creel> <https://caboodle.dev/ns#roleInStack> "browser harness" .
+<https://caboodle.dev/stack/prometheus> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://caboodle.dev/ns#StackComponent> .
+<https://caboodle.dev/stack/prometheus> <http://www.w3.org/2000/01/rdf-schema#comment> "Every tool's metrics, consolidated. Caboodle's third proof: observable means Prometheus actually scrapes each tool's declared exporter." .
+<https://caboodle.dev/stack/prometheus> <http://www.w3.org/2000/01/rdf-schema#label> "prometheus" .
+<https://caboodle.dev/stack/prometheus> <https://caboodle.dev/ns#roleInStack> "observability" .
+<https://caboodle.dev/stack/quipu> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://caboodle.dev/ns#StackComponent> .
+<https://caboodle.dev/stack/quipu> <http://www.w3.org/2000/01/rdf-schema#comment> "AI-native knowledge graph with strict ontology enforcement — the governed store. Bitemporal EAVT fact log, SPARQL, SHACL-gated writes, named graphs, knowledge packs." .
+<https://caboodle.dev/stack/quipu> <http://www.w3.org/2000/01/rdf-schema#label> "quipu" .
+<https://caboodle.dev/stack/quipu> <https://caboodle.dev/ns#language> "Rust" .
+<https://caboodle.dev/stack/quipu> <https://caboodle.dev/ns#repository> <https://github.com/scbrown/quipu> .
+<https://caboodle.dev/stack/quipu> <https://caboodle.dev/ns#roleInStack> "governed store" .
+<https://caboodle.dev/stack/shantytown> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://caboodle.dev/ns#StackComponent> .
+<https://caboodle.dev/stack/shantytown> <http://www.w3.org/2000/01/rdf-schema#comment> "A small zero-dependency Python harness for running a crew of coding agents; installs the st console script." .
+<https://caboodle.dev/stack/shantytown> <http://www.w3.org/2000/01/rdf-schema#label> "shantytown" .
+<https://caboodle.dev/stack/shantytown> <https://caboodle.dev/ns#language> "Python" .
+<https://caboodle.dev/stack/shantytown> <https://caboodle.dev/ns#repository> <https://github.com/scbrown/shantytown> .
+<https://caboodle.dev/stack/shantytown> <https://caboodle.dev/ns#roleInStack> "crew harness" .
+<https://caboodle.dev/stack/yupana> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://caboodle.dev/ns#StackComponent> .
+<https://caboodle.dev/stack/yupana> <http://www.w3.org/2000/01/rdf-schema#comment> "In-memory, multi-tenant code-analysis engine — AST, symbols, and call graph as the structural signal, served over MCP/HTTP with tier-tagged facts." .
+<https://caboodle.dev/stack/yupana> <http://www.w3.org/2000/01/rdf-schema#label> "yupana" .
+<https://caboodle.dev/stack/yupana> <https://caboodle.dev/ns#feedsInto> <https://caboodle.dev/stack/bobbin> .
+<https://caboodle.dev/stack/yupana> <https://caboodle.dev/ns#language> "Rust" .
+<https://caboodle.dev/stack/yupana> <https://caboodle.dev/ns#repository> <https://github.com/scbrown/yupana> .
+<https://caboodle.dev/stack/yupana> <https://caboodle.dev/ns#roleInStack> "structural code facts" .
