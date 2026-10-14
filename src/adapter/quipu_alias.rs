@@ -75,7 +75,7 @@ pub(crate) enum Repair {
     Retargeted,
     ForeignPreserved,
     /// quipu resolves to a file a package manager installed; its package owns
-    /// the aliases, so nothing here is repaired (aegis-g2t).
+    /// the aliases, so nothing here is repaired.
     PackageManaged(String),
 }
 
