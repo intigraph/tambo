@@ -710,7 +710,7 @@ struct Yupana;
 struct DesirePath;
 
 struct Camayoc;
-const BOBBIN_VERSION: &str = "0.25.2";
+const BOBBIN_VERSION: &str = "0.27.3";
 
 impl Adapter for Camayoc {
     fn name(&self) -> ToolName {
@@ -882,7 +882,7 @@ impl Adapter for Bobbin {
     }
 }
 
-const YUPANA_VERSION: &str = "0.10.7";
+const YUPANA_VERSION: &str = "0.12.7";
 
 impl Adapter for Yupana {
     fn name(&self) -> ToolName {
@@ -951,20 +951,20 @@ fn yupana_release_target() -> Result<&'static str> {
     yupana_release_for(env::consts::ARCH, env::consts::OS).map(|(target, _)| target)
 }
 
-// Digests of the published v0.10.7 archives, verified against SHA256SUMS.
+// Digests of the published v0.12.7 archives, verified against SHA256SUMS.
 fn yupana_release_for(arch: &str, os: &str) -> Result<(&'static str, &'static str)> {
     match (arch, os) {
         ("x86_64", "linux") => Ok((
             "x86_64-linux-gnu",
-            "7ed132173fa6c141772b368c851c1559997c958b808e0d46220142e2edab4922",
+            "44bfefb529a5977cd6ced67e662ca1cab87ec53e62a4cdf173ebbb367b5f8667",
         )),
         ("aarch64", "macos") => Ok((
             "aarch64-apple-darwin",
-            "90acb9a228c3e80282824322c25b550a4ea536f2c422d50288190afade6a6302",
+            "7f02e1c96b97a21abbc5478341d5ee44d10ea860b803e45d721b1c5a66647770",
         )),
         ("x86_64", "macos") => Ok((
             "x86_64-apple-darwin",
-            "362f27c7ea9c6da2c940cf74706284c9f96a230364d0d55ae12b31e1676c9266",
+            "94b872a6cd3ea9de4bf4271b1d16fa569f1979b4d216e0fd307d88e1b66364a2",
         )),
         _ => bail!("Yupana v{YUPANA_VERSION} has no checksummed CABOODLE release for {arch}-{os}"),
     }
