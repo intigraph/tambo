@@ -1,0 +1,40 @@
+name: Stack table drift
+
+on:
+  push:
+    paths:
+      - README.md
+      - docs/stack-table.md
+      - docs/stack/README-TEMPLATE.md
+      - scripts/check-stack-table.py
+      - scripts/test-stack-table.py
+      - .github/workflows/stack-table.yml
+  pull_request:
+    paths:
+      - README.md
+      - docs/stack-table.md
+      - docs/stack/README-TEMPLATE.md
+      - scripts/check-stack-table.py
+      - scripts/test-stack-table.py
+      - .github/workflows/stack-table.yml
+  schedule:
+    - cron: '23 8 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  local:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 scripts/check-stack-table.py README.md docs/stack/README-TEMPLATE.md
+      - run: python3 scripts/test-stack-table.py
+      - name: Compare published tables
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: python3 scripts/check-stack-table.py --remote

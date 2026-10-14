@@ -32,6 +32,8 @@ awk '
   /^## / { section = "" }
   /^```bash$/ && section != "" { block++; capture = (section == "success" || block == 1); next }
   /^```$/ { capture = 0; next }
+  # PATH setup is a separate documented block from the one-line bootstrap.
+  section == "install" && /^export PATH=/ { print; next }
   capture { print }
 ' "$repo/README.md" > "$work/commands.sh"
 awk '

@@ -93,27 +93,16 @@ each book, and diverging from it is a review finding.
 
 ## 3. The shared stack block (identical everywhere)
 
-Copy verbatim, then mark your own row by putting **(you are here)** straight after the repo link, as in `| [yupana](…) **(you are here)** | … |` (the pilot's placement). It lists the
-six stack repos only. Other projects belong on caboodle's book page, not in
-every README.
+The canonical table is [docs/stack-table.md](../stack-table.md). Copy its complete
+marked block verbatim into the seven stack READMEs: Caboodle, Quipu, Camayoc,
+Bobbin, Yupana, Desire Path and Seeds. Keep the Shuttle row. Do not add a
+repository-specific self marker; every copy must remain byte-identical.
 
-```markdown
-## 🧺 The stack
-
-Caboodle installs these together and proves each one works; every tool also stands alone.
-
-| tool | what it gives your agents |
-|---|---|
-| [caboodle](https://github.com/scbrown/caboodle) | one wizard that installs the stack and proves it works |
-| [quipu](https://github.com/scbrown/quipu) | a knowledge graph that refuses facts that break its rules |
-| [camayoc](https://github.com/scbrown/camayoc) | the starter vocabulary, and how new knowledge earns its way in |
-| [bobbin](https://github.com/scbrown/bobbin) | search and context over your repositories, served over MCP |
-| [yupana](https://github.com/scbrown/yupana) | which code calls which: the blast radius before an edit |
-| [desire-path](https://github.com/scbrown/desire-path) | the tool calls your agents get wrong, so you can fix them |
-```
-
-The row wording is outcome-first, like the taglines. Changing it is a change
-to this standard, made here, and then synced to all six repos.
+The [README template](README-TEMPLATE.md) carries the same marked block. Run
+`python3 scripts/check-stack-table.py README.md docs/stack/README-TEMPLATE.md`
+from the repository root to verify both local copies, and add `--remote` to
+check the seven published READMEs. Update the canonical source and copies
+together when changing outcome-first row wording.
 
 ## 4. Rules every README is held to
 

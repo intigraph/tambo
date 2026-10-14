@@ -37,12 +37,21 @@ Checksummed releases: Linux x86_64, macOS arm64 and macOS x86_64.
 The installer verifies SHA256 before placing the binary in `~/.cargo/bin`.
 
 ```bash
-curl -fsSLO https://raw.githubusercontent.com/scbrown/caboodle/main/scripts/install.sh
-sh install.sh
+curl -fsSL https://raw.githubusercontent.com/scbrown/caboodle/main/scripts/install.sh | bash
+```
+
+To pin a release, pass the version to the receiving shell:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/scbrown/caboodle/main/scripts/install.sh | CABOODLE_VERSION=vX.Y.Z bash
+```
+
+Add the install directory to this shell's PATH:
+
+```bash
 export PATH="${CARGO_HOME:-$HOME/.cargo}/bin:$PATH"
 ```
 
-`install.sh` fetches the latest release; set `CABOODLE_VERSION=vX.Y.Z` to pin one.
 The `export` lasts for this shell only. To keep it, add the same line once to
 your shell's startup file: `~/.bashrc` for bash, `~/.zshrc` for zsh (the macOS
 default). For bash:
@@ -180,16 +189,20 @@ installed files and removal; `caboodle doctor` names missing prerequisites.
 
 Caboodle installs these together and proves each one works; every tool also stands alone.
 
+<!-- stack-table:start -->
+
 | tool | what it gives your agents |
 |---|---|
-| [caboodle](https://github.com/scbrown/caboodle) **(you are here)** | one wizard that installs the stack and proves it works |
+| [caboodle](https://github.com/scbrown/caboodle) | one wizard that installs the stack and proves it works |
 | [quipu](https://github.com/scbrown/quipu) | a knowledge graph that refuses facts that break its rules |
 | [camayoc](https://github.com/scbrown/camayoc) | the starter vocabulary, and how new knowledge earns its way in |
 | [bobbin](https://github.com/scbrown/bobbin) | search and context over your repositories, served over MCP |
-| [yupana](https://github.com/scbrown/yupana) | which code calls which: the blast radius before an edit |
-| [desire-path](https://github.com/scbrown/desire-path) | the tool calls your agents get wrong, so you can fix them |
-| [seeds](https://github.com/scbrown/seeds) | the work your agents track, as facts in the graph with full history |
+| [yupana](https://github.com/scbrown/yupana) | enforces your code policies and shows the blast radius before an edit |
+| [desire-path](https://github.com/scbrown/desire-path) | turns your agents' hallucinations into feature requests |
+| [seeds](https://github.com/scbrown/seeds) | a work item tracker backed by the Quipu knowledge base |
 | [shuttle](https://github.com/scbrown/shuttle) | the workflows your agents run, every step signed and kept in the graph |
+
+<!-- stack-table:end -->
 
 ## Contributing
 
