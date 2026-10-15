@@ -285,6 +285,54 @@ enum Commands {
         #[arg(long)]
         endpoint: String,
     },
+    /// Pendant packs a repository ships under .quipu/packs/
+    Packs {
+        #[command(subcommand)]
+        command: PacksCommand,
+    },
+}
+
+#[derive(Subcommand)]
+enum PacksCommand {
+    /// Which packs and pointer endpoints may load (~/.config/caboodle/pack-trust.toml)
+    Trust {
+        /// Trust file to read and write instead of the default
+        #[arg(long, global = true)]
+        file: Option<PathBuf>,
+        #[command(subcommand)]
+        command: TrustCommand,
+    },
+}
+
+#[derive(Subcommand)]
+enum TrustCommand {
+    /// Autoload every repository of this owner (host/owner, e.g. github.com/scbrown)
+    Own { owner: String },
+    /// Admit exactly one foreign pack archive: repository plus its sha256
+    Allow {
+        repo: String,
+        sha256: String,
+        #[arg(long)]
+        note: Option<String>,
+    },
+    /// Admit exactly one pointer endpoint declared by a foreign repository's pack
+    AllowEndpoint {
+        repo: String,
+        endpoint: String,
+        #[arg(long)]
+        note: Option<String>,
+    },
+    /// Print the trust file
+    List,
+    /// Decide one pack: exit 0 to load, 3 refused (message names the pack)
+    Check {
+        /// The repository's git remote URL
+        remote: String,
+        sha256: String,
+        /// The pack's path, named in a refusal
+        #[arg(long, default_value = "pack")]
+        pack: String,
+    },
 }
 
 #[derive(Clone, Copy, ValueEnum)]
@@ -646,6 +694,54 @@ fn main() -> Result<()> {
             let count = emission::flush(&queue, &endpoint)?;
             println!("delivered queued episodes: {count}");
         }
+        Commands::Packs {
+            command: PacksCommand::Trust { file, command },
+        } => run_pack_trust(file, command)?,
+    }
+    Ok(())
+}
+
+fn run_pack_trust(file: Option<PathBuf>, command: TrustCommand) -> Result<()> {
+    use caboodle::pack_trust::{default_path, Decision, TrustConfig};
+    let path = match file {
+        Some(path) => path,
+        None => default_path()?,
+    };
+    let mut trust = TrustConfig::load(&path)?;
+    let changed = match command {
+        TrustCommand::Own { owner } => trust.add_owner(&owner)?,
+        TrustCommand::Allow { repo, sha256, note } => {
+            trust.add_pack(&repo, &sha256, note.as_deref())?
+        }
+        TrustCommand::AllowEndpoint {
+            repo,
+            endpoint,
+            note,
+        } => trust.add_endpoint(&repo, &endpoint, note.as_deref())?,
+        TrustCommand::List => {
+            print!("{}", toml::to_string_pretty(&trust)?);
+            return Ok(());
+        }
+        TrustCommand::Check {
+            remote,
+            sha256,
+            pack,
+        } => {
+            match trust.decide_pack(&remote, &pack, &sha256) {
+                Decision::Allow { basis } => println!("load: {basis}"),
+                Decision::Refuse { message } => {
+                    eprintln!("refused: {message}");
+                    std::process::exit(3);
+                }
+            }
+            return Ok(());
+        }
+    };
+    if changed {
+        trust.save(&path)?;
+        println!("recorded in {}", path.display());
+    } else {
+        println!("already recorded in {}", path.display());
     }
     Ok(())
 }
