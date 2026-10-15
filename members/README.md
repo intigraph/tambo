@@ -57,3 +57,13 @@ A verify step may set `stdin`, text written to the program's standard input
 with `{marker}` substituted. shuttle uses it to define a workflow without
 writing a file. The B3 rule covers it: a step handed the marker on stdin may
 not also assert it present.
+
+Chaski pins `chaski-reactor` 0.1.0 and its three console programs (`chaski`,
+`chaski-event`, `chaski-once`). It requires Python >=3.11; the wheel installer
+checks `Requires-Python` before installing. Its dependency PyYAML==6.0.3 is
+resolved by pip and is not digest-pinned by this manifest. The functional proof
+runs a local demo and reads its marker through a separate status command.
+`cargo test --locked --test chaski_member_live -- --ignored` installs the
+published wheel into a temporary home and also proves a no-op writer fails.
+The member workflow runs this on Linux and macOS with Python 3.12; this is
+source CI evidence, not evidence of an installation on a user's Mac.
