@@ -2,7 +2,7 @@
 
 This terminal recording compares the retained `cargo metadata` baseline at
 `47389353fe7f73e6668745a7607125a1427a0d6e` with source candidate
-`3278c3402f55` (the implementation commit). The baseline declares the Caboodle
+`23d7164` (the paired-update implementation and registry-checksum commit). The baseline declares the Caboodle
 package and one executable. The candidate declares Tambo and both `tambo` and
 `caboodle`, then runs each candidate's actual version command. Both entry points
 use the same CLI implementation. This is a source fixture, not an installed
@@ -27,5 +27,6 @@ Replay was checked locally. These are a terminal recording and timing file,
 not an inline video. The small sanitized recording is retained in this demo
 directory with the PR. The independent release fixture also checks matching
 plan output, invalid-command refusal, a missing compatibility binary, and a
-corrupted archive. Full self-update and installed migration acceptance follow
-integration with the pending package-backend changes.
+corrupted archive. The paired self-update regression now verifies that both commands advance
+together and both roll back after failed installed validation. Installed migration
+acceptance follows integration with the pending package-backend changes.
