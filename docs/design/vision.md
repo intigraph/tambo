@@ -79,7 +79,7 @@ post-write hook or JSONL-watcher installed by caboodle), not as a fork patch.
 also a camayoc catalogue entry, so "what does this series mean and who owns it"
 lives in the graph the box just installed.
 
-**Two first-class skills** (skein-portable, shell + HTTP only):
+**Two first-class skills** (portable, shell + HTTP only):
 
 - `skills/caboodle` — install, verify, diagnose, upgrade the stack; an agent's
   entry point to the whole box.
