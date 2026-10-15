@@ -22,6 +22,10 @@ fn path_with(bin: &Path) -> String {
 }
 
 fn command(root: &Path, bin: &Path) -> Command {
+    command_named(root, bin, "caboodle")
+}
+
+fn command_named(root: &Path, bin: &Path, name: &str) -> Command {
     let intent = root.join("caboodle-intent.toml");
     if !intent.exists() {
         fs::write(
@@ -44,7 +48,7 @@ expected = "fixture-result"
         )
         .unwrap();
     }
-    let mut command = Command::cargo_bin("caboodle").unwrap();
+    let mut command = Command::cargo_bin(name).unwrap();
     command
         .current_dir(root)
         .env("HOME", root)
@@ -2311,15 +2315,60 @@ fn self_update_fixture(
     binding: Option<&str>,
     repair_fails: bool,
 ) {
+    self_update_pair_fixture(bad_checksum, requested_tag, binding, repair_fails, None);
+}
+
+fn self_update_pair_fixture(
+    bad_checksum: bool,
+    requested_tag: Option<&str>,
+    binding: Option<&str>,
+    repair_fails: bool,
+    pair: Option<&str>,
+) {
     let root = tempfile::tempdir().unwrap();
     let bin = root.path().join("bin");
     fs::create_dir(&bin).unwrap();
     install_fakes(root.path(), &bin);
     fake_tool(&bin, "caboodle", "echo 'caboodle 0.2.0'");
     let before = fs::read(bin.join("caboodle")).unwrap();
+    let companion_path = if pair == Some("foreign-companion") {
+        let foreign = root.path().join("unrelated-bin");
+        fs::create_dir(&foreign).unwrap();
+        foreign.join("tambo")
+    } else {
+        bin.join("tambo")
+    };
+    let companion_before = pair.map(|mode| {
+        let identity = if mode == "mixed-installed" {
+            "tambo 0.1.9"
+        } else {
+            "tambo 0.2.0"
+        };
+        fake_tool(
+            companion_path.parent().unwrap(),
+            "tambo",
+            &format!("echo '{identity}'"),
+        );
+        fs::read(&companion_path).unwrap()
+    });
     let stage = root.path().join("self-stage");
     fs::create_dir(&stage).unwrap();
     fake_tool(&stage, "caboodle", "touch \"$HOME/candidate-executed\"; if [ \"$1\" = post-install-repair ]; then echo \"$*\" >> \"$HOME/post-install.log\"; if [ -e \"$HOME/fail-repair\" ]; then echo boom >&2; exit 3; fi; echo 'post-install repair: qp ok'; elif [ \"$1\" = --version ]; then echo 'caboodle 0.2.1'; else echo '--tool bobbin yupana desire-path'; fi");
+    if let Some(mode) = pair {
+        if mode != "missing-companion" {
+            let identity = if mode == "mixed-candidate" {
+                "tambo 0.2.2"
+            } else {
+                "tambo 0.2.1"
+            };
+            let installed_failure = if mode == "failed-installed" {
+                "case \"$0\" in */bin/tambo) echo boom >&2; exit 3 ;; esac"
+            } else {
+                ":"
+            };
+            fake_tool(&stage, "tambo", &format!("{installed_failure}\nif [ \"$1\" = --version ]; then echo '{identity}'; else echo '--tool bobbin yupana desire-path'; fi"));
+        }
+    }
     if repair_fails {
         fs::write(root.path().join("fail-repair"), b"").unwrap();
     }
@@ -2331,15 +2380,16 @@ fn self_update_fixture(
     };
     let name = format!("caboodle-v0.2.1-{triple}.tar.gz");
     let archive = root.path().join(&name);
-    assert!(std::process::Command::new("tar")
-        .arg("-czf")
+    let mut tar = std::process::Command::new("tar");
+    tar.arg("-czf")
         .arg(&archive)
         .arg("-C")
         .arg(&stage)
-        .arg("caboodle")
-        .status()
-        .unwrap()
-        .success());
+        .arg("caboodle");
+    if pair.is_some_and(|mode| mode != "missing-companion") {
+        tar.arg("tambo");
+    }
+    assert!(tar.status().unwrap().success());
     use sha2::{Digest, Sha256};
     let digest = if bad_checksum {
         "0".repeat(64)
@@ -2367,6 +2417,14 @@ case "$url" in */releases/latest|*/releases/tags/*) cat "$HOME/latest.json" ;; *
     );
     let mut updater = command(root.path(), &bin);
     updater.arg("update-self");
+    if pair == Some("foreign-companion") {
+        let existing = std::env::var_os("PATH").unwrap_or_default();
+        let dirs = [bin.clone(), companion_path.parent().unwrap().to_path_buf()];
+        updater.env(
+            "PATH",
+            std::env::join_paths(dirs.into_iter().chain(std::env::split_paths(&existing))).unwrap(),
+        );
+    }
     if let Some(tag) = requested_tag {
         updater.args(["--tag", tag]);
     }
@@ -2404,6 +2462,26 @@ case "$url" in */releases/latest|*/releases/tags/*) cat "$HOME/latest.json" ;; *
             assert!(!root.path().join(".caboodle/state.json").exists());
             assert!(!root.path().join(".caboodle/release-backups").exists());
             assert!(!root.path().join("candidate-executed").exists());
+            return;
+        }
+    }
+    if let Some(mode) = pair {
+        if mode != "success" && mode != "foreign-companion" {
+            updater.assert().failure();
+            assert_eq!(fs::read(bin.join("caboodle")).unwrap(), before, "{mode}");
+            assert_eq!(
+                fs::read(bin.join("tambo")).unwrap(),
+                companion_before.clone().unwrap(),
+                "{mode}"
+            );
+            assert!(!root.path().join(".caboodle/state.json").exists(), "{mode}");
+            assert!(
+                !root
+                    .path()
+                    .join(".caboodle/state.release-pending.json")
+                    .exists(),
+                "{mode}"
+            );
             return;
         }
     }
@@ -2445,6 +2523,50 @@ case "$url" in */releases/latest|*/releases/tags/*) cat "$HOME/latest.json" ;; *
     assert!(fs::read_to_string(root.path().join(".caboodle/state.json"))
         .unwrap()
         .contains("caboodle 0.2.1"));
+    if pair == Some("foreign-companion") {
+        assert_eq!(
+            fs::read(&companion_path).unwrap(),
+            companion_before.unwrap()
+        );
+        let state: serde_json::Value =
+            serde_json::from_slice(&fs::read(root.path().join(".caboodle/state.json")).unwrap())
+                .unwrap();
+        assert!(state["tools"]["tambo"].is_null());
+    }
+    if pair == Some("success") {
+        let observed = String::from_utf8(
+            std::process::Command::new(bin.join("tambo"))
+                .arg("--version")
+                .env("HOME", root.path())
+                .output()
+                .unwrap()
+                .stdout,
+        )
+        .unwrap();
+        let primary = String::from_utf8(
+            std::process::Command::new(bin.join("caboodle"))
+                .arg("--version")
+                .env("HOME", root.path())
+                .output()
+                .unwrap()
+                .stdout,
+        )
+        .unwrap();
+        println!(
+            "paired readback: primary={} companion={}",
+            primary.trim(),
+            observed.trim()
+        );
+        assert_eq!(observed.trim(), "tambo 0.2.1");
+        let state: serde_json::Value =
+            serde_json::from_slice(&fs::read(root.path().join(".caboodle/state.json")).unwrap())
+                .unwrap();
+        assert_eq!(state["tools"]["tambo"]["verified"], true);
+        assert!(!root
+            .path()
+            .join(".caboodle/state.release-pending.json")
+            .exists());
+    }
     let backup = fs::read_dir(root.path().join(".caboodle/release-backups/caboodle"))
         .unwrap()
         .next()
@@ -3811,5 +3933,57 @@ fn update_self_refuses_an_apt_owned_binary_and_keeps_the_symlink() {
             fs::read_to_string(&packaged).unwrap(),
             "#!/bin/sh\necho 'caboodle 0.0.1'\n"
         );
+    }
+}
+
+#[test]
+fn doctor_checks_the_tambo_entry_point_and_preserves_legacy_compatibility() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    fake_tool(&bin, "tambo", "echo 'tambo 0.0.1 (stale0000000)'");
+    command_named(root.path(), &bin, "tambo")
+        .arg("doctor")
+        .assert()
+        .stdout(predicate::str::contains("warn tambo on PATH: PATH runs"))
+        .stdout(predicate::str::contains("tambo 0.0.1 (stale0000000)"));
+    // Copy the owned candidate; do not put a stub behind a real executable link.
+    fs::copy(assert_cmd::cargo::cargo_bin("tambo"), bin.join("tambo")).unwrap();
+    command_named(root.path(), &bin, "tambo")
+        .arg("doctor")
+        .assert()
+        .stdout(predicate::str::contains("warn tambo on PATH").not())
+        .stdout(predicate::str::contains("ok   tambo on PATH"));
+    command_named(root.path(), &bin, "tambo")
+        .arg("--version")
+        .assert()
+        .success()
+        .stdout(predicate::str::starts_with("tambo "));
+    command(root.path(), &bin)
+        .arg("--version")
+        .assert()
+        .success()
+        .stdout(predicate::str::starts_with("caboodle "));
+}
+
+#[test]
+#[cfg(any(
+    all(target_os = "linux", target_arch = "x86_64"),
+    all(
+        target_os = "macos",
+        any(target_arch = "x86_64", target_arch = "aarch64")
+    )
+))]
+fn installer_self_update_keeps_both_commands_and_restores_the_pair_on_failure() {
+    for mode in [
+        "success",
+        "foreign-companion",
+        "mixed-installed",
+        "mixed-candidate",
+        "missing-companion",
+        "failed-installed",
+    ] {
+        self_update_pair_fixture(false, Some("v0.2.1"), Some("verified"), false, Some(mode));
     }
 }

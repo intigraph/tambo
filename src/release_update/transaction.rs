@@ -137,7 +137,10 @@ fn restore_pair(state: &Path, pending: &PairPending) -> Result<()> {
     }
     durable::sync_dir(durable::parent(state))?;
     finish(state)?;
-    println!("quipu: restored interrupted/failed paired release and prior state");
+    println!(
+        "{}: restored interrupted/failed paired release and prior state",
+        pending.artifacts[0].tool
+    );
     Ok(())
 }
 

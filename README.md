@@ -12,10 +12,10 @@
 </p>
 
 <p align="center">
-  <img src="assets/logo.svg" width="200" alt="Caboodle logo — a light-teal tackle box open with pink fold-out trays, each compartment holding a tool of the stack"/>
+  <img src="assets/logo.svg" width="200" alt="Tambo logo — a light-teal tackle box open with pink fold-out trays, each compartment holding a tool of the stack"/>
 </p>
 
-<h1 align="center">caboodle</h1>
+<h1 align="center">tambo</h1>
 
 <p align="center">
   <em>🧰 Agent Platform Toolkit - installs and configures the quipu stack</em>

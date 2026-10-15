@@ -18,6 +18,9 @@ cp "$target_dir/release/tambo" "$fixture/program/tambo"
 cp "$target_dir/release/caboodle" "$fixture/program/caboodle"
 tar -czf "$fixture/$archive" -C "$fixture/program" tambo caboodle
 (cd "$fixture" && sha256sum "$archive" > "$archive.sha256")
+legacy="caboodle-v$version-$target.tar.gz"
+cp "$fixture/$archive" "$fixture/$legacy"
+(cd "$fixture" && sha256sum "$legacy" > "$legacy.sha256")
 (cd "$repo_root" && scripts/check-release-assets.sh "v$version" "$fixture")
 
 CABOODLE_VERSION="v$version" \
@@ -25,7 +28,7 @@ CABOODLE_TARGET="$target" \
 CABOODLE_RELEASE_BASE_URL="file://$fixture" \
 CABOODLE_INSTALL_DIR="$fixture/bin" \
     "$repo_root/scripts/install.sh"
-"$fixture/bin/caboodle" --version | grep -F "tambo $version"
+"$fixture/bin/caboodle" --version | grep -F "caboodle $version"
 test -x "$fixture/bin/tambo"
 test -x "$fixture/bin/caboodle"
 
@@ -50,7 +53,9 @@ fi
 # Both command names must execute the same argument parsing and plan semantics.
 "$fixture/bin/tambo" --version > "$fixture/tambo-version"
 "$fixture/bin/caboodle" --version > "$fixture/caboodle-version"
-cmp "$fixture/tambo-version" "$fixture/caboodle-version"
+cut -d ' ' -f 2- "$fixture/tambo-version" > "$fixture/tambo-identity"
+cut -d ' ' -f 2- "$fixture/caboodle-version" > "$fixture/caboodle-identity"
+cmp "$fixture/tambo-identity" "$fixture/caboodle-identity"
 cat > "$fixture/intent.toml" <<'INTENT'
 intended_use = "compare compatible command names"
 [[anticipated_questions]]

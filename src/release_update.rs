@@ -3,6 +3,7 @@
 mod durable;
 mod quipu;
 mod rollback;
+mod self_pair;
 mod transaction;
 pub use rollback::rollback_seeds;
 
@@ -102,7 +103,7 @@ fn names_for_platform(
         };
         let archive = format!("caboodle-{tag}-{target}.tar.gz");
         return Ok((
-            "caboodle",
+            "tambo",
             "caboodle",
             archive.clone(),
             format!("{archive}.sha256"),
@@ -140,7 +141,7 @@ fn names_for_platform(
         None => {
             let archive = format!("caboodle-{tag}-x86_64-unknown-linux-gnu.tar.gz");
             (
-                "caboodle",
+                "tambo",
                 "caboodle",
                 archive.clone(),
                 format!("{archive}.sha256"),
@@ -637,9 +638,24 @@ fn update_binary(
     {
         bail!("candidate version differs from published release");
     }
+    let companion = if tool.is_none() {
+        self_pair::prepare(
+            &archive,
+            temporary.path(),
+            &destination,
+            &before,
+            &after,
+            state_path,
+        )?
+    } else {
+        None
+    };
     let old_hash = hash(&destination)?;
     let mut state = State::read(state_path)?;
     if old_hash == new_hash
+        && companion
+            .as_ref()
+            .map_or(true, |c| c.old_hash == c.new_hash)
         && state
             .tools
             .get(tool_id)
@@ -663,6 +679,9 @@ fn update_binary(
         .join(binary)
         .join(&old_hash);
     atomic_copy(&destination, &backup)?;
+    if let Some(c) = &companion {
+        c.backup()?;
+    }
     if held() {
         println!("{}: held before swap", tool_id);
         return Ok(());
@@ -670,16 +689,35 @@ fn update_binary(
     if hash(&destination)? != old_hash {
         bail!("installed binary changed concurrently");
     }
-    transaction::begin(
-        state_path,
-        &transaction::Pending {
-            tool: tool_id.into(),
-            destination: destination.clone(),
-            backup: backup.clone(),
-            sha256: old_hash.clone(),
-        },
-    )?;
-    atomic_copy(&candidate, &destination)?;
+    let primary = transaction::Pending {
+        tool: tool_id.into(),
+        destination: destination.clone(),
+        backup: backup.clone(),
+        sha256: old_hash.clone(),
+    };
+    if let Some(c) = &companion {
+        c.unchanged()?;
+        let previous_state = match fs::read(state_path) {
+            Ok(bytes) => Some(bytes),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => None,
+            Err(e) => return Err(e).context("cannot establish prior installer state"),
+        };
+        transaction::begin_pair(
+            state_path,
+            &transaction::PairPending {
+                artifacts: vec![primary, c.pending()],
+                previous_state,
+            },
+        )?;
+        if let Err(error) = atomic_copy(&candidate, &destination).and_then(|()| c.install()) {
+            transaction::recover(state_path)
+                .context("installer pair swap failed AND recovery failed")?;
+            return Err(error).context("installer pair swap failed; both prior artifacts restored");
+        }
+    } else {
+        transaction::begin(state_path, &primary)?;
+        atomic_copy(&candidate, &destination)?;
+    }
     let verify = (|| -> Result<()> {
         if hash(&destination)? != new_hash
             || text(destination.to_str().unwrap(), &[version_arg])? != after
@@ -694,6 +732,9 @@ fn update_binary(
             )
             .verify()?;
         } else {
+            if let Some(c) = &companion {
+                c.verify()?;
+            }
             let help = text(destination.to_str().unwrap(), &["update-release", "--help"])?;
             if !help.contains("--tool") {
                 bail!("updated Caboodle omitted release-update command contract");
@@ -702,6 +743,13 @@ fn update_binary(
         Ok(())
     })();
     if let Err(error) = verify {
+        if companion.is_some() {
+            transaction::recover(state_path)
+                .context("installer pair verification failed AND rollback failed")?;
+            return Err(error).context(
+                "installer pair verification failed; both prior artifacts and state restored",
+            );
+        }
         atomic_copy(&backup, &destination).context("verification failed AND rollback failed")?;
         if hash(&destination)? != old_hash {
             bail!("rollback checksum mismatch after {error:#}");
@@ -717,6 +765,16 @@ fn update_binary(
             verified: true,
         },
     );
+    if let Some(c) = &companion {
+        state.tools.insert(
+            "tambo".into(),
+            ToolState {
+                version: c.after.clone(),
+                applied: true,
+                verified: true,
+            },
+        );
+    }
     state.write(state_path)?;
     emission::queue_transition(state_path, tool_id, "release-updated", &after)?;
     transaction::finish(state_path)?;
@@ -816,7 +874,7 @@ mod tests {
         ] {
             let (repo, binary, archive, sums) =
                 names_for_platform(None, "v0.2.13", os, arch).unwrap();
-            assert_eq!((repo, binary), ("caboodle", "caboodle"));
+            assert_eq!((repo, binary), ("tambo", "caboodle"));
             assert_eq!(archive, format!("caboodle-v0.2.13-{triple}.tar.gz"));
             assert_eq!(sums, format!("{archive}.sha256"));
         }

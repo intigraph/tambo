@@ -20,7 +20,7 @@ const VERSION: &str = concat!(
 );
 
 #[derive(Parser)]
-#[command(version = VERSION, about)]
+#[command(name = env!("CARGO_BIN_NAME"), version = VERSION, about)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,

@@ -1,4 +1,18 @@
-# Installing and removing Caboodle
+# Installing and removing Tambo
+
+Tambo is the renamed Caboodle installer. For the transition release, both
+`tambo` and `caboodle` are available. Existing `caboodle-plan.toml` and
+`.caboodle` state paths remain compatible; no install-state move is required.
+The canonical archive is `tambo-vVERSION-TARGET.tar.gz`; a compatibility archive
+named `caboodle-vVERSION-TARGET.tar.gz` carries the same two commands for legacy
+self-update clients. Both have filename-bound SHA-256 checksum files.
+
+On managed Linux and macOS installations, apt and Homebrew update the commands
+as a package. Homebrew's formula rename migrates `caboodle` to `tambo`; the
+Linux transitional `caboodle` package depends on `tambo`. The checksummed release
+installer remains the standalone fallback. A standalone self-update of a
+dual-command installation verifies and updates both commands together, restoring
+both prior files and state if either installed read-back fails.
 
 Caboodle publishes a release only when a `vVERSION` tag exactly matches the
 version in `Cargo.toml`. Each supported archive has a sibling `.sha256` file;

@@ -11,7 +11,7 @@ if [ -z "$version" ]; then
 fi
 case "$version" in
     v[0-9]*) ;;
-    *) printf '%s\n' "invalid or unavailable CABOODLE release version: $version" >&2; exit 1 ;;
+    *) printf '%s\n' "invalid or unavailable Tambo release version: $version" >&2; exit 1 ;;
 esac
 
 if [ -n "${TAMBO_TARGET:-${CABOODLE_TARGET:-}}" ]; then
@@ -23,7 +23,7 @@ else
         Linux:x86_64) target=x86_64-unknown-linux-gnu ;;
         Darwin:x86_64) target=x86_64-apple-darwin ;;
         Darwin:arm64) target=aarch64-apple-darwin ;;
-        *) printf '%s\n' "unsupported CABOODLE release target: $system $machine" >&2; exit 1 ;;
+        *) printf '%s\n' "unsupported Tambo release target: $system $machine" >&2; exit 1 ;;
     esac
 fi
 

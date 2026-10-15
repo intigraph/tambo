@@ -45,6 +45,14 @@ jobs:
           else
             (cd dist && shasum -a 256 "$archive" > "$archive.sha256")
           fi
+          # One compatibility release for existing Caboodle update-self clients.
+          legacy="caboodle-$GITHUB_REF_NAME-${{ matrix.target }}.tar.gz"
+          cp "dist/$archive" "dist/$legacy"
+          if command -v sha256sum >/dev/null; then
+            (cd dist && sha256sum "$legacy" > "$legacy.sha256")
+          else
+            (cd dist && shasum -a 256 "$legacy" > "$legacy.sha256")
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.target }}
@@ -63,7 +71,7 @@ jobs:
           merge-multiple: true
       - name: Verify complete release metadata
         env:
-          CABOODLE_EXPECT_TARGETS: x86_64-unknown-linux-gnu x86_64-apple-darwin aarch64-apple-darwin
+          TAMBO_EXPECT_TARGETS: x86_64-unknown-linux-gnu x86_64-apple-darwin aarch64-apple-darwin
         run: scripts/check-release-assets.sh "$GITHUB_REF_NAME" dist
       - name: Publish immutable GitHub release
         env:
