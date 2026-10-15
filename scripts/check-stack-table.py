@@ -10,7 +10,7 @@ from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
-REPOS = ("quipu", "bobbin", "camayoc", "yupana", "desire-path", "seeds", "caboodle")
+REPOS = ("quipu", "bobbin", "camayoc", "yupana", "desire-path", "seeds", "caboodle", "shantytown")
 START = b"<!-- stack-table:start -->"
 END = b"<!-- stack-table:end -->"
 MAX_BYTES = 256 * 1024
@@ -28,8 +28,14 @@ def marked_table(data: bytes, label: str) -> bytes:
     if match is None:
         raise ValueError(f"{label}: malformed or reversed stack-table markers")
     body = match.group(1)
-    if not body.strip(b"\n").startswith(b"| tool |") or not body.endswith(b"\n"):
-        raise ValueError(f"{label}: marked block is not a complete stack table")
+    # The guarded overview may lead with prose. Compare that prose verbatim
+    # along with the table; never normalize it away when checking copies.
+    table = body.strip(b"\n").rsplit(b"\n\n", 1)[-1].splitlines()
+    if (len(table) < 3 or not table[0].startswith(b"| tool |")
+            or table[1] != b"|---|---|"
+            or any(not row.startswith(b"|") or not row.endswith(b"|") for row in table)
+            or not body.endswith(b"\n")):
+        raise ValueError(f"{label}: marked block is not a complete stack overview")
     return body
 
 
@@ -50,7 +56,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("readmes", nargs="*", type=Path, help="local README copies")
     parser.add_argument("--canonical", type=Path, default=ROOT / "docs/stack-table.md")
-    parser.add_argument("--remote", action="store_true", help="also audit all seven public main branches")
+    parser.add_argument("--remote", action="store_true", help="also audit all eight public main branches")
     args = parser.parse_args()
     try:
         canonical = marked_table(args.canonical.read_bytes(), str(args.canonical))

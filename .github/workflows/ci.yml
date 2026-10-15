@@ -59,6 +59,10 @@ jobs:
       - run: cargo test --all-features
       - name: Validate documented release installer and metadata
         run: scripts/test-release-install.sh
+      - name: Bootstrap legacy and renamed release controls
+        run: python3 scripts/test-install-bootstrap.py
+      - name: Registry visibility refusal controls
+        run: python3 scripts/test-crate-version.py
 
   evaluation-tests:
     # The Text2KGBench harness is Python and its guards (provider drift, gold
@@ -114,7 +118,7 @@ jobs:
               plan = tomllib.load(plan_file)
           assert plan["profile"] == "everything"
           # Built-ins, then the members that join this profile (members/*.toml).
-          assert plan["tools"] == ["quipu", "camayoc", "bobbin", "yupana", "desire-path", "seeds", "shuttle"]
+          assert plan["tools"] == ["quipu", "camayoc", "bobbin", "yupana", "desire-path", "chaski", "seeds", "shuttle"]
           assert plan["intent"]["anticipated_questions"][0]["expected"] == "caboodle-verify-roundtrip"
           PY
       - name: Install and functionally verify the expanded corpus
@@ -144,7 +148,8 @@ jobs:
             .tools.yupana.verified == true and
             .tools["desire-path"].verified == true and
             .tools.seeds.verified == true and
-            .tools.shuttle.verified == true
+            .tools.shuttle.verified == true and
+            .tools.chaski.verified == true
           ' .caboodle/state.json
       - name: Execute the interview's anticipated ontology question
         run: |
@@ -199,7 +204,7 @@ jobs:
           caboodle render-observability
           caboodle validate-observability
           # One contract per selected tool; a member's says it declares no metrics.
-          jq -e '.contracts | length == 7' caboodle-observability/contracts.json
+          jq -e '.contracts | length == 8' caboodle-observability/contracts.json
           grep -q 'quipu_graph_facts' caboodle-observability/alerts.yml
           grep -q 'bobbin_up' caboodle-observability/dashboard.json
       - name: Prove lifecycle emission queue is redacted and idempotent
@@ -207,11 +212,11 @@ jobs:
           set -euo pipefail
           export PATH="$RUNNER_TEMP/caboodle/bin:$HOME/.cargo/bin:$PATH"
           cd "$RUNNER_TEMP/caboodle-phase2"
-          test "$(find .caboodle/episodes -maxdepth 1 -name '*.json' | wc -l)" -eq 14
+          test "$(find .caboodle/episodes -maxdepth 1 -name '*.json' | wc -l)" -eq 16
           printf '%s\n' '{"id":"demo-1","title":"token=fixture-secret","status":"closed","comments":[{"id":"c1","text":"done"}]}' > br-export.jsonl
           caboodle queue-br br-export.jsonl
           caboodle queue-br br-export.jsonl
-          test "$(find .caboodle/episodes -maxdepth 1 -name '*.json' | wc -l)" -eq 17
+          test "$(find .caboodle/episodes -maxdepth 1 -name '*.json' | wc -l)" -eq 19
           ! grep -R -q 'fixture-secret' .caboodle/episodes
       - name: Prove adversarial negative controls turn verification red
         run: |

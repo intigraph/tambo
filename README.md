@@ -1,15 +1,24 @@
+> Caboodle is becoming **Tambo**. The transition release includes both `tambo`
+> and `caboodle`, backed by the same CLI. Existing plan and state paths remain
+> compatible. New release archives use `tambo-vVERSION-TARGET.tar.gz` with a
+> sibling SHA-256 checksum; supported archives contain both commands.
+>
+> Repository and registry publication, package-manager migration, and installed
+> host verification are separate release steps. The compatibility command stays
+> available for at least one release.
+
 <p align="center">
   <img src="assets/header.svg" width="100%" alt="Animated banner — a teal kit box with a tipping lid and three flowing, knotted cords"/>
 </p>
 
 <p align="center">
-  <img src="assets/logo.svg" width="200" alt="Caboodle logo — a light-teal tackle box open with pink fold-out trays, each compartment holding a tool of the stack"/>
+  <img src="assets/logo.svg" width="200" alt="Tambo logo — a light-teal tackle box open with pink fold-out trays, each compartment holding a tool of the stack"/>
 </p>
 
-<h1 align="center">caboodle</h1>
+<h1 align="center">tambo</h1>
 
 <p align="center">
-  <em>🧰 The whole kit — one wizard that installs the stack, proves it works, and watches it run</em>
+  <em>🧰 Agent Platform Toolkit - installs and configures the quipu stack</em>
 </p>
 
 <p align="center">
@@ -18,10 +27,11 @@
   <a href="https://github.com/scbrown/caboodle"><img src="https://img.shields.io/badge/stack-quipu-8B5E3C.svg" alt="Part of the quipu stack"/></a>
 </p>
 
-**Caboodle is an install wizard for people and AI coding agents who want
-persistent memory and searchable code context. Its CLI installs the Quipu
-stack from a reviewable plan and proves each tool works. An agent skill
-walks through the same workflow.**
+**Caboodle installs and configures a stack built around Quipu, a governed,
+bitemporal knowledge store for people and AI coding agents.** Shared facts,
+decisions and work history stay available for your agents to query. Its CLI
+installs the tools from a reviewable plan and proves each one works; an agent
+skill guides you through the same workflow.
 
 ## Why you would want it
 
@@ -134,7 +144,7 @@ state). Keep the directory; `verify`, `update` and a resumed `install` read it.
 
 ## Wire it into your agent
 
-Caboodle is a CLI, with an [agent skill](skills/caboodle/SKILL.md), not an MCP
+Tambo is a CLI, with an [agent skill](skills/tambo/SKILL.md), not an MCP
 server. Bobbin, which the `retrieval` profile installed above, is one. It
 searches one repository: the code you want your agent to work on, such as your
 own project's git checkout. Do not use `~/caboodle`, which holds only the plan.
@@ -191,16 +201,22 @@ Caboodle installs these together and proves each one works; every tool also stan
 
 <!-- stack-table:start -->
 
+The Quipu stack is built around a governed, bitemporal knowledge store: shared
+facts, decisions and work history your agents can query. Quipu can check writes
+against your rules, records where each fact came from, and answers what was true
+when.
+
 | tool | what it gives your agents |
 |---|---|
-| [caboodle](https://github.com/scbrown/caboodle) | one wizard that installs the stack and proves it works |
-| [quipu](https://github.com/scbrown/quipu) | a knowledge graph that refuses facts that break its rules |
-| [camayoc](https://github.com/scbrown/camayoc) | the starter vocabulary, and how new knowledge earns its way in |
-| [bobbin](https://github.com/scbrown/bobbin) | search and context over your repositories, served over MCP |
-| [yupana](https://github.com/scbrown/yupana) | enforces your code policies and shows the blast radius before an edit |
-| [desire-path](https://github.com/scbrown/desire-path) | turns your agents' hallucinations into feature requests |
+| [caboodle](https://github.com/scbrown/caboodle) | 🧰 Agent Platform Toolkit - installs and configures the quipu stack |
+| [quipu](https://github.com/scbrown/quipu) | stores shared facts with provenance and history; can check writes against your rules |
+| [camayoc](https://github.com/scbrown/camayoc) | prepares knowledge and vocabulary for Quipu, with checks before it is admitted |
+| [bobbin](https://github.com/scbrown/bobbin) | searches your code and can include related knowledge from Quipu |
+| [yupana](https://github.com/scbrown/yupana) | shows code impact and can read policies from Quipu to check changes |
+| [desire-path](https://github.com/scbrown/desire-path) | turns agent mistakes into feature requests; works on its own without Quipu |
 | [seeds](https://github.com/scbrown/seeds) | a work item tracker backed by the Quipu knowledge base |
-| [shuttle](https://github.com/scbrown/shuttle) | the workflows your agents run, every step signed and kept in the graph |
+| [shantytown](https://github.com/scbrown/shantytown) | runs crews of AI agents on work items, triggered by hand, on a schedule or by events; can share work and memory through Quipu |
+| [shuttle](https://github.com/scbrown/shuttle) | runs signed agent workflows and keeps their records in Quipu |
 
 <!-- stack-table:end -->
 

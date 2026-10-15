@@ -135,6 +135,7 @@ The table covers the current source tree; published binaries may lag new command
 | `validate-observability` | Check artifact contracts; `--output`. |
 | `queue-br` | Queue lifecycle records; input JSONL argument, `--queue`. |
 | `flush-episodes` | Deliver queued records; `--queue`, `--endpoint`. |
+| `packs trust` | Pendant autoload trust: `own <host/owner>`, `allow <repo> <sha256>`, `allow-endpoint <repo> <url>`, `list`, `check <remote> <sha256>` (exit 3 when refused); `--file`. |
 
 ## Files and configuration
 

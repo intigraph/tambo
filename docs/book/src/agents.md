@@ -1,7 +1,7 @@
 # Using it with agents
 
 Caboodle is a CLI that an agent can run with the
-[Caboodle skill](https://github.com/scbrown/caboodle/blob/main/skills/caboodle/SKILL.md).
+[Tambo skill](https://github.com/scbrown/tambo/blob/main/skills/tambo/SKILL.md).
 It does not expose its own MCP server. MCP (Model Context Protocol) lets an
 agent call servers supplied by the installed tools.
 

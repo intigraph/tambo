@@ -24,8 +24,8 @@ if [ "$expect_root" = true ]; then
   exit 2
 fi
 if [ -n "$root_dir" ]; then
-  book_uri=$(python3 -c 'from pathlib import Path; import sys; print((Path(sys.argv[1]).resolve() / "caboodle").as_uri())' "$root_dir")
-  set -- --remap "^https://scbrown\\.github\\.io/caboodle/ ${book_uri}/" "$@"
+  book_uri=$(python3 -c 'from pathlib import Path; import sys; print((Path(sys.argv[1]).resolve() / "tambo").as_uri())' "$root_dir")
+  set -- --remap "^https://scbrown\\.github\\.io/(caboodle|tambo)/ ${book_uri}/" "$@"
 fi
 exec lychee --config .lychee.toml \
-  --remap "^https://github\\.com/scbrown/caboodle/blob/main/ ${repo_uri}/" "$@"
+  --remap "^https://github\\.com/scbrown/(caboodle|tambo)/blob/main/ ${repo_uri}/" "$@"

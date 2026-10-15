@@ -14,6 +14,8 @@ pub mod member_bump;
 pub mod members;
 pub mod model;
 pub mod observability;
+pub mod pack_trust;
+pub mod package;
 pub mod projection;
 pub mod tool_bundles;
 

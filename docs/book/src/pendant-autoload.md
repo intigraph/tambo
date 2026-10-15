@@ -85,6 +85,17 @@ naming the pack. It never loads partially.
 A pack is data landing in the graph that agents query first, so loading is a
 trust decision.
 
+**Exists today** (aegis-2eckx0): `caboodle packs trust` keeps these decisions in
+`~/.config/caboodle/pack-trust.toml`, separate from the stack config.
+`owners` lists `host/owner` pairs whose packs autoload. `[[allow]]` admits one
+foreign archive and must name both `repo` and `pack_sha256`: an entry without
+the hash, an unknown key or a malformed value refuses the whole file, so every
+pack is refused until it is fixed. `[[allow_endpoint]]` admits one exact
+`http(s)` endpoint with no credentials in its URL. `caboodle packs trust check
+<remote> <sha256> --pack <path>` exits 0 to load, or 3 with a refusal naming the
+pack and the exact `allow` command. `packs sync` (child 2) is still to be built
+and will ask this question before composing.
+
 - **Your own repositories load automatically**, meaning repositories whose
   remote owner matches an allow-list in caboodle's configuration.
 - **A foreign pack needs an explicit allow**, recorded per repository and pack

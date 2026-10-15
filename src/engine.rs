@@ -538,7 +538,7 @@ pub fn verify(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
 
 /// Compare the running toolchain to the releases reviewed by this Caboodle
 /// build. Returns true only when every selected tool is current.
-fn reviewed_drift_status(installed: &str, desired: &str) -> &'static str {
+pub(crate) fn reviewed_drift_status(installed: &str, desired: &str) -> &'static str {
     match crate::release_update::behind_reviewed(installed, desired) {
         Some(true) => "update available",
         Some(false) if crate::release_update::behind_reviewed(desired, installed) == Some(true) => {
@@ -546,6 +546,109 @@ fn reviewed_drift_status(installed: &str, desired: &str) -> &'static str {
         }
         Some(false) | None => "version drift; review required",
     }
+}
+
+/// A tool whose binary a package manager owns is judged by its package receipt
+/// and never installed by caboodle (aegis-6f1, option A): the package lane is
+/// its only writer. Returns the line to print and whether it is current.
+fn package_owned_status(name: crate::model::ToolName, desired: &str) -> Option<(String, bool)> {
+    use crate::package::{apt_receipt, primary_program, standing, Standing};
+    let receipt = primary_program(name)
+        .and_then(|program| apt_receipt(&program))
+        .or_else(|| crate::package::brew_receipt(name))?;
+    let status = standing(&receipt.version, desired);
+    let verdict = match status {
+        Standing::Current => "current",
+        Standing::Ahead => "ahead of reviewed pin; downgrade refused",
+        Standing::Behind => {
+            "behind reviewed pin; delivered by the package lane, not installed by caboodle"
+        }
+        Standing::Unknown => "version drift; review required",
+    };
+    Some((
+        format!(
+            "{}: {verdict} (package-owned: {} {} {}; reviewed: {desired})",
+            name.as_str(),
+            receipt.manager,
+            receipt.package,
+            receipt.version
+        ),
+        status == Standing::Current,
+    ))
+}
+
+/// Member delivery through the stack's Homebrew tap (aegis-6f1). Applies only
+/// where caboodle may drive brew and the tool has a stack formula. Returns the
+/// verified version when brew delivered (or already holds) the tool, `None` to
+/// fall back to the other lanes (the release download when the tap is older
+/// than the pin). Never downgrades.
+fn brew_update(
+    name: crate::model::ToolName,
+    adapter: &dyn crate::adapter::Adapter,
+) -> Result<Option<String>> {
+    use crate::package::{
+        brew_available, brew_converge, brew_formula, brew_program, brew_receipt, standing, Standing,
+    };
+    if brew_formula(name).is_none() || brew_program().is_none() {
+        return Ok(None);
+    }
+    let desired = adapter.desired_version();
+    match brew_receipt(name) {
+        Some(receipt) => match standing(&receipt.version, &desired) {
+            Standing::Behind => brew_converge(name, true)?,
+            verdict => {
+                let word = match verdict {
+                    Standing::Current => "current",
+                    Standing::Ahead => "ahead of reviewed pin; downgrade refused",
+                    _ => "version drift; review required",
+                };
+                println!(
+                    "{}: {word} (package-owned: brew {} {}; reviewed: {desired})",
+                    name.as_str(),
+                    receipt.package,
+                    receipt.version
+                );
+                return Ok(Some(adapter.version()?));
+            }
+        },
+        None => {
+            let Some(available) = brew_available(name) else {
+                return Ok(None);
+            };
+            // The tap must carry at least the pin, or the release fallback applies.
+            if standing(&available, &desired) == Standing::Behind {
+                return Ok(None);
+            }
+            // Never replace a newer existing copy with an older tap release.
+            if let Ok(installed) = adapter.version() {
+                if crate::release_update::behind_reviewed(&format!("pkg {available}"), &installed)
+                    == Some(true)
+                {
+                    println!(
+                        "{}: installed {installed} is newer than {} {available}; not installed by brew",
+                        name.as_str(),
+                        crate::package::STACK_TAP
+                    );
+                    return Ok(Some(installed));
+                }
+            }
+            brew_converge(name, false)?;
+        }
+    }
+    let receipt = brew_receipt(name).context("brew receipt after install")?;
+    adapter
+        .verify()
+        .with_context(|| format!("{} verification after brew delivery", name.as_str()))?;
+    let version = adapter
+        .version()
+        .with_context(|| format!("{} version read-back after brew delivery", name.as_str()))?;
+    println!(
+        "{}: delivered by brew ({} {}) and verified",
+        name.as_str(),
+        receipt.package,
+        receipt.version
+    );
+    Ok(Some(version))
 }
 
 pub fn check_updates(plan: &Plan) -> Result<bool> {
@@ -559,6 +662,11 @@ pub fn check_updates(plan: &Plan) -> Result<bool> {
                 "quipu: externally owned; release convergence not assessed ({})",
                 adapter.version()?
             );
+            continue;
+        }
+        if let Some((line, is_current)) = package_owned_status(name, &desired) {
+            current &= is_current;
+            println!("{line}");
             continue;
         }
         match adapter.version() {
@@ -600,6 +708,23 @@ pub fn update(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
                 "quipu: externally owned; update skipped ({})",
                 adapter.version()?
             );
+            continue;
+        }
+        if let Some(version) = brew_update(name, adapter.as_ref())? {
+            state.tools.insert(
+                name.as_str().to_owned(),
+                ToolState {
+                    version: version.clone(),
+                    applied: true,
+                    verified: true,
+                },
+            );
+            state.write(state_path)?;
+            emission::queue_transition(state_path, name.as_str(), "updated", &version)?;
+            continue;
+        }
+        if let Some((line, _)) = package_owned_status(name, &adapter.desired_version()) {
+            println!("{line}");
             continue;
         }
         let before = adapter.version().ok();

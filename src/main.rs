@@ -20,7 +20,7 @@ const VERSION: &str = concat!(
 );
 
 #[derive(Parser)]
-#[command(version = VERSION, about)]
+#[command(name = env!("CARGO_BIN_NAME"), version = VERSION, about)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -97,6 +97,9 @@ enum Commands {
         /// Refuse to install missing tools; useful for managed or offline machines
         #[arg(long)]
         skip_install: bool,
+        /// Apply this plan host profile (e.g. exclude crew a different lane owns)
+        #[arg(long)]
+        host_profile: Option<String>,
     },
     /// Run isolated functional round trips for every selected tool
     Verify {
@@ -110,6 +113,9 @@ enum Commands {
         /// Creel admission JSON produced by its provider-window governor
         #[arg(long)]
         creel_admission: Option<PathBuf>,
+        /// Apply this plan host profile (e.g. exclude crew a different lane owns)
+        #[arg(long)]
+        host_profile: Option<String>,
     },
     /// Verify one embedded release member in temporary roots without installing it
     VerifyMember { member: String },
@@ -125,11 +131,17 @@ enum Commands {
         creel_doctor: Option<PathBuf>,
         #[arg(long)]
         creel_admission: Option<PathBuf>,
+        /// Apply this plan host profile (e.g. exclude crew a different lane owns)
+        #[arg(long)]
+        host_profile: Option<String>,
     },
     /// Report drift from the releases reviewed by this Caboodle build
     CheckUpdates {
         #[arg(short, long, default_value = "caboodle-plan.toml")]
         plan: PathBuf,
+        /// Apply this plan host profile (e.g. exclude crew a different lane owns)
+        #[arg(long)]
+        host_profile: Option<String>,
     },
     /// Converge drifted tools to reviewed releases and verify each change
     Update {
@@ -141,6 +153,9 @@ enum Commands {
         creel_doctor: Option<PathBuf>,
         #[arg(long)]
         creel_admission: Option<PathBuf>,
+        /// Apply this plan host profile (e.g. exclude crew a different lane owns)
+        #[arg(long)]
+        host_profile: Option<String>,
     },
     /// Update this installer from a published checksummed release
     #[cfg(unix)]
@@ -269,6 +284,54 @@ enum Commands {
         queue: PathBuf,
         #[arg(long)]
         endpoint: String,
+    },
+    /// Pendant packs a repository ships under .quipu/packs/
+    Packs {
+        #[command(subcommand)]
+        command: PacksCommand,
+    },
+}
+
+#[derive(Subcommand)]
+enum PacksCommand {
+    /// Which packs and pointer endpoints may load (~/.config/caboodle/pack-trust.toml)
+    Trust {
+        /// Trust file to read and write instead of the default
+        #[arg(long, global = true)]
+        file: Option<PathBuf>,
+        #[command(subcommand)]
+        command: TrustCommand,
+    },
+}
+
+#[derive(Subcommand)]
+enum TrustCommand {
+    /// Autoload every repository of this owner (host/owner, e.g. github.com/scbrown)
+    Own { owner: String },
+    /// Admit exactly one foreign pack archive: repository plus its sha256
+    Allow {
+        repo: String,
+        sha256: String,
+        #[arg(long)]
+        note: Option<String>,
+    },
+    /// Admit exactly one pointer endpoint declared by a foreign repository's pack
+    AllowEndpoint {
+        repo: String,
+        endpoint: String,
+        #[arg(long)]
+        note: Option<String>,
+    },
+    /// Print the trust file
+    List,
+    /// Decide one pack: exit 0 to load, 3 refused (message names the pack)
+    Check {
+        /// The repository's git remote URL
+        remote: String,
+        sha256: String,
+        /// The pack's path, named in a refusal
+        #[arg(long, default_value = "pack")]
+        pack: String,
     },
 }
 
@@ -440,17 +503,23 @@ fn main() -> Result<()> {
             plan,
             state,
             skip_install,
+            host_profile,
         } => {
-            engine::apply(&Plan::read(&plan)?, &state, skip_install)?;
+            engine::apply(
+                &read_plan(&plan, host_profile.as_deref())?,
+                &state,
+                skip_install,
+            )?;
         }
         Commands::Verify {
             plan,
             state,
             creel_doctor,
             creel_admission,
+            host_profile,
         } => {
             engine::verify(
-                &Plan::read(&plan)?,
+                &read_plan(&plan, host_profile.as_deref())?,
                 &state,
                 &CrewEvidence {
                     creel_doctor,
@@ -468,8 +537,9 @@ fn main() -> Result<()> {
             skip_install,
             creel_doctor,
             creel_admission,
+            host_profile,
         } => {
-            let plan = Plan::read(&plan)?;
+            let plan = read_plan(&plan, host_profile.as_deref())?;
             engine::apply(&plan, &state, skip_install)?;
             engine::verify(
                 &plan,
@@ -480,8 +550,8 @@ fn main() -> Result<()> {
                 },
             )?;
         }
-        Commands::CheckUpdates { plan } => {
-            let plan = Plan::read(&plan)?;
+        Commands::CheckUpdates { plan, host_profile } => {
+            let plan = read_plan(&plan, host_profile.as_deref())?;
             if !engine::check_updates(&plan)? {
                 anyhow::bail!("selected stack has pending reviewed updates");
             }
@@ -491,9 +561,10 @@ fn main() -> Result<()> {
             state,
             creel_doctor,
             creel_admission,
+            host_profile,
         } => {
             engine::update(
-                &Plan::read(&plan)?,
+                &read_plan(&plan, host_profile.as_deref())?,
                 &state,
                 &CrewEvidence {
                     creel_doctor,
@@ -623,6 +694,64 @@ fn main() -> Result<()> {
             let count = emission::flush(&queue, &endpoint)?;
             println!("delivered queued episodes: {count}");
         }
+        Commands::Packs {
+            command: PacksCommand::Trust { file, command },
+        } => run_pack_trust(file, command)?,
     }
     Ok(())
+}
+
+fn run_pack_trust(file: Option<PathBuf>, command: TrustCommand) -> Result<()> {
+    use caboodle::pack_trust::{default_path, Decision, TrustConfig};
+    let path = match file {
+        Some(path) => path,
+        None => default_path()?,
+    };
+    let mut trust = TrustConfig::load(&path)?;
+    let changed = match command {
+        TrustCommand::Own { owner } => trust.add_owner(&owner)?,
+        TrustCommand::Allow { repo, sha256, note } => {
+            trust.add_pack(&repo, &sha256, note.as_deref())?
+        }
+        TrustCommand::AllowEndpoint {
+            repo,
+            endpoint,
+            note,
+        } => trust.add_endpoint(&repo, &endpoint, note.as_deref())?,
+        TrustCommand::List => {
+            print!("{}", toml::to_string_pretty(&trust)?);
+            return Ok(());
+        }
+        TrustCommand::Check {
+            remote,
+            sha256,
+            pack,
+        } => {
+            match trust.decide_pack(&remote, &pack, &sha256) {
+                Decision::Allow { basis } => println!("load: {basis}"),
+                Decision::Refuse { message } => {
+                    eprintln!("refused: {message}");
+                    std::process::exit(3);
+                }
+            }
+            return Ok(());
+        }
+    };
+    if changed {
+        trust.save(&path)?;
+        println!("recorded in {}", path.display());
+    } else {
+        println!("already recorded in {}", path.display());
+    }
+    Ok(())
+}
+
+/// Read a plan and apply `--host-profile`, printing each exclusion so an
+/// excluded runtime is visible and never mistaken for a verified one.
+fn read_plan(path: &std::path::Path, host_profile: Option<&str>) -> anyhow::Result<Plan> {
+    let (plan, excluded) = Plan::read(path)?.for_host(host_profile)?;
+    for line in excluded {
+        println!("{line}");
+    }
+    Ok(plan)
 }

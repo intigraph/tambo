@@ -31,11 +31,23 @@ class StackTableControls(unittest.TestCase):
     def test_canonical_copy_passes_but_changed_wording_fails(self):
         data = CANONICAL.read_bytes()
         self.assertEqual(self.check_copy(data).returncode, 0)
-        changed = data.replace(b"enforces your code policies", b"ignores your code policies")
+        changed = data.replace(b"can read policies from Quipu", b"ignores policies from Quipu")
         self.assertNotEqual(changed, data)
         result = self.check_copy(changed)
         self.assertEqual(result.returncode, 1)
         self.assertIn("differs", result.stderr)
+
+    def test_lead_drift_is_not_normalized_away(self):
+        data = CANONICAL.read_bytes()
+        changed = data.replace(b"governed, bitemporal", b"unaccountable, timeless")
+        self.assertNotEqual(changed, data)
+        self.assertEqual(self.check_copy(changed).returncode, 1)
+
+    def test_lead_without_table_or_separator_fails(self):
+        for body in (b"An overview.\n", b"An overview.\n\n| tool | value |\n| bad | row |\n"):
+            with self.subTest(body=body):
+                with self.assertRaisesRegex(ValueError, "complete stack overview"):
+                    CHECK.marked_table(CHECK.START + b"\n" + body + CHECK.END + b"\n", "fixture")
 
     def test_missing_duplicate_or_reversed_markers_fail(self):
         data = CANONICAL.read_bytes()
@@ -53,6 +65,23 @@ class StackTableControls(unittest.TestCase):
              patch.object(sys, "argv", [str(SCRIPT), "--remote"]), \
              redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
             self.assertEqual(CHECK.main(), 1)
+
+    def test_shantytown_is_audited_and_its_missing_block_fails(self):
+        canonical = CANONICAL.read_bytes()
+        for missing, expected in ((False, 0), (True, 1)):
+            seen = []
+
+            def read(repo):
+                seen.append(repo)
+                return b"A README without a stack block.\n" if missing and repo == "shantytown" else canonical
+
+            with self.subTest(missing=missing), \
+                 patch.object(CHECK, "remote_readme", side_effect=read), \
+                 patch.object(sys, "argv", [str(SCRIPT), "--remote"]), \
+                 redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+                self.assertEqual(CHECK.main(), expected)
+                self.assertEqual(seen.count("shantytown"), 1)
+                self.assertEqual(len(seen), 8)
 
     def test_remote_response_has_a_size_limit(self):
         response = MagicMock()

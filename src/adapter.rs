@@ -670,13 +670,21 @@ pub(crate) fn verify_existing_quipu_alias() -> Result<()> {
 fn verify_quipu_alias(client: &Path) -> Result<()> {
     let bin = client.parent().context("Quipu CLI has no directory")?;
     let alias = bin.join("qp");
-    if fs::read_link(&alias).ok().as_deref() != Some(Path::new("quipu")) {
+    let resolved = client.canonicalize()?;
+    let resolved_bin = resolved.parent().context("Quipu CLI has no directory")?;
+    // The relative link may sit beside the selected quipu or beside the file it
+    // resolves to: a package manager (Homebrew) links bin/ into its own tree,
+    // and the formula owns `qp -> quipu` there (aegis-6f1).
+    let relative =
+        |dir: &Path| fs::read_link(dir.join("qp")).ok().as_deref() == Some(Path::new("quipu"));
+    if !relative(bin) && !relative(resolved_bin) {
         bail!(
             "Quipu verification requires relative qp -> quipu in {}",
             bin.display()
         );
     }
-    if alias.canonicalize()? != client.canonicalize()? {
+    // The qp a user types (beside the selected quipu) must be the same program.
+    if alias.canonicalize().ok().as_deref() != Some(resolved.as_path()) {
         bail!("qp and quipu do not resolve to the same executable");
     }
     if read_version(alias.to_str().context("qp path is not UTF-8")?)?
@@ -1861,4 +1869,63 @@ mod auth_config_tests {
 pub fn verify_member(name: &str) -> Result<()> {
     let member = crate::members::get(name).context("unknown reviewed member")?;
     manifest::verify_release_member(member)
+}
+
+#[cfg(all(test, unix))]
+mod quipu_alias_layout_tests {
+    use super::verify_quipu_alias;
+    use std::os::unix::fs::{symlink, PermissionsExt};
+    use std::{fs, path::Path};
+
+    fn script(path: &Path, version: &str) {
+        fs::write(path, format!("#!/bin/sh\necho '{version}'\n")).unwrap();
+        fs::set_permissions(path, fs::Permissions::from_mode(0o755)).unwrap();
+    }
+
+    #[test]
+    fn package_managed_layout_passes_with_qp_beside_the_resolved_quipu() {
+        // Homebrew: bin/quipu and bin/qp link into the Cellar, where the
+        // formula owns the relative qp -> quipu.
+        let root = tempfile::tempdir().unwrap();
+        let cellar = root.path().join("Cellar/quipu/1.0/bin");
+        let bin = root.path().join("bin");
+        fs::create_dir_all(&cellar).unwrap();
+        fs::create_dir(&bin).unwrap();
+        script(&cellar.join("quipu"), "quipu 1.0");
+        symlink("quipu", cellar.join("qp")).unwrap();
+        symlink("../Cellar/quipu/1.0/bin/quipu", bin.join("quipu")).unwrap();
+        symlink("../Cellar/quipu/1.0/bin/qp", bin.join("qp")).unwrap();
+        verify_quipu_alias(&bin.join("quipu")).unwrap();
+    }
+
+    #[test]
+    fn a_qp_for_another_program_or_no_qp_still_fails() {
+        let root = tempfile::tempdir().unwrap();
+        let bin = root.path().join("bin");
+        fs::create_dir(&bin).unwrap();
+        script(&bin.join("quipu"), "quipu 1.0");
+        let err = verify_quipu_alias(&bin.join("quipu")).unwrap_err();
+        assert!(err.to_string().contains("requires relative qp -> quipu"));
+        // A relative link exists beside the resolved file, but the qp on PATH
+        // is a different program: refuse.
+        let cellar = root.path().join("Cellar/bin");
+        fs::create_dir_all(&cellar).unwrap();
+        script(&cellar.join("quipu"), "quipu 1.0");
+        symlink("quipu", cellar.join("qp")).unwrap();
+        script(&root.path().join("other"), "quipu 1.0");
+        let pkg = root.path().join("pkgbin");
+        fs::create_dir(&pkg).unwrap();
+        symlink("../Cellar/bin/quipu", pkg.join("quipu")).unwrap();
+        symlink("../other", pkg.join("qp")).unwrap();
+        let err = verify_quipu_alias(&pkg.join("quipu")).unwrap_err();
+        assert!(err.to_string().contains("same executable"));
+    }
+
+    #[test]
+    fn owned_layout_with_qp_beside_quipu_still_passes() {
+        let root = tempfile::tempdir().unwrap();
+        script(&root.path().join("quipu"), "quipu 1.0");
+        symlink("quipu", root.path().join("qp")).unwrap();
+        verify_quipu_alias(&root.path().join("quipu")).unwrap();
+    }
 }
