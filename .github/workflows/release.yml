@@ -98,13 +98,18 @@ jobs:
           test "$GITHUB_REF_NAME" = "v$version"
           echo "TAMBO_PUBLISH_VERSION=$version" >> "$GITHUB_ENV"
       - name: Build and verify the registry package
-        run: cargo package --locked -p tambo
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo package --locked -p tambo
+          package_sha=$(sha256sum "target/package/tambo-$TAMBO_PUBLISH_VERSION.crate" | awk '{print $1}')
+          echo "TAMBO_PACKAGE_SHA256=$package_sha" >> "$GITHUB_ENV"
       - name: Check whether the account bootstrap already published this version
         id: registry
         shell: bash
         run: |
           set -euo pipefail
-          if scripts/check-crate-version.sh tambo "$TAMBO_PUBLISH_VERSION"; then
+          if scripts/check-crate-version.sh tambo "$TAMBO_PUBLISH_VERSION" "$TAMBO_PACKAGE_SHA256"; then
             echo 'already=true' >> "$GITHUB_OUTPUT"
           else
             rc=$?
@@ -125,7 +130,7 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in $(seq 1 10); do
-            if scripts/check-crate-version.sh tambo "$TAMBO_PUBLISH_VERSION"; then
+            if scripts/check-crate-version.sh tambo "$TAMBO_PUBLISH_VERSION" "$TAMBO_PACKAGE_SHA256"; then
               exit 0
             fi
             test "$attempt" = 10 || sleep 15

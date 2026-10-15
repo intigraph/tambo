@@ -38,6 +38,15 @@ sys.exit(int(os.environ["MOCK_EXIT"]))
         result = subprocess.run([str(checker), "tambo", "0.2.23"], env=env, capture_output=True, text=True)
         assert result.returncode == expected, (name, result.returncode, result.stderr)
         print(f"PASS: {name} -> {expected}")
+    for name, checksum, expected in [("exact package", "a" * 64, 0), ("foreign bytes", "b" * 64, 2), ("missing package hash", None, 2)]:
+        body = {"version": {**good["version"]}}
+        if checksum is not None:
+            body["version"]["checksum"] = checksum
+        env = {**os.environ, "PATH": str(root) + os.pathsep + os.environ["PATH"],
+               "MOCK_STATUS": "200", "MOCK_BODY": json.dumps(body), "MOCK_EXIT": "0"}
+        result = subprocess.run([str(checker), "tambo", "0.2.23", "a" * 64], env=env, capture_output=True)
+        assert result.returncode == expected, (name, result.returncode)
+        print(f"PASS: {name} -> {expected}")
     invalid = subprocess.run([str(checker), "tambo", "..."], capture_output=True)
     assert invalid.returncode == 2
     print("PASS: invalid version -> UNKNOWN")
