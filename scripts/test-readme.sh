@@ -21,9 +21,9 @@ mkdir "$work/home" "$work/run"
 cargo build --release --locked --manifest-path "$repo/Cargo.toml"
 version=$(sed -n 's/^version = "\([^"]*\)"$/\1/p' "$repo/Cargo.toml" | head -n 1)
 target_dir=$(cargo metadata --no-deps --format-version 1 --manifest-path "$repo/Cargo.toml" | python3 -c 'import json,sys; print(json.load(sys.stdin)["target_directory"])')
-archive="caboodle-v$version-x86_64-unknown-linux-gnu.tar.gz"
+archive="tambo-v$version-x86_64-unknown-linux-gnu.tar.gz"
 mkdir "$work/release"
-tar -czf "$work/release/$archive" -C "$target_dir/release" caboodle
+tar -czf "$work/release/$archive" -C "$target_dir/release" tambo caboodle
 (cd "$work/release" && sha256sum "$archive" > "$archive.sha256")
 bind=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print("127.0.0.1:"+str(s.getsockname()[1])); s.close()')
 awk '
