@@ -2,7 +2,7 @@
 
 This terminal recording compares the retained `cargo metadata` baseline at
 `47389353fe7f73e6668745a7607125a1427a0d6e` with source candidate
-`23d7164` (the paired-update implementation and registry-checksum commit). The baseline declares the Caboodle
+`1429c78` (the integrated Tambo 0.3.0 implementation). The baseline declares the Caboodle
 package and one executable. The candidate declares Tambo and both `tambo` and
 `caboodle`, then runs each candidate's actual version command. Both entry points
 use the same CLI implementation. This is a source fixture, not an installed
