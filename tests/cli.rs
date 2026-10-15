@@ -745,6 +745,55 @@ fn check_updates_reports_ahead_without_proposing_an_update_or_touching_the_tool(
 }
 
 #[test]
+fn package_owned_tools_are_judged_by_receipt_and_never_installed_by_caboodle() {
+    // aegis-6f1 option A: dpkg owns bobbin, so caboodle reads the package
+    // receipt (Debian revision stripped) and leaves delivery to the package lane.
+    for (deb_version, verdict) in [
+        ("0.28.0", "bobbin: ahead of reviewed pin; downgrade refused (package-owned: apt bobbin 0.28.0;"),
+        ("0.1.0-2", "bobbin: behind reviewed pin; delivered by the package lane, not installed by caboodle (package-owned: apt bobbin 0.1.0;"),
+    ] {
+        let root = tempfile::tempdir().unwrap();
+        let bin = root.path().join("bin");
+        fs::create_dir(&bin).unwrap();
+        install_fakes(root.path(), &bin);
+        command(root.path(), &bin)
+            .args(["plan", "--profile", "retrieval"])
+            .assert()
+            .success();
+        // The binary reports what dpkg says, so the pre-6f1 engine would treat
+        // the behind case as a stale install and converge it.
+        let upstream = deb_version.split('-').next().unwrap();
+        fake_tool(&bin, "bobbin", &format!("echo 'bobbin {upstream}'"));
+        let bobbin = fs::canonicalize(bin.join("bobbin")).unwrap();
+        let query = root.path().join("dpkg-query");
+        fake_tool(
+            root.path(),
+            "dpkg-query",
+            &format!(
+                "echo \"$*\" >> \"$HOME/dpkg.log\"\n\
+                 if [ \"$1\" = -S ] && [ \"$2\" = '{}' ]; then echo \"bobbin: $2\"; exit 0; fi\n\
+                 if [ \"$1\" = -W ] && [ \"$4\" = bobbin ]; then printf '%s' '{deb_version}'; exit 0; fi\n\
+                 exit 1",
+                bobbin.display()
+            ),
+        );
+        let before = fs::read(bin.join("bobbin")).unwrap();
+        command(root.path(), &bin)
+            .env("CABOODLE_DPKG_QUERY", &query)
+            .arg("check-updates")
+            .assert()
+            .stdout(predicate::str::contains(verdict));
+        command(root.path(), &bin)
+            .env("CABOODLE_DPKG_QUERY", &query)
+            .arg("update")
+            .assert()
+            .stdout(predicate::str::contains(verdict))
+            .stderr(predicate::str::contains("bobbin: converging").not());
+        assert_eq!(fs::read(bin.join("bobbin")).unwrap(), before);
+    }
+}
+
+#[test]
 fn check_updates_reads_quipu_from_cargo_home_before_a_shadowing_path() {
     let root = tempfile::tempdir().unwrap();
     let bin = root.path().join("bin");
