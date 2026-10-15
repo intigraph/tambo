@@ -11,7 +11,6 @@
 | shuttle | workflow engine — signed runs, windowed export, frozen history |
 | creel | browser-native crew — tabs as workers |
 | shanty | the tmux the crew lives in |
-| skein | portable agentic skills |
 | beads (`br`) | issue tracking as agent memory — SQLite + JSONL |
 
 ## Extending the corpus with Quipu shares

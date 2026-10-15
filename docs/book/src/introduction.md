@@ -58,8 +58,7 @@ of the stack to install.
 
 ## Around the stack
 
-Explore [Skein](https://github.com/scbrown/skein),
-[Shuttle](https://github.com/scbrown/shuttle),
+Explore [Shuttle](https://github.com/scbrown/shuttle),
 [Creel](https://github.com/scbrown/creel),
 [Shanty](https://github.com/scbrown/shanty),
 [Desire Path](https://github.com/scbrown/desire-path) for turning hallucinations
