@@ -43,7 +43,6 @@ design is in the [book](introduction.md).
 | [shantytown](https://github.com/scbrown/shantytown) | a small harness for running a crew of coding agents |
 | [creel](https://github.com/scbrown/creel) | parallel agent bursts, entirely in the browser |
 | [shanty](https://github.com/scbrown/shanty) | a terminal multiplexer wrapper that makes tmux feel like home |
-| [skein](https://github.com/scbrown/skein) | portable agentic skills — shell + HTTP only |
 | [beads](https://github.com/Dicklesworthstone/beads_rust) | issue tracking as agent memory — `br`, SQLite + JSONL |
 | [quechua](https://github.com/scbrown/quechua) | the stack's shared vocabulary; caboodle pins a release by digest and loads it into Quipu ([catalog](https://scbrown.github.io/quechua/ns)) |
 
