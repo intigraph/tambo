@@ -1,5 +1,5 @@
 [book]
-title = "caboodle"
+title = "Tambo"
 description = "The whole kit — one wizard that installs the stack, proves it works, and watches it run"
 authors = ["Steve Brown"]
 language = "en"
@@ -8,10 +8,10 @@ src = "src"
 [output.html]
 default-theme = "coal"
 preferred-dark-theme = "coal"
-git-repository-url = "https://github.com/scbrown/caboodle"
-edit-url-template = "https://github.com/scbrown/caboodle/edit/main/docs/book/{path}"
+git-repository-url = "https://github.com/scbrown/tambo"
+edit-url-template = "https://github.com/scbrown/tambo/edit/main/docs/book/{path}"
 additional-css = ["custom/css/custom.css"]
-site-url = "/caboodle/"
+site-url = "/tambo/"
 
 [output.html.search]
 enable = true

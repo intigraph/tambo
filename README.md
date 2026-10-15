@@ -144,7 +144,7 @@ state). Keep the directory; `verify`, `update` and a resumed `install` read it.
 
 ## Wire it into your agent
 
-Caboodle is a CLI, with an [agent skill](skills/caboodle/SKILL.md), not an MCP
+Tambo is a CLI, with an [agent skill](skills/tambo/SKILL.md), not an MCP
 server. Bobbin, which the `retrieval` profile installed above, is one. It
 searches one repository: the code you want your agent to work on, such as your
 own project's git checkout. Do not use `~/caboodle`, which holds only the plan.
