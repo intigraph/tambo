@@ -7,9 +7,10 @@ The canonical archive is `tambo-vVERSION-TARGET.tar.gz`; a compatibility archive
 named `caboodle-vVERSION-TARGET.tar.gz` carries the same two commands for legacy
 self-update clients. Both have filename-bound SHA-256 checksum files.
 
-On managed Linux and macOS installations, apt and Homebrew update the commands
-as a package. Homebrew's formula rename migrates `caboodle` to `tambo`; the
-Linux transitional `caboodle` package depends on `tambo`. The checksummed release
+The planned managed Linux and macOS cutover uses apt and Homebrew to update
+both commands as a package after the first official Tambo release. The Homebrew
+formula rename will migrate `caboodle` to `tambo`; the Linux transitional
+`caboodle` package will depend on `tambo`. The checksummed release
 installer remains the standalone fallback. A standalone self-update of a
 dual-command installation verifies and updates both commands together, restoring
 both prior files and state if either installed read-back fails.
