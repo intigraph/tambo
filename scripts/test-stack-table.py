@@ -66,6 +66,23 @@ class StackTableControls(unittest.TestCase):
              redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
             self.assertEqual(CHECK.main(), 1)
 
+    def test_shantytown_is_audited_and_its_missing_block_fails(self):
+        canonical = CANONICAL.read_bytes()
+        for missing, expected in ((False, 0), (True, 1)):
+            seen = []
+
+            def read(repo):
+                seen.append(repo)
+                return b"A README without a stack block.\n" if missing and repo == "shantytown" else canonical
+
+            with self.subTest(missing=missing), \
+                 patch.object(CHECK, "remote_readme", side_effect=read), \
+                 patch.object(sys, "argv", [str(SCRIPT), "--remote"]), \
+                 redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+                self.assertEqual(CHECK.main(), expected)
+                self.assertEqual(seen.count("shantytown"), 1)
+                self.assertEqual(len(seen), 8)
+
     def test_remote_response_has_a_size_limit(self):
         response = MagicMock()
         response.__enter__.return_value.read.return_value = b"x" * (CHECK.MAX_BYTES + 1)

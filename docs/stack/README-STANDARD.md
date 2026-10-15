@@ -94,14 +94,14 @@ each book, and diverging from it is a review finding.
 ## 3. The shared stack block (identical everywhere)
 
 The canonical table is [docs/stack-table.md](../stack-table.md). Copy its complete
-marked block verbatim into the seven stack READMEs: Caboodle, Quipu, Camayoc,
-Bobbin, Yupana, Desire Path and Seeds. Keep the Shuttle row. Do not add a
+marked block verbatim into the eight stack READMEs: Caboodle, Quipu, Camayoc,
+Bobbin, Yupana, Desire Path, Seeds and Shantytown. Keep the Shuttle row. Do not add a
 repository-specific self marker; every copy must remain byte-identical.
 
 The [README template](README-TEMPLATE.md) carries the same marked block. Run
 `python3 scripts/check-stack-table.py README.md docs/stack/README-TEMPLATE.md`
 from the repository root to verify both local copies, and add `--remote` to
-check the seven published READMEs. Update the canonical source and copies
+check the eight published READMEs. Update the canonical source and copies
 together when changing outcome-first row wording.
 
 ## 4. Rules every README is held to
