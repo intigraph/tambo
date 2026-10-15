@@ -1,0 +1,28 @@
+Script started on 2026-10-14 20:40:05-04:00 [COMMAND="sh docs/demos/tambo-rename/run.sh" <not executed on terminal>]
+Retained cargo metadata baseline (before the rename):
+{
+  "revision": "47389353fe7f73e6668745a7607125a1427a0d6e",
+  "package": "caboodle",
+  "version": "0.2.22",
+  "binaries": [
+    "caboodle"
+  ]
+}
+
+$ cargo metadata --locked --no-deps --format-version 1 (package and binaries)
+{
+  "package": "tambo",
+  "version": "0.2.22",
+  "binaries": [
+    "tambo",
+    "caboodle"
+  ]
+}
+
+$ tambo --version (source candidate)
+tambo 0.2.22 (3278c3402f55)
+
+$ caboodle --version (candidate compatibility entry point)
+tambo 0.2.22 (3278c3402f55)
+
+Script done on 2026-10-14 20:40:06-04:00 [COMMAND_EXIT_CODE="0"]
