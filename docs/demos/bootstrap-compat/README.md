@@ -17,10 +17,10 @@ From a clone containing both commit objects:
 
 ```sh
 python3 docs/demos/bootstrap-compat/run.py
-scriptreplay --timing docs/demos/bootstrap-compat/timing.log docs/demos/bootstrap-compat/output.log
+scriptreplay --timing docs/demos/bootstrap-compat/timing.txt docs/demos/bootstrap-compat/output.txt
 ```
 
-[Recording transcript](output.log) and [timing](timing.log) are small terminal
+[Recording transcript](output.txt) and [timing](timing.txt) are small terminal
 recording artifacts retained with this source. The separate CI fixture suite
 also covers pinned legacy installs, new dual-command archives, incomplete
 archives, checksum failures, HTTP 500 and transport failures. Only a missing
