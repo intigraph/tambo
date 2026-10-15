@@ -49,6 +49,13 @@ the binary. Read the [installer source](https://github.com/scbrown/caboodle/blob
 when inspecting the bootstrap. After installation, `caboodle --version` reads
 back the installed release.
 
+The compatibility repository URL remains the bootstrap default through the
+rename. The installer prefers a `tambo-` archive with both commands. Only an
+HTTP 404 selects the historical `caboodle-` archive, which may contain just
+`caboodle`; pinned releases such as `v0.2.23` therefore remain installable.
+Checksum, server and transport failures stop installation without trying an
+alternative archive.
+
 Supported release targets are Linux x86_64, macOS x86_64, and macOS arm64.
 The default destination is `${CARGO_HOME:-$HOME/.cargo}/bin/caboodle`; override
 it with `CABOODLE_INSTALL_DIR` when that directory is managed elsewhere.
