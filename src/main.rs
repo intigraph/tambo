@@ -97,6 +97,9 @@ enum Commands {
         /// Refuse to install missing tools; useful for managed or offline machines
         #[arg(long)]
         skip_install: bool,
+        /// Apply this plan host profile (e.g. exclude crew a different lane owns)
+        #[arg(long)]
+        host_profile: Option<String>,
     },
     /// Run isolated functional round trips for every selected tool
     Verify {
@@ -110,6 +113,9 @@ enum Commands {
         /// Creel admission JSON produced by its provider-window governor
         #[arg(long)]
         creel_admission: Option<PathBuf>,
+        /// Apply this plan host profile (e.g. exclude crew a different lane owns)
+        #[arg(long)]
+        host_profile: Option<String>,
     },
     /// Verify one embedded release member in temporary roots without installing it
     VerifyMember { member: String },
@@ -125,11 +131,17 @@ enum Commands {
         creel_doctor: Option<PathBuf>,
         #[arg(long)]
         creel_admission: Option<PathBuf>,
+        /// Apply this plan host profile (e.g. exclude crew a different lane owns)
+        #[arg(long)]
+        host_profile: Option<String>,
     },
     /// Report drift from the releases reviewed by this Caboodle build
     CheckUpdates {
         #[arg(short, long, default_value = "caboodle-plan.toml")]
         plan: PathBuf,
+        /// Apply this plan host profile (e.g. exclude crew a different lane owns)
+        #[arg(long)]
+        host_profile: Option<String>,
     },
     /// Converge drifted tools to reviewed releases and verify each change
     Update {
@@ -141,6 +153,9 @@ enum Commands {
         creel_doctor: Option<PathBuf>,
         #[arg(long)]
         creel_admission: Option<PathBuf>,
+        /// Apply this plan host profile (e.g. exclude crew a different lane owns)
+        #[arg(long)]
+        host_profile: Option<String>,
     },
     /// Update this installer from a published checksummed release
     #[cfg(unix)]
@@ -440,17 +455,23 @@ fn main() -> Result<()> {
             plan,
             state,
             skip_install,
+            host_profile,
         } => {
-            engine::apply(&Plan::read(&plan)?, &state, skip_install)?;
+            engine::apply(
+                &read_plan(&plan, host_profile.as_deref())?,
+                &state,
+                skip_install,
+            )?;
         }
         Commands::Verify {
             plan,
             state,
             creel_doctor,
             creel_admission,
+            host_profile,
         } => {
             engine::verify(
-                &Plan::read(&plan)?,
+                &read_plan(&plan, host_profile.as_deref())?,
                 &state,
                 &CrewEvidence {
                     creel_doctor,
@@ -468,8 +489,9 @@ fn main() -> Result<()> {
             skip_install,
             creel_doctor,
             creel_admission,
+            host_profile,
         } => {
-            let plan = Plan::read(&plan)?;
+            let plan = read_plan(&plan, host_profile.as_deref())?;
             engine::apply(&plan, &state, skip_install)?;
             engine::verify(
                 &plan,
@@ -480,8 +502,8 @@ fn main() -> Result<()> {
                 },
             )?;
         }
-        Commands::CheckUpdates { plan } => {
-            let plan = Plan::read(&plan)?;
+        Commands::CheckUpdates { plan, host_profile } => {
+            let plan = read_plan(&plan, host_profile.as_deref())?;
             if !engine::check_updates(&plan)? {
                 anyhow::bail!("selected stack has pending reviewed updates");
             }
@@ -491,9 +513,10 @@ fn main() -> Result<()> {
             state,
             creel_doctor,
             creel_admission,
+            host_profile,
         } => {
             engine::update(
-                &Plan::read(&plan)?,
+                &read_plan(&plan, host_profile.as_deref())?,
                 &state,
                 &CrewEvidence {
                     creel_doctor,
@@ -625,4 +648,14 @@ fn main() -> Result<()> {
         }
     }
     Ok(())
+}
+
+/// Read a plan and apply `--host-profile`, printing each exclusion so an
+/// excluded runtime is visible and never mistaken for a verified one.
+fn read_plan(path: &std::path::Path, host_profile: Option<&str>) -> anyhow::Result<Plan> {
+    let (plan, excluded) = Plan::read(path)?.for_host(host_profile)?;
+    for line in excluded {
+        println!("{line}");
+    }
+    Ok(plan)
 }
