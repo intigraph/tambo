@@ -1,0 +1,7 @@
+Script started on 2026-10-15 04:24:56-04:00 [COMMAND="python3 docs/demos/bootstrap-compat/run.py" <not executed on terminal>]
+BEFORE a696fccd13157db1943bbb4c99ed76d8cf84a93f: default bootstrap exit=1; installed=[]
+AFTER 47d3ee0bf6ececc0150968295fee7d1a221a7baa: default bootstrap exit=0; installed=['caboodle']
+caboodle 0.2.23 (fixture)
+LIMIT: fixture URLs and generated executable archives; no host install or public release is claimed.
+
+Script done on 2026-10-15 04:24:56-04:00 [COMMAND_EXIT_CODE="0"]

@@ -1,4 +1,19 @@
-# Installing and removing Caboodle
+# Installing and removing Tambo
+
+Tambo is the renamed Caboodle installer. For the transition release, both
+`tambo` and `caboodle` are available. Existing `caboodle-plan.toml` and
+`.caboodle` state paths remain compatible; no install-state move is required.
+The canonical archive is `tambo-vVERSION-TARGET.tar.gz`; a compatibility archive
+named `caboodle-vVERSION-TARGET.tar.gz` carries the same two commands for legacy
+self-update clients. Both have filename-bound SHA-256 checksum files.
+
+The planned managed Linux and macOS cutover uses apt and Homebrew to update
+both commands as a package after the first official Tambo release. The Homebrew
+formula rename will migrate `caboodle` to `tambo`; the Linux transitional
+`caboodle` package will depend on `tambo`. The checksummed release
+installer remains the standalone fallback. A standalone self-update of a
+dual-command installation verifies and updates both commands together, restoring
+both prior files and state if either installed read-back fails.
 
 Caboodle publishes a release only when a `vVERSION` tag exactly matches the
 version in `Cargo.toml`. Each supported archive has a sibling `.sha256` file;
@@ -33,6 +48,13 @@ The script still verifies the release archive's SHA256 checksum before replacing
 the binary. Read the [installer source](https://github.com/scbrown/caboodle/blob/main/scripts/install.sh)
 when inspecting the bootstrap. After installation, `caboodle --version` reads
 back the installed release.
+
+The compatibility repository URL remains the bootstrap default through the
+rename. The installer prefers a `tambo-` archive with both commands. Only an
+HTTP 404 selects the historical `caboodle-` archive, which may contain just
+`caboodle`; pinned releases such as `v0.2.23` therefore remain installable.
+Checksum, server and transport failures stop installation without trying an
+alternative archive.
 
 Supported release targets are Linux x86_64, macOS x86_64, and macOS arm64.
 The default destination is `${CARGO_HOME:-$HOME/.cargo}/bin/caboodle`; override

@@ -29,7 +29,7 @@ the tool demonstrate its own job, through three proofs:
 
 Install and verification outcomes are also queued as quipu episodes, so a fresh
 box's first knowledge is a record of the box itself. The agent-facing version of
-this workflow is the [`caboodle` skill](https://github.com/scbrown/caboodle/blob/main/skills/caboodle/SKILL.md), and the full
+this workflow is the [`tambo` skill](https://github.com/scbrown/tambo/blob/main/skills/tambo/SKILL.md), and the full
 design is in the [book](introduction.md).
 
 ## Related projects

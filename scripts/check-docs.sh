@@ -4,6 +4,6 @@ set -eu
 cd "$(dirname "$0")/.."
 site=$(mktemp -d)
 trap 'rm -rf "$site"' EXIT HUP INT TERM
-# Match Pages' /caboodle/ base, including the generated 404 page's root link.
-mdbook build docs/book --dest-dir "$site/caboodle"
-scripts/check-doc-links.sh --root-dir "$site" README.md "$site/caboodle/**/*.html"
+# Match Pages' /tambo/ base, including the generated 404 page's root link.
+mdbook build docs/book --dest-dir "$site/tambo"
+scripts/check-doc-links.sh --root-dir "$site" README.md "$site/tambo/**/*.html"

@@ -1,12 +1,21 @@
+> Caboodle is becoming **Tambo**. The transition release includes both `tambo`
+> and `caboodle`, backed by the same CLI. Existing plan and state paths remain
+> compatible. New release archives use `tambo-vVERSION-TARGET.tar.gz` with a
+> sibling SHA-256 checksum; supported archives contain both commands.
+>
+> Repository and registry publication, package-manager migration, and installed
+> host verification are separate release steps. The compatibility command stays
+> available for at least one release.
+
 <p align="center">
   <img src="assets/header.svg" width="100%" alt="Animated banner — a teal kit box with a tipping lid and three flowing, knotted cords"/>
 </p>
 
 <p align="center">
-  <img src="assets/logo.svg" width="200" alt="Caboodle logo — a light-teal tackle box open with pink fold-out trays, each compartment holding a tool of the stack"/>
+  <img src="assets/logo.svg" width="200" alt="Tambo logo — a light-teal tackle box open with pink fold-out trays, each compartment holding a tool of the stack"/>
 </p>
 
-<h1 align="center">caboodle</h1>
+<h1 align="center">tambo</h1>
 
 <p align="center">
   <em>🧰 Agent Platform Toolkit - installs and configures the quipu stack</em>
@@ -135,7 +144,7 @@ state). Keep the directory; `verify`, `update` and a resumed `install` read it.
 
 ## Wire it into your agent
 
-Caboodle is a CLI, with an [agent skill](skills/caboodle/SKILL.md), not an MCP
+Tambo is a CLI, with an [agent skill](skills/tambo/SKILL.md), not an MCP
 server. Bobbin, which the `retrieval` profile installed above, is one. It
 searches one repository: the code you want your agent to work on, such as your
 own project's git checkout. Do not use `~/caboodle`, which holds only the plan.

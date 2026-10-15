@@ -143,7 +143,17 @@ pub const SELF_VERSION: &str = concat!(
 /// shadowed a fresh install, and both reported the same release version).
 fn check_self_on_path(path: Option<&std::ffi::OsStr>) -> Option<Finding> {
     let current = env::current_exe().ok()?;
-    let runs = which_all("caboodle", path).into_iter().next()?;
+    let command = if current.file_name().is_some_and(|name| name == "tambo") {
+        "tambo"
+    } else {
+        "caboodle"
+    };
+    let self_version = format!(
+        "{command} {} ({})",
+        env!("CARGO_PKG_VERSION"),
+        env!("CABOODLE_GIT_SHA")
+    );
+    let runs = which_all(command, path).into_iter().next()?;
     let canonical = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
     if canonical(&runs) == canonical(&current) {
         return None;
@@ -163,21 +173,21 @@ fn check_self_on_path(path: Option<&std::ffi::OsStr>) -> Option<Finding> {
         })
         .filter(|v| !v.is_empty())
         .unwrap_or_else(|| "version unreadable".to_owned());
-    Some(if runs_version == SELF_VERSION {
+    Some(if runs_version == self_version {
         Finding::new(
             Level::Ok,
-            "caboodle on PATH",
+            format!("{command} on PATH"),
             format!(
-                "{} is a copy of this build ({SELF_VERSION})",
+                "{} is a copy of this build ({self_version})",
                 runs.display()
             ),
         )
     } else {
         Finding::new(
             Level::Warn,
-            "caboodle on PATH",
+            format!("{command} on PATH"),
             format!(
-                "PATH runs {} ({runs_version}), NOT this caboodle {} ({SELF_VERSION}). Remove the stale copy or reorder PATH",
+                "PATH runs {} ({runs_version}), NOT this {command} {} ({self_version}). Remove the stale copy or reorder PATH",
                 runs.display(),
                 current.display()
             ),

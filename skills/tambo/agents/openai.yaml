@@ -1,0 +1,4 @@
+interface:
+  display_name: "Tambo"
+  short_description: "Install and prove the AI tool corpus"
+  default_prompt: "Use $tambo to create, review, install, and verify a Tambo stack plan."
