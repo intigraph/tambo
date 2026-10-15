@@ -1,3 +1,12 @@
+> Caboodle is becoming **Tambo**. The transition release includes both `tambo`
+> and `caboodle`, backed by the same CLI. Existing plan and state paths remain
+> compatible. New release archives use `tambo-vVERSION-TARGET.tar.gz` with a
+> sibling SHA-256 checksum; supported archives contain both commands.
+>
+> Repository and registry publication, package-manager migration, and installed
+> host verification are separate release steps. The compatibility command stays
+> available for at least one release.
+
 <p align="center">
   <img src="assets/header.svg" width="100%" alt="Animated banner — a teal kit box with a tipping lid and three flowing, knotted cords"/>
 </p>

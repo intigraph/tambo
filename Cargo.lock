@@ -115,23 +115,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "caboodle"
-version = "0.2.22"
-dependencies = [
- "anyhow",
- "assert_cmd",
- "clap",
- "fs2",
- "predicates",
- "serde",
- "serde_json",
- "sha2",
- "tempfile",
- "toml",
- "toml_edit",
-]
-
-[[package]]
 name = "cfg-if"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -533,6 +516,23 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "tambo"
+version = "0.2.22"
+dependencies = [
+ "anyhow",
+ "assert_cmd",
+ "clap",
+ "fs2",
+ "predicates",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "toml",
+ "toml_edit",
 ]
 
 [[package]]

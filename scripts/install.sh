@@ -1,9 +1,9 @@
 #!/bin/sh
 set -eu
 
-repo=${CABOODLE_REPOSITORY:-scbrown/caboodle}
-version=${CABOODLE_VERSION:-}
-install_dir=${CABOODLE_INSTALL_DIR:-${CARGO_HOME:-$HOME/.cargo}/bin}
+repo=${TAMBO_REPOSITORY:-${CABOODLE_REPOSITORY:-scbrown/tambo}}
+version=${TAMBO_VERSION:-${CABOODLE_VERSION:-}}
+install_dir=${TAMBO_INSTALL_DIR:-${CABOODLE_INSTALL_DIR:-${CARGO_HOME:-$HOME/.cargo}/bin}}
 
 if [ -z "$version" ]; then
     version=$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" |
@@ -14,8 +14,8 @@ case "$version" in
     *) printf '%s\n' "invalid or unavailable CABOODLE release version: $version" >&2; exit 1 ;;
 esac
 
-if [ -n "${CABOODLE_TARGET:-}" ]; then
-    target=$CABOODLE_TARGET
+if [ -n "${TAMBO_TARGET:-${CABOODLE_TARGET:-}}" ]; then
+    target=${TAMBO_TARGET:-$CABOODLE_TARGET}
 else
     machine=$(uname -m)
     system=$(uname -s)
@@ -27,8 +27,8 @@ else
     esac
 fi
 
-archive="caboodle-$version-$target.tar.gz"
-base=${CABOODLE_RELEASE_BASE_URL:-https://github.com/$repo/releases/download/$version}
+archive="tambo-$version-$target.tar.gz"
+base=${TAMBO_RELEASE_BASE_URL:-${CABOODLE_RELEASE_BASE_URL:-https://github.com/$repo/releases/download/$version}}
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT HUP INT TERM
 
@@ -45,20 +45,25 @@ else
     }
 fi
 tar -xzf "$work/$archive" -C "$work"
+test -x "$work/tambo"
 test -x "$work/caboodle"
 mkdir -p "$install_dir"
-staged="$install_dir/.caboodle.$$.tmp"
-cp "$work/caboodle" "$staged"
-chmod 0755 "$staged"
-mv "$staged" "$install_dir/caboodle"
-"$install_dir/caboodle" --version
-printf '%s\n' "installed $install_dir/caboodle"
+for binary in tambo caboodle; do
+    staged="$install_dir/.$binary.$$.tmp"
+    cp "$work/$binary" "$staged"
+    chmod 0755 "$staged"
+    mv "$staged" "$install_dir/$binary"
+done
+"$install_dir/tambo" --version
+printf '%s\n' "installed $install_dir/tambo and compatibility command $install_dir/caboodle"
 
-# A different caboodle earlier on PATH keeps running instead of this one, and a
-# same-version string cannot tell the two apart (aegis-nvw6ye.1). Say so.
-resolved=$(command -v caboodle 2>/dev/null || true)
-if [ -n "$resolved" ] && ! [ "$resolved" -ef "$install_dir/caboodle" ]; then
-    printf '%s\n' "WARNING: \`caboodle\` on PATH is $resolved ($("$resolved" --version 2>&1 | head -n 1)), not the copy just installed at $install_dir/caboodle. Remove the stale copy or put $install_dir earlier on PATH." >&2
-elif [ -z "$resolved" ]; then
-    printf '%s\n' "note: $install_dir is not on PATH; add it to run \`caboodle\`" >&2
-fi
+# Name a stale executable for either command; version equality cannot prove
+# that PATH resolves to the binary just installed.
+for binary in tambo caboodle; do
+    resolved=$(command -v "$binary" 2>/dev/null || true)
+    if [ -n "$resolved" ] && ! [ "$resolved" -ef "$install_dir/$binary" ]; then
+        printf '%s\n' "WARNING: \`$binary\` on PATH is $resolved ($("$resolved" --version 2>&1 | head -n 1)), not the copy just installed at $install_dir/$binary. Remove the stale copy or put $install_dir earlier on PATH." >&2
+    elif [ -z "$resolved" ]; then
+        printf '%s\n' "note: $install_dir is not on PATH; add it to run \`$binary\`" >&2
+    fi
+done

@@ -10,10 +10,11 @@ test "$tag" = "v$package_version" || {
 }
 
 found=0
-for archive in "$directory"/caboodle-"$tag"-*.tar.gz; do
+for archive in "$directory"/tambo-"$tag"-*.tar.gz; do
     test -f "$archive" || continue
     checksum="$archive.sha256"
     test -f "$checksum"
+    tar -tzf "$archive" | grep -qx 'tambo'
     tar -tzf "$archive" | grep -qx 'caboodle'
     expected_name=$(basename "$archive")
     recorded_name=$(awk '{print $2}' "$checksum")
@@ -29,11 +30,11 @@ test "$found" -gt 0 || {
     exit 1
 }
 for target in ${CABOODLE_EXPECT_TARGETS:-}; do
-    test -f "$directory/caboodle-$tag-$target.tar.gz" || {
+    test -f "$directory/tambo-$tag-$target.tar.gz" || {
         printf '%s\n' "missing release archive for supported target $target" >&2
         exit 1
     }
-    test -f "$directory/caboodle-$tag-$target.tar.gz.sha256" || {
+    test -f "$directory/tambo-$tag-$target.tar.gz.sha256" || {
         printf '%s\n' "missing checksum for supported target $target" >&2
         exit 1
     }
