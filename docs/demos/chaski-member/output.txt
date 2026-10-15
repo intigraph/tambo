@@ -1,0 +1,7 @@
+Script started on 2026-10-14 21:23:50-04:00 [COMMAND="bash docs/demos/chaski-member/run.sh" <not executed on terminal>]
+base {"chaski": 0, "shuttle_control": 1}
+candidate {"chaski": 1, "shuttle_control": 1}
+pinned 0.1.0 chaski chaski-event chaski-once
+reader requires {"fired": true, "focus": "{marker}", "resolved": true, "transitions": 2, "unknown_preserved": true, "version": 1}
+
+Script done on 2026-10-14 21:23:50-04:00 [COMMAND_EXIT_CODE="0"]

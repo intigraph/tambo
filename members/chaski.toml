@@ -1,0 +1,43 @@
+# Chaski release wheel; re-pin using caboodle bump-member, never hand-edit hashes.
+# Own code is pinned; PyYAML==6.0.3 is resolved by pip at install time.
+name = "chaski"
+kind = "python-wheel"
+repo = "scbrown/chaski"
+version = "0.1.0"
+tag = "v{version}"
+asset = "chaski_reactor-{version}-py3-none-any.whl"
+version_argv = ["--version"]
+sums_asset = "checksums.txt"
+prerequisites = ["python3"]
+profiles = ["crew", "everything"]
+
+[sha256]
+any = "758f08de2a26d093fd5c234205f220a70312f80c459d622ed68ff6a946081b56"
+
+[[programs]]
+name = "chaski"
+identity_argv = ["--help"]
+identity_contains = "a post-commit and time-driven reactor"
+
+[[programs]]
+name = "chaski-event"
+identity_argv = ["--help"]
+identity_contains = "existing outbox"
+
+[[programs]]
+name = "chaski-once"
+identity_argv = ["--help"]
+identity_contains = "One bounded scheduled emitter tick"
+
+# Reader-path proof: the marker is absent, a real local demo executes,
+# then an independent status command must recover the marker.
+[[verify]]
+argv = ["chaski", "demo", "status"]
+absent = "{marker}"
+
+[[verify]]
+argv = ["chaski", "demo", "run", "--focus", "{marker}"]
+
+[[verify]]
+argv = ["chaski", "demo", "status"]
+present = '{"fired": true, "focus": "{marker}", "resolved": true, "transitions": 2, "unknown_preserved": true, "version": 1}'

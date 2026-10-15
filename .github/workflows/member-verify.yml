@@ -14,9 +14,28 @@ jobs:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
       - run: cargo build --locked
       - name: Verify the Seeds release pinned by this checkout
         run: |
           VERIFY_HOME=$(mktemp -d)
           trap 'rm -rf "$VERIFY_HOME"' EXIT
           HOME="$VERIFY_HOME" target/debug/caboodle verify-member seeds
+      - name: Install and functionally verify the pinned Chaski wheel
+        run: cargo test --locked --test chaski_member_live -- --ignored
+  chaski-macos-verify:
+    runs-on: macos-14
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - name: Install and functionally verify the pinned Chaski wheel
+        run: cargo test --locked --test chaski_member_live -- --ignored
