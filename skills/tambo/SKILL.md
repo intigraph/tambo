@@ -18,7 +18,8 @@ For Tambo itself, prefer the reviewed checksummed release path documented in
 `docs/book/src/installing.md`. A source install must pin a reviewed commit.
 
 1. If `tambo` is absent and the request authorizes installation, install the public source with:
-   `cargo install --git https://github.com/scbrown/tambo --locked`.
+   `cargo install --git https://github.com/scbrown/caboodle --bin tambo --locked`.
+   The compatibility repository URL remains valid through the repository rename.
    Otherwise stop and request authorization; bootstrapping Tambo is itself an
    installation.
 2. Prove the binary answers: `tambo --version`.
@@ -116,7 +117,7 @@ present all four generated artifacts for review. Rendering is not deployment
 and is not evidence that Prometheus scraped a target.
 
 Applied and verified transitions queue automatically under
-`.caboodle/episodes`. For bead snapshots, run `tambo queue-br <export.jsonl>`.
+`.caboodle/episodes`. For work-item snapshots, run `tambo queue-br <export.jsonl>`.
 Never put a token in a plan or queue: `flush-episodes` reads only
 `QUIPU_AUTH_TOKEN`, requires HTTPS or explicit localhost, and must leave an
 identical file pending on any ambiguous response. Report queued and delivered
