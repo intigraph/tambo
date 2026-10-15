@@ -283,6 +283,38 @@ exit 2
             version = seeds.version
         ),
     );
+    // Profile fixtures include every Chaski launcher. This fake only supports
+    // isolated plan tests; the ignored live test installs and proves real bytes.
+    let chaski = caboodle::members::get("chaski").expect("Chaski is embedded");
+    fake_tool(
+        bin,
+        "chaski",
+        &format!(
+            r#"
+case "${{1:-}}" in
+  --help) echo 'a post-commit and time-driven reactor'; exit 0 ;;
+  --version) echo 'chaski {version}'; exit 0 ;;
+  demo)
+    case "${{2:-}}" in
+      run) printf '{{"fired": true, "focus": "%s", "resolved": true, "transitions": 2, "unknown_preserved": true, "version": 1}}\n' "$4" >> .chaski-fake-runs; exit 0 ;;
+      status) cat .chaski-fake-runs 2>/dev/null || true; exit 0 ;;
+    esac ;;
+esac
+exit 2
+"#,
+            version = chaski.version
+        ),
+    );
+    fake_tool(
+        bin,
+        "chaski-event",
+        "[ \"${1:-}\" = --help ] && echo 'existing outbox'",
+    );
+    fake_tool(
+        bin,
+        "chaski-once",
+        "[ \"${1:-}\" = --help ] && echo 'One bounded scheduled emitter tick'",
+    );
     // shuttle (members/shuttle.toml), same rules: identity from --help, the
     // PINNED version from `version`. A run only reaches "claimed" in status
     // after `advance`, so the fake keeps the manifest's read-back meaningful.
