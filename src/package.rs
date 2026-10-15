@@ -87,6 +87,9 @@ pub fn brew_formula(tool: ToolName) -> Option<&'static str> {
         ToolName::Quipu => Some("quipu"),
         ToolName::Yupana => Some("yupana"),
         ToolName::Member("seeds") => Some("seeds"),
+        // Chaski needs Python >= 3.11; its formula owns a python@3.12, which a
+        // release-fallback wheel on macOS's /usr/bin/python3 (3.9) cannot (aegis-o7n).
+        ToolName::Member("chaski") => Some("chaski"),
         _ => None,
     }
 }
@@ -218,6 +221,7 @@ mod tests {
         assert_eq!(brew_formula(ToolName::Bobbin), Some("bobbin"));
         assert_eq!(brew_formula(ToolName::DesirePath), Some("desire-path"));
         assert_eq!(brew_formula(ToolName::Member("seeds")), Some("seeds"));
+        assert_eq!(brew_formula(ToolName::Member("chaski")), Some("chaski"));
         assert_eq!(brew_formula(ToolName::Camayoc), None);
         assert_eq!(brew_formula(ToolName::Member("shuttle")), None);
     }
