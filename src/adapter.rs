@@ -1300,7 +1300,8 @@ fn ensure_bobbin_link(link: &Path, target: &Path) -> Result<()> {
         }
         Ok(_) => {
             bail!(
-                "refusing to replace existing {}; remove or repair it explicitly",
+                "refusing to replace existing {}; preserve it at a new backup path such as {}.before-tambo, then rerun apply; see Installing > Replacing a cargo-installed Bobbin for backup and rollback commands",
+                link.display(),
                 link.display()
             );
         }
