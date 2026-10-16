@@ -798,6 +798,58 @@ fn package_owned_tools_are_judged_by_receipt_and_never_installed_by_caboodle() {
 }
 
 #[test]
+fn brew_owned_desire_path_ahead_of_the_pin_is_read_not_refused() {
+    // aegis-fv4 2026-10-16: the Mac's brew desire-path 0.7.1 (090ec88) is ahead
+    // of the dp pin. `version()` refused any non-pinned identity, so the
+    // package-owned "ahead" verdict could not read it back and the member failed
+    // with "dp version is not the CABOODLE-pinned revision".
+    let brew_body = r#"echo "$*" >> "$HOME/brew.log"
+case "$*" in
+  "info --json=v2 --installed scbrown/tap/desire-path")
+    printf '{"formulae":[{"full_name":"abseil","tap":"homebrew/core","installed":[{"version":"1"}]}]}'; exit 0;;
+  "info --json=v2 scbrown/tap/desire-path")
+    printf '{"formulae":[{"full_name":"scbrown/tap/desire-path","tap":"scbrown/tap","versions":{"stable":"0.7.1"},"installed":[{"version":"0.7.1"}]}]}'; exit 0;;
+  info*) printf '{"formulae":[]}'; exit 0;;
+esac
+exit 1"#;
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    command(root.path(), &bin)
+        .args(["plan", "--profile", "everything"])
+        .assert()
+        .success();
+    fake_tool(
+        &bin,
+        "dp",
+        "if [ \"${1:-}\" = version ]; then echo 'dp 0.7.1 (090ec88)'; exit 0; fi\nexit 2",
+    );
+    fake_tool(root.path(), "brew", brew_body);
+    let out = command(root.path(), &bin)
+        .env("CABOODLE_BREW", root.path().join("brew"))
+        .arg("update")
+        .output()
+        .unwrap();
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    assert!(
+        stdout.contains("desire-path: ahead of reviewed pin; downgrade refused (package-owned: brew scbrown/tap/desire-path 0.7.1;"),
+        "{stdout}\n{stderr}"
+    );
+    assert!(
+        !format!("{stdout}{stderr}").contains("CABOODLE-pinned"),
+        "{stdout}\n{stderr}"
+    );
+    let log = fs::read_to_string(root.path().join("brew.log")).unwrap_or_default();
+    assert!(
+        !log.contains("install scbrown/tap/desire-path")
+            && !log.contains("upgrade scbrown/tap/desire-path"),
+        "{log}"
+    );
+}
+
+#[test]
 fn brew_delivers_members_from_the_stack_tap_and_never_downgrades() {
     // aegis-6f1: a stateful fake brew. `installed` holds the brew-installed
     // bobbin version (absent = not installed); `stable` is the tap's version.
@@ -932,7 +984,7 @@ fn check_updates_rejects_stale_path_despite_current_cargo_copy() {
         .assert()
         .failure()
         .stdout(predicate::str::contains(
-            "dp version is not the CABOODLE-pinned revision: dp c964ea2",
+            "desire-path: version drift; review required (installed: dp c964ea2 (c964ea2); reviewed: dp v0.3.2 (1f457ec))",
         ));
 }
 
