@@ -1133,10 +1133,11 @@ impl Adapter for DesirePath {
     fn version(&self) -> Result<String> {
         let result = checked(desire_path_program()?, ["version"], None)?;
         let version = String::from_utf8_lossy(&result.stdout).trim().to_owned();
-        if !version.contains(DESIRE_PATH_VERSION.trim_start_matches('v'))
-            || !version.contains(&DESIRE_PATH_REVISION[..7])
-        {
-            bail!("dp version is not the CABOODLE-pinned revision: {version}");
+        // Identity only, like every other adapter: `is_current` and package
+        // `standing` judge it against the pin. Refusing here made a brew-owned
+        // dp that is AHEAD of the pin unreadable, so the member failed (aegis-fv4).
+        if version.is_empty() {
+            bail!("dp version returned no version");
         }
         Ok(version)
     }
