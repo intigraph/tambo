@@ -324,6 +324,18 @@ pub struct HostProfile {
     /// plan's `[crew]` is excluded on this host.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub crew_excluded_owner: Option<String>,
+    /// Plan tools another lane owns on this host, each named with that lane
+    /// (aegis-fv4 D3: shuttle has no reviewed macOS delivery yet). Dropped for
+    /// the run and reported, never installed or verified by caboodle.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub excluded_tools: Vec<ExcludedTool>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ExcludedTool {
+    pub tool: ToolName,
+    pub owner: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -653,6 +665,28 @@ impl Plan {
                     host.name
                 );
             }
+            let mut excluded = std::collections::BTreeSet::new();
+            for entry in &host.excluded_tools {
+                if entry.owner.trim().is_empty() {
+                    bail!(
+                        "host profile {}: excluded tool {} must name the owning lane",
+                        host.name,
+                        entry.tool.as_str()
+                    );
+                }
+                // Built-ins are the profile's fixed prefix: excluding one would leave
+                // a plan no profile accepts. Only declared stack members qualify.
+                if !matches!(entry.tool, ToolName::Member(_))
+                    || !self.tools.contains(&entry.tool)
+                    || !excluded.insert(entry.tool)
+                {
+                    bail!(
+                        "host profile {}: excluded tool {} must be a selected stack member, listed once",
+                        host.name,
+                        entry.tool.as_str()
+                    );
+                }
+            }
         }
         Ok(())
     }
@@ -677,6 +711,21 @@ impl Plan {
             if self.crew.take().is_some() {
                 excluded.push(format!(
                     "crew: EXCLUDED on host profile {host}; owned by {owner}; not installed or verified by caboodle"
+                ));
+            }
+        }
+        // The returned plan has already applied this profile's tool exclusions, so
+        // it must not carry them into a later validate() of the selected plan.
+        if let Some(applied) = self.host_profiles.iter_mut().find(|p| p.name == host) {
+            applied.excluded_tools.clear();
+        }
+        for entry in &profile.excluded_tools {
+            if let Some(index) = self.tools.iter().position(|t| *t == entry.tool) {
+                self.tools.remove(index);
+                excluded.push(format!(
+                    "{}: EXCLUDED on host profile {host}; owned by {}; not installed or verified by caboodle",
+                    entry.tool.as_str(),
+                    entry.owner
                 ));
             }
         }
@@ -800,7 +849,7 @@ mod self_test_question_tests {
 
 #[cfg(test)]
 mod host_profile_tests {
-    use super::{CrewMode, HostProfile, Plan, Profile};
+    use super::{CrewMode, ExcludedTool, HostProfile, Plan, Profile, ToolName};
 
     fn plan() -> Plan {
         let mut plan = Plan::for_profile(Profile::Everything);
@@ -808,8 +857,69 @@ mod host_profile_tests {
         plan.host_profiles = vec![HostProfile {
             name: "mac".into(),
             crew_excluded_owner: Some("st-peer-autopull".into()),
+            excluded_tools: Vec::new(),
         }];
         plan
+    }
+
+    #[test]
+    fn host_profile_drops_an_excluded_tool_and_names_its_owner() {
+        // aegis-fv4 D3: a tool with no reviewed delivery on this host.
+        let mut excluding = plan();
+        let tool = *excluding
+            .tools
+            .iter()
+            .find(|t| matches!(t, ToolName::Member(_)))
+            .expect("the everything profile carries stack members");
+        excluding.host_profiles[0].excluded_tools = vec![ExcludedTool {
+            tool,
+            owner: "its own release lane".into(),
+        }];
+        excluding.validate().unwrap();
+        let (selected, lines) = excluding.clone().for_host(Some("mac")).unwrap();
+        assert!(!selected.tools.contains(&tool));
+        assert!(lines.iter().any(|l| l.starts_with(tool.as_str())
+            && l.contains("EXCLUDED")
+            && l.contains("its own release lane")));
+        // The selected plan still validates (it is re-checked by the commands).
+        selected.validate().unwrap();
+        let (unchanged, _) = excluding.for_host(None).unwrap();
+        assert!(unchanged.tools.contains(&tool));
+    }
+
+    #[test]
+    fn excluded_tools_must_be_owned_selected_and_listed_once() {
+        let mut ownerless = plan();
+        let tool = *ownerless
+            .tools
+            .iter()
+            .find(|t| matches!(t, ToolName::Member(_)))
+            .unwrap();
+        ownerless.host_profiles[0].excluded_tools = vec![ExcludedTool {
+            tool,
+            owner: " ".into(),
+        }];
+        assert!(ownerless.validate().is_err());
+        let mut twice = plan();
+        let entry = ExcludedTool {
+            tool,
+            owner: "lane".into(),
+        };
+        twice.host_profiles[0].excluded_tools = vec![entry.clone(), entry.clone()];
+        assert!(twice.validate().is_err());
+        let mut unselected = plan();
+        unselected.tools.retain(|t| *t != tool);
+        unselected.host_profiles[0].excluded_tools = vec![ExcludedTool {
+            tool,
+            owner: "lane".into(),
+        }];
+        assert!(unselected.validate().is_err());
+        let mut builtin = plan();
+        builtin.host_profiles[0].excluded_tools = vec![ExcludedTool {
+            tool: ToolName::Bobbin,
+            owner: "lane".into(),
+        }];
+        assert!(builtin.validate().is_err());
     }
 
     #[test]
