@@ -4042,3 +4042,55 @@ fn installer_self_update_keeps_both_commands_and_restores_the_pair_on_failure() 
         self_update_pair_fixture(false, Some("v0.2.1"), Some("verified"), false, Some(mode));
     }
 }
+
+/// aegis-vgu: a rejected credential must not hide the independent namespace
+/// check. `/query` is a public read, so doctor still reports it; the write probe
+/// needs the credential and is skipped rather than repeating the refusal.
+#[test]
+fn doctor_reports_namespace_after_a_rejected_credential() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    command(root.path(), &bin)
+        .args(["plan", "--profile", "kg"])
+        .assert()
+        .success();
+    let token = root.path().join(".config/quipu/token");
+    fs::set_permissions(&token, fs::Permissions::from_mode(0o600)).unwrap();
+    fs::write(&token, "bad-token\n").unwrap();
+    fs::set_permissions(&token, fs::Permissions::from_mode(0o400)).unwrap();
+    fake_tool(
+        &bin,
+        "curl",
+        r#"
+echo "$*" >> "$HOME/curl.log"
+case "$*" in
+  *"/health"*) exit 0 ;;
+  *"/shapes"*) printf '401' ;;
+  *"/query"*) echo '{"count":0,"rows":[]}' ;;
+  *"/episode"*) printf '401' ;;
+  *) exit 2 ;;
+esac
+"#,
+    );
+
+    command(root.path(), &bin)
+        .arg("doctor")
+        .assert()
+        .failure()
+        .stdout(predicate::str::contains("FAIL quipu credential"))
+        .stdout(predicate::str::contains("warn quipu namespace"))
+        .stdout(predicate::str::contains(
+            "camayoc's ontology is NOT loaded here",
+        ));
+    let calls = fs::read_to_string(root.path().join("curl.log")).unwrap();
+    assert!(
+        calls.contains("/query"),
+        "namespace check must still run: {calls}"
+    );
+    assert!(
+        !calls.contains("/episode"),
+        "write probe needs the credential: {calls}"
+    );
+}
