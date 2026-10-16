@@ -803,11 +803,14 @@ fn brew_delivers_members_from_the_stack_tap_and_never_downgrades() {
     // bobbin version (absent = not installed); `stable` is the tap's version.
     let brew_body = r#"echo "$*" >> "$HOME/brew.log"
 state="$HOME/brew-installed"; stable=$(cat "$HOME/brew-stable")
+installed='[]'; [ -f "$state" ] && installed=$(printf '[{"version":"%s"}]' "$(cat "$state")")
 case "$*" in
+  # Real brew (aegis-fv4): --installed ignores the formula and lists EVERY
+  # installed formula, an unrelated core one first.
   "info --json=v2 --installed scbrown/tap/bobbin")
-    if [ -f "$state" ]; then printf '{"formulae":[{"tap":"scbrown/tap","installed":[{"version":"%s"}]}]}' "$(cat "$state")"; else printf '{"formulae":[]}'; fi; exit 0;;
+    printf '{"formulae":[{"full_name":"abseil","tap":"homebrew/core","installed":[{"version":"1"}]}]}'; exit 0;;
   "info --json=v2 scbrown/tap/bobbin")
-    printf '{"formulae":[{"tap":"scbrown/tap","versions":{"stable":"%s"}}]}' "$stable"; exit 0;;
+    printf '{"formulae":[{"full_name":"scbrown/tap/bobbin","tap":"scbrown/tap","versions":{"stable":"%s"},"installed":%s}]}' "$stable" "$installed"; exit 0;;
   "install scbrown/tap/bobbin"|"upgrade scbrown/tap/bobbin") echo "$stable" > "$state"; exit 0;;
   info*) printf '{"formulae":[]}'; exit 0;;
 esac
