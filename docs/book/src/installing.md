@@ -30,6 +30,23 @@ immediately. Checksum verification happens after downloading and is never
 retried or bypassed. This policy covers downloads made by the Caboodle binary,
 not the bootstrap shell installer above it or external package managers.
 
+## Homebrew member updates
+
+For a Mac plan with stack formulas, `tambo update` refreshes Homebrew metadata
+once before checking members. An unpinned formula follows the tap's current
+stable version, even when the installed version is already ahead of Tambo's
+embedded minimum release. A newer installed version is never downgraded.
+`brew pin scbrown/tap/bobbin` holds that formula; the updater reports the hold
+and never unpins it. Use `brew unpin scbrown/tap/bobbin` when you intend to resume
+stable updates.
+
+A failed metadata refresh, unreadable channel, failed upgrade, or version
+read-back mismatch is an error. After an upgrade, the formula receipt must reach
+stable and agree with the executable, and functional verification must pass.
+The release fallback still requires the embedded reviewed minimum when no stack
+formula is available. `check-updates` continues to report drift from those
+embedded release pins; it does not refresh package metadata.
+
 ## Release install
 
 Run the checksummed release installer in one line:

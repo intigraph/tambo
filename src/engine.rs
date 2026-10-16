@@ -587,47 +587,69 @@ fn brew_update(
     adapter: &dyn crate::adapter::Adapter,
 ) -> Result<Option<String>> {
     use crate::package::{
-        brew_available, brew_converge, brew_formula, brew_program, brew_receipt, standing, Standing,
+        brew_channel, brew_converge, brew_formula, brew_program, standing, Standing,
     };
     if brew_formula(name).is_none() || brew_program().is_none() {
         return Ok(None);
     }
+    let Some(channel) = brew_channel(name)? else {
+        return Ok(None);
+    };
     let desired = adapter.desired_version();
-    match brew_receipt(name) {
-        Some(receipt) => match standing(&receipt.version, &desired) {
-            Standing::Behind => brew_converge(name, true)?,
-            verdict => {
-                let word = match verdict {
-                    Standing::Current => "current",
-                    Standing::Ahead => "ahead of reviewed pin; downgrade refused",
-                    _ => "version drift; review required",
+    let stable = format!("pkg {}", channel.stable);
+    if channel.pinned {
+        let installed = channel
+            .installed
+            .context("pinned brew formula has no installed receipt")?;
+        println!(
+            "{}: pinned Homebrew formula; update skipped ({} {}; stable: {})",
+            name.as_str(),
+            crate::package::STACK_TAP,
+            installed,
+            channel.stable
+        );
+        return brew_version(adapter, &installed).map(Some);
+    }
+    match channel.installed {
+        Some(installed) => match standing(&installed, &stable) {
+            Standing::Behind => {
+                // A tap older than the minimum reviewed release cannot deliver
+                // it; keep the existing package ownership/fallback decision.
+                if standing(&channel.stable, &desired) == Standing::Behind {
+                    return Ok(None);
+                }
+                brew_converge(name, true)?;
+            }
+            Standing::Current | Standing::Ahead => {
+                let word = if standing(&installed, &stable) == Standing::Ahead {
+                    "ahead of stable channel; downgrade refused"
+                } else {
+                    "current stable channel"
                 };
                 println!(
-                    "{}: {word} (package-owned: brew {} {}; reviewed: {desired})",
+                    "{}: {word} (package-owned: brew {} {}; stable: {})",
                     name.as_str(),
-                    receipt.package,
-                    receipt.version
+                    crate::package::STACK_TAP,
+                    installed,
+                    channel.stable
                 );
-                return Ok(Some(adapter.version()?));
+                return brew_version(adapter, &installed).map(Some);
+            }
+            Standing::Unknown => {
+                anyhow::bail!("{} brew versions cannot be compared", name.as_str())
             }
         },
         None => {
-            let Some(available) = brew_available(name) else {
-                return Ok(None);
-            };
-            // The tap must carry at least the pin, or the release fallback applies.
-            if standing(&available, &desired) == Standing::Behind {
+            if standing(&channel.stable, &desired) == Standing::Behind {
                 return Ok(None);
             }
-            // Never replace a newer existing copy with an older tap release.
             if let Ok(installed) = adapter.version() {
-                if crate::release_update::behind_reviewed(&format!("pkg {available}"), &installed)
-                    == Some(true)
-                {
+                if crate::release_update::behind_reviewed(&stable, &installed) == Some(true) {
                     println!(
-                        "{}: installed {installed} is newer than {} {available}; not installed by brew",
+                        "{}: installed {installed} is newer than {} {}; not installed by brew",
                         name.as_str(),
-                        crate::package::STACK_TAP
+                        crate::package::STACK_TAP,
+                        channel.stable
                     );
                     return Ok(Some(installed));
                 }
@@ -635,20 +657,41 @@ fn brew_update(
             brew_converge(name, false)?;
         }
     }
-    let receipt = brew_receipt(name).context("brew receipt after install")?;
+    let receipt = brew_channel(name)?
+        .context("brew channel after delivery")?
+        .installed
+        .context("brew receipt after delivery")?;
+    if !matches!(
+        standing(&receipt, &stable),
+        Standing::Current | Standing::Ahead
+    ) {
+        anyhow::bail!(
+            "{} brew update did not reach stable {} (receipt: {receipt})",
+            name.as_str(),
+            channel.stable
+        );
+    }
     adapter
         .verify()
         .with_context(|| format!("{} verification after brew delivery", name.as_str()))?;
-    let version = adapter
-        .version()
-        .with_context(|| format!("{} version read-back after brew delivery", name.as_str()))?;
+    let version = brew_version(adapter, &receipt)?;
     println!(
         "{}: delivered by brew ({} {}) and verified",
         name.as_str(),
-        receipt.package,
-        receipt.version
+        crate::package::STACK_TAP,
+        receipt
     );
     Ok(Some(version))
+}
+
+fn brew_version(adapter: &dyn crate::adapter::Adapter, receipt: &str) -> Result<String> {
+    let version = adapter
+        .version()
+        .context("version read-back after brew delivery")?;
+    if crate::package::standing(receipt, &version) != crate::package::Standing::Current {
+        anyhow::bail!("brew receipt and executable version disagree");
+    }
+    Ok(version)
 }
 
 pub fn check_updates(plan: &Plan) -> Result<bool> {
@@ -701,6 +744,14 @@ pub fn check_updates(plan: &Plan) -> Result<bool> {
 pub fn update(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result<State> {
     plan.validate()?;
     let mut state = State::read(state_path)?;
+    if crate::package::brew_program().is_some()
+        && plan.tools.iter().any(|name| {
+            crate::package::brew_formula(*name).is_some()
+                && !(*name == crate::model::ToolName::Quipu && plan.external_quipu)
+        })
+    {
+        crate::package::brew_refresh()?;
+    }
     for &name in &plan.tools {
         let adapter = adapter_for_plan(name, plan)?;
         if name == crate::model::ToolName::Quipu && plan.external_quipu {
