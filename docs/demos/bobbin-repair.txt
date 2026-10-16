@@ -1,0 +1,8 @@
+Script started on 2026-10-16 14:41:52-04:00 [COMMAND="python3 docs/demos/bobbin-repair.py" <not executed on terminal>]
+regular: backup preserved executable bytes; replacement fixture read; occupied rollback refused; empty-path rollback restored original
+backup-exists: refused; original preserved
+backup-symlink: refused; original preserved
+source-symlink: refused; original preserved
+source-directory: refused; original preserved
+
+Script done on 2026-10-16 14:41:53-04:00 [COMMAND_EXIT_CODE="0"]
