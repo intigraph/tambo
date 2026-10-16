@@ -104,23 +104,34 @@ pub fn brew_program() -> Option<std::ffi::OsString> {
     cfg!(target_os = "macos").then(|| "brew".into())
 }
 
-/// `brew info --json=v2 --installed <tap>/<formula>`: the installed version,
-/// and only when the formula really comes from the stack tap.
+/// `brew info --json=v2 <tap>/<formula>`: the installed version, and only when
+/// the formula really comes from the stack tap.
+///
+/// NOT `--installed` (aegis-fv4, measured on the Mac 2026-10-16): with that
+/// flag brew ignores the formula argument and lists EVERY installed formula, so
+/// the first entry was an unrelated `homebrew/core` package and no stack member
+/// could ever produce a receipt ("brew receipt after install" on every run).
 fn brew_info(brew: &std::ffi::OsStr, formula: &str) -> Option<String> {
     let out = Command::new(brew)
-        .args([
-            "info",
-            "--json=v2",
-            "--installed",
-            &format!("{STACK_TAP}/{formula}"),
-        ])
+        .args(["info", "--json=v2", &format!("{STACK_TAP}/{formula}")])
         .output()
         .ok()?;
     if !out.status.success() {
         return None;
     }
-    let info: serde_json::Value = serde_json::from_slice(&out.stdout).ok()?;
-    let entry = info.get("formulae")?.as_array()?.first()?;
+    installed_version(&out.stdout, formula)
+}
+
+/// The installed version of exactly `<STACK_TAP>/<formula>` in brew's v2 JSON.
+/// Selects the entry by full name rather than position, so extra or reordered
+/// entries can never stand in for the member.
+fn installed_version(json: &[u8], formula: &str) -> Option<String> {
+    let info: serde_json::Value = serde_json::from_slice(json).ok()?;
+    let wanted = format!("{STACK_TAP}/{formula}");
+    let entry =
+        info.get("formulae")?.as_array()?.iter().find(|entry| {
+            entry.get("full_name").and_then(|v| v.as_str()) == Some(wanted.as_str())
+        })?;
     if entry.get("tap")?.as_str()? != STACK_TAP {
         return None;
     }
@@ -206,6 +217,65 @@ pub fn standing(receipt_version: &str, desired: &str) -> Standing {
 
 #[cfg(test)]
 mod tests {
+    use super::installed_version;
+
+    fn entry(full_name: &str, tap: &str, installed: &[&str]) -> serde_json::Value {
+        serde_json::json!({
+            "full_name": full_name,
+            "tap": tap,
+            "installed": installed.iter().map(|v| serde_json::json!({"version": v})).collect::<Vec<_>>(),
+        })
+    }
+
+    fn info(entries: Vec<serde_json::Value>) -> Vec<u8> {
+        serde_json::to_vec(&serde_json::json!({"formulae": entries, "casks": []})).unwrap()
+    }
+
+    #[test]
+    fn receipt_reads_the_named_member_not_the_first_installed_formula() {
+        // aegis-fv4: `--installed` made brew list every formula; abseil came first.
+        let listing = info(vec![
+            entry("abseil", "homebrew/core", &["20250814.1"]),
+            entry("scbrown/tap/quipu", "scbrown/tap", &["0.14.1"]),
+        ]);
+        assert_eq!(
+            installed_version(&listing, "quipu").as_deref(),
+            Some("0.14.1")
+        );
+        assert_eq!(installed_version(&listing, "bobbin"), None);
+    }
+
+    #[test]
+    fn receipt_refuses_uninstalled_foreign_tap_and_malformed_answers() {
+        assert_eq!(
+            installed_version(
+                &info(vec![entry("scbrown/tap/bobbin", "scbrown/tap", &[])]),
+                "bobbin"
+            ),
+            None
+        );
+        assert_eq!(
+            installed_version(
+                &info(vec![entry("scbrown/tap/bobbin", "other/tap", &["1.0.0"])]),
+                "bobbin"
+            ),
+            None
+        );
+        assert_eq!(installed_version(b"not json", "bobbin"), None);
+        assert_eq!(
+            installed_version(
+                &info(vec![entry(
+                    "scbrown/tap/yupana",
+                    "scbrown/tap",
+                    &["0.13.0_1"]
+                )]),
+                "yupana"
+            )
+            .as_deref(),
+            Some("0.13.0")
+        );
+    }
+
     use super::*;
 
     #[test]
