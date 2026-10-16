@@ -4254,3 +4254,67 @@ exit 2"#;
         );
     }
 }
+
+#[test]
+fn brew_quipu_reads_path_pair_instead_of_stale_cargo_pair() {
+    for (version, server_version, succeeds) in [
+        ("0.14.1", "0.14.1", true),
+        ("0.13.0", "0.13.0", false),
+        ("0.14.1", "0.13.0", false),
+    ] {
+        let root = tempfile::tempdir().unwrap();
+        let bin = root.path().join("bin");
+        fs::create_dir(&bin).unwrap();
+        install_fakes(root.path(), &bin);
+        fake_tool(&bin, "quipu", &format!("echo 'quipu {version}'"));
+        fake_tool(
+            &bin,
+            "quipu-server",
+            &format!("echo 'quipu-server {server_version}'"),
+        );
+        let cargo = root.path().join("cargo-home/bin");
+        fs::create_dir_all(&cargo).unwrap();
+        for name in ["quipu", "quipu-server"] {
+            fake_tool(
+                &cargo,
+                name,
+                &format!("echo used-stale-cargo >> \"$HOME/stale.log\"; echo '{name} 0.8.1'"),
+            );
+        }
+        fake_tool(
+            &bin,
+            "brew",
+            r#"
+case "$*" in
+ "update --quiet") exit 0;;
+ "info --json=v2 scbrown/tap/quipu")
+ printf '{"formulae":[{"full_name":"scbrown/tap/quipu","tap":"scbrown/tap","pinned":false,"versions":{"stable":"0.14.1"},"installed":[{"version":"0.14.1"}]}]}'; exit 0;;
+ info*) printf '{"formulae":[]}'; exit 0;;
+esac
+exit 2
+"#,
+        );
+        command(root.path(), &bin)
+            .args(["plan", "--profile", "retrieval"])
+            .assert()
+            .success();
+        fs::create_dir_all(root.path().join("camayoc")).unwrap();
+        fs::write(
+            root.path().join("camayoc/REVISION"),
+            "f443bf19974d06ab662c8ae3deeccfbb1e082f48",
+        )
+        .unwrap();
+        let mut cmd = command(root.path(), &bin);
+        cmd.env("CABOODLE_BREW", bin.join("brew")).arg("update");
+        if succeeds {
+            cmd.assert()
+                .success()
+                .stdout(predicate::str::contains("quipu: current stable channel"));
+        } else {
+            cmd.assert().failure().stderr(predicate::str::contains(
+                "brew receipt and executable version disagree",
+            ));
+        }
+        assert!(!root.path().join("stale.log").exists());
+    }
+}

@@ -595,6 +595,10 @@ fn brew_update(
     let Some(channel) = brew_channel(name)? else {
         return Ok(None);
     };
+    // Package delivery must read and verify the PATH pair, not a stale
+    // unrelated Cargo installation (Quipu's normal source-install default).
+    let package_adapter = adapter.package_adapter()?;
+    let adapter = package_adapter.as_deref().unwrap_or(adapter);
     let desired = adapter.desired_version();
     let stable = format!("pkg {}", channel.stable);
     if channel.pinned {
@@ -688,7 +692,17 @@ fn brew_version(adapter: &dyn crate::adapter::Adapter, receipt: &str) -> Result<
     let version = adapter
         .version()
         .context("version read-back after brew delivery")?;
-    if crate::package::standing(receipt, &version) != crate::package::Standing::Current {
+    // Quipu reports its client and server as two semicolon-separated
+    // identities. Check both; a plain version line must not absorb the
+    // separator, and a current client must not hide a stale server.
+    let identities: Vec<_> = if adapter.name() == crate::model::ToolName::Quipu {
+        version.split(';').take(2).collect()
+    } else {
+        vec![version.as_str()]
+    };
+    if identities.iter().any(|identity| {
+        crate::package::standing(receipt, identity.trim()) != crate::package::Standing::Current
+    }) {
         anyhow::bail!("brew receipt and executable version disagree");
     }
     Ok(version)
