@@ -176,6 +176,86 @@ pub fn brew_available(tool: ToolName) -> Option<String> {
     Some(entry.get("versions")?.get("stable")?.as_str()?.to_owned())
 }
 
+/// Current stable channel and pin selected by Homebrew for one stack formula.
+#[derive(Debug, PartialEq, Eq)]
+pub struct BrewChannel {
+    pub installed: Option<String>,
+    pub stable: String,
+    pub pinned: bool,
+}
+
+fn channel_from_json(bytes: &[u8], formula: &str) -> anyhow::Result<Option<BrewChannel>> {
+    use anyhow::Context;
+    let info: serde_json::Value = serde_json::from_slice(bytes).context("brew channel JSON")?;
+    let wanted = format!("{STACK_TAP}/{formula}");
+    let entries = info
+        .get("formulae")
+        .and_then(serde_json::Value::as_array)
+        .context("brew channel formula list")?;
+    let Some(entry) = entries.iter().find(|entry| {
+        entry.get("full_name").and_then(serde_json::Value::as_str) == Some(wanted.as_str())
+            && entry.get("tap").and_then(serde_json::Value::as_str) == Some(STACK_TAP)
+    }) else {
+        return Ok(None);
+    };
+    let stable = entry
+        .get("versions")
+        .and_then(|v| v.get("stable"))
+        .and_then(serde_json::Value::as_str)
+        .filter(|v| !v.is_empty())
+        .context("brew stable channel version")?
+        .to_owned();
+    let pinned = entry
+        .get("pinned")
+        .and_then(serde_json::Value::as_bool)
+        .context("brew formula pin status")?;
+    let installed = entry
+        .get("installed")
+        .and_then(serde_json::Value::as_array)
+        .context("brew installed receipt list")?
+        .first()
+        .map(|receipt| {
+            receipt
+                .get("version")
+                .and_then(serde_json::Value::as_str)
+                .filter(|v| !v.is_empty())
+                .map(|v| v.split('_').next().unwrap_or(v).to_owned())
+                .context("brew installed version")
+        })
+        .transpose()?;
+    Ok(Some(BrewChannel {
+        installed,
+        stable,
+        pinned,
+    }))
+}
+
+/// Refresh once per selected update, before judging installed versions. An
+/// unreadable/stale channel must not be silently reported as converged.
+pub fn brew_refresh() -> anyhow::Result<()> {
+    let brew = brew_program().ok_or_else(|| anyhow::anyhow!("brew is not available"))?;
+    let status = Command::new(brew).args(["update", "--quiet"]).status()?;
+    if !status.success() {
+        anyhow::bail!("brew update failed ({status})");
+    }
+    Ok(())
+}
+
+pub fn brew_channel(tool: ToolName) -> anyhow::Result<Option<BrewChannel>> {
+    let Some(formula) = brew_formula(tool) else {
+        return Ok(None);
+    };
+    let brew = brew_program().ok_or_else(|| anyhow::anyhow!("brew is not available"))?;
+    let out = Command::new(brew)
+        .args(["info", "--json=v2", &format!("{STACK_TAP}/{formula}")])
+        .env("HOMEBREW_NO_AUTO_UPDATE", "1")
+        .output()?;
+    if !out.status.success() {
+        anyhow::bail!("brew channel read failed for {formula} ({})", out.status);
+    }
+    channel_from_json(&out.stdout, formula)
+}
+
 /// Install or upgrade a member from the stack tap. Brew runs as the user (no
 /// root), so caboodle drives it directly (aegis-6f1 ruling).
 pub fn brew_converge(tool: ToolName, upgrade: bool) -> anyhow::Result<()> {
@@ -184,6 +264,7 @@ pub fn brew_converge(tool: ToolName, upgrade: bool) -> anyhow::Result<()> {
     let verb = if upgrade { "upgrade" } else { "install" };
     let status = Command::new(&brew)
         .args([verb, &format!("{STACK_TAP}/{formula}")])
+        .env("HOMEBREW_NO_AUTO_UPDATE", "1")
         .status()?;
     if !status.success() {
         anyhow::bail!("brew {verb} {STACK_TAP}/{formula} failed ({status})");
@@ -303,5 +384,44 @@ mod tests {
         assert_eq!(standing("0.28.0", "bobbin 0.27.3"), Standing::Ahead);
         assert_eq!(standing("dev", "bobbin 0.27.3"), Standing::Unknown);
         assert_eq!(standing("0.7.1", "dp v0.3.2 (1f457ec)"), Standing::Ahead);
+    }
+}
+
+#[cfg(test)]
+mod channel_tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn stable_channel_selects_exact_stack_formula_and_retains_pin() {
+        let bytes=serde_json::to_vec(&json!({"formulae":[
+            {"full_name":"other/bobbin","tap":"other","versions":{"stable":"99.0.0"},"installed":[{"version":"99.0.0"}],"pinned":false},
+            {"full_name":"scbrown/tap/bobbin","tap":"scbrown/tap","versions":{"stable":"0.29.0"},"installed":[{"version":"0.28.0_2"}],"pinned":true}
+        ]})).unwrap();
+        assert_eq!(
+            channel_from_json(&bytes, "bobbin").unwrap(),
+            Some(BrewChannel {
+                installed: Some("0.28.0".into()),
+                stable: "0.29.0".into(),
+                pinned: true
+            })
+        );
+        assert_eq!(channel_from_json(&bytes, "quipu").unwrap(), None);
+    }
+
+    #[test]
+    fn malformed_channel_cannot_stand_in_for_a_receipt() {
+        for raw in [
+            r#"{"formulae":[{"full_name":"scbrown/tap/bobbin","tap":"scbrown/tap","versions":{"stable":"0.29.0"},"installed":[] }]}"#,
+            r#"{"formulae":[{"full_name":"scbrown/tap/bobbin","tap":"scbrown/tap","pinned":false,"installed":[] }]}"#,
+            r#"{"formulae":[{"full_name":"scbrown/tap/bobbin","tap":"scbrown/tap","pinned":false,"versions":{"stable":"0.29.0"},"installed":[{}]}]}"#,
+            r#"{"formulae":null}"#,
+            "not JSON",
+        ] {
+            assert!(
+                channel_from_json(raw.as_bytes(), "bobbin").is_err(),
+                "{raw}"
+            );
+        }
     }
 }
