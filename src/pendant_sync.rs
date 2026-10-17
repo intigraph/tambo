@@ -21,6 +21,7 @@ pub struct Options<'a> {
     pub db: Option<&'a Path>,
     pub shapes_from: Option<&'a Path>,
     pub trust_file: Option<&'a Path>,
+    pub monorepo: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -41,12 +42,20 @@ struct Stamp {
 #[serde(deny_unknown_fields)]
 struct Receipt {
     version: u8,
+    #[serde(default, skip_serializing_if = "is_false")]
+    monorepo: bool,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    selected: Vec<String>,
     repo: String,
     db: PathBuf,
     hashes: BTreeMap<String, String>,
     authority: String,
     database: Option<Stamp>,
     wal: Option<Stamp>,
+}
+
+fn is_false(value: &bool) -> bool {
+    !value
 }
 
 pub(crate) fn git_command(root: &Path) -> Command {
@@ -219,6 +228,11 @@ pub fn sync(options: &Options<'_>) -> Result<Report> {
         hashes.insert(name.into(), hash);
         inputs.push((name.to_owned(), target));
     }
+    let all_inputs = inputs.clone();
+    if options.monorepo {
+        inputs = crate::pendant_projects::select(&root, inputs)?;
+    }
+    let loaded_packs = inputs.len();
     fs::create_dir(frozen.path().join("operator"))?;
     let authority_copy = frozen.path().join("operator/authority.pendant.tar.gz");
     let authority_hash = freeze(authority, &authority_copy, &mut budget)?;
@@ -238,7 +252,13 @@ pub fn sync(options: &Options<'_>) -> Result<Report> {
         .context("another pendant sync owns this database; no compose attempted")?;
     let wal = sidecar(&db, "-wal")?;
     let mut receipt = Receipt {
-        version: 1,
+        version: if options.monorepo { 2 } else { 1 },
+        monorepo: options.monorepo,
+        selected: if options.monorepo {
+            inputs.iter().map(|(key, _)| key.clone()).collect()
+        } else {
+            Vec::new()
+        },
         repo: repo.clone(),
         db: db.clone(),
         hashes,
@@ -249,15 +269,41 @@ pub fn sync(options: &Options<'_>) -> Result<Report> {
     if receipt_path.exists() {
         let prior: Receipt = serde_json::from_slice(&fs::read(&receipt_path)?)
             .context("invalid pendant receipt; no compose attempted")?;
+        if !matches!(prior.version, 1 | 2) {
+            bail!("unsupported pendant receipt version; no compose attempted");
+        }
         if receipt.database.is_some() && prior == receipt {
             return Ok(Report {
                 outcome: "unchanged",
-                packs: packs.len(),
+                packs: loaded_packs,
                 current: None,
             });
         }
     }
     let program = std::env::var_os("QUIPU_BIN").unwrap_or_else(|| "quipu".into());
+    if options.monorepo {
+        // Even excluded parents and absent projects must pass native integrity,
+        // vocabulary and authority gates. Verification touches only a throwaway store.
+        let mut verify = Command::new(&program);
+        verify
+            .arg("compose")
+            .arg("--db")
+            .arg(frozen.path().join("verification.db"))
+            .arg("--shapes-from")
+            .arg(&authority_copy)
+            .arg(&authority_copy);
+        for (_, path) in &all_inputs {
+            verify.arg(path);
+        }
+        let checked = verify.output().context("verify all monorepo shares")?;
+        let report: serde_json::Value = serde_json::from_slice(&checked.stdout).unwrap_or_default();
+        if !checked.status.success() || report["outcome"] != "composed" {
+            bail!(
+                "monorepo share verification refused; CURRENT and receipt unchanged: {}",
+                String::from_utf8_lossy(&checked.stderr)
+            );
+        }
+    }
     let mut command = Command::new(program);
     command
         .args(["compose", "--repo", &repo])
@@ -305,7 +351,7 @@ pub fn sync(options: &Options<'_>) -> Result<Report> {
     }
     Ok(Report {
         outcome: "composed",
-        packs: packs.len(),
+        packs: loaded_packs,
         current: Some(result["current"].clone()),
     })
 }

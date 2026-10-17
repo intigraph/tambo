@@ -56,6 +56,9 @@ enum Commands {
         /// Opt in to repository pendant sync hooks; retains existing hooks
         #[arg(long, conflicts_with = "guided")]
         pack_hooks: bool,
+        /// Select project shares by their native path scope in installed hooks
+        #[arg(long, requires = "pack_hooks")]
+        monorepo: bool,
         #[arg(long, default_value = ".")]
         repo: PathBuf,
         /// Operator-controlled shape-authority pendant for local composition
@@ -306,8 +309,29 @@ enum Commands {
 
 #[derive(Subcommand)]
 enum PacksCommand {
+    /// Print the native CONSTRUCT path scope used for one derived project share
+    ProjectScope {
+        /// Read CODEOWNERS from this checkout and attach ownership in the scope
+        #[arg(long, requires_all = ["ownership_predicate", "db"])]
+        repo: Option<PathBuf>,
+        /// Existing producer store; owner resources must already be registered
+        #[arg(long, requires = "repo")]
+        db: Option<PathBuf>,
+        /// Existing RDF ownership predicate, supplied by the producer's schema
+        #[arg(long, requires = "repo")]
+        ownership_predicate: Option<String>,
+        #[arg(long)]
+        graph: String,
+        #[arg(long)]
+        path_predicate: String,
+        #[arg(long)]
+        prefix: String,
+    },
     /// Discover trusted .quipu/packs/*.pendant.tar.gz and update local CURRENT
     Sync {
+        /// Exclude the parent and load only derived projects present in the checkout
+        #[arg(long)]
+        monorepo: bool,
         #[arg(long, default_value = ".")]
         repo: PathBuf,
         #[arg(long)]
@@ -473,6 +497,7 @@ fn main() -> Result<()> {
             output,
             session,
             pack_hooks,
+            monorepo,
             repo,
             shapes_from,
             db,
@@ -484,6 +509,7 @@ fn main() -> Result<()> {
                     db: db.as_deref(),
                     shapes_from: shapes_from.as_deref(),
                     trust_file: trust_file.as_deref(),
+                    monorepo,
                 };
                 for path in caboodle::pendant_hooks::install(&options)? {
                     println!("pendant hook: {}", path.display());
@@ -738,6 +764,7 @@ fn main() -> Result<()> {
         Commands::Packs {
             command:
                 PacksCommand::Sync {
+                    monorepo,
                     repo,
                     db,
                     shapes_from,
@@ -749,8 +776,36 @@ fn main() -> Result<()> {
                 db: db.as_deref(),
                 shapes_from: shapes_from.as_deref(),
                 trust_file: trust_file.as_deref(),
+                monorepo,
             })?;
             println!("{}", serde_json::to_string_pretty(&result)?);
+        }
+        Commands::Packs {
+            command:
+                PacksCommand::ProjectScope {
+                    graph,
+                    path_predicate,
+                    prefix,
+                    repo,
+                    ownership_predicate,
+                    db,
+                },
+        } => {
+            let owners = if let (Some(repo), Some(predicate)) = (repo, ownership_predicate) {
+                caboodle::pendant_ownership::resolve(&repo, &prefix, &predicate)?
+            } else {
+                Vec::new()
+            };
+            let query = caboodle::pendant_projects::enriched_query(
+                &graph,
+                &path_predicate,
+                &prefix,
+                &owners,
+            )?;
+            if let Some(db) = db {
+                caboodle::pendant_ownership::verify_owners(&graph, &db, &owners)?;
+            }
+            println!("{query}");
         }
         Commands::Packs {
             command: PacksCommand::Trust { file, command },

@@ -65,6 +65,9 @@ pub fn install(options: &Options<'_>) -> Result<Vec<PathBuf>> {
             quote(path.to_str().context("trust path must be UTF-8")?)
         ));
     }
+    if options.monorepo {
+        line.push_str(" --monorepo");
+    }
     let body = format!("#!/bin/sh\n# caboodle pendant sync: installed by explicit init --pack-hooks\nset -eu\nroot=$(git rev-parse --show-toplevel)\n{line}\n");
     let paths: Vec<_> = ["post-checkout", "post-merge"]
         .map(|n| hooks.join(n))

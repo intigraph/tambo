@@ -156,6 +156,57 @@ A monorepo ships **one parent share and one derived share per project**.
 
 Test case: `scbrown/reckoning`, a real pnpm monorepo.
 
+The monorepo implementation adds an explicit `packs sync --monorepo` mode. It
+reads native share manifests, finds the one parent referenced by the derived
+shares, and excludes that parent from CURRENT. Each child uses the canonical
+CONSTRUCT path scope printed by `packs project-scope`. A child needs a visible tracked file whose index entry is not marked skip-worktree, under a directory without symlink redirects. An excluded directory left behind by untracked files does not count as a checked-out project; those files are preserved. Keep
+`.quipu/packs/` in a sparse checkout. Unchanged members reuse Quipu's committed
+pack graphs; changing one share creates only that member's new graph. Selection
+is part of the version-2 monorepo receipt, so changing sparse membership reconciles CURRENT. Flat mode retains the baseline version-1 receipt format. Downgrading a monorepo consumer requires its retained pre-upgrade receipt and database rollback; an older binary refuses version-2 metadata rather than silently loading all projects.
+The parent may itself name a previous snapshot. All archives, including excluded
+ones, are trust-checked and verified by native Quipu in an isolated temporary
+store before a changed composition is accepted.
+
+For a producer with an existing graph and loaded shapes, generate the scope,
+then use native `quipu share` with the parent share's identity:
+
+```sh
+tambo packs project-scope --graph urn:source:repo --path-predicate urn:source:path \
+  --prefix packages/client/ > client.construct
+quipu share --construct "$(cat client.construct)" --parent-share "$parent_share" \
+  --shapes project-schema --no-queries --db producer.db --output client-share
+```
+
+Archive the parent and each child as separate `.pendant.tar.gz` files under
+`.quipu/packs/`. No all-projects union pack or repository manifest is required.
+The native manifest binds both the query and `parent_share` into share identity.
+Scope readers deliberately refuse arbitrary query variants rather than guessing
+which paths they cover. Regenerate a scope with `packs project-scope`.
+
+To include CODEOWNERS-derived ownership, add `--repo . --db producer.db
+--ownership-predicate urn:source:owned_by` to `packs project-scope`. Supply the
+existing schema's predicates; these URNs are examples. The command reads the
+first CODEOWNERS in `.github/`, the repository root, or `docs/`, applies the last
+matching rule to tracked project files, and includes ownership in the native
+CONSTRUCT. It supports GitHub users, teams and email owners. Empty owner rules
+clear earlier matches. Unsupported patterns (`!`, bracket ranges and backslash
+escapes), invalid identities, symlinked CODEOWNERS, and bounded input overflows
+refuse. When CODEOWNERS is absent it invents no owners. Git's matcher runs in a
+private repository, with no global ignore file or case folding.
+
+Owner resources must already exist in the producer graph. Current native
+CONSTRUCT export can otherwise turn an unknown constant IRI into a literal;
+scope generation checks each resource and refuses unknown or unreadable owners.
+Register resources through the producer's governed ingest path before exporting.
+Generation reads the producer; it does not register owners or change ROOT.
+
+Opt-in hooks retain this mode with `init --pack-hooks --monorepo`. Cloud setup
+uses `CABOODLE_PACKS_MONOREPO=1` alongside the existing repository and authority
+settings. Neither mode is armed by default. See the replayable
+Reckoning demonstration in `docs/demos/monorepo-sync/`
+for the pinned checkout, explicit synthetic CODEOWNERS and isolated stores.
+
+
 ## 4. Pointers to graphs that are not loaded
 
 A pack's own manifest can name a graph the pack does not contain, so pointers

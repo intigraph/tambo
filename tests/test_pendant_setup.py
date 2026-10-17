@@ -11,7 +11,7 @@ BLOCK = SCRIPT[SCRIPT.index("# Repo pendants are opt-in"):SCRIPT.index("# ──
 
 
 class PendantSetup(unittest.TestCase):
-    def probe(self, *, available=True, authority=True, status=0, requested=True):
+    def probe(self, *, available=True, authority=True, status=0, requested=True, monorepo=None):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             repo = root / "checkout with spaces"
@@ -26,6 +26,8 @@ class PendantSetup(unittest.TestCase):
                    "STATUS": str(status), "HOME": str(root)}
             if requested:
                 env["CABOODLE_PACKS_REPO"] = str(repo)
+            if monorepo is not None:
+                env["CABOODLE_PACKS_MONOREPO"] = monorepo
             if authority:
                 env["CABOODLE_PACKS_SHAPES_FROM"] = str(root / "authority with spaces.pendant.tar.gz")
             result = subprocess.run(["sh", "-c", "have() { command -v \"$1\" >/dev/null 2>&1; }\n"
@@ -53,6 +55,14 @@ class PendantSetup(unittest.TestCase):
         output, calls, _, _ = self.probe(status=3)
         self.assertIsNotNone(calls)
         self.assertIn("FAILED: repository pendant sync refused", output)
+
+    def test_monorepo_is_explicit_and_invalid_mode_does_not_run_sync(self):
+        output, calls, repo, authority = self.probe(monorepo="1")
+        self.assertEqual(calls, ["packs", "sync", "--repo", repo, "--shapes-from", authority, "--monorepo"])
+        self.assertIn("sync completed", output)
+        output, calls, _, _ = self.probe(monorepo="unexpected")
+        self.assertIsNone(calls)
+        self.assertIn("FAILED", output)
 
 
 if __name__ == "__main__":
