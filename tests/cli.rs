@@ -4392,3 +4392,101 @@ exit 2
         1
     );
 }
+
+#[test]
+fn brew_manifest_reads_path_member_instead_of_stale_managed_copy() {
+    for (path_version, identity, succeeds, fresh) in [
+        ("0.4.2", true, true, false),
+        ("0.4.2", true, true, true),
+        ("0.4.1", true, false, false),
+        ("0.4.2", false, false, false),
+    ] {
+        let root = tempfile::tempdir().unwrap();
+        let bin = root.path().join("bin");
+        fs::create_dir(&bin).unwrap();
+        install_fakes(root.path(), &bin);
+        let cargo = root.path().join("cargo-home/bin");
+        fs::create_dir_all(&cargo).unwrap();
+        fake_tool(
+            &cargo,
+            "sd",
+            "echo used-stale-cargo >> \"$HOME/stale.log\"; echo 'sd 0.2.0 (seeds)'",
+        );
+        fake_tool(
+            &bin,
+            "sd",
+            &format!(
+                "if [ \"$1\" = --help ]; then echo '{}'; else echo 'sd {path_version} (seeds)'; fi",
+                if identity {
+                    "seeds is the beads-compatible tracker"
+                } else {
+                    "foreign replacement"
+                }
+            ),
+        );
+        let seed = fs::read_to_string(bin.join("sd")).unwrap();
+        let seed = seed.replace("else echo", "elif [ \"$1\" = create ]; then echo \"$2\" >> .sd-fake-seeds; elif [ \"$1\" = list ]; then cat .sd-fake-seeds 2>/dev/null || true; else echo");
+        fs::write(bin.join("sd"), &seed).unwrap();
+        fs::copy(bin.join("sd"), root.path().join("seed-template")).unwrap();
+        if fresh {
+            fs::remove_file(bin.join("sd")).unwrap();
+        } else {
+            fs::write(root.path().join("seed-installed"), "yes").unwrap();
+        }
+        fake_tool(
+            &bin,
+            "brew",
+            r#"
+case "$*" in
+ "update --quiet") exit 0;;
+ "info --json=v2 scbrown/tap/seeds")
+ rec=''; if [ -f "$HOME/seed-installed" ]; then rec='{"version":"0.4.2"}'; fi
+ printf '{"formulae":[{"full_name":"scbrown/tap/seeds","tap":"scbrown/tap","pinned":false,"versions":{"stable":"0.4.2"},"installed":[%s]}]}' "$rec"; exit 0;;
+ "install scbrown/tap/seeds") cp "$HOME/seed-template" "$HOME/bin/sd"; chmod +x "$HOME/bin/sd"; touch "$HOME/seed-installed"; exit 0;;
+ info*) echo '{"formulae":[]}'; exit 0;;
+esac
+exit 2
+"#,
+        );
+        command(root.path(), &bin)
+            .args(["plan", "--profile", "everything"])
+            .assert()
+            .success();
+        let path = root.path().join("caboodle-plan.toml");
+        let mut plan: toml::Value = toml::from_str(&fs::read_to_string(&path).unwrap()).unwrap();
+        plan["tools"] = toml::Value::Array(
+            [
+                "quipu",
+                "camayoc",
+                "bobbin",
+                "yupana",
+                "desire-path",
+                "seeds",
+            ]
+            .iter()
+            .map(|n| toml::Value::String(n.to_string()))
+            .collect(),
+        );
+        fs::write(path, toml::to_string(&plan).unwrap()).unwrap();
+        fs::create_dir_all(root.path().join("camayoc")).unwrap();
+        fs::write(
+            root.path().join("camayoc/REVISION"),
+            "f443bf19974d06ab662c8ae3deeccfbb1e082f48",
+        )
+        .unwrap();
+        let mut cmd = command(root.path(), &bin);
+        cmd.env("CABOODLE_BREW", bin.join("brew")).arg("update");
+        if succeeds {
+            cmd.assert()
+                .success()
+                .stdout(predicate::str::contains(if fresh {
+                    "seeds: delivered by brew"
+                } else {
+                    "seeds: current stable channel"
+                }));
+        } else {
+            cmd.assert().failure();
+        }
+        assert!(!root.path().join("stale.log").exists());
+    }
+}
