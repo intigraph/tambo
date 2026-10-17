@@ -1,8 +1,8 @@
-Script started on 2026-10-17 01:17:05-04:00 [COMMAND="python3 demo.py" <not executed on terminal>]
+Script started on 2026-10-17 01:33:38-04:00 [COMMAND="python3 demo.py" <not executed on terminal>]
 quipu 0.14.1
 git_sha: cb0350800ebf8f5dffae1a8ac994159ea552762f
 git_dirty: false
-tambo 0.3.7 (5d54c158db95)
+tambo 0.3.7 (b366a47e2192)
 CODEOWNERS is an explicit synthetic fixture; pinned Reckoning has none
 BASELINE same project-scope command: refused; command absent
 unknown owner resource refuses before scope emission
@@ -17,8 +17,9 @@ flat mode retains v1 receipts readable by the baseline binary
 initial: composed projects: 3
 changed client gets a new pack graph; server/shared graph identities reused; ownership/cross-edge survive
 actual Git checkout event preserves opt-in monorepo mode: three projects, parent excluded
+PREVIOUS same sparse sync: three projects (excluded directory retained by untracked cache)
 sparse: composed projects: 2
-sparse server absent, cross-project edge survives, ROOT unchanged
+sparse server absent from CURRENT, untracked cache retained, cross-project edge survives, ROOT unchanged
 tampered absent project refuses, receipt and CURRENT retained
 
-Script done on 2026-10-17 01:17:09-04:00 [COMMAND_EXIT_CODE="0"]
+Script done on 2026-10-17 01:33:42-04:00 [COMMAND_EXIT_CODE="0"]

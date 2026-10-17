@@ -5,8 +5,10 @@
   "src/main.rs": "c5f3dc96aa923716575443887a087caa7f1b2cac596de29c3f5fe1d27b22752a",
   "src/pendant_sync.rs": "33090bcc635f4388146408fe5191c0fa5d6fb38f7f9f53fa93a32017418558a2",
   "src/pendant_hooks.rs": "2ffb0611daf347a6ed458e66e1e53e3a27fc880e5c531a357f9a3633fc4bcbdb",
-  "src/pendant_projects.rs": "79e6181950b5265e5e11acbe1d9ad025213e8a91294e5642b00c6c86ecf6a896",
-  "src/pendant_ownership.rs": "57dabe162ba2d92a75aae1233fe31504b13617519a503155b6df1ff466f9703b",
+  "src/pendant_projects.rs": "f7d08890fa4ef3420fa252f1caecf977929a73cadc8a8efec2917e31d6405f5c",
+  "src/pendant_ownership.rs": "29b7c1b4e6022a22a7540e2166f721860a85932a3e6009e3b10894e0469fc7d4",
   "scripts/setup-environment.sh": "769a3d09331d4effe98b90ba9e3be657740529ad95c8df3af249de31138313d0",
-  "tests/test_pendant_setup.py": "7423d2f2f07a8d7f8ca183141cb092985a722f47aa002f72c69331979c00a16f"
+  "tests/test_pendant_setup.py": "7423d2f2f07a8d7f8ca183141cb092985a722f47aa002f72c69331979c00a16f",
+  "docs/demos/monorepo-sync/demo.py": "9065ed56092cbf5649053e4607eae4d3388cad160a56ac7b9d73ff4c96ba07d1",
+  ".gitattributes": "3860fbba2133c600ad662fdff013023c4b1618d5e720757d7638f308e26f90d0"
 }

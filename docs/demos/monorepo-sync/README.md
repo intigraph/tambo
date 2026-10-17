@@ -10,7 +10,7 @@ is performed. Git hooks run only in the temporary fixture.
 Before: Tambo source `7f447974e595d2d4fe1d12d62ead5e2c66b7e3b9` rejects the same
 `packs project-scope` command. Its implementation is unchanged by integration
 base `6344cb35b6436896b75b414792638bb3335b7b3d` (the base update adds README docs).
-After: candidate implementation `5d54c158db95945b8a9e8e38d181bbca1b33add1`
+After: corrected implementation `b366a47e2192453a976d44b33054178231112a36`
 prints a native path scope and composes three project shares while excluding
 the parent. Native Quipu is `0.14.1`, clean `cb0350800ebf8f5dffae1a8ac994159ea552762f`.
 The source inventory below identifies the implementation independently of build
@@ -22,7 +22,7 @@ Watch these controls in order:
 - Flat-mode receipts remain readable by the baseline binary.
 - Only the changed client's pack graph identity changes; server/shared identities remain equal.
 - A real Git checkout hook retains monorepo mode.
-- Actual sparse checkout changes membership from three projects to two.
+- The earlier implementation `5d54c158db95945b8a9e8e38d181bbca1b33add1` keeps three projects when an untracked cache retains the excluded directory; the corrected implementation loads two and preserves that cache.
 - Cross-project edges survive; ROOT stays empty.
 - Corrupting the excluded server share refuses while retaining CURRENT and its receipt.
 
@@ -42,11 +42,12 @@ Reckoning revision in a separate local directory, then run from Tambo's root:
 CANDIDATE_BINARY=/path/to/built/tambo \
 RECKONING_FIXTURE=/path/to/pinned/reckoning \
 BASELINE_BINARY=/path/to/baseline/tambo \
+PREVIOUS_MONOREPO_BINARY=/path/to/earlier/monorepo/tambo \
 python3 docs/demos/monorepo-sync/demo.py
 ```
 
 `BASELINE_BINARY` is optional; without it the baseline refusal and v1 backward
-reader control are omitted. The script creates its own producer/consumer stores,
+reader control are omitted. `PREVIOUS_MONOREPO_BINARY` is also optional; it enables the same sparse-input regression comparison against the earlier monorepo implementation. The script creates its own producer/consumer stores,
 trust file, shape authority, archives and Git repository. `RECKONING_FIXTURE`
 is read only. The fixture source path and ownership predicates are test URNs;
 they are not a proposed production schema.
