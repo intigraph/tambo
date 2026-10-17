@@ -16,6 +16,8 @@ pub mod model;
 pub mod observability;
 pub mod pack_trust;
 pub mod package;
+pub mod pendant_hooks;
+pub mod pendant_sync;
 pub mod projection;
 pub mod tool_bundles;
 

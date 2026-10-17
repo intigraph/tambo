@@ -53,6 +53,18 @@ enum Commands {
         output: PathBuf,
         #[arg(long, default_value = ".caboodle/interview.toml")]
         session: PathBuf,
+        /// Opt in to repository pendant sync hooks; retains existing hooks
+        #[arg(long, conflicts_with = "guided")]
+        pack_hooks: bool,
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        /// Operator-controlled shape-authority pendant for local composition
+        #[arg(long, requires = "pack_hooks")]
+        shapes_from: Option<PathBuf>,
+        #[arg(long, requires = "pack_hooks")]
+        db: Option<PathBuf>,
+        #[arg(long, requires = "pack_hooks")]
+        trust_file: Option<PathBuf>,
     },
     /// Write a reviewable install plan without changing the machine
     Plan {
@@ -294,6 +306,18 @@ enum Commands {
 
 #[derive(Subcommand)]
 enum PacksCommand {
+    /// Discover trusted .quipu/packs/*.pendant.tar.gz and update local CURRENT
+    Sync {
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        #[arg(long)]
+        db: Option<PathBuf>,
+        /// Trusted local authority pendant, never chosen from repository data
+        #[arg(long)]
+        shapes_from: Option<PathBuf>,
+        #[arg(long)]
+        trust_file: Option<PathBuf>,
+    },
     /// Which packs and pointer endpoints may load (~/.config/caboodle/pack-trust.toml)
     Trust {
         /// Trust file to read and write instead of the default
@@ -448,7 +472,24 @@ fn main() -> Result<()> {
             guided,
             output,
             session,
+            pack_hooks,
+            repo,
+            shapes_from,
+            db,
+            trust_file,
         } => {
+            if pack_hooks {
+                let options = caboodle::pendant_sync::Options {
+                    repo: &repo,
+                    db: db.as_deref(),
+                    shapes_from: shapes_from.as_deref(),
+                    trust_file: trust_file.as_deref(),
+                };
+                for path in caboodle::pendant_hooks::install(&options)? {
+                    println!("pendant hook: {}", path.display());
+                }
+                return Ok(());
+            }
             if !guided {
                 anyhow::bail!("caboodle init currently requires --guided");
             }
@@ -693,6 +734,23 @@ fn main() -> Result<()> {
         Commands::FlushEpisodes { queue, endpoint } => {
             let count = emission::flush(&queue, &endpoint)?;
             println!("delivered queued episodes: {count}");
+        }
+        Commands::Packs {
+            command:
+                PacksCommand::Sync {
+                    repo,
+                    db,
+                    shapes_from,
+                    trust_file,
+                },
+        } => {
+            let result = caboodle::pendant_sync::sync(&caboodle::pendant_sync::Options {
+                repo: &repo,
+                db: db.as_deref(),
+                shapes_from: shapes_from.as_deref(),
+                trust_file: trust_file.as_deref(),
+            })?;
+            println!("{}", serde_json::to_string_pretty(&result)?);
         }
         Commands::Packs {
             command: PacksCommand::Trust { file, command },

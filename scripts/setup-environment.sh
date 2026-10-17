@@ -136,6 +136,24 @@ if have quipu && [ -n "${CABOODLE_QUIPU_SHARE_URL:-}" ]; then
     fi
 fi
 
+# Repo pendants are opt-in and use the same command as the Git hooks. Cloud
+# setup may run before checkout: report that absence, never invent a repo.
+PENDANT_STATUS="not requested"
+if [ -n "${CABOODLE_PACKS_REPO:-}" ]; then
+    if ! have caboodle; then
+        PENDANT_STATUS="FAILED: caboodle is missing"
+    elif [ ! -d "$CABOODLE_PACKS_REPO" ]; then
+        PENDANT_STATUS="not run: repository is not available yet; run packs sync after checkout"
+    elif [ -z "${CABOODLE_PACKS_SHAPES_FROM:-}" ]; then
+        PENDANT_STATUS="FAILED: CABOODLE_PACKS_SHAPES_FROM must name the trusted authority pendant"
+    elif caboodle packs sync --repo "$CABOODLE_PACKS_REPO" \
+        --shapes-from "$CABOODLE_PACKS_SHAPES_FROM"; then
+        PENDANT_STATUS="repository pendant sync completed"
+    else
+        PENDANT_STATUS="FAILED: repository pendant sync refused; inspect the diagnostic above"
+    fi
+fi
+
 # ── Verify: report what is actually present ────────────────────────────────
 # A setup script that half-worked and exited 0 is worse than one that failed,
 # so print the truth rather than assuming the installs above landed.
@@ -149,6 +167,8 @@ for tool in just bd pre-commit mdbook mdbook-mermaid quipu quipu-server caboodle
 done
 log "Repository share"
 printf '  %s\n' "$SHARE_STATUS"
+log "Repository pendants"
+printf '  %s\n' "$PENDANT_STATUS"
 
 # Never fail the session: a missing optional tool degrades a lane, it does
 # not stop Claude from working on everything else.
