@@ -43,6 +43,8 @@ skill guides you through the same workflow.
 
 ## Install
 
+### Checksummed archives
+
 Checksummed releases: Linux x86_64, macOS arm64 and macOS x86_64.
 The installer verifies SHA256 before placing the binary in `~/.cargo/bin`.
 
@@ -77,6 +79,19 @@ absolute path.
 Or build the latest release from source with Rust (`cargo install --git
 https://github.com/scbrown/caboodle --tag vX.Y.Z --locked`). Either way,
 `caboodle --version` prints `caboodle X.Y.Z` for the release you installed.
+
+### macOS with Homebrew
+
+```bash
+brew install scbrown/tap/caboodle
+caboodle --version
+```
+
+Homebrew owns the installed command; Caboodle still composes and verifies the
+stack. Update it with `brew upgrade scbrown/tap/caboodle`. To hold the installed
+version, use `brew pin caboodle`; resume updates with `brew unpin caboodle`.
+The [tap channel guide](https://github.com/scbrown/homebrew-tap#caboodle-preview-channel)
+explains the opt-in nightly channel and switching back to stable.
 
 ## First success in three commands
 
