@@ -122,6 +122,12 @@ pack is refused until it is fixed. `[[allow_endpoint]]` admits one exact
 pack and the exact `allow` command. `packs sync` asks this question before composing and before accepting a
 cached replay.
 
+`packs trust check-endpoint <remote> <url>` asks the same policy whether a
+pointer endpoint may join federation: exit 0 admits it, exit 3 refuses it.
+It reads the current trust file on every invocation and never changes it.
+An archive allow does not admit its endpoint; foreign endpoints need their own
+exact repository/URL allow. Both `tambo` and `caboodle` expose this command.
+
 - **Your own repositories load automatically**, meaning repositories whose
   remote owner matches an allow-list in caboodle's configuration.
 - **A foreign pack needs an explicit allow**, recorded per repository and pack

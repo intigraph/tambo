@@ -370,6 +370,13 @@ enum TrustCommand {
         #[arg(long)]
         note: Option<String>,
     },
+    /// Decide one pointer endpoint: exit 0 to federate, 3 refused
+    CheckEndpoint {
+        /// The declaring repository's git remote URL
+        remote: String,
+        /// The exact endpoint URL
+        endpoint: String,
+    },
     /// Print the trust file
     List,
     /// Decide one pack: exit 0 to load, 3 refused (message names the pack)
@@ -831,6 +838,18 @@ fn run_pack_trust(file: Option<PathBuf>, command: TrustCommand) -> Result<()> {
             endpoint,
             note,
         } => trust.add_endpoint(&repo, &endpoint, note.as_deref())?,
+        TrustCommand::CheckEndpoint { remote, endpoint } => {
+            match trust.decide_endpoint(&remote, &endpoint) {
+                Decision::Allow { basis } => println!("federate: {basis}"),
+                Decision::Refuse { .. } => {
+                    // Policy errors can embed the raw URL, including userinfo.
+                    // Keep this read-only command's diagnostics free of input.
+                    eprintln!("refused: endpoint trust policy did not admit this request; check the repository and endpoint, then review packs trust --help");
+                    std::process::exit(3);
+                }
+            }
+            return Ok(());
+        }
         TrustCommand::List => {
             print!("{}", toml::to_string_pretty(&trust)?);
             return Ok(());

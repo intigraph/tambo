@@ -1,0 +1,19 @@
+BEFORE: endpoint policy decision has no CLI
+error: unrecognized subcommand 'check-endpoint'
+
+  tip: some similar subcommands exist: 'allow-endpoint', 'check'
+
+Usage: caboodle packs trust [OPTIONS] <COMMAND>
+
+For more information, try '--help'.
+exit=2
+AFTER: foreign endpoint without consent
+refused: endpoint https://example.org/query declared by foreign repository github.com/foreign/project has no allow entry; a pack declaring it is not consent. Admit it with: caboodle packs trust allow-endpoint github.com/foreign/project https://example.org/query
+exit=3
+AFTER: exact endpoint consent
+federate: explicit endpoint allow for github.com/foreign/project
+exit=0
+AFTER: consent revoked
+refused: endpoint https://example.org/query declared by foreign repository github.com/foreign/project has no allow entry; a pack declaring it is not consent. Admit it with: caboodle packs trust allow-endpoint github.com/foreign/project https://example.org/query
+exit=3
+
