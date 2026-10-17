@@ -214,6 +214,39 @@ pub fn present(root: &Path, prefix: &str) -> Result<bool> {
     Ok(true)
 }
 
+fn checked_out(root: &Path, prefix: &str) -> Result<bool> {
+    if !present(root, prefix)? {
+        return Ok(false);
+    }
+    let listed = crate::pendant_sync::git_command(root)
+        .args(["--literal-pathspecs", "ls-files", "-v", "-z", "--", prefix])
+        .output()?;
+    if !listed.status.success() {
+        bail!("cannot inspect project checkout membership");
+    }
+    for entry in String::from_utf8(listed.stdout)?
+        .split('\0')
+        .filter(|s| !s.is_empty())
+    {
+        let (tag, path) = entry
+            .split_once(' ')
+            .context("invalid Git checkout entry")?;
+        if tag.len() != 1 || !path.starts_with(prefix) {
+            bail!("Git returned an unexpected project path");
+        }
+        if matches!(tag, "S" | "s") {
+            continue;
+        }
+        match fs::symlink_metadata(root.join(path)) {
+            Ok(m) if m.is_file() || m.file_type().is_symlink() => return Ok(true),
+            Ok(_) => (),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => (),
+            Err(e) => return Err(e.into()),
+        }
+    }
+    Ok(false)
+}
+
 pub fn select(
     root: &Path,
     inputs: Vec<(String, std::path::PathBuf)>,
@@ -261,7 +294,7 @@ pub fn select(
         if !prefixes.insert(prefix.clone()) {
             bail!("duplicate project prefix: {prefix}");
         }
-        if present(root, &prefix)? {
+        if checked_out(root, &prefix)? {
             selected.push(input);
         }
     }
@@ -304,7 +337,18 @@ mod tests {
     #[test]
     fn parent_lineage_sparse_membership_and_duplicate_scope_controls() {
         let root = tempfile::tempdir().unwrap();
+        assert!(crate::pendant_sync::git_command(root.path())
+            .args(["init", "-q"])
+            .status()
+            .unwrap()
+            .success());
         fs::create_dir_all(root.path().join("packages/api")).unwrap();
+        fs::write(root.path().join("packages/api/source.rs"), "fixture").unwrap();
+        assert!(crate::pendant_sync::git_command(root.path())
+            .args(["add", "packages/api/source.rs"])
+            .status()
+            .unwrap()
+            .success());
         let parent = archive(
             root.path(),
             "parent",
@@ -335,6 +379,23 @@ mod tests {
         let selected = select(root.path(), inputs).unwrap();
         assert_eq!(selected.len(), 1);
         assert_eq!(selected[0].0, "api");
+        assert!(crate::pendant_sync::git_command(root.path())
+            .args(["update-index", "--skip-worktree", "packages/api/source.rs"])
+            .status()
+            .unwrap()
+            .success());
+        fs::remove_file(root.path().join("packages/api/source.rs")).unwrap();
+        fs::create_dir(root.path().join("packages/api/node_modules")).unwrap();
+        fs::write(
+            root.path().join("packages/api/node_modules/cache"),
+            "retained",
+        )
+        .unwrap();
+        assert!(!checked_out(root.path(), "packages/api/").unwrap());
+        assert_eq!(
+            fs::read_to_string(root.path().join("packages/api/node_modules/cache")).unwrap(),
+            "retained"
+        );
         let duplicate = archive(
             root.path(),
             "duplicate",

@@ -101,14 +101,23 @@ start=hook_output.find("{");assert start>=0
 hook_report=json.JSONDecoder().raw_decode(hook_output[start:])[0]
 assert hook_report["packs"]==3
 print("actual Git checkout event preserves opt-in monorepo mode: three projects, parent excluded",flush=True)
+(checkout/"packages/server/node_modules").mkdir()
+(checkout/"packages/server/node_modules/retained-cache").write_text("preserve me")
 run("git","-C",checkout,"sparse-checkout","init","--cone")
 run("git","-C",checkout,"sparse-checkout","set",".quipu","packages/client","packages/shared")
-assert not (checkout/"packages/server").exists()
+assert not (checkout/"packages/server/package.json").exists()
+assert (checkout/"packages/server/node_modules/retained-cache").read_text()=="preserve me"
+previous=os.environ.get("PREVIOUS_MONOREPO_BINARY")
+if previous:
+ old=json.loads(run(previous,"packs","sync","--monorepo","--repo",checkout,"--shapes-from",auth,"--trust-file",trust,"--db",consumer).stdout)
+ assert old["packs"]==3
+ print("PREVIOUS same sparse sync: three projects (excluded directory retained by untracked cache)",flush=True)
 report=json.loads(sync().stdout);print("sparse:",report["outcome"],"projects:",report["packs"],flush=True);assert report["packs"]==2
 assert ask("<urn:reckoning:server> ?p ?o")=="false"
 assert ask("<urn:reckoning:client> <urn:test:uses> <urn:reckoning:shared>")=="true"
 assert run(qp,"read","ASK { <urn:reckoning:client> ?p ?o }","--db",consumer).stdout.strip()=="false"
-print("sparse server absent, cross-project edge survives, ROOT unchanged",flush=True)
+assert (checkout/"packages/server/node_modules/retained-cache").read_text()=="preserve me"
+print("sparse server absent from CURRENT, untracked cache retained, cross-project edge survives, ROOT unchanged",flush=True)
 receipt=pathlib.Path(str(consumer)+".caboodle-packs.json");before=receipt.read_bytes()
 with (root/"server/export.nt").open("a") as f:f.write('<urn:tampered> <urn:bad> "bad" .\n')
 with tarfile.open(packs/"server.pendant.tar.gz","w:gz") as archive:archive.add(root/"server",arcname="pendant")

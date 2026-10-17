@@ -111,7 +111,7 @@ pub fn resolve(repo: &Path, prefix: &str, predicate: &str) -> Result<Vec<OwnedPa
         return Ok(Vec::new());
     };
     let listed = crate::pendant_sync::git_command(&root)
-        .args(["ls-files", "-z", "--", prefix])
+        .args(["--literal-pathspecs", "ls-files", "-z", "--", prefix])
         .output()?;
     if !listed.status.success() {
         bail!("cannot enumerate tracked project paths");

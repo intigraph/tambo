@@ -159,8 +159,7 @@ Test case: `scbrown/reckoning`, a real pnpm monorepo.
 The monorepo implementation adds an explicit `packs sync --monorepo` mode. It
 reads native share manifests, finds the one parent referenced by the derived
 shares, and excludes that parent from CURRENT. Each child uses the canonical
-CONSTRUCT path scope printed by `packs project-scope`. A child's directory must
-be present without symlink redirects; absent directories are excluded. Keep
+CONSTRUCT path scope printed by `packs project-scope`. A child needs a visible tracked file whose index entry is not marked skip-worktree, under a directory without symlink redirects. An excluded directory left behind by untracked files does not count as a checked-out project; those files are preserved. Keep
 `.quipu/packs/` in a sparse checkout. Unchanged members reuse Quipu's committed
 pack graphs; changing one share creates only that member's new graph. Selection
 is part of the version-2 monorepo receipt, so changing sparse membership reconciles CURRENT. Flat mode retains the baseline version-1 receipt format. Downgrading a monorepo consumer requires its retained pre-upgrade receipt and database rollback; an older binary refuses version-2 metadata rather than silently loading all projects.
