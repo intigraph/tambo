@@ -671,6 +671,9 @@ fn brew_update(
             channel.stable
         );
     }
+    // Resolve after delivery: a fresh package install creates the PATH pair.
+    let package_adapter = adapter.package_adapter()?;
+    let adapter = package_adapter.as_deref().unwrap_or(adapter);
     adapter
         .verify()
         .with_context(|| format!("{} verification after brew delivery", name.as_str()))?;
@@ -685,10 +688,24 @@ fn brew_update(
 }
 
 fn brew_version(adapter: &dyn crate::adapter::Adapter, receipt: &str) -> Result<String> {
+    // Current/pinned reads also use the package pair, never an unrelated
+    // Cargo copy. This is deliberately lazy until a read-back is needed.
+    let package_adapter = adapter.package_adapter()?;
+    let adapter = package_adapter.as_deref().unwrap_or(adapter);
     let version = adapter
         .version()
         .context("version read-back after brew delivery")?;
-    if crate::package::standing(receipt, &version) != crate::package::Standing::Current {
+    // Quipu reports its client and server as two semicolon-separated
+    // identities. Check both; a plain version line must not absorb the
+    // separator, and a current client must not hide a stale server.
+    let identities: Vec<_> = if adapter.name() == crate::model::ToolName::Quipu {
+        version.split(';').take(2).collect()
+    } else {
+        vec![version.as_str()]
+    };
+    if identities.iter().any(|identity| {
+        crate::package::standing(receipt, identity.trim()) != crate::package::Standing::Current
+    }) {
         anyhow::bail!("brew receipt and executable version disagree");
     }
     Ok(version)
