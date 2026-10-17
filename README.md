@@ -43,24 +43,28 @@ skill guides you through the same workflow.
 
 ## Install
 
-**Debian and Ubuntu (amd64):** install from the signed apt repository,
-which republishes each checksum-verified release, so `apt upgrade` (or
-unattended-upgrades) keeps it current. The package puts `tambo` and the
-compatibility `caboodle` command in `/usr/bin`.
+**Debian and Ubuntu (amd64):** install from the signed apt repository, which
+republishes each checksum-verified release. The package puts `tambo` and the compatibility `caboodle` command in
+`/usr/bin`. Check the signing key's fingerprint before trusting it; the
+commands stop if it does not match:
 
 ```bash
-sudo install -d -m 0755 /etc/apt/keyrings
-curl -fsSL https://scbrown.github.io/apt/key.gpg | sudo tee /etc/apt/keyrings/scbrown-stack.gpg >/dev/null
-echo "deb [signed-by=/etc/apt/keyrings/scbrown-stack.gpg] https://scbrown.github.io/apt stable main" \
-  | sudo tee /etc/apt/sources.list.d/scbrown-stack.list
-sudo apt update && sudo apt install tambo
+curl -fsSL https://scbrown.github.io/apt/key.gpg -o scbrown-stack.gpg
+gpg --show-keys --with-colons scbrown-stack.gpg \
+  | grep -qx 'fpr:::::::::AB5625C5612F643BF76464DF0DC99924994EC959:' \
+  && sudo install -D -m 0644 scbrown-stack.gpg /etc/apt/keyrings/scbrown-stack.gpg \
+  && echo "deb [signed-by=/etc/apt/keyrings/scbrown-stack.gpg] https://scbrown.github.io/apt stable main" \
+     | sudo tee /etc/apt/sources.list.d/scbrown-stack.list \
+  && sudo apt update && sudo apt install tambo
 ```
 
-Before trusting the key, `gpg --show-keys /etc/apt/keyrings/scbrown-stack.gpg`
-must print `AB5625C5612F643BF76464DF0DC99924994EC959`. A host with the older
-`caboodle` package moves over with `sudo apt install tambo` (or
-`apt full-upgrade`): `caboodle 0.3.4-1` is a transitional package that depends
-on `tambo`. Channels, pinning and rollback:
+`apt upgrade` then picks up new releases. unattended-upgrades only installs
+from origins it allows, so to have it upgrade tambo too, add
+`"origin=scbrown,codename=stable";` to `Unattended-Upgrade::Origins-Pattern`.
+A host with the older `caboodle` package moves over with
+`sudo apt install tambo` (or `apt full-upgrade`): `caboodle 0.3.4-1` is a
+transitional package that depends on `tambo`.
+Channels, pinning and rollback:
 [scbrown/apt](https://github.com/scbrown/apt#channels-and-pinning).
 
 Checksummed releases: Linux x86_64, macOS arm64 and macOS x86_64.
