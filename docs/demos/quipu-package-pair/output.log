@@ -1,0 +1,5 @@
+Script started on 2026-10-16 19:46:31-04:00 [COMMAND="python3 demo.py "$DEMO_BEFORE" "$DEMO_AFTER"" <not executed on terminal>]
+{"binary": "official0.3.5", "pinned": false, "exit": 1, "installed": "0.28.0", "local_stable": "0.29.0", "refreshes": 1, "upgrades": 0, "output": "quipu: current stable channel (package-owned: brew scbrown/tap 0.14.1; stable: 0.14.1)", "stderr": "Error: brew receipt and executable version disagree"}
+{"binary": "candidate", "pinned": false, "exit": 0, "installed": "0.29.0", "local_stable": "0.29.0", "refreshes": 1, "upgrades": 1, "output": "quipu: current stable channel (package-owned: brew scbrown/tap 0.14.1; stable: 0.14.1)\ncamayoc: current\nbobbin: delivered by brew (scbrown/tap 0.29.0) and verified", "stderr": ""}
+
+Script done on 2026-10-16 19:46:31-04:00 [COMMAND_EXIT_CODE="0"]

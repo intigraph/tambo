@@ -26,6 +26,12 @@ pub trait Adapter {
     fn version(&self) -> Result<String>;
     fn verify(&self) -> Result<()>;
 
+    /// Bind package verification to the executables PATH actually runs. Most
+    /// adapters already use PATH; Quipu normally prefers its Cargo install.
+    fn package_adapter(&self) -> Result<Option<Box<dyn Adapter>>> {
+        Ok(None)
+    }
+
     fn is_current(&self, installed: &str) -> bool {
         installed == self.desired_version()
     }
@@ -356,6 +362,22 @@ fn quipu_features(flavor: QuipuFlavor) -> &'static str {
 }
 
 impl Adapter for Quipu {
+    fn package_adapter(&self) -> Result<Option<Box<dyn Adapter>>> {
+        let path = env::var_os("PATH");
+        let resolve = |name| {
+            which_all(name, path.as_deref())
+                .into_iter()
+                .next()
+                .with_context(|| format!("package Quipu requires {name} on PATH"))
+        };
+        // Keep the package-manager symlinks rather than the old Cellar targets:
+        // brew may replace both targets during this same update.
+        Ok(Some(Box::new(Self {
+            flavor: self.flavor,
+            external: Some((resolve("quipu")?, resolve("quipu-server")?)),
+        })))
+    }
+
     fn name(&self) -> ToolName {
         ToolName::Quipu
     }
