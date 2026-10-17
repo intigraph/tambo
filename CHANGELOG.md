@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.7](https://github.com/scbrown/tambo/compare/v0.3.6...v0.3.7) (2026-10-17)
+
+
+### Bug Fixes
+
+* **packages:** verify manifest members through package launchers ([#161](https://github.com/scbrown/tambo/issues/161)) ([ed418d9](https://github.com/scbrown/tambo/commit/ed418d9fd3e8c74ee8c4754967e060ff8262a587))
+
 ## [0.3.6](https://github.com/scbrown/tambo/compare/v0.3.5...v0.3.6) (2026-10-17)
 
 
