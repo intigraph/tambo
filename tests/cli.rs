@@ -798,25 +798,85 @@ fn package_owned_tools_are_judged_by_receipt_and_never_installed_by_caboodle() {
 }
 
 #[test]
+fn brew_owned_desire_path_ahead_of_the_pin_is_read_not_refused() {
+    // aegis-fv4 2026-10-16: the Mac's brew desire-path 0.7.1 (090ec88) is ahead
+    // of the dp pin. `version()` refused any non-pinned identity, so the
+    // package-owned "ahead" verdict could not read it back and the member failed
+    // with "dp version is not the CABOODLE-pinned revision".
+    let brew_body = r#"echo "$*" >> "$HOME/brew.log"
+case "$*" in
+  "update --quiet") exit 0;;
+  "info --json=v2 --installed scbrown/tap/desire-path")
+    printf '{"formulae":[{"full_name":"abseil","tap":"homebrew/core","installed":[{"version":"1"}]}]}'; exit 0;;
+  "info --json=v2 scbrown/tap/desire-path")
+    printf '{"formulae":[{"full_name":"scbrown/tap/desire-path","tap":"scbrown/tap","pinned":false,"versions":{"stable":"0.7.1"},"installed":[{"version":"0.7.1"}]}]}'; exit 0;;
+  info*) printf '{"formulae":[]}'; exit 0;;
+esac
+exit 1"#;
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    command(root.path(), &bin)
+        .args(["plan", "--profile", "everything"])
+        .assert()
+        .success();
+    fake_tool(
+        &bin,
+        "dp",
+        "if [ \"${1:-}\" = version ]; then echo 'dp 0.7.1 (090ec88)'; exit 0; fi\nexit 2",
+    );
+    fake_tool(root.path(), "brew", brew_body);
+    let out = command(root.path(), &bin)
+        .env("CABOODLE_BREW", root.path().join("brew"))
+        .arg("update")
+        .output()
+        .unwrap();
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    assert!(
+        stdout.contains(
+            "desire-path: current stable channel (package-owned: brew scbrown/tap 0.7.1;"
+        ),
+        "{stdout}\n{stderr}"
+    );
+    assert!(
+        !format!("{stdout}{stderr}").contains("CABOODLE-pinned"),
+        "{stdout}\n{stderr}"
+    );
+    let log = fs::read_to_string(root.path().join("brew.log")).unwrap_or_default();
+    assert!(
+        !log.contains("install scbrown/tap/desire-path")
+            && !log.contains("upgrade scbrown/tap/desire-path"),
+        "{log}"
+    );
+}
+
+#[test]
 fn brew_delivers_members_from_the_stack_tap_and_never_downgrades() {
     // aegis-6f1: a stateful fake brew. `installed` holds the brew-installed
     // bobbin version (absent = not installed); `stable` is the tap's version.
     let brew_body = r#"echo "$*" >> "$HOME/brew.log"
 state="$HOME/brew-installed"; stable=$(cat "$HOME/brew-stable")
+installed='[]'; [ -f "$state" ] && installed=$(printf '[{"version":"%s"}]' "$(cat "$state")")
 case "$*" in
+  "update --quiet") exit 0;;
+  # Real brew (aegis-fv4): --installed ignores the formula and lists EVERY
+  # installed formula, an unrelated core one first.
   "info --json=v2 --installed scbrown/tap/bobbin")
-    if [ -f "$state" ]; then printf '{"formulae":[{"tap":"scbrown/tap","installed":[{"version":"%s"}]}]}' "$(cat "$state")"; else printf '{"formulae":[]}'; fi; exit 0;;
+    printf '{"formulae":[{"full_name":"abseil","tap":"homebrew/core","installed":[{"version":"1"}]}]}'; exit 0;;
   "info --json=v2 scbrown/tap/bobbin")
-    printf '{"formulae":[{"tap":"scbrown/tap","versions":{"stable":"%s"}}]}' "$stable"; exit 0;;
+    printf '{"formulae":[{"full_name":"scbrown/tap/bobbin","tap":"scbrown/tap","pinned":false,"versions":{"stable":"%s"},"installed":%s}]}' "$stable" "$installed"; exit 0;;
   "install scbrown/tap/bobbin"|"upgrade scbrown/tap/bobbin") echo "$stable" > "$state"; exit 0;;
   info*) printf '{"formulae":[]}'; exit 0;;
 esac
 exit 1"#;
     // (installed by brew, tap stable, bobbin on PATH, expected stdout, brew verb expected)
     for (installed, stable, path_bobbin, expect, verb) in [
-        (None, "0.27.3", None, "bobbin: delivered by brew (scbrown/tap/bobbin 0.27.3) and verified", Some("install")),
-        (Some("0.28.0"), "0.28.0", None, "bobbin: ahead of reviewed pin; downgrade refused (package-owned: brew scbrown/tap/bobbin 0.28.0;", None),
-        (Some("0.20.0"), "0.27.3", None, "bobbin: delivered by brew (scbrown/tap/bobbin 0.27.3) and verified", Some("upgrade")),
+        (None, "0.27.3", None, "bobbin: delivered by brew (scbrown/tap 0.27.3) and verified", Some("install")),
+        (Some("0.28.0"), "0.28.0", None, "bobbin: current stable channel (package-owned: brew scbrown/tap 0.28.0;", None),
+        (Some("0.28.0"), "0.29.0", None, "bobbin: delivered by brew (scbrown/tap 0.29.0) and verified", Some("upgrade")),
+        (Some("0.20.0"), "0.27.3", None, "bobbin: delivered by brew (scbrown/tap 0.27.3) and verified", Some("upgrade")),
         (None, "0.20.0", None, "bobbin: current", None),
         (None, "0.27.3", Some("0.99.0"), "bobbin: installed bobbin 0.99.0 is newer than scbrown/tap 0.27.3; not installed by brew", None),
     ] {
@@ -828,6 +888,8 @@ exit 1"#;
             .args(["plan", "--profile", "retrieval"])
             .assert()
             .success();
+        let fake = fs::read_to_string(bin.join("bobbin")).unwrap();
+        fs::write(bin.join("bobbin"), fake.replace("echo 'bobbin 0.27.3';", "if [ -f \"$HOME/brew-installed\" ]; then printf 'bobbin %s\\n' \"$(cat \"$HOME/brew-installed\")\"; else echo 'bobbin 0.27.3'; fi;")).unwrap();
         if let Some(version) = path_bobbin {
             let fake = fs::read_to_string(bin.join("bobbin")).unwrap();
             fs::write(bin.join("bobbin"), fake.replace("bobbin 0.27.3", &format!("bobbin {version}"))).unwrap();
@@ -929,7 +991,7 @@ fn check_updates_rejects_stale_path_despite_current_cargo_copy() {
         .assert()
         .failure()
         .stdout(predicate::str::contains(
-            "dp version is not the CABOODLE-pinned revision: dp c964ea2",
+            "desire-path: version drift; review required (installed: dp c964ea2 (c964ea2); reviewed: dp v0.3.2 (1f457ec))",
         ));
 }
 
@@ -3985,5 +4047,446 @@ fn installer_self_update_keeps_both_commands_and_restores_the_pair_on_failure() 
         "failed-installed",
     ] {
         self_update_pair_fixture(false, Some("v0.2.1"), Some("verified"), false, Some(mode));
+    }
+}
+
+/// aegis-vgu: a rejected credential must not hide the independent namespace
+/// check. `/query` is a public read, so doctor still reports it; the write probe
+/// needs the credential and is skipped rather than repeating the refusal.
+#[test]
+fn doctor_reports_namespace_after_a_rejected_credential() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    command(root.path(), &bin)
+        .args(["plan", "--profile", "kg"])
+        .assert()
+        .success();
+    let token = root.path().join(".config/quipu/token");
+    fs::set_permissions(&token, fs::Permissions::from_mode(0o600)).unwrap();
+    fs::write(&token, "bad-token\n").unwrap();
+    fs::set_permissions(&token, fs::Permissions::from_mode(0o400)).unwrap();
+    fake_tool(
+        &bin,
+        "curl",
+        r#"
+echo "$*" >> "$HOME/curl.log"
+case "$*" in
+  *"/health"*) exit 0 ;;
+  *"/shapes"*) printf '401' ;;
+  *"/query"*) echo '{"count":0,"rows":[]}' ;;
+  *"/episode"*) printf '401' ;;
+  *) exit 2 ;;
+esac
+"#,
+    );
+
+    command(root.path(), &bin)
+        .arg("doctor")
+        .assert()
+        .failure()
+        .stdout(predicate::str::contains("FAIL quipu credential"))
+        .stdout(predicate::str::contains("warn quipu namespace"))
+        .stdout(predicate::str::contains(
+            "camayoc's ontology is NOT loaded here",
+        ));
+    let calls = fs::read_to_string(root.path().join("curl.log")).unwrap();
+    assert!(
+        calls.contains("/query"),
+        "namespace check must still run: {calls}"
+    );
+    assert!(
+        !calls.contains("/episode"),
+        "write probe needs the credential: {calls}"
+    );
+}
+
+#[test]
+fn brew_stable_refresh_preserves_pins_and_refuses_failed_delivery() {
+    let brew_body = r#"echo "$*" >> "$HOME/brew.log"
+case "$*" in
+ "update --quiet")
+   [ "$(cat "$HOME/scenario")" != refresh-fails ] || exit 1
+   cp "$HOME/remote-stable" "$HOME/local-stable"; exit 0;;
+ "info --json=v2 scbrown/tap/bobbin")
+   [ "$(cat "$HOME/scenario")" != metadata-fails ] || exit 1
+   printf '{"formulae":[{"full_name":"scbrown/tap/bobbin","tap":"scbrown/tap","pinned":%s,"versions":{"stable":"%s"},"installed":[{"version":"%s"}]}]}' "$(cat "$HOME/pinned")" "$(cat "$HOME/local-stable")" "$(cat "$HOME/brew-installed")"; exit 0;;
+ "upgrade scbrown/tap/bobbin")
+   [ "$(cat "$HOME/scenario")" != upgrade-fails ] || exit 1
+   [ "$(cat "$HOME/scenario")" != unchanged-upgrade ] || exit 0
+   cp "$HOME/local-stable" "$HOME/brew-installed"; exit 0;;
+ info*) printf '{"formulae":[]}'; exit 0;;
+esac
+exit 2"#;
+    for (scenario, installed, pinned, success, upgrade, message) in [
+        ("stable", "0.28.0", false, true, true, "delivered by brew"),
+        ("stable", "0.27.3", false, true, true, "delivered by brew"),
+        (
+            "stable",
+            "0.30.0",
+            false,
+            true,
+            false,
+            "ahead of stable channel; downgrade refused",
+        ),
+        (
+            "stable",
+            "0.29.0",
+            false,
+            true,
+            false,
+            "current stable channel",
+        ),
+        (
+            "stable",
+            "0.28.0",
+            true,
+            true,
+            false,
+            "pinned Homebrew formula; update skipped",
+        ),
+        (
+            "refresh-fails",
+            "0.28.0",
+            false,
+            false,
+            false,
+            "brew update failed",
+        ),
+        (
+            "metadata-fails",
+            "0.28.0",
+            false,
+            false,
+            false,
+            "brew channel read failed",
+        ),
+        (
+            "upgrade-fails",
+            "0.28.0",
+            false,
+            false,
+            true,
+            "brew upgrade",
+        ),
+        (
+            "unchanged-upgrade",
+            "0.28.0",
+            false,
+            false,
+            true,
+            "did not reach stable",
+        ),
+    ] {
+        let root = tempfile::tempdir().unwrap();
+        let bin = root.path().join("bin");
+        fs::create_dir(&bin).unwrap();
+        install_fakes(root.path(), &bin);
+        command(root.path(), &bin)
+            .args(["plan", "--profile", "retrieval"])
+            .assert()
+            .success();
+        let fake = fs::read_to_string(bin.join("bobbin")).unwrap();
+        fs::write(
+            bin.join("bobbin"),
+            fake.replace(
+                "echo 'bobbin 0.27.3';",
+                "printf 'bobbin %s\\n' \"$(cat \"$HOME/brew-installed\")\";",
+            ),
+        )
+        .unwrap();
+        for (name, value) in [
+            ("scenario", scenario),
+            ("brew-installed", installed),
+            ("pinned", if pinned { "true" } else { "false" }),
+            ("local-stable", "0.28.0"),
+            ("remote-stable", "0.29.0"),
+        ] {
+            fs::write(root.path().join(name), value).unwrap();
+        }
+        fake_tool(root.path(), "brew", brew_body);
+        let output = command(root.path(), &bin)
+            .env("CABOODLE_BREW", root.path().join("brew"))
+            .arg("update")
+            .output()
+            .unwrap();
+        let text = format!(
+            "{}{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert_eq!(
+            output.status.success(),
+            success,
+            "{scenario}/{installed}/pin{pinned}: {text}"
+        );
+        assert!(
+            text.contains(message),
+            "{scenario}/{installed}/pin{pinned}: {text}"
+        );
+        let log = fs::read_to_string(root.path().join("brew.log")).unwrap();
+        assert_eq!(log.lines().next(), Some("update --quiet"), "{log}");
+        assert_eq!(
+            log.lines().filter(|l| *l == "update --quiet").count(),
+            1,
+            "{log}"
+        );
+        assert_eq!(
+            log.lines()
+                .filter(|l| *l == "upgrade scbrown/tap/bobbin")
+                .count(),
+            usize::from(upgrade),
+            "{log}"
+        );
+        assert!(
+            !log.contains("unpin") && !log.contains("install scbrown/tap/bobbin"),
+            "{log}"
+        );
+        let actual = fs::read_to_string(root.path().join("brew-installed")).unwrap();
+        assert_eq!(
+            actual,
+            if success && upgrade {
+                "0.29.0"
+            } else {
+                installed
+            }
+        );
+    }
+}
+
+#[test]
+fn brew_quipu_reads_path_pair_instead_of_stale_cargo_pair() {
+    for (version, server_version, succeeds) in [
+        ("0.14.1", "0.14.1", true),
+        ("0.13.0", "0.13.0", false),
+        ("0.14.1", "0.13.0", false),
+    ] {
+        let root = tempfile::tempdir().unwrap();
+        let bin = root.path().join("bin");
+        fs::create_dir(&bin).unwrap();
+        install_fakes(root.path(), &bin);
+        fake_tool(&bin, "quipu", &format!("echo 'quipu {version}'"));
+        fake_tool(
+            &bin,
+            "quipu-server",
+            &format!("echo 'quipu-server {server_version}'"),
+        );
+        let cargo = root.path().join("cargo-home/bin");
+        fs::create_dir_all(&cargo).unwrap();
+        for name in ["quipu", "quipu-server"] {
+            fake_tool(
+                &cargo,
+                name,
+                &format!("echo used-stale-cargo >> \"$HOME/stale.log\"; echo '{name} 0.8.1'"),
+            );
+        }
+        fake_tool(
+            &bin,
+            "brew",
+            r#"
+case "$*" in
+ "update --quiet") exit 0;;
+ "info --json=v2 scbrown/tap/quipu")
+ printf '{"formulae":[{"full_name":"scbrown/tap/quipu","tap":"scbrown/tap","pinned":false,"versions":{"stable":"0.14.1"},"installed":[{"version":"0.14.1"}]}]}'; exit 0;;
+ info*) printf '{"formulae":[]}'; exit 0;;
+esac
+exit 2
+"#,
+        );
+        command(root.path(), &bin)
+            .args(["plan", "--profile", "retrieval"])
+            .assert()
+            .success();
+        fs::create_dir_all(root.path().join("camayoc")).unwrap();
+        fs::write(
+            root.path().join("camayoc/REVISION"),
+            "f443bf19974d06ab662c8ae3deeccfbb1e082f48",
+        )
+        .unwrap();
+        let mut cmd = command(root.path(), &bin);
+        cmd.env("CABOODLE_BREW", bin.join("brew")).arg("update");
+        if succeeds {
+            cmd.assert()
+                .success()
+                .stdout(predicate::str::contains("quipu: current stable channel"));
+        } else {
+            cmd.assert().failure().stderr(predicate::str::contains(
+                "brew receipt and executable version disagree",
+            ));
+        }
+        assert!(!root.path().join("stale.log").exists());
+    }
+}
+
+#[test]
+fn brew_quipu_installs_a_missing_path_pair_before_binding_it() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    for (program, template) in [
+        ("quipu", "client-template"),
+        ("quipu-server", "server-template"),
+    ] {
+        let body = fs::read_to_string(bin.join(program))
+            .unwrap()
+            .replace("0.3.27", "0.14.1");
+        fs::write(bin.join(program), body).unwrap();
+        fs::rename(bin.join(program), root.path().join(template)).unwrap();
+    }
+    if fs::symlink_metadata(bin.join("qp")).is_ok() {
+        fs::remove_file(bin.join("qp")).unwrap();
+    }
+    fake_tool(&bin, "curl", "echo network-refused >&2; exit 97");
+    fake_tool(
+        &bin,
+        "brew",
+        r#"
+echo "$*" >> "$HOME/brew.log"
+case "$*" in
+ "update --quiet") exit 0;;
+ "info --json=v2 scbrown/tap/quipu")
+   rec=''; if [ -f "$HOME/quipu-installed" ]; then rec='{"version":"0.14.1"}'; fi
+   printf '{"formulae":[{"full_name":"scbrown/tap/quipu","tap":"scbrown/tap","pinned":false,"versions":{"stable":"0.14.1"},"installed":[%s]}]}' "$rec"; exit 0;;
+ "install scbrown/tap/quipu")
+   cp "$HOME/client-template" "$HOME/bin/quipu"
+   cp "$HOME/server-template" "$HOME/bin/quipu-server"
+   chmod +x "$HOME/bin/quipu" "$HOME/bin/quipu-server"
+   ln -s quipu "$HOME/bin/qp"
+   touch "$HOME/quipu-installed"; exit 0;;
+ info*) printf '{"formulae":[]}'; exit 0;;
+esac
+exit 2
+"#,
+    );
+    command(root.path(), &bin)
+        .args(["plan", "--profile", "retrieval"])
+        .assert()
+        .success();
+    fs::create_dir_all(root.path().join("camayoc")).unwrap();
+    fs::write(
+        root.path().join("camayoc/REVISION"),
+        "f443bf19974d06ab662c8ae3deeccfbb1e082f48",
+    )
+    .unwrap();
+    assert!(!bin.join("quipu").exists());
+    assert!(!bin.join("quipu-server").exists());
+    command(root.path(), &bin)
+        .env("CABOODLE_BREW", bin.join("brew"))
+        .arg("update")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(
+            "quipu: delivered by brew (scbrown/tap 0.14.1) and verified",
+        ));
+    assert!(bin.join("quipu").is_file());
+    assert!(bin.join("quipu-server").is_file());
+    assert!(root.path().join("quipu-installed").is_file());
+    let calls = fs::read_to_string(root.path().join("brew.log")).unwrap();
+    assert_eq!(
+        calls
+            .lines()
+            .filter(|line| *line == "install scbrown/tap/quipu")
+            .count(),
+        1
+    );
+}
+
+#[test]
+fn brew_manifest_reads_path_member_instead_of_stale_managed_copy() {
+    for (path_version, identity, succeeds, fresh) in [
+        ("0.4.2", true, true, false),
+        ("0.4.2", true, true, true),
+        ("0.4.1", true, false, false),
+        ("0.4.2", false, false, false),
+    ] {
+        let root = tempfile::tempdir().unwrap();
+        let bin = root.path().join("bin");
+        fs::create_dir(&bin).unwrap();
+        install_fakes(root.path(), &bin);
+        let cargo = root.path().join("cargo-home/bin");
+        fs::create_dir_all(&cargo).unwrap();
+        fake_tool(
+            &cargo,
+            "sd",
+            "echo used-stale-cargo >> \"$HOME/stale.log\"; echo 'sd 0.2.0 (seeds)'",
+        );
+        fake_tool(
+            &bin,
+            "sd",
+            &format!(
+                "if [ \"$1\" = --help ]; then echo '{}'; else echo 'sd {path_version} (seeds)'; fi",
+                if identity {
+                    "seeds is the beads-compatible tracker"
+                } else {
+                    "foreign replacement"
+                }
+            ),
+        );
+        let seed = fs::read_to_string(bin.join("sd")).unwrap();
+        let seed = seed.replace("else echo", "elif [ \"$1\" = create ]; then echo \"$2\" >> .sd-fake-seeds; elif [ \"$1\" = list ]; then cat .sd-fake-seeds 2>/dev/null || true; else echo");
+        fs::write(bin.join("sd"), &seed).unwrap();
+        fs::copy(bin.join("sd"), root.path().join("seed-template")).unwrap();
+        if fresh {
+            fs::remove_file(bin.join("sd")).unwrap();
+        } else {
+            fs::write(root.path().join("seed-installed"), "yes").unwrap();
+        }
+        fake_tool(
+            &bin,
+            "brew",
+            r#"
+case "$*" in
+ "update --quiet") exit 0;;
+ "info --json=v2 scbrown/tap/seeds")
+ rec=''; if [ -f "$HOME/seed-installed" ]; then rec='{"version":"0.4.2"}'; fi
+ printf '{"formulae":[{"full_name":"scbrown/tap/seeds","tap":"scbrown/tap","pinned":false,"versions":{"stable":"0.4.2"},"installed":[%s]}]}' "$rec"; exit 0;;
+ "install scbrown/tap/seeds") cp "$HOME/seed-template" "$HOME/bin/sd"; chmod +x "$HOME/bin/sd"; touch "$HOME/seed-installed"; exit 0;;
+ info*) echo '{"formulae":[]}'; exit 0;;
+esac
+exit 2
+"#,
+        );
+        command(root.path(), &bin)
+            .args(["plan", "--profile", "everything"])
+            .assert()
+            .success();
+        let path = root.path().join("caboodle-plan.toml");
+        let mut plan: toml::Value = toml::from_str(&fs::read_to_string(&path).unwrap()).unwrap();
+        plan["tools"] = toml::Value::Array(
+            [
+                "quipu",
+                "camayoc",
+                "bobbin",
+                "yupana",
+                "desire-path",
+                "seeds",
+            ]
+            .iter()
+            .map(|n| toml::Value::String(n.to_string()))
+            .collect(),
+        );
+        fs::write(path, toml::to_string(&plan).unwrap()).unwrap();
+        fs::create_dir_all(root.path().join("camayoc")).unwrap();
+        fs::write(
+            root.path().join("camayoc/REVISION"),
+            "f443bf19974d06ab662c8ae3deeccfbb1e082f48",
+        )
+        .unwrap();
+        let mut cmd = command(root.path(), &bin);
+        cmd.env("CABOODLE_BREW", bin.join("brew")).arg("update");
+        if succeeds {
+            cmd.assert()
+                .success()
+                .stdout(predicate::str::contains(if fresh {
+                    "seeds: delivered by brew"
+                } else {
+                    "seeds: current stable channel"
+                }));
+        } else {
+            cmd.assert().failure();
+        }
+        assert!(!root.path().join("stale.log").exists());
     }
 }

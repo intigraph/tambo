@@ -30,6 +30,23 @@ immediately. Checksum verification happens after downloading and is never
 retried or bypassed. This policy covers downloads made by the Caboodle binary,
 not the bootstrap shell installer above it or external package managers.
 
+## Homebrew member updates
+
+For a Mac plan with stack formulas, `tambo update` refreshes Homebrew metadata
+once before checking members. An unpinned formula follows the tap's current
+stable version, even when the installed version is already ahead of Tambo's
+embedded minimum release. A newer installed version is never downgraded.
+`brew pin scbrown/tap/bobbin` holds that formula; the updater reports the hold
+and never unpins it. Use `brew unpin scbrown/tap/bobbin` when you intend to resume
+stable updates.
+
+A failed metadata refresh, unreadable channel, failed upgrade, or version
+read-back mismatch is an error. After an upgrade, the formula receipt must reach
+stable and agree with the executable, and functional verification must pass.
+The release fallback still requires the embedded reviewed minimum when no stack
+formula is available. `check-updates` continues to report drift from those
+embedded release pins; it does not refresh package metadata.
+
 ## Release install
 
 Run the checksummed release installer in one line:
@@ -318,6 +335,62 @@ These reports remain nonzero because the installation differs from the review.
 `caboodle update` refuses a reviewed-pin downgrade before replacing the tool.
 There is no `--allow-downgrade` escape: a deliberate rollback requires a separately
 reviewed installation, rather than a normal stack update.
+
+## Replacing a cargo-installed Bobbin
+
+If `apply` refuses to replace an existing Bobbin executable, it preserves your
+installation. To switch a regular-file Cargo install to the reviewed release,
+first stop any automatic updates and choose a backup that does not already exist.
+The following works on macOS and Linux and uses `$CARGO_HOME/bin` when configured.
+It creates a hard-link backup beside the executable, retaining its bytes and
+permissions, before removing the original directory entry. It refuses symlinks,
+directories, and an existing backup (including a dangling symlink). It does not
+change Cargo's install metadata or uninstall the crate.
+
+```bash
+python3 - <<'PYTHON'
+import os
+from pathlib import Path
+import stat
+
+binary = Path(os.environ.get("CARGO_HOME", str(Path.home() / ".cargo"))) / "bin/bobbin"
+backup = binary.with_name("bobbin.before-tambo")
+if not stat.S_ISREG(binary.lstat().st_mode):
+    raise SystemExit(f"Expected a regular file; preserved {binary}")
+os.link(binary, backup, follow_symlinks=False)  # fails if backup already exists
+binary.unlink()
+print(f"Saved {backup}; rerun apply with your existing plan and state")
+PYTHON
+caboodle apply --plan caboodle-plan.toml --state .caboodle/state.json
+caboodle verify --plan caboodle-plan.toml --state .caboodle/state.json
+```
+
+Keep `bobbin.before-tambo` until verification succeeds. If either command fails,
+stop and inspect the failure. To restore, remove only the managed Bobbin symlink
+created by this attempt, if present, then run the following. It refuses an
+occupied destination and leaves the backup in place:
+
+```bash
+python3 - <<'PYTHON'
+import os
+from pathlib import Path
+import stat
+
+binary = Path(os.environ.get("CARGO_HOME", str(Path.home() / ".cargo"))) / "bin/bobbin"
+backup = binary.with_name("bobbin.before-tambo")
+if not stat.S_ISREG(backup.lstat().st_mode):
+    raise SystemExit(f"Expected a regular backup; preserved {backup}")
+os.link(backup, binary, follow_symlinks=False)  # never overwrites a destination
+print(f"Restored {binary}; backup retained at {backup}")
+PYTHON
+```
+
+This procedure deliberately replaces the selected Bobbin version with the plan's
+reviewed release. Compare `bobbin --version` with the planned version first; keep
+a newer Cargo install if you do not intend to switch. Do not use `cargo uninstall`
+after switching: Cargo still records its previous install and may remove the new
+entry. For a symlink or a package-manager-owned executable, use its owner's repair
+procedure instead of the regular-file steps above.
 
 ## Opt-in published binary updates
 

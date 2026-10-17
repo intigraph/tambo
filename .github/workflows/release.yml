@@ -4,12 +4,44 @@ on:
   push:
     tags:
       - 'v*'
+    branches: [main]
+
+# Release-PR model (aegis-ebal6v.7.1, as in bobbin/yupana): every main push opens or
+# refreshes the release PR; merging it makes release-please create the tag and a
+# DRAFT release. A tag created with GITHUB_TOKEN does not trigger another workflow,
+# so the jobs below run in THIS run, gated on releases_created, and take the version
+# from the release-please tag_name (github.ref_name is `main` there). The tag-push
+# arm still works for an emergency hand release.
 
 permissions:
   contents: write
 
 jobs:
+  release-please:
+    name: Release Please
+    if: startsWith(github.ref, 'refs/heads/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      releases_created: ${{ steps.release.outputs.releases_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
   build:
+    needs: release-please
+    # always(): release-please is SKIPPED on the tag-push arm, which would skip this job.
+    if: >-
+      always() &&
+      (startsWith(github.ref, 'refs/tags/') ||
+       needs.release-please.outputs.releases_created == 'true')
+    env:
+      VERSION: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || needs.release-please.outputs.tag_name }}
     strategy:
       fail-fast: false
       matrix:
@@ -23,6 +55,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.VERSION }}
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
@@ -31,13 +65,13 @@ jobs:
         run: |
           set -euo pipefail
           package_version=$(sed -n 's/^version = "\([^"]*\)"$/\1/p' Cargo.toml | head -n 1)
-          test "$GITHUB_REF_NAME" = "v$package_version"
+          test "$VERSION" = "v$package_version"
       - name: Build archive and checksum
         shell: bash
         run: |
           set -euo pipefail
           cargo build --release --locked --target '${{ matrix.target }}'
-          archive="tambo-$GITHUB_REF_NAME-${{ matrix.target }}.tar.gz"
+          archive="tambo-$VERSION-${{ matrix.target }}.tar.gz"
           mkdir dist
           tar -czf "dist/$archive" -C 'target/${{ matrix.target }}/release' tambo caboodle
           if command -v sha256sum >/dev/null; then
@@ -46,7 +80,7 @@ jobs:
             (cd dist && shasum -a 256 "$archive" > "$archive.sha256")
           fi
           # One compatibility release for existing Caboodle update-self clients.
-          legacy="caboodle-$GITHUB_REF_NAME-${{ matrix.target }}.tar.gz"
+          legacy="caboodle-$VERSION-${{ matrix.target }}.tar.gz"
           cp "dist/$archive" "dist/$legacy"
           if command -v sha256sum >/dev/null; then
             (cd dist && sha256sum "$legacy" > "$legacy.sha256")
@@ -60,10 +94,18 @@ jobs:
           if-no-files-found: error
 
   publish:
-    needs: build
+    needs: [release-please, build]
+    if: >-
+      always() && needs.build.result == 'success' &&
+      (startsWith(github.ref, 'refs/tags/') ||
+       needs.release-please.outputs.releases_created == 'true')
     runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || needs.release-please.outputs.tag_name }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.VERSION }}
       - uses: actions/download-artifact@v4
         with:
           pattern: release-*
@@ -72,22 +114,37 @@ jobs:
       - name: Verify complete release metadata
         env:
           TAMBO_EXPECT_TARGETS: x86_64-unknown-linux-gnu x86_64-apple-darwin aarch64-apple-darwin
-        run: scripts/check-release-assets.sh "$GITHUB_REF_NAME" dist
+        run: scripts/check-release-assets.sh "$VERSION" dist
       - name: Publish immutable GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/* --verify-tag --generate-notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          # release-please path: it created a DRAFT release for this tag; attach the
+          # verified assets, then publish it. Tag-push path: create it as before.
+          if gh release view "$VERSION" --json isDraft --jq .isDraft 2>/dev/null | grep -qx true; then
+            gh release upload "$VERSION" dist/* --clobber
+            gh release edit "$VERSION" --draft=false
+          else
+            gh release create "$VERSION" dist/* --verify-tag --generate-notes
+          fi
 
   publish-crate:
     name: Publish Tambo through crates.io Trusted Publishing
-    needs: publish
+    needs: [release-please, publish]
+    if: always() && needs.publish.result == 'success'
     runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || needs.release-please.outputs.tag_name }}
     timeout-minutes: 20
     permissions:
       contents: read
       id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.VERSION }}
       - uses: dtolnay/rust-toolchain@stable
       - name: Require the canonical repository and matching tag
         shell: bash
@@ -95,7 +152,7 @@ jobs:
           set -euo pipefail
           test "$GITHUB_REPOSITORY" = scbrown/tambo
           version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "tambo") | .version')
-          test "$GITHUB_REF_NAME" = "v$version"
+          test "$VERSION" = "v$version"
           echo "TAMBO_PUBLISH_VERSION=$version" >> "$GITHUB_ENV"
       - name: Build and verify the registry package
         shell: bash

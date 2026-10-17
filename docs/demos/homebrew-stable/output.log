@@ -1,0 +1,7 @@
+Script started on 2026-10-16 18:20:02-04:00 [COMMAND="python3 demo.py ./before ./after" <not executed on terminal>]
+{"binary": "official0.3.4", "pinned": false, "exit": 0, "installed": "0.28.0", "local_stable": "0.28.0", "refreshes": 0, "upgrades": 0, "output": "quipu: current\ncamayoc: current\nbobbin: ahead of reviewed pin; downgrade refused (package-owned: brew scbrown/tap/bobbin 0.28.0; reviewed: bobbin 0.27.3)", "stderr": ""}
+{"binary": "official0.3.4", "pinned": true, "exit": 0, "installed": "0.28.0", "local_stable": "0.28.0", "refreshes": 0, "upgrades": 0, "output": "quipu: current\ncamayoc: current\nbobbin: ahead of reviewed pin; downgrade refused (package-owned: brew scbrown/tap/bobbin 0.28.0; reviewed: bobbin 0.27.3)", "stderr": ""}
+{"binary": "candidate", "pinned": false, "exit": 0, "installed": "0.29.0", "local_stable": "0.29.0", "refreshes": 1, "upgrades": 1, "output": "quipu: current\ncamayoc: current\nbobbin: delivered by brew (scbrown/tap 0.29.0) and verified", "stderr": ""}
+{"binary": "candidate", "pinned": true, "exit": 0, "installed": "0.28.0", "local_stable": "0.29.0", "refreshes": 1, "upgrades": 0, "output": "quipu: current\ncamayoc: current\nbobbin: pinned Homebrew formula; update skipped (scbrown/tap 0.28.0; stable: 0.29.0)", "stderr": ""}
+
+Script done on 2026-10-16 18:20:04-04:00 [COMMAND_EXIT_CODE="0"]

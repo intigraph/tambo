@@ -26,6 +26,13 @@ pub trait Adapter {
     fn version(&self) -> Result<String>;
     fn verify(&self) -> Result<()>;
 
+    /// Bind package verification to the executables PATH actually runs. Most
+    /// adapters already use PATH; Quipu and manifest members normally prefer
+    /// their managed Cargo install.
+    fn package_adapter(&self) -> Result<Option<Box<dyn Adapter>>> {
+        Ok(None)
+    }
+
     fn is_current(&self, installed: &str) -> bool {
         installed == self.desired_version()
     }
@@ -356,6 +363,22 @@ fn quipu_features(flavor: QuipuFlavor) -> &'static str {
 }
 
 impl Adapter for Quipu {
+    fn package_adapter(&self) -> Result<Option<Box<dyn Adapter>>> {
+        let path = env::var_os("PATH");
+        let resolve = |name| {
+            which_all(name, path.as_deref())
+                .into_iter()
+                .next()
+                .with_context(|| format!("package Quipu requires {name} on PATH"))
+        };
+        // Keep the package-manager symlinks rather than the old Cellar targets:
+        // brew may replace both targets during this same update.
+        Ok(Some(Box::new(Self {
+            flavor: self.flavor,
+            external: Some((resolve("quipu")?, resolve("quipu-server")?)),
+        })))
+    }
+
     fn name(&self) -> ToolName {
         ToolName::Quipu
     }
@@ -1133,10 +1156,11 @@ impl Adapter for DesirePath {
     fn version(&self) -> Result<String> {
         let result = checked(desire_path_program()?, ["version"], None)?;
         let version = String::from_utf8_lossy(&result.stdout).trim().to_owned();
-        if !version.contains(DESIRE_PATH_VERSION.trim_start_matches('v'))
-            || !version.contains(&DESIRE_PATH_REVISION[..7])
-        {
-            bail!("dp version is not the CABOODLE-pinned revision: {version}");
+        // Identity only, like every other adapter: `is_current` and package
+        // `standing` judge it against the pin. Refusing here made a brew-owned
+        // dp that is AHEAD of the pin unreadable, so the member failed (aegis-fv4).
+        if version.is_empty() {
+            bail!("dp version returned no version");
         }
         Ok(version)
     }
@@ -1299,7 +1323,8 @@ fn ensure_bobbin_link(link: &Path, target: &Path) -> Result<()> {
         }
         Ok(_) => {
             bail!(
-                "refusing to replace existing {}; remove or repair it explicitly",
+                "refusing to replace existing {}; preserve it at a new backup path such as {}.before-tambo, then rerun apply; see Installing > Replacing a cargo-installed Bobbin for backup and rollback commands",
+                link.display(),
                 link.display()
             );
         }

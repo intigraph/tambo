@@ -385,21 +385,27 @@ fn check_graph() -> Vec<Finding> {
         .unwrap_or_else(|| "http://localhost:3030".to_owned());
     let mut findings = vec![check_quipu_server()];
     let reachable = findings[0].detail.contains("is live");
-    match crate::quipu_credential::verify(&server) {
-        Ok(source) => findings.push(Finding::new(
-            Level::Ok,
-            "quipu credential",
-            format!("canonical file 0400/0700 and authenticated /shapes read accepted; source: {source}"),
-        )),
+    // A rejected credential must not hide the checks that do not need it
+    // (aegis-vgu): the namespace read below is public, so it still runs. Only
+    // the write probe depends on the credential, and it is skipped.
+    let credential_ok = match crate::quipu_credential::verify(&server) {
+        Ok(source) => {
+            findings.push(Finding::new(
+                Level::Ok,
+                "quipu credential",
+                format!("canonical file 0400/0700 and authenticated /shapes read accepted; source: {source}"),
+            ));
+            true
+        }
         Err(error) => {
             findings.push(Finding::new(
                 Level::Fail,
                 "quipu credential",
                 format!("{error:#}"),
             ));
-            return findings;
+            false
         }
-    }
+    };
     if !reachable {
         return findings;
     }
@@ -450,6 +456,9 @@ fn check_graph() -> Vec<Finding> {
             "quipu namespace",
             "camayoc not installed yet; namespace resolves after install",
         )),
+    }
+    if !credential_ok {
+        return findings;
     }
     findings.push(match adapter::quipu_write_probe(base) {
         Ok((code, body, token_set)) => classify_write_probe(code, &body, token_set),
