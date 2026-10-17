@@ -595,10 +595,6 @@ fn brew_update(
     let Some(channel) = brew_channel(name)? else {
         return Ok(None);
     };
-    // Package delivery must read and verify the PATH pair, not a stale
-    // unrelated Cargo installation (Quipu's normal source-install default).
-    let package_adapter = adapter.package_adapter()?;
-    let adapter = package_adapter.as_deref().unwrap_or(adapter);
     let desired = adapter.desired_version();
     let stable = format!("pkg {}", channel.stable);
     if channel.pinned {
@@ -675,6 +671,9 @@ fn brew_update(
             channel.stable
         );
     }
+    // Resolve after delivery: a fresh package install creates the PATH pair.
+    let package_adapter = adapter.package_adapter()?;
+    let adapter = package_adapter.as_deref().unwrap_or(adapter);
     adapter
         .verify()
         .with_context(|| format!("{} verification after brew delivery", name.as_str()))?;
@@ -689,6 +688,10 @@ fn brew_update(
 }
 
 fn brew_version(adapter: &dyn crate::adapter::Adapter, receipt: &str) -> Result<String> {
+    // Current/pinned reads also use the package pair, never an unrelated
+    // Cargo copy. This is deliberately lazy until a read-back is needed.
+    let package_adapter = adapter.package_adapter()?;
+    let adapter = package_adapter.as_deref().unwrap_or(adapter);
     let version = adapter
         .version()
         .context("version read-back after brew delivery")?;

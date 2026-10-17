@@ -4318,3 +4318,77 @@ exit 2
         assert!(!root.path().join("stale.log").exists());
     }
 }
+
+#[test]
+fn brew_quipu_installs_a_missing_path_pair_before_binding_it() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    for (program, template) in [
+        ("quipu", "client-template"),
+        ("quipu-server", "server-template"),
+    ] {
+        let body = fs::read_to_string(bin.join(program))
+            .unwrap()
+            .replace("0.3.27", "0.14.1");
+        fs::write(bin.join(program), body).unwrap();
+        fs::rename(bin.join(program), root.path().join(template)).unwrap();
+    }
+    if fs::symlink_metadata(bin.join("qp")).is_ok() {
+        fs::remove_file(bin.join("qp")).unwrap();
+    }
+    fake_tool(&bin, "curl", "echo network-refused >&2; exit 97");
+    fake_tool(
+        &bin,
+        "brew",
+        r#"
+echo "$*" >> "$HOME/brew.log"
+case "$*" in
+ "update --quiet") exit 0;;
+ "info --json=v2 scbrown/tap/quipu")
+   rec=''; if [ -f "$HOME/quipu-installed" ]; then rec='{"version":"0.14.1"}'; fi
+   printf '{"formulae":[{"full_name":"scbrown/tap/quipu","tap":"scbrown/tap","pinned":false,"versions":{"stable":"0.14.1"},"installed":[%s]}]}' "$rec"; exit 0;;
+ "install scbrown/tap/quipu")
+   cp "$HOME/client-template" "$HOME/bin/quipu"
+   cp "$HOME/server-template" "$HOME/bin/quipu-server"
+   chmod +x "$HOME/bin/quipu" "$HOME/bin/quipu-server"
+   ln -s quipu "$HOME/bin/qp"
+   touch "$HOME/quipu-installed"; exit 0;;
+ info*) printf '{"formulae":[]}'; exit 0;;
+esac
+exit 2
+"#,
+    );
+    command(root.path(), &bin)
+        .args(["plan", "--profile", "retrieval"])
+        .assert()
+        .success();
+    fs::create_dir_all(root.path().join("camayoc")).unwrap();
+    fs::write(
+        root.path().join("camayoc/REVISION"),
+        "f443bf19974d06ab662c8ae3deeccfbb1e082f48",
+    )
+    .unwrap();
+    assert!(!bin.join("quipu").exists());
+    assert!(!bin.join("quipu-server").exists());
+    command(root.path(), &bin)
+        .env("CABOODLE_BREW", bin.join("brew"))
+        .arg("update")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(
+            "quipu: delivered by brew (scbrown/tap 0.14.1) and verified",
+        ));
+    assert!(bin.join("quipu").is_file());
+    assert!(bin.join("quipu-server").is_file());
+    assert!(root.path().join("quipu-installed").is_file());
+    let calls = fs::read_to_string(root.path().join("brew.log")).unwrap();
+    assert_eq!(
+        calls
+            .lines()
+            .filter(|line| *line == "install scbrown/tap/quipu")
+            .count(),
+        1
+    );
+}
