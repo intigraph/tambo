@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.6](https://github.com/scbrown/tambo/compare/v0.3.5...v0.3.6) (2026-10-17)
+
+
+### Bug Fixes
+
+* **homebrew:** verify the package Quipu pair on PATH ([#158](https://github.com/scbrown/tambo/issues/158)) ([2cbf4c4](https://github.com/scbrown/tambo/commit/2cbf4c44283dea6dc80c2caa412b10eef88e2fb9))
+
 ## [0.3.5](https://github.com/scbrown/tambo/compare/v0.3.4...v0.3.5) (2026-10-16)
 
 
