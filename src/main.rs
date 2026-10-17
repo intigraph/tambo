@@ -841,8 +841,10 @@ fn run_pack_trust(file: Option<PathBuf>, command: TrustCommand) -> Result<()> {
         TrustCommand::CheckEndpoint { remote, endpoint } => {
             match trust.decide_endpoint(&remote, &endpoint) {
                 Decision::Allow { basis } => println!("federate: {basis}"),
-                Decision::Refuse { message } => {
-                    eprintln!("refused: {message}");
+                Decision::Refuse { .. } => {
+                    // Policy errors can embed the raw URL, including userinfo.
+                    // Keep this read-only command's diagnostics free of input.
+                    eprintln!("refused: endpoint trust policy did not admit this request; check the repository and endpoint, then review packs trust --help");
                     std::process::exit(3);
                 }
             }

@@ -21,7 +21,7 @@ fn endpoint_decisions_use_current_policy_for_both_binary_names() {
         check(endpoint)
             .assert()
             .code(3)
-            .stderr(predicate::str::contains(endpoint));
+            .stderr(predicate::str::contains("endpoint trust policy"));
         assert!(!policy.exists());
         let mut trust = caboodle::pack_trust::TrustConfig::default();
         trust
@@ -39,9 +39,21 @@ fn endpoint_decisions_use_current_policy_for_both_binary_names() {
             .success()
             .stdout(predicate::str::contains("federate:"));
         check("https://example.org/other").assert().code(3);
-        check("https://user:secret@example.org/query")
-            .assert()
-            .code(3);
+        for endpoint in [
+            "https://review-user:SYNTHETIC_PASSWORD@example.org/query",
+            "https://review-user:SYNTHETIC_PASSWORD@example.org/invalid path",
+        ] {
+            let output = check(endpoint).output().unwrap();
+            assert_eq!(output.status.code(), Some(3));
+            let full_output = format!(
+                "{}{}",
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            );
+            assert!(!full_output.contains("SYNTHETIC_PASSWORD"));
+            assert!(!full_output.contains("review-user"));
+            assert!(full_output.contains("endpoint trust policy"));
+        }
         assert_eq!(fs::read(&policy).unwrap(), before);
         // A later revocation applies immediately.
         trust.endpoints.clear();
