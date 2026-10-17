@@ -298,6 +298,25 @@ impl Adapter for ManifestAdapter {
         format!("{} {}", self.0.name, self.0.version)
     }
 
+    fn package_adapter(&self) -> Result<Option<Box<dyn Adapter>>> {
+        let resolved = self
+            .0
+            .programs
+            .iter()
+            .map(|program| {
+                let path = on_path(&program.name).with_context(|| {
+                    format!("package {} requires {} on PATH", self.0.name, program.name)
+                })?;
+                identify(&path, program)?;
+                Ok((program.name.clone(), path))
+            })
+            .collect::<Result<Vec<_>>>()?;
+        Ok(Some(Box::new(PackageManifestAdapter {
+            manifest: self.0,
+            resolved,
+        })))
+    }
+
     fn install(&self) -> Result<()> {
         let m = self.0;
         refuse_foreign_program(m)?;
@@ -345,6 +364,49 @@ impl Adapter for ManifestAdapter {
             .map(|p| Ok((p.name.as_str(), resolve(p)?)))
             .collect::<Result<Vec<_>>>()?;
         verify_resolved(m, &resolved)
+    }
+}
+
+/// Package read-back uses the exact PATH launchers selected after delivery.
+/// Keep the launcher path (rather than its canonical target) for wrappers that
+/// depend on argv[0] or their installation directory.
+struct PackageManifestAdapter {
+    manifest: &'static Manifest,
+    resolved: Vec<(String, PathBuf)>,
+}
+
+impl Adapter for PackageManifestAdapter {
+    fn name(&self) -> ToolName {
+        ToolName::Member(self.manifest.name.as_str())
+    }
+    fn desired_version(&self) -> String {
+        format!("{} {}", self.manifest.name, self.manifest.version)
+    }
+    fn install(&self) -> Result<()> {
+        bail!("package installation belongs to the package manager")
+    }
+    fn version(&self) -> Result<String> {
+        let out = checked(
+            self.resolved[0].1.as_os_str(),
+            self.manifest.version_argv.iter().map(String::as_str),
+            None,
+        )?;
+        let version = String::from_utf8_lossy(&out.stdout).trim().to_owned();
+        if version.is_empty() {
+            bail!("{} returned no package version", self.manifest.name);
+        }
+        Ok(version)
+    }
+    fn is_current(&self, installed: &str) -> bool {
+        reports_version(installed, &self.manifest.version)
+    }
+    fn verify(&self) -> Result<()> {
+        let resolved = self
+            .resolved
+            .iter()
+            .map(|(name, path)| (name.as_str(), path.clone()))
+            .collect::<Vec<_>>();
+        verify_resolved(self.manifest, &resolved)
     }
 }
 

@@ -27,7 +27,8 @@ pub trait Adapter {
     fn verify(&self) -> Result<()>;
 
     /// Bind package verification to the executables PATH actually runs. Most
-    /// adapters already use PATH; Quipu normally prefers its Cargo install.
+    /// adapters already use PATH; Quipu and manifest members normally prefer
+    /// their managed Cargo install.
     fn package_adapter(&self) -> Result<Option<Box<dyn Adapter>>> {
         Ok(None)
     }
