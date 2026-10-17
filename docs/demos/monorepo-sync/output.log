@@ -1,0 +1,24 @@
+Script started on 2026-10-17 01:17:05-04:00 [COMMAND="python3 demo.py" <not executed on terminal>]
+quipu 0.14.1
+git_sha: cb0350800ebf8f5dffae1a8ac994159ea552762f
+git_dirty: false
+tambo 0.3.7 (5d54c158db95)
+CODEOWNERS is an explicit synthetic fixture; pinned Reckoning has none
+BASELINE same project-scope command: refused; command absent
+unknown owner resource refuses before scope emission
+native scope: packages/client/
+client native parent_share/scope preserved; export lines 5
+native scope: packages/server/
+server native parent_share/scope preserved; export lines 4
+native scope: packages/shared/
+shared native parent_share/scope preserved; export lines 4
+Three native derived shares preserve parent/scope and ownership; client-to-shared edge retained.
+flat mode retains v1 receipts readable by the baseline binary
+initial: composed projects: 3
+changed client gets a new pack graph; server/shared graph identities reused; ownership/cross-edge survive
+actual Git checkout event preserves opt-in monorepo mode: three projects, parent excluded
+sparse: composed projects: 2
+sparse server absent, cross-project edge survives, ROOT unchanged
+tampered absent project refuses, receipt and CURRENT retained
+
+Script done on 2026-10-17 01:17:09-04:00 [COMMAND_EXIT_CODE="0"]

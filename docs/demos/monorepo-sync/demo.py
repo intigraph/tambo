@@ -11,6 +11,8 @@ run(qp,"shapes","load","fixture",shape,"--db",db)
 base=pathlib.Path(__file__).resolve().parents[3]/"packs/policy"
 run(qp,"shapes","load","identifier-policy",base/"identifier-policy.shapes.ttl","--db",db)
 run(qp,"knot",base/"identifier-policy.ttl","--graph","urn:test:policy","--db",db)
+print(run(qp,"--version").stdout.strip(),flush=True)
+print(run(binary,"--version").stdout.strip(),flush=True)
 repo=pathlib.Path(os.environ["RECKONING_FIXTURE"])
 assert run("git","-C",repo,"rev-parse","HEAD").stdout.strip()=="e69450e4a449df74cd6b989afa4704b17fc8b977"
 paths=subprocess.check_output(["git","-C",str(repo),"ls-tree","-r","--name-only","HEAD","packages"],text=True).splitlines()

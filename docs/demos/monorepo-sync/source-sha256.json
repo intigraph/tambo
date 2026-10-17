@@ -1,0 +1,12 @@
+{
+  "Cargo.toml": "5882dfd574fa43d0268fca58047248fb499e6c2c10d53674344a3fefdb802e5c",
+  "Cargo.lock": "ed43b505e1efafcb2b048f96008246b63793b6a1f678e43bdd977512afebc4e0",
+  "src/lib.rs": "7a8ed62186b39d4bc07b3c69143f0618f4d3dba373df205afcdc7e03ed009c6f",
+  "src/main.rs": "c5f3dc96aa923716575443887a087caa7f1b2cac596de29c3f5fe1d27b22752a",
+  "src/pendant_sync.rs": "33090bcc635f4388146408fe5191c0fa5d6fb38f7f9f53fa93a32017418558a2",
+  "src/pendant_hooks.rs": "2ffb0611daf347a6ed458e66e1e53e3a27fc880e5c531a357f9a3633fc4bcbdb",
+  "src/pendant_projects.rs": "79e6181950b5265e5e11acbe1d9ad025213e8a91294e5642b00c6c86ecf6a896",
+  "src/pendant_ownership.rs": "57dabe162ba2d92a75aae1233fe31504b13617519a503155b6df1ff466f9703b",
+  "scripts/setup-environment.sh": "769a3d09331d4effe98b90ba9e3be657740529ad95c8df3af249de31138313d0",
+  "tests/test_pendant_setup.py": "7423d2f2f07a8d7f8ca183141cb092985a722f47aa002f72c69331979c00a16f"
+}
