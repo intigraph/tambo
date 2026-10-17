@@ -8,6 +8,6 @@ consent exits 3, an exact repository/endpoint allow exits 0, and revocation exit
 No installed/runtime change is claimed.
 
 Reproduce: `python3 docs/demos/endpoint-trust/demo.py /path/to/candidate [/path/to/baseline]`.
-The script uses a temporary policy and synthetic public URLs. The raw terminal
-recording is `output.gz` (gzip compressed); readable output is `transcript.txt`.
+The script uses a temporary policy and synthetic public URLs. The terminal
+recording (command-header paths redacted) is `output.gz` (gzip compressed); readable output is `transcript.txt`.
 Replay after decompression with `scriptreplay --log-out output --log-timing timing.txt`.
