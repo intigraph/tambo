@@ -1,19 +1,11 @@
 #!/bin/bash
 # arming: ci Documentation workflow; also runnable locally
 # Execute the README's release install and first-success blocks with no inherited
-# tool installations or configuration. Diff stdout against the README itself.
+# tool installations or configuration. Require both documented functional checks.
 set -euo pipefail
 repo=$(cd "$(dirname "$0")/.." && pwd)
 work=$(mktemp -d)
-cleanup() {
-  if [ -f "$work/credential/server.pid" ]; then
-    fixture_pid=$(cat "$work/credential/server.pid")
-    case "$(ps -p "$fixture_pid" -o args= 2>/dev/null || true)" in
-      *"$work/credential/fixture.db"*) kill "$fixture_pid" 2>/dev/null || true ;;
-    esac
-  fi
-  rm -rf "$work"
-}
+cleanup() { rm -rf "$work"; }
 trap cleanup EXIT
 mkdir "$work/home" "$work/run"
 # Use the checkout's checksummed release-shaped fixture so new documented
@@ -25,43 +17,27 @@ archive="tambo-v$version-x86_64-unknown-linux-gnu.tar.gz"
 mkdir "$work/release"
 tar -czf "$work/release/$archive" -C "$target_dir/release" tambo caboodle
 (cd "$work/release" && sha256sum "$archive" > "$archive.sha256")
-bind=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print("127.0.0.1:"+str(s.getsockname()[1])); s.close()')
-awk '
-  /^## Install$/ { section = "install"; next }
-  /^## First success in three commands$/ { section = "success"; next }
-  /^## / { section = "" }
-  /^```bash$/ && section != "" { block++; capture = (section == "success" || block == 1); next }
-  /^```$/ { capture = 0; next }
-  # PATH setup is a separate documented block from the one-line bootstrap.
-  section == "install" && /^export PATH=/ { print; next }
-  capture { print }
-' "$repo/README.md" > "$work/commands.sh"
-awk '
-  /^## First success in three commands$/ { section = 1; next }
-  /^## / { section = 0 }
-  /^```text$/ && section { capture = 1; next }
-  /^```$/ { capture = 0; next }
-  capture { print }
-' "$repo/README.md" > "$work/expected.txt"
-test -s "$work/expected.txt"
-# Separate the release installer (whose output includes HOME) from the three
-# first-success commands. Keep the same fresh HOME and shell for both.
-# Absolute: the block changes into its own work directory first (aegis-2gtpsr).
-sed "/^curl .*examples\/caboodle-intent.toml/i exec > $work/run/actual.txt" "$work/commands.sh" > "$work/run.sh"
-# The documented live-server/issued-token prerequisite is built by the test.
-# apply installs the real Quipu server; the actual README install still runs its
-# own apply and full verification. No fixture bypasses the credential gate.
-sed -i '/^caboodle install$/i\
-caboodle apply >/dev/null\
-python3 "$CABOODLE_TEST_REPO/scripts/start-credential-fixture.py" --home "$HOME" --root "$CABOODLE_TEST_ROOT/credential" --bind "$CABOODLE_TEST_BIND" >/dev/null\
-export QUIPU_SERVER="http://$CABOODLE_TEST_BIND"\
-caboodle provision-quipu-token --from "$CABOODLE_TEST_ROOT/credential/issued-token" --server "$QUIPU_SERVER" >/dev/null' "$work/run.sh"
+# Extract the actual README commands; no issued-token fixture or injected
+# provisioning commands are allowed on this default-path proof.
+python3 - "$repo/README.md" "$work/commands.sh" <<'PYEXTRACT'
+import pathlib, re, sys
+text = pathlib.Path(sys.argv[1]).read_text()
+install = text.split("## Install", 1)[1].split("## First success", 1)[0]
+local = text.split("## First success", 1)[1].split("### Advanced:", 1)[0]
+bootstrap = re.findall(r"```bash\n(.*?)```", install, re.S)[0]
+commands = re.findall(r"```bash\n(.*?)```", local, re.S)
+assert commands == ["tambo quickstart\n", "tambo verify\n"], commands
+pathlib.Path(sys.argv[2]).write_text(bootstrap + '\nexport PATH="${CARGO_HOME:-$HOME/.cargo}/bin:$PATH"\n' + "\n".join(commands))
+PYEXTRACT
 (cd "$work/run" && env -i HOME="$work/home" PATH=/usr/bin:/bin \
   CABOODLE_VERSION="v$version" CABOODLE_RELEASE_BASE_URL="file://$work/release" \
-  CABOODLE_TEST_REPO="$repo" CABOODLE_TEST_ROOT="$work" CABOODLE_TEST_BIND="$bind" \
-  /bin/bash --noprofile --norc -e "$work/run.sh")
-# The README shows paths under the reader's home as ~ (aegis-y4dd06); this run's
-# HOME is a fresh temp dir, so write it the same way before comparing.
-sed "s|$work/home|~|g" "$work/run/actual.txt" > "$work/actual.txt"
-diff -u "$work/expected.txt" "$work/actual.txt"
-printf '%s\n' 'README first success: exact stdout matched in a fresh HOME'
+  /bin/bash --noprofile --norc -e "$work/commands.sh") > "$work/actual.txt"
+for tool in quipu camayoc bobbin; do
+  test "$(grep -c "^$tool: verified$" "$work/actual.txt")" -eq 2
+done
+test ! -e "$work/home/.config/quipu/token"
+if grep -q '^quipu credential:' "$work/actual.txt"; then
+  printf '%s\n' 'local default unexpectedly required a credential' >&2
+  exit 1
+fi
+printf '%s\n' 'README local quickstart + verify: passed in a fresh HOME without issued token or server'

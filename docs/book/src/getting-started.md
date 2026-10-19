@@ -1,29 +1,26 @@
 # Getting started
 
-Install Caboodle with the [release installer](installing.md), then try the
-smallest profile: Quipu and Camayoc. Start in an empty directory.
+Install Tambo with the [release installer](installing.md), then run this in an
+empty directory you will keep:
 
 ```bash
-curl -fsSLO https://raw.githubusercontent.com/scbrown/caboodle/main/examples/caboodle-intent.toml
-caboodle plan --profile kg --intent caboodle-intent.toml
-caboodle install
+tambo quickstart
 ```
 
-The plan command prints `plan: caboodle-plan.toml`. Read that file before
-installing: it selects Quipu and Camayoc, and retains the example intent.
-Installation prints progress on stderr and these lines on stdout:
+This saves a retrieval plan, installs Quipu, Camayoc and Bobbin, and verifies
+all three without an interview, running server, or issued token. The local
+single-user store is `.caboodle/quipu.db`. Keep the plan and `.caboodle/`.
+Each `<tool>: verified` line means an isolated functional round trip passed,
+with a negative control and a reader-path proof. Recheck with:
 
-```text
-quipu: applied
-camayoc: applied
-stack configuration: applied
-quipu: verified
-camayoc: verified
+```bash
+tambo verify
 ```
 
-Each verified line means an isolated functional round trip passed, including
-a control proving the marker was absent before the write. The example intent
-is a starting contract, not a seeded production graph; see [question verification](reference.md).
+Camayoc verification manages its own temporary loopback server. It needs no
+administrator service. Remote access is an advanced opt-in through
+`QUIPU_SERVER` or a plan's `quipu_mcp`; that path still requires a valid issued
+credential. See [configuration](configuration.md).
 
 ## Guided interview
 
@@ -67,10 +64,10 @@ last proven state.
 ## Reproduce the README proof
 
 On Linux x86_64, from a checkout, run `scripts/test-readme.sh`. It extracts the
-README's shell blocks, runs the checksummed release installer and the three
-first-success commands under `env -i` with a fresh home, then diffs stdout
-against the README's own expected-output block. It does not reuse host binaries
-for the stack. The Documentation workflow runs this proof on every push and PR.
+README's actual bootstrap, quickstart and verify commands, runs them under
+`env -i` with a fresh home and no issued token or server, and requires both
+functional verifications for all three tools. The Documentation workflow runs
+this proof on every push and PR.
 
 For local link checks, install mdBook 0.5.4 and lychee 0.24.2, then run
 `just docs-check`. `pre-commit install` enables the same check before commits.

@@ -4490,3 +4490,63 @@ exit 2
         assert!(!root.path().join("stale.log").exists());
     }
 }
+
+#[test]
+fn quickstart_local_needs_no_server_or_issued_token_and_resumes() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    fs::remove_file(root.path().join(".config/quipu/token")).unwrap();
+    for args in [vec!["quickstart", "--skip-install"], vec!["verify"]] {
+        command_named(root.path(), &bin, "tambo")
+            .env_remove("QUIPU_SERVER")
+            .args(args)
+            .assert()
+            .success()
+            .stdout(predicate::str::contains("quipu: verified"))
+            .stdout(predicate::str::contains("bobbin: verified"))
+            .stdout(predicate::str::contains("quipu credential:").not());
+    }
+    command_named(root.path(), &bin, "tambo")
+        .env_remove("QUIPU_SERVER")
+        .env("CARGO_HOME", root.path())
+        .arg("doctor")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("quipu credential").not())
+        .stdout(predicate::str::contains("quipu server").not());
+    assert!(!root.path().join(".config/quipu/token").exists());
+    let plan = fs::read_to_string(root.path().join("caboodle-plan.toml")).unwrap();
+    assert!(plan.contains(".caboodle/quipu.db"));
+    // No installed live server is needed by embedded verification.
+    assert!(!root.path().join(".quipu/server.pid").exists());
+}
+
+#[test]
+fn remote_mcp_plan_requires_credential_even_without_server_environment() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    command(root.path(), &bin)
+        .args(["plan", "--profile", "retrieval"])
+        .assert()
+        .success();
+    command(root.path(), &bin)
+        .args(["install", "--skip-install"])
+        .assert()
+        .success();
+    let file = root.path().join("caboodle-plan.toml");
+    let mut plan = fs::read_to_string(&file).unwrap();
+    plan.push_str("\n[quipu_mcp]\nurl = \"https://remote.example\"\n");
+    fs::write(file, plan).unwrap();
+    fs::remove_file(root.path().join(".config/quipu/token")).unwrap();
+    command(root.path(), &bin)
+        .env_remove("QUIPU_SERVER")
+        .arg("verify")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("missing canonical"))
+        .stdout(predicate::str::contains("quipu: verified").not());
+}
