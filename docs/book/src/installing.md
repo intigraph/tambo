@@ -498,9 +498,11 @@ prints the exact source-build command where no reviewed release exists.
 three pinned v0.12.7 archives in-process and needs only `curl` and `tar` for installation. The `everything`
 profile also needs Go 1.22+. Rust is only needed for the source builds above.
 
-**Accounts and servers.** None. Nothing talks to a private network, and no
-token is needed to install. A token (`QUIPU_AUTH_TOKEN`) matters only when you
-send install records to a remote quipu with `flush-episodes`.
+**Accounts and servers.** The default local single-user install needs neither
+an issued token nor a running server. Explicit `QUIPU_SERVER` or `quipu_mcp`
+configuration opts into authenticated remote verification and requires an
+accepted issued credential. Sending install records with `flush-episodes`
+also requires remote authorization.
 
 ## Seeds successful-update rollback
 

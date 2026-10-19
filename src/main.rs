@@ -28,6 +28,16 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Install the local single-user stack with no interview, server, or token
+    Quickstart {
+        #[arg(long, default_value = "caboodle-plan.toml")]
+        plan: PathBuf,
+        #[arg(long, default_value = ".caboodle/state.json")]
+        state: PathBuf,
+        /// Use tools already installed by an external package manager
+        #[arg(long)]
+        skip_install: bool,
+    },
     /// Install an administrator-issued Quipu token after proving acceptance; never rotate
     ProvisionQuipuToken {
         #[arg(long = "from")]
@@ -474,6 +484,24 @@ fn update_release_tool(value: &str) -> Result<String, String> {
 
 fn main() -> Result<()> {
     match Cli::parse().command {
+        Commands::Quickstart {
+            plan,
+            state,
+            skip_install,
+        } => {
+            let selected = if plan.exists() {
+                Plan::read(&plan)?
+            } else {
+                let mut selected = Plan::for_profile(Profile::Retrieval);
+                selected.quipu_db = Some(PathBuf::from(".caboodle/quipu.db"));
+                selected.write(&plan)?;
+                selected
+            };
+            println!("plan: {}", plan.display());
+            engine::apply(&selected, &state, skip_install)?;
+            engine::verify(&selected, &state, &CrewEvidence::default())?;
+        }
+
         Commands::ProvisionQuipuToken { source, server } => {
             engine::provision_quipu_credential(&source, &server)?;
         }

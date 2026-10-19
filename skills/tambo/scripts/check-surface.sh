@@ -4,7 +4,7 @@ set -eu
 tambo_bin=${1:-tambo}
 
 "$tambo_bin" --version >/dev/null
-for command in init plan apply verify install project-settings verify-questions render-observability validate-observability queue-br flush-episodes; do
+for command in quickstart init plan apply verify install project-settings verify-questions render-observability validate-observability queue-br flush-episodes; do
     "$tambo_bin" "$command" --help >/dev/null
 done
 

@@ -93,57 +93,56 @@ version, use `brew pin caboodle`; resume updates with `brew unpin caboodle`.
 The [tap channel guide](https://github.com/scbrown/homebrew-tap#caboodle-preview-channel)
 explains the opt-in nightly channel and switching back to stable.
 
-## First success in three commands
+## First success: local, single-user
 
-Run these in a new, empty directory that will stay put. It is caboodle's own
-working directory, NOT the repository you want indexed (that comes in
-[Wire it into your agent](#wire-it-into-your-agent)). `retrieval` installs
-Quipu, Camayoc and Bobbin, which the agent step needs. To check prerequisites,
-Set `QUIPU_SERVER` to the intended authenticated server and obtain an issued
-token from its administrator before verification. Install it with
-`caboodle provision-quipu-token --from /secure/issued-token --server <server-url>`.
-This proves acceptance and creates the canonical credential with `0400/0700`
-permissions; it refuses rotation of a differing existing credential. Then
-run `caboodle doctor` after `plan` in the same directory (with no plan it checks
-`everything`, which needs Go); it exits 0 when ready, and warnings do not block.
+After installing Tambo, run this in an empty directory you will keep:
 
 ```bash
-mkdir -p ~/caboodle && cd ~/caboodle
-curl -fsSLO https://raw.githubusercontent.com/scbrown/caboodle/main/examples/caboodle-intent.toml
-caboodle plan --profile retrieval --intent caboodle-intent.toml
-caboodle install
+tambo quickstart
 ```
 
-Expected stdout on a fresh machine (downloads and progress go to stderr):
+Tambo saves a retrieval plan, installs Quipu, Camayoc and Bobbin, and verifies
+all three. There are no interview questions, issued tokens, accounts or running
+server prerequisites. Your knowledge store is local at `.caboodle/quipu.db`.
+Keep `caboodle-plan.toml` and `.caboodle/` to resume or update the same install.
+An existing plan is reused and validated; quickstart never replaces it.
 
-```text
-plan: caboodle-plan.toml
-quipu: applied
-camayoc: applied
-bobbin: applied
-stack configuration: applied
-hook bundle bobbin: source tool
-hook bundle quipu: source shipped copy
-hook bundle NOT registered: `st` (shantytown) is not installed on this host. Install it and rerun `caboodle apply`; verify reports the bundles until then
-vocabulary: quechua v0.1.0 cached at ~/.local/share/caboodle/vocabulary/quechua-ns-v0.1.0.ttl (no plan quipu_db to load into)
-hook bundle NOT verified: `st` (shantytown) is not installed on this host, so no hook bundle is registered here
-quipu credential: canonical file 0400/0700 and authenticated read verified; source: default ~/.config/quipu/token
-quipu: verified
-camayoc: verified
-bobbin: verified
+**Success check:** exit 0 and `quipu: verified`, `camayoc: verified`, and
+`bobbin: verified`. Each tool passes an isolated functional round trip, including
+a negative control and a read after writing. Recheck with one command:
+
+```bash
+tambo verify
 ```
 
-`hook bundle` lines are expected without Shantytown. Each `verified` is a passed
-functional round trip; [the walkthrough](https://scbrown.github.io/caboodle/getting-started.html) covers recovery.
+Quipu's verification uses a temporary embedded database. Camayoc's check starts
+and stops its own temporary loopback server; you do not supply or manage one.
+This proves the installed tools, not a connection to a remote knowledge service.
+Optional Shantytown hook messages do not require a crew installation.
 
-**Success check:** `caboodle install` exits 0 and prints `<tool>: verified` for
-every tool in the plan (`quipu`, `camayoc`, `bobbin` for `retrieval`). Recheck at
-any time with `caboodle verify` from `~/caboodle`: same lines, exit 0. A failing
-tool prints `<tool>: FAILED: …` and the command exits nonzero.
+### Advanced: connect to a shared, authenticated Quipu server
 
-The install leaves these in `~/caboodle`: `caboodle-intent.toml` (downloaded
-above), `caboodle-plan.toml` (the reviewed plan) and `.caboodle/` (install
-state). Keep the directory; `verify`, `update` and a resumed `install` read it.
+Remote mode is opt-in: set `QUIPU_SERVER` to the server you intend to use, or
+create a plan with `--quipu-mcp-url`. Obtain an administrator-issued token and
+provision it before verification:
+
+```bash
+tambo provision-quipu-token --from /secure/issued-token --server https://your-quipu-server.example
+export QUIPU_SERVER=https://your-quipu-server.example
+tambo verify
+```
+
+Remote verification requires the canonical credential with `0400/0700`
+permissions, proves that unauthenticated access is refused and the selected
+credential is accepted, and refuses token rotation. Missing or rejected
+credentials stop verification. Never put a token in the plan or a server URL.
+Unset `QUIPU_SERVER` to use the local default; an explicit `quipu_mcp` plan
+remains remote until you remove that configuration deliberately.
+
+To customize the tools and intended-use contract instead, use
+`tambo init --guided` or `tambo plan --profile retrieval --intent caboodle-intent.toml`,
+review the resulting plan, then run `tambo install`. See the
+[walkthrough](https://scbrown.github.io/caboodle/getting-started.html).
 
 ## On your own code
 
