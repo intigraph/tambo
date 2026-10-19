@@ -39,3 +39,15 @@ service acceptance.
 
 The official release and a new timed clean-room run remain separate delivery
 steps. No publication or remote trust enrollment is performed by this change.
+
+A paired CLI-fixture probe was also run against the exact base above, with
+only the new default-path test copied into an isolated base checkout. The same
+`cargo test --locked --test cli quickstart_local` invocation produced:
+
+```text
+Base: error: unrecognized subcommand 'quickstart' (exit 2)
+Candidate: test quickstart_local_needs_no_server_or_issued_token_and_resumes ... ok
+```
+
+The fixture probe distinguishes the CLI change; the real README proof above
+separately demonstrates that the actual pinned tools install and verify.
