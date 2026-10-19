@@ -5,8 +5,8 @@ description: Install, verify, diagnose, resume, or update the Quipu-stack tool c
 
 # CABOODLE
 
-Drive one reviewable sequence: interview → plan review → apply → verify. Use the
-same CLI path in every harness; require only a shell for the current profiles.
+Use the local quickstart for a default install. Customized installs follow
+interview → plan review → apply → verify. Use the same CLI in every harness.
 
 ## Bootstrap and preflight
 
@@ -21,13 +21,32 @@ For CABOODLE itself, prefer the reviewed checksummed release path documented in
 3. Run `skills/caboodle/scripts/check-surface.sh "$(command -v caboodle)"`
    when this skill directory is available. A failed surface check is a bootstrap
    failure; do not continue with guessed commands.
-4. When `caboodle doctor --help` answers, run `caboodle doctor` before any
-   apply or install. It is read-only. Report every `FAIL` line with its fix and
+4. For an existing or customized plan, run `caboodle doctor` before apply or
+   install. Without a plan doctor checks all tools, so it is not a prerequisite
+   for the default quickstart. It is read-only. Report every `FAIL` line with its fix and
    stop until each is resolved; report `warn` lines to the operator.
 
 Do not print credentials or introduce private endpoints. Do not delete
 `.caboodle/` to recover from an error: it contains the resumable interview and
 last-proven state.
+
+## Default local install
+
+When installation is already authorized, use a persistent empty work directory
+and run `caboodle quickstart`. It saves a retrieval plan, installs Quipu, Camayoc
+and Bobbin, and verifies each with isolated functional controls. There is no
+interview, issued token or running-server prerequisite. Recheck with
+`caboodle verify`; keep `caboodle-plan.toml` and `.caboodle/` to resume.
+Quickstart reuses an existing plan and never overwrites it.
+
+Remote access is advanced and opt-in: `QUIPU_SERVER` or a plan's `quipu_mcp`
+selects authenticated remote verification. That path still requires an issued
+credential, canonical permissions, and an accepted server probe. Never invent
+or auto-mint an issued credential. Local signing-key enrollment is not an
+installation prerequisite.
+
+The interview below is for customized profiles and intended-use contracts;
+it is not required for the default single-user install.
 
 ## Interview and plan review
 
