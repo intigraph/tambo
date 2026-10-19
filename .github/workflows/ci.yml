@@ -126,9 +126,10 @@ jobs:
           set -euo pipefail
           export PATH="$RUNNER_TEMP/caboodle/bin:$HOME/.cargo/bin:$PATH"
           cd "$RUNNER_TEMP/caboodle-phase2"
-          # A clean host has no issued credential; doctor must name that blocker.
-          if caboodle doctor > doctor.log 2>&1; then
-            echo 'clean host unexpectedly passed credential diagnostics' >&2
+          # An explicitly selected remote still requires an issued credential.
+          # The zero-credential local default is proved by readme-first-success.
+          if QUIPU_SERVER=http://127.0.0.1:3030 caboodle doctor > doctor.log 2>&1; then
+            echo 'remote mode unexpectedly passed credential diagnostics' >&2
             exit 1
           fi
           grep -q 'missing canonical Quipu credential' doctor.log
