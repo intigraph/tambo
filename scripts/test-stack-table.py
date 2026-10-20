@@ -82,14 +82,14 @@ class StackTableControls(unittest.TestCase):
                 self.assertEqual(CHECK.main(), expected)
                 self.assertEqual(seen.count("shantytown"), 1)
                 self.assertEqual(seen.count("rikuy"), 1)
-                self.assertEqual(len(seen), 9)
+                self.assertEqual(len(seen), 12)
 
     def test_remote_response_has_a_size_limit(self):
         response = MagicMock()
         response.__enter__.return_value.read.return_value = b"x" * (CHECK.MAX_BYTES + 1)
         with patch.object(CHECK, "urlopen", return_value=response):
             with self.assertRaisesRegex(ValueError, "size limit"):
-                CHECK.remote_readme("caboodle")
+                CHECK.remote_readme("tambo")
 
 
 if __name__ == "__main__":

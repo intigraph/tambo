@@ -128,6 +128,37 @@ class Bootstrap(unittest.TestCase):
         self.assertEqual(existing.read_bytes(), b'prior installed bytes')
         self.assertNotIn('/caboodle-', self.requests.read_text())
 
+    def test_root_installer_matches_compatibility_entrypoint(self):
+        self.assertEqual((ROOT / 'install.sh').read_bytes(),
+                         (ROOT / 'scripts/install.sh').read_bytes())
+
+    def test_unsupported_platform_preserves_existing_install(self):
+        self.target = 'aarch64-unknown-linux-gnu'
+        existing = self.root / 'installed/tambo'
+        existing.write_bytes(b'prior installed bytes')
+        self.assertNotEqual(self.run_installer('v0.4.0').returncode, 0)
+        self.assertIn('unsupported', self.result.stderr)
+        self.assertEqual(existing.read_bytes(), b'prior installed bytes')
+
+    def test_missing_assets_preserve_existing_install(self):
+        existing = self.root / 'installed/tambo'
+        existing.write_bytes(b'prior installed bytes')
+        self.assertNotEqual(self.run_installer('v0.4.0').returncode, 0)
+        self.assertEqual(existing.read_bytes(), b'prior installed bytes')
+
+    def test_wrong_version_preserves_existing_install(self):
+        self.archive('tambo', 'v0.3.0', ['tambo', 'caboodle'])
+        for url, route in list(self.routes.items()):
+            self.routes[url.replace('v0.3.0', 'v0.4.0')] = route
+        # Rewrite only the checksum filename: verified bytes still report 0.3.0.
+        url = f'{self.base}/tambo-v0.4.0-{self.target}.tar.gz.sha256'
+        self.routes[url]['body'] = self.routes[url]['body'].replace('v0.3.0', 'v0.4.0')
+        existing = self.root / 'installed/tambo'
+        existing.write_bytes(b'prior installed bytes')
+        self.assertNotEqual(self.run_installer('v0.4.0').returncode, 0)
+        self.assertIn('version mismatch', self.result.stderr)
+        self.assertEqual(existing.read_bytes(), b'prior installed bytes')
+
     def test_non_404_failure_never_falls_back(self):
         self.archive('caboodle', 'v0.3.0', ['caboodle'])
         for response in ({'status': 500}, {'status': 0, 'exit': 7}):

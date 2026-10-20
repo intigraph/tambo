@@ -10,7 +10,7 @@ from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
-REPOS = ("quipu", "bobbin", "camayoc", "yupana", "desire-path", "seeds", "caboodle", "shantytown", "rikuy")
+REPOS = ("tambo", "quipu", "camayoc", "quechua", "chaski", "bobbin", "yupana", "seeds", "shantytown", "shuttle", "rikuy", "desire-path")
 START = b"<!-- stack-table:start -->"
 END = b"<!-- stack-table:end -->"
 MAX_BYTES = 256 * 1024
@@ -56,7 +56,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("readmes", nargs="*", type=Path, help="local README copies")
     parser.add_argument("--canonical", type=Path, default=ROOT / "docs/stack-table.md")
-    parser.add_argument("--remote", action="store_true", help="also audit all nine public main branches")
+    parser.add_argument("--remote", action="store_true", help="also audit all twelve public main branches")
     args = parser.parse_args()
     try:
         canonical = marked_table(args.canonical.read_bytes(), str(args.canonical))
