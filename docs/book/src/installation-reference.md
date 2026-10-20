@@ -1,5 +1,7 @@
 # Installation and agent reference
 
+For Debian/Ubuntu packages, use the [signed apt repository guide](https://github.com/scbrown/apt#channels-and-pinning), including its fingerprint check, allowed update origins and rollback. The archive installer below is independent of apt.
+
 
 ### Checksummed archives
 
