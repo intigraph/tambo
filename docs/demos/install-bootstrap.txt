@@ -1,0 +1,18 @@
+Script started on 2026-10-20 19:22:31-04:00 [COMMAND="python3 scripts/test-install-bootstrap.py" <not executed on terminal>]
+test_bad_checksum_never_falls_back_or_replaces (__main__.Bootstrap.test_bad_checksum_never_falls_back_or_replaces) ... ok
+test_default_uses_compatibility_repository_and_legacy_release (__main__.Bootstrap.test_default_uses_compatibility_repository_and_legacy_release) ... ok
+test_missing_assets_preserve_existing_install (__main__.Bootstrap.test_missing_assets_preserve_existing_install) ... ok
+test_new_archive_installs_both_commands (__main__.Bootstrap.test_new_archive_installs_both_commands) ... ok
+test_new_archive_requires_both_commands (__main__.Bootstrap.test_new_archive_requires_both_commands) ... ok
+test_non_404_failure_never_falls_back (__main__.Bootstrap.test_non_404_failure_never_falls_back) ... ok
+test_pinned_legacy_release (__main__.Bootstrap.test_pinned_legacy_release) ... ok
+test_root_installer_matches_compatibility_entrypoint (__main__.Bootstrap.test_root_installer_matches_compatibility_entrypoint) ... ok
+test_unsupported_platform_preserves_existing_install (__main__.Bootstrap.test_unsupported_platform_preserves_existing_install) ... ok
+test_wrong_version_preserves_existing_install (__main__.Bootstrap.test_wrong_version_preserves_existing_install) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.787s
+
+OK
+
+Script done on 2026-10-20 19:22:32-04:00 [COMMAND_EXIT_CODE="0"]
