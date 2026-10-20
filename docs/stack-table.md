@@ -1,6 +1,6 @@
 # Canonical stack table
 
-This is the source for the marked stack overview in the eight tool READMEs.
+This is the source for the marked stack overview in the nine tool READMEs.
 
 <!-- ANCHOR: table -->
 <!-- stack-table:start -->
@@ -20,11 +20,12 @@ when.
 | [desire-path](https://github.com/scbrown/desire-path) | turns agent mistakes into feature requests; works on its own without Quipu |
 | [seeds](https://github.com/scbrown/seeds) | a work item tracker backed by the Quipu knowledge base |
 | [shantytown](https://github.com/scbrown/shantytown) | runs crews of AI agents on work items, triggered by hand, on a schedule or by events; can share work and memory through Quipu |
+| [rikuy](https://github.com/scbrown/rikuy) | live brief: status, graphs, watches and signed decisions over Quipu |
 | [shuttle](https://github.com/scbrown/shuttle) | runs signed agent workflows and keeps their records in Quipu |
 
 <!-- stack-table:end -->
 <!-- ANCHOR_END: table -->
 
 Run `python3 scripts/check-stack-table.py` to check this repository, or add
-`--remote` to compare all eight published READMEs. Update the marked blocks
+`--remote` to compare all nine published READMEs. Update the marked blocks
 together when changing this table.
