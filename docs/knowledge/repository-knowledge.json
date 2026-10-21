@@ -1,6 +1,6 @@
 {
-  "source_revision": "c66eb462c038aeb05a8da1b9979524b45bf34adc",
-  "reviewed_at": "2026-10-21T05:26:11.677727Z",
+  "source_revision": "ccdfa3a2ed8747228b486f6ee97f4c291aadac26",
+  "reviewed_at": "2026-10-21T06:26:04.583642Z",
   "max_age_seconds": 2592000,
   "records": [
     {
@@ -60,7 +60,7 @@
       "source": "Cargo.toml",
       "subject": "http://aegis.gastown.local/ontology/code/tambo/Cargo.toml",
       "summary": "The package and primary command are tambo, while the Rust library import name remains caboodle and a legacy caboodle binary is explicitly declared for compatibility.",
-      "source_sha256": "4c419af45d8a28f872fd114bad3d9d25182ca8b1639c1cf9c0d06702bb37126b",
+      "source_sha256": "7e31dcd35cb941031963d783120fc1653cf113914b5b0fe473760c08b898f752",
       "type": "DecisionRecord",
       "properties": {
         "status": "active",
@@ -93,7 +93,7 @@
       "source": "Cargo.toml",
       "subject": "http://aegis.gastown.local/ontology/code/tambo/Cargo.toml",
       "summary": "Read the declared library and binary names before integrating the crate or changing compatibility assumptions.",
-      "source_sha256": "4c419af45d8a28f872fd114bad3d9d25182ca8b1639c1cf9c0d06702bb37126b",
+      "source_sha256": "7e31dcd35cb941031963d783120fc1653cf113914b5b0fe473760c08b898f752",
       "properties": {
         "startHereOrder": 3
       }
