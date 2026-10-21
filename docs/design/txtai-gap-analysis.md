@@ -30,7 +30,7 @@ knowledge/graph substrate — and diverge everywhere else on purpose.
 
 | Axis | txtai 9.14 | quipu stack today |
 |---|---|---|
-| Language / license | Python 3.10+, Apache 2.0 | Rust (quipu/bobbin/yupana), Python scripts (camayoc), MIT |
+| Language / license | Python 3.10+, Apache 2.0 | Rust (quipu/bobbin/yupana), Python scripts (camayoc), Apache-2.0 |
 | Core data model | Embeddings DB: dense+sparse ANN ∪ SQL content store ∪ similarity graph | Bitemporal EAVT fact log → RDF quads, SPARQL 1.1, SHACL/OWL gates (quipu); LanceDB chunk store (bobbin) |
 | Dense ANN backends | Faiss, HNSW, Annoy, NumPy, Torch, pgvector, sqlite-vec, Milvus, ggml, more | Bobbin: LanceDB **flat scan, no ANN index**; quipu: SQLite brute-force cosine (LanceDB ANN exists but is excluded from release binaries) |
 | Sparse / keyword | BM25/TF-IDF/SIF + learned sparse ANN (ivfsparse, pgsparse) | Tantivy BM25 FTS (bobbin); `FILTER(CONTAINS)` fallback (quipu release) |
