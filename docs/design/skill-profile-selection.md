@@ -60,3 +60,24 @@ private 55-fact store: three releases selected for both harnesses; selecting an
 empty graph refused. It is a wire-format control, not a live catalogue receipt.
 CLI `query` text tables are not this JSON contract. No credential handling,
 server selection, graph writes, retirement or harness installation is added.
+
+## Compile a skill source tree
+
+`python3 scripts/skill-render-source.py skills/example` emits native RenderSpec
+data on stdout. It writes no graph, share archive, installation or settings.
+The owning repository remains the authoring source; the result is input to the
+existing governed native share builder, not a sealed pendant or trust receipt.
+
+The compiler requires an explicit regular directory and a UTF-8 `SKILL.md`.
+It reads through no-follow directory/file descriptors and refuses symlinks,
+special files, hidden or template-active paths, concurrent metadata changes,
+unsupported modes and oversized trees. It accepts at most 512 files and 8 MiB;
+`SKILL.md` is at most 256 KiB with mode 0644. Supporting files retain 0644/0755
+modes and carry native `sha256:` hashes plus base64 bytes.
+
+Skill markdown is query data, never template source: literal template syntax
+and front matter remain unchanged. Native rendering revalidates include hashes
+and enforces the existing destination ownership and atomic publication rules.
+Compilation does not decide public scope or scan for private information; the
+existing source review and share scrub remain required before publication.
+No catalogue identity, release version or share ID is invented by this step.
