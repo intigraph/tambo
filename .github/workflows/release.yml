@@ -194,3 +194,22 @@ jobs:
           done
           echo 'Registry visibility is UNKNOWN; publication is not accepted.' >&2
           exit 1
+
+  repository-pendant:
+    name: Verify repository pendant
+    needs: [release-please, publish]
+    if: always() && needs.publish.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || needs.release-please.outputs.tag_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          fetch-depth: 0
+      - name: Verify the bounded public pointer corpus
+        run: python3 scripts/verify-repository-share.py "$RELEASE_TAG" "$(git rev-parse HEAD)"
