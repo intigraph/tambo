@@ -3,7 +3,7 @@
 name = "chaski"
 kind = "python-wheel"
 repo = "scbrown/chaski"
-version = "0.1.0"
+version = "0.2.0"
 tag = "v{version}"
 asset = "chaski_reactor-{version}-py3-none-any.whl"
 version_argv = ["--version"]
@@ -12,7 +12,7 @@ prerequisites = ["python3"]
 profiles = ["crew", "everything"]
 
 [sha256]
-any = "758f08de2a26d093fd5c234205f220a70312f80c459d622ed68ff6a946081b56"
+any = "2098db36157249c9301374e26b7d2be83d5f461bb61a4a237bc89f5e27c369ce"
 
 [[programs]]
 name = "chaski"
