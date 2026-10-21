@@ -71,7 +71,8 @@ existing governed native share builder, not a sealed pendant or trust receipt.
 The compiler requires an explicit regular directory and a UTF-8 `SKILL.md`.
 It reads through no-follow directory/file descriptors and refuses symlinks,
 special files, hidden or template-active paths, concurrent metadata changes,
-unsupported modes and oversized trees. It accepts at most 512 files and 8 MiB;
+unsupported modes and oversized trees. It streams at most 1,024 total entries before sorting (including directories),
+and accepts at most 512 files and 8 MiB;
 `SKILL.md` is at most 256 KiB with mode 0644. Supporting files retain 0644/0755
 modes and carry native `sha256:` hashes plus base64 bytes.
 

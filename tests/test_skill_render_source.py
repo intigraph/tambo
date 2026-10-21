@@ -98,5 +98,19 @@ class SourceTests(unittest.TestCase):
 
 
 
+    def test_empty_directories_count_toward_streamed_entry_budget(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            self.fixture(root)
+            for name in ['one', 'two']:
+                (root / name).mkdir()
+            with patch.object(producer, 'MAX_ENTRIES', 3):
+                self.assertEqual(producer.compile_skill(root)['path'], 'SKILL.md')
+            with patch.object(producer, 'MAX_ENTRIES', 2):
+                with self.assertRaisesRegex(ValueError, 'entry budget'):
+                    producer.compile_skill(root)
+
+
+
 if __name__ == '__main__':
     unittest.main()

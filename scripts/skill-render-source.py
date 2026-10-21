@@ -10,20 +10,29 @@ import stat
 
 MAX_BYTES = 8 * 1024 * 1024
 MAX_FILES = 512
+MAX_ENTRIES = 1024
 
 
 def compile_skill(root):
     """Read through no-follow directory capabilities, refusing partial trees."""
     files = {}
     budget = MAX_BYTES
+    entries = 0
 
     def walk(directory, prefix):
-        nonlocal budget
+        nonlocal budget, entries
         before = os.fstat(directory)
-        for name in sorted(os.listdir(directory)):
+        names = []
+        with os.scandir(directory) as children:
+            for entry in children:
+                entries += 1
+                if entries > MAX_ENTRIES:
+                    raise ValueError('skill source exceeds entry budget')
+                names.append(entry.name)
+        for name in sorted(names):
             if (not name.isascii() or name.startswith('.') or
                     any(c in name for c in '\\:{}\x00') or
-                    any(ord(c) < 32 for c in name) or name.endswith((' ', '.'))):
+                    any(ord(c) < 32 or ord(c) == 127 for c in name) or name.endswith((' ', '.'))):
                 raise ValueError('unsafe skill source path')
             path = prefix + name
             if len(path) > 1024:
