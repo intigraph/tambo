@@ -8,7 +8,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/tambo/README.md",
       "summary": "Tambo installs and verifies the knowledge-tool stack from a reviewable plan. The transition retains the caboodle command and existing plan/state paths; publication and installed verification remain separate.",
-      "source_sha256": "3825407ad4647187a00b943e4ca1e40206ce841300394b6fe18b07cbd725d300",
+      "source_sha256": "de96246f8a6f898be1d21d0b1f8cf21c142cb0e22db9830e26648ba7ddb13a9f",
       "type": "Concept"
     },
     {
@@ -72,7 +72,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/tambo/README.md",
       "summary": "Start with the local single-user quickstart and its verified-tool success checks before selecting remote service mode.",
-      "source_sha256": "3825407ad4647187a00b943e4ca1e40206ce841300394b6fe18b07cbd725d300",
+      "source_sha256": "de96246f8a6f898be1d21d0b1f8cf21c142cb0e22db9830e26648ba7ddb13a9f",
       "properties": {
         "startHereOrder": 1,
         "glossaryTerm": "https://scbrown.github.io/quechua/ns#Tool"
