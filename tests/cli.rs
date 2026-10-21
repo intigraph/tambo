@@ -4325,6 +4325,19 @@ fn brew_quipu_installs_a_missing_path_pair_before_binding_it() {
     let bin = root.path().join("bin");
     fs::create_dir(&bin).unwrap();
     install_fakes(root.path(), &bin);
+    // The missing-pair case must not discover a newer host installation on
+    // the inherited PATH. Copy utilities rather than linking anything a fake
+    // command could overwrite back into the real host.
+    for tool in [
+        "cp", "chmod", "ln", "touch", "cat", "mkdir", "rm", "sed", "grep", "head", "dirname",
+    ] {
+        let source = ["/bin", "/usr/bin"]
+            .iter()
+            .map(|directory| Path::new(directory).join(tool))
+            .find(|path| path.is_file())
+            .unwrap();
+        fs::copy(source, bin.join(tool)).unwrap();
+    }
     for (program, template) in [
         ("quipu", "client-template"),
         ("quipu-server", "server-template"),
@@ -4361,6 +4374,7 @@ exit 2
 "#,
     );
     command(root.path(), &bin)
+        .env("PATH", &bin)
         .args(["plan", "--profile", "retrieval"])
         .assert()
         .success();
@@ -4372,7 +4386,12 @@ exit 2
     .unwrap();
     assert!(!bin.join("quipu").exists());
     assert!(!bin.join("quipu-server").exists());
+    assert!(std::process::Command::new("quipu")
+        .env("PATH", &bin)
+        .output()
+        .is_err());
     command(root.path(), &bin)
+        .env("PATH", &bin)
         .env("CABOODLE_BREW", bin.join("brew"))
         .arg("update")
         .assert()
