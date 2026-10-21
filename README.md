@@ -92,4 +92,4 @@ when.
 
 Run `just check`, `just book` and `just docs-check`.
 
-[MIT license](LICENSE).
+[Apache-2.0 license](LICENSE).

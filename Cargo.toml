@@ -3,7 +3,7 @@ name = "tambo"
 version = "0.5.0"
 edition = "2021"
 description = "Install and prove the whole AI knowledge-tool kit"
-license = "MIT"
+license = "Apache-2.0"
 repository = "https://github.com/scbrown/tambo"
 rust-version = "1.80"
 # Tambo is the renamed installer. The legacy executable remains supported.
