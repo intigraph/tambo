@@ -18,8 +18,8 @@ installs seeds (`sd`), the crew's work tracker, and shuttle, its workflow engine
 When a plan selects both seeds and Desire Path, `apply` also sets the Desire
 Path command alias `bd -> sd`, so an agent that types `bd` from habit reaches
 seeds. `verify` checks that the alias is there. If the host already has a `bd`
-alias that points somewhere else, caboodle leaves it alone: `dp alias` would
-silently replace it, so caboodle reads the existing aliases first. `apply` and
+alias that points somewhere else, Tambo leaves it alone: `dp alias` would
+silently replace it, so Tambo reads the existing aliases first. `apply` and
 `verify` then report the existing target as a deliberate local choice, not a
 failure. If `dp` is not on PATH, `apply` prints a note instead of failing.
 
@@ -32,10 +32,10 @@ than a hidden installer input.
 The crew choice is emitted today:
 
 ```console
-caboodle plan --profile crew --crew shantytown
-caboodle plan --profile crew --crew creel
-caboodle plan --profile crew --crew both
-caboodle plan --profile crew --crew standalone
+tambo plan --profile crew --crew shantytown
+tambo plan --profile crew --crew creel
+tambo plan --profile crew --crew both
+tambo plan --profile crew --crew standalone
 ```
 
 `both` is not fan-out. Its plan names Shantytown as `durable_owner`, Creel as
@@ -46,7 +46,7 @@ The reviewed plan can export policy summaries for review. These summaries do not
 register MCP servers or override the rig crew and its Quipu tooling manifest:
 
 ```console
-caboodle project-settings --policy-only
+tambo project-settings --policy-only
 ```
 
 In `both` mode this writes `shantytown.settings.json` and
@@ -68,7 +68,7 @@ It refuses when either contract is absent, when a required doctor result is not
 `pass`, or when the governor does not return a measured `admit`.
 
 Camayoc currently distributes its bootstrap ontology, shapes, queries, and gate
-proof as a repository bundle; CABOODLE pins and checksums that bundle until the
+proof as a repository bundle; Tambo pins and checksums that bundle until the
 designed `core.pendant` artifact is published.
 
 ## Quipu install flavor
@@ -82,7 +82,7 @@ deliberately excludes the `lancedb` cargo feature — so
 flavor can never pull in an unreviewed Quipu:
 
 ```console
-caboodle plan --profile retrieval --quipu-flavor lancedb
+tambo plan --profile retrieval --quipu-flavor lancedb
 ```
 
 The flavor is proven, never assumed. `quipu --version` cannot say which
@@ -118,7 +118,7 @@ url = "https://models.example/reviewed/tokenizer.json"
 sha256 = "…"
 ```
 
-`caboodle plan --embedding-model <spec.toml>` copies a spec of that shape into
+`tambo plan --embedding-model <spec.toml>` copies a spec of that shape into
 the plan. During `apply`, each artifact is downloaded beside its destination
 and hashed **before** it may take the artifact's name; a checksum mismatch
 deletes the download and fails the named `embedding-model` step with a
@@ -130,7 +130,7 @@ like every other step.
 **What verify proves today, stated plainly:** verification re-hashes every
 artifact on disk against the plan's pinned digest and goes red on drift or
 absence. It does **not** yet prove an embed-and-search round-trip — the
-installed Quipu exposes no reviewed embeddings contract for caboodle to
+installed Quipu exposes no reviewed embeddings contract for Tambo to
 drive, and wiring a proof that cannot fail would be exactly the banner the
 three-proofs rule forbids. When that contract lands, the round-trip
 (auto-embedded episode against an isolated store, absent-control first,

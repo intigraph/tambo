@@ -53,9 +53,9 @@ stack:creel
 
 stack:caboodle
     caboodle:buildCommand "just check" ;
-    caboodle:installMethod "curl -fsSL https://raw.githubusercontent.com/scbrown/caboodle/main/scripts/install.sh | sh (prebuilt release binary, sha256-verified)" ;
+    caboodle:installMethod "curl -fsSL https://raw.githubusercontent.com/scbrown/tambo/main/scripts/install.sh | sh (prebuilt release binary, sha256-verified)" ;
     caboodle:verifyProof "three proofs, not one: installed (version read-back), working (functional round-trip with a paired negative control), observable (Prometheus actually scrapes)" ;
-    caboodle:operationalNote "caboodle install --plan caboodle-plan.toml applies a reviewed plan; caboodle verify re-proves an installed stack" .
+    caboodle:operationalNote "tambo install --plan caboodle-plan.toml applies a reviewed plan; tambo verify re-proves an installed stack" .
 
 # Cross-cutting: how knowledge itself moves through the stack.
 stack:quipu caboodle:knowledgeFlow

@@ -4,8 +4,8 @@
 <https://caboodle.dev/stack/bobbin> <https://caboodle.dev/ns#testCommand> "just test" .
 <https://caboodle.dev/stack/bobbin> <https://caboodle.dev/ns#verifyProof> "bobbin indexes a fixture and search returns it" .
 <https://caboodle.dev/stack/caboodle> <https://caboodle.dev/ns#buildCommand> "just check" .
-<https://caboodle.dev/stack/caboodle> <https://caboodle.dev/ns#installMethod> "curl -fsSL https://raw.githubusercontent.com/scbrown/caboodle/main/scripts/install.sh | sh (prebuilt release binary, sha256-verified)" .
-<https://caboodle.dev/stack/caboodle> <https://caboodle.dev/ns#operationalNote> "caboodle install --plan caboodle-plan.toml applies a reviewed plan; caboodle verify re-proves an installed stack" .
+<https://caboodle.dev/stack/caboodle> <https://caboodle.dev/ns#installMethod> "curl -fsSL https://raw.githubusercontent.com/scbrown/tambo/main/scripts/install.sh | sh (prebuilt release binary, sha256-verified)" .
+<https://caboodle.dev/stack/caboodle> <https://caboodle.dev/ns#operationalNote> "tambo install --plan caboodle-plan.toml applies a reviewed plan; tambo verify re-proves an installed stack" .
 <https://caboodle.dev/stack/caboodle> <https://caboodle.dev/ns#verifyProof> "three proofs, not one: installed (version read-back), working (functional round-trip with a paired negative control), observable (Prometheus actually scrapes)" .
 <https://caboodle.dev/stack/camayoc> <https://caboodle.dev/ns#buildCommand> "just check" .
 <https://caboodle.dev/stack/camayoc> <https://caboodle.dev/ns#gitDiscipline> "trunk-based, straight to main; quality gates are the only gate; never force-push main" .

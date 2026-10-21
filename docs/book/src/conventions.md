@@ -6,7 +6,7 @@ caboodle-ready by exposing the pattern the repos already follow:
 - conventional CLI verbs: `<tool> selftest`, `<tool> health`, `<tool> init`
 - and/or `just` recipes: `just install`, `just verify`
 
-Caboodle discovers and drives these directly. Metrics contracts live as
+Tambo discovers and drives these directly. Metrics contracts live as
 camayoc catalogue entries, not per-repo config. The readiness contract every
 corpus repo adopts:
 

@@ -1,10 +1,10 @@
-//! Tools installed by a system package manager are not CABOODLE's to replace.
+//! Tools installed by a system package manager are not Tambo's to replace.
 //!
 //! A host can install a stack tool from the signed apt repository and keep its
 //! user path (for example `~/.local/bin/sd`) as a symlink to the packaged
 //! `/usr/bin/sd`. Replacing that path would turn the symlink into a regular
 //! file and silently shadow the package: apt would keep upgrading a binary
-//! nobody runs. So before replacing or re-aliasing a binary, CABOODLE resolves
+//! nobody runs. So before replacing or re-aliasing a binary, Tambo resolves
 //! the path and asks dpkg who owns the result. An owned binary is refused with
 //! the package name, and the package manager stays the only updater.
 //!

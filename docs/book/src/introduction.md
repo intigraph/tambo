@@ -6,7 +6,7 @@ against your rules, records where each fact came from, and answers what was true
 when. *Bitemporal* means keeping both when a fact was recorded and, when supplied,
 when it was true.
 
-**Caboodle installs and configures this stack**, then proves the selected tools
+**Tambo installs and configures this stack**, then proves the selected tools
 work. [Quipu](https://scbrown.github.io/quipu/) holds the knowledge. Camayoc
 prepares knowledge and vocabulary for it. Bobbin searches code and can include
 knowledge from Quipu; Yupana shows code impact and can read policies from Quipu.
@@ -19,7 +19,7 @@ Quipu's write checks for the rules you want enforced. See
 [Quipu's configuration reference](https://scbrown.github.io/quipu/getting-started/configuration.html)
 for the settings and their defaults.
 
-![The quipu stack loop: agents send activity to Camayoc, which sends tagged, quarantined episodes to Quipu. Quipu supplies knowledge to Bobbin, which feeds the next agent turn. Yupana enforces code policies and contributes committed structure to Quipu and code context to Bobbin. Desire Path turns hallucinations into feature requests. Seeds tracks work items in the Quipu knowledge base. Caboodle installs, proves, and observes the tools.](images/stack-loop.svg)
+![The quipu stack loop: agents send activity to Camayoc, which sends tagged, quarantined episodes to Quipu. Quipu supplies knowledge to Bobbin, which feeds the next agent turn. Yupana enforces code policies and contributes committed structure to Quipu and code context to Bobbin. Desire Path turns hallucinations into feature requests. Seeds tracks work items in the Quipu knowledge base. Tambo installs, proves, and observes the tools.](images/stack-loop.svg)
 
 ## Three ways in
 
@@ -45,10 +45,10 @@ with probes that must be refused. See the
 
 ### 3. Install the whole kit
 
-[Install Caboodle](installing.md), then start its guided interview:
+[Install Tambo](installing.md), then start its guided interview:
 
 ```bash
-caboodle init --guided
+tambo init --guided
 ```
 
 Review the generated plan before applying it. The

@@ -99,7 +99,7 @@ fn names_for_platform(
             ("linux", "x86_64") => "x86_64-unknown-linux-gnu",
             ("macos", "x86_64") => "x86_64-apple-darwin",
             ("macos", "aarch64") => "aarch64-apple-darwin",
-            _ => bail!("Caboodle self-update has no published target for {os}/{arch}"),
+            _ => bail!("Tambo self-update has no published target for {os}/{arch}"),
         };
         let archive = format!("caboodle-{tag}-{target}.tar.gz");
         return Ok((
@@ -268,7 +268,7 @@ pub fn guard_reviewed_update(tool: ToolName, desired: &str) -> Result<()> {
 pub fn update(plan: &Plan, tool: ToolName, state_path: &Path, check_only: bool) -> Result<()> {
     plan.validate()?;
     if tool == ToolName::Quipu && plan.external_quipu {
-        bail!("external Quipu is not owned by Caboodle; release update refused");
+        bail!("external Quipu is not owned by Tambo; release update refused");
     }
     if !plan.tools.contains(&tool) {
         bail!("tool is not selected by the reviewed plan");
@@ -448,7 +448,7 @@ fn update_member(
     Ok(())
 }
 
-/// Update Caboodle itself from a published checksummed release.
+/// Update Tambo itself from a published checksummed release.
 pub fn update_self(state_path: &Path, check_only: bool) -> Result<()> {
     update_binary(None, None, state_path, check_only, None, None)
 }
@@ -737,7 +737,7 @@ fn update_binary(
             }
             let help = text(destination.to_str().unwrap(), &["update-release", "--help"])?;
             if !help.contains("--tool") {
-                bail!("updated Caboodle omitted release-update command contract");
+                bail!("updated Tambo omitted release-update command contract");
             }
         }
         Ok(())
@@ -885,7 +885,7 @@ mod tests {
         ] {
             assert!(names_for_platform(None, "v0.2.13", os, arch).is_err());
         }
-        // Do not infer the other tools' asset layouts from Caboodle's layout.
+        // Do not infer the other tools' asset layouts from Tambo's layout.
         assert!(names_for_platform(Some(ToolName::Bobbin), "v0.2.13", "macos", "aarch64").is_err());
     }
     #[test]

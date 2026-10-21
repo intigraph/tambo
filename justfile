@@ -1,4 +1,4 @@
-# caboodle — the whole kit
+# Tambo — the stack installer
 
 default:
     @just --list
@@ -16,6 +16,8 @@ verify plan="caboodle-plan.toml":
     cargo run -- verify --plan "{{plan}}"
 
 check:
+    python3 scripts/check-product-name.py
+    python3 scripts/test-product-name.py
     sh -n scripts/install.sh scripts/check-release-assets.sh scripts/test-release-install.sh scripts/check-crate-version.sh scripts/setup-environment.sh scripts/build-stack-packs.sh
     cargo fmt --check
     cargo clippy --all-targets --all-features -- -D warnings

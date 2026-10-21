@@ -802,7 +802,7 @@ fn brew_owned_desire_path_ahead_of_the_pin_is_read_not_refused() {
     // aegis-fv4 2026-10-16: the Mac's brew desire-path 0.7.1 (090ec88) is ahead
     // of the dp pin. `version()` refused any non-pinned identity, so the
     // package-owned "ahead" verdict could not read it back and the member failed
-    // with "dp version is not the CABOODLE-pinned revision".
+    // with "dp version is not the Tambo-pinned revision".
     let brew_body = r#"echo "$*" >> "$HOME/brew.log"
 case "$*" in
   "update --quiet") exit 0;;
@@ -841,7 +841,7 @@ exit 1"#;
         "{stdout}\n{stderr}"
     );
     assert!(
-        !format!("{stdout}{stderr}").contains("CABOODLE-pinned"),
+        !format!("{stdout}{stderr}").contains("Tambo-pinned"),
         "{stdout}\n{stderr}"
     );
     let log = fs::read_to_string(root.path().join("brew.log")).unwrap_or_default();
@@ -2714,7 +2714,7 @@ fn missing_plan_points_at_the_interview() {
         .arg("install")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("caboodle init --guided"));
+        .stderr(predicate::str::contains("tambo init --guided"));
 }
 
 /// aegis-70qlhs: a stale copy earlier on PATH must turn verify RED even when
@@ -4372,7 +4372,20 @@ exit 2
     .unwrap();
     assert!(!bin.join("quipu").exists());
     assert!(!bin.join("quipu-server").exists());
+    // This fixture deliberately removes Quipu. Do not discover an installed
+    // host copy through the inherited PATH instead of exercising the missing pair.
+    for utility in [
+        "cp", "chmod", "ln", "touch", "cat", "rm", "mkdir", "dirname", "basename", "sed", "grep",
+        "head", "sleep",
+    ] {
+        let source = std::env::split_paths(&std::env::var_os("PATH").unwrap())
+            .map(|directory| directory.join(utility))
+            .find(|candidate| candidate.is_file())
+            .unwrap_or_else(|| panic!("fixture utility is missing: {utility}"));
+        fs::copy(source, bin.join(utility)).unwrap();
+    }
     command(root.path(), &bin)
+        .env("PATH", &bin)
         .env("CABOODLE_BREW", bin.join("brew"))
         .arg("update")
         .assert()

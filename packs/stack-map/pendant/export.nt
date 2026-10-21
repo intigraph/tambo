@@ -7,7 +7,7 @@
 <https://caboodle.dev/stack/bobbin> <https://caboodle.dev/ns#roleInStack> "retrieval index" .
 <https://caboodle.dev/stack/caboodle> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://caboodle.dev/ns#StackComponent> .
 <https://caboodle.dev/stack/caboodle> <http://www.w3.org/2000/01/rdf-schema#comment> "The whole kit — an AI-installable install wizard that installs the stack, proves it works with paired negative controls, and watches it run." .
-<https://caboodle.dev/stack/caboodle> <http://www.w3.org/2000/01/rdf-schema#label> "caboodle" .
+<https://caboodle.dev/stack/caboodle> <http://www.w3.org/2000/01/rdf-schema#label> "tambo" .
 <https://caboodle.dev/stack/caboodle> <https://caboodle.dev/ns#installs> <https://caboodle.dev/stack/bobbin> .
 <https://caboodle.dev/stack/caboodle> <https://caboodle.dev/ns#installs> <https://caboodle.dev/stack/camayoc> .
 <https://caboodle.dev/stack/caboodle> <https://caboodle.dev/ns#installs> <https://caboodle.dev/stack/quipu> .
@@ -15,7 +15,7 @@
 <https://caboodle.dev/stack/caboodle> <https://caboodle.dev/ns#installs> <https://caboodle.dev/stack/yupana> .
 <https://caboodle.dev/stack/caboodle> <https://caboodle.dev/ns#language> "Rust" .
 <https://caboodle.dev/stack/caboodle> <https://caboodle.dev/ns#observes> <https://caboodle.dev/stack/prometheus> .
-<https://caboodle.dev/stack/caboodle> <https://caboodle.dev/ns#repository> <https://github.com/scbrown/caboodle> .
+<https://caboodle.dev/stack/caboodle> <https://caboodle.dev/ns#repository> <https://github.com/scbrown/tambo> .
 <https://caboodle.dev/stack/camayoc> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://caboodle.dev/ns#StackComponent> .
 <https://caboodle.dev/stack/camayoc> <http://www.w3.org/2000/01/rdf-schema#comment> "The knot-keeper: bootstrap ontology, knowledge ingress discipline, and knowledge-pack production. Owns what facts MEAN and how they earn their way into the graph; runs the governed RML executor for structured sources." .
 <https://caboodle.dev/stack/camayoc> <http://www.w3.org/2000/01/rdf-schema#label> "camayoc" .
@@ -30,7 +30,7 @@
 <https://caboodle.dev/stack/creel> <https://caboodle.dev/ns#repository> <https://github.com/scbrown/creel> .
 <https://caboodle.dev/stack/creel> <https://caboodle.dev/ns#roleInStack> "browser harness" .
 <https://caboodle.dev/stack/prometheus> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://caboodle.dev/ns#StackComponent> .
-<https://caboodle.dev/stack/prometheus> <http://www.w3.org/2000/01/rdf-schema#comment> "Every tool's metrics, consolidated. Caboodle's third proof: observable means Prometheus actually scrapes each tool's declared exporter." .
+<https://caboodle.dev/stack/prometheus> <http://www.w3.org/2000/01/rdf-schema#comment> "Every tool's metrics, consolidated. Tambo's third proof: observable means Prometheus actually scrapes each tool's declared exporter." .
 <https://caboodle.dev/stack/prometheus> <http://www.w3.org/2000/01/rdf-schema#label> "prometheus" .
 <https://caboodle.dev/stack/prometheus> <https://caboodle.dev/ns#roleInStack> "observability" .
 <https://caboodle.dev/stack/quipu> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://caboodle.dev/ns#StackComponent> .

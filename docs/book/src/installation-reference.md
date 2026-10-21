@@ -9,13 +9,13 @@ Checksummed releases: Linux x86_64, macOS arm64 and macOS x86_64.
 The installer verifies SHA256 before placing the binary in `~/.cargo/bin`.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/scbrown/caboodle/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/scbrown/tambo/main/scripts/install.sh | bash
 ```
 
 To pin a release, pass the version to the receiving shell:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/scbrown/caboodle/main/scripts/install.sh | CABOODLE_VERSION=vX.Y.Z bash
+curl -fsSL https://raw.githubusercontent.com/scbrown/tambo/main/scripts/install.sh | CABOODLE_VERSION=vX.Y.Z bash
 ```
 
 Add the install directory to this shell's PATH:
@@ -37,19 +37,19 @@ not read that file, which is why the agent step below registers servers by
 absolute path.
 
 Or build the latest release from source with Rust (`cargo install --git
-https://github.com/scbrown/caboodle --tag vX.Y.Z --locked`). Either way,
-`caboodle --version` prints `caboodle X.Y.Z` for the release you installed.
+https://github.com/scbrown/tambo --tag vX.Y.Z --locked`). Either way,
+`tambo --version` prints `tambo X.Y.Z` for the release you installed.
 
 ### macOS with Homebrew
 
 ```bash
 brew install scbrown/tap/caboodle
-caboodle --version
+tambo --version
 ```
 
-Homebrew owns the installed command; Caboodle still composes and verifies the
+Homebrew owns the installed command; Tambo still composes and verifies the
 stack. Update it with `brew upgrade scbrown/tap/caboodle`. To hold the installed
-version, use `brew pin caboodle`; resume updates with `brew unpin caboodle`.
+version, use `brew pin Tambo`; resume updates with `brew unpin Tambo`.
 The [tap channel guide](https://github.com/scbrown/homebrew-tap#caboodle-preview-channel)
 explains the opt-in nightly channel and switching back to stable.
 
@@ -102,19 +102,19 @@ remains remote until you remove that configuration deliberately.
 To customize the tools and intended-use contract instead, use
 `tambo init --guided` or `tambo plan --profile retrieval --intent caboodle-intent.toml`,
 review the resulting plan, then run `tambo install`. See the
-[walkthrough](https://scbrown.github.io/caboodle/getting-started.html).
+[walkthrough](https://scbrown.github.io/tambo/getting-started.html).
 
 ## On your own code
 
 | I want to… | Command |
 |---|---|
-| Choose tools and describe my own use | `caboodle init --guided` |
-| Find install blockers before changing anything | `caboodle doctor` |
-| Install and prove the reviewed selection | `caboodle install` |
-| Recheck the selected tools | `caboodle verify` |
-| Compare against this build's reviewed versions | `caboodle check-updates` |
+| Choose tools and describe my own use | `tambo init --guided` |
+| Find install blockers before changing anything | `tambo doctor` |
+| Install and prove the reviewed selection | `tambo install` |
+| Recheck the selected tools | `tambo verify` |
+| Compare against this build's reviewed versions | `tambo check-updates` |
 
-[Full command and configuration reference](https://scbrown.github.io/caboodle/reference.html).
+[Full command and configuration reference](https://scbrown.github.io/tambo/reference.html).
 
 ## Wire it into your agent
 
@@ -146,12 +146,12 @@ serve` exits with `Bobbin not initialized` and Claude Code reports the server as
 failed to connect.
 
 MCP (Model Context Protocol) lets your agent call the installed server.
-[Agent setup](https://scbrown.github.io/caboodle/agents.html) covers indexing, Yupana, other clients
-and managed crew registration through `caboodle project-settings`.
+[Agent setup](https://scbrown.github.io/tambo/agents.html) covers indexing, Yupana, other clients
+and managed crew registration through `tambo project-settings`.
 
 ## Before you start
 
-| Platform | Caboodle | Quipu | Yupana |
+| Platform | Tambo | Quipu | Yupana |
 |---|---|---|---|
 | Linux x86_64 | Release | Release | Release |
 | macOS arm64 / x86_64 | Release | Release | Release |
@@ -160,12 +160,12 @@ and managed crew registration through `caboodle project-settings`.
 Have `curl`, `tar`, `git`, `bash`, `python3` and `sha256sum` on PATH
 (`brew install coreutils` supplies `sha256sum` on macOS).
 The `everything` profile also needs Go. No account or remote server is needed.
-[Installation details](https://scbrown.github.io/caboodle/installing.html) cover source builds,
-installed files and removal; `caboodle doctor` names missing prerequisites.
+[Installation details](https://scbrown.github.io/tambo/installing.html) cover source builds,
+installed files and removal; `tambo doctor` names missing prerequisites.
 
 ## What's next
 
-- [Read the book](https://scbrown.github.io/caboodle/introduction.html)
-- [Find a topic in the docs map](https://scbrown.github.io/caboodle/docs-map.html)
-- [Choose your profile](https://scbrown.github.io/caboodle/profiles.html)
+- [Read the book](https://scbrown.github.io/tambo/introduction.html)
+- [Find a topic in the docs map](https://scbrown.github.io/tambo/docs-map.html)
+- [Choose your profile](https://scbrown.github.io/tambo/profiles.html)
 

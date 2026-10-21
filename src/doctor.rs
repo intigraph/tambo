@@ -1,4 +1,4 @@
-//! Read-only preflight: what will stop `caboodle install` on this host, before
+//! Read-only preflight: what will stop `tambo install` on this host, before
 //! anything is downloaded, built, or started.
 //!
 //! Every check here inspects the platform, PATH, the MCP registrations the agent
@@ -133,11 +133,11 @@ fn prerequisite_hint(command: &str) -> &'static str {
         "cargo" => "install Rust from https://rustup.rs",
         "python3" => "install Python 3.9+ from your package manager",
         "git" | "curl" | "tar" | "bash" => "install it from your package manager",
-        _ => "install it and rerun `caboodle doctor`",
+        _ => "install it and rerun `tambo doctor`",
     }
 }
 
-/// This build, as `caboodle --version` prints it.
+/// This build, as `tambo --version` prints it.
 pub const SELF_VERSION: &str = concat!(
     "caboodle ",
     env!("CARGO_PKG_VERSION"),
@@ -306,7 +306,7 @@ pub(crate) fn mcp_findings(
             None if work_dir => Finding::new(
                 Level::Ok,
                 format!("mcp {want}"),
-                format!("not registered here, as expected: registration is per repository, and this is the caboodle work directory. In each repository you want searchable, run: `{}`", mcp_add_command(want)),
+                format!("not registered here, as expected: registration is per repository, and this is the Tambo work directory. In each repository you want searchable, run: `{}`", mcp_add_command(want)),
             ),
             None => Finding::new(
                 Level::Warn,
@@ -563,7 +563,7 @@ fn check_tool(tool: ToolName, flavor: QuipuFlavor, path: Option<&std::ffi::OsStr
             Level::Warn,
             tool.as_str(),
             format!(
-                "installed ({}) differs from the reviewed {desired}; `caboodle check-updates` explains the drift",
+                "installed ({}) differs from the reviewed {desired}; `tambo check-updates` explains the drift",
                 one_line(&installed)
             ),
         )),
@@ -662,7 +662,7 @@ pub fn report<W: Write>(findings: &[Finding], installed: bool, output: &mut W) -
     if failures == 0 && installed {
         writeln!(
             output,
-            "doctor: installed and verified ({warnings} warning{plural}); recheck with `caboodle verify`"
+            "doctor: installed and verified ({warnings} warning{plural}); recheck with `tambo verify`"
         )?;
     } else if failures == 0 {
         writeln!(
@@ -679,7 +679,7 @@ pub fn report<W: Write>(findings: &[Finding], installed: bool, output: &mut W) -
         };
         writeln!(
             output,
-            "doctor: {earlier}{failures} blocker{} — fix the FAIL lines, then rerun `caboodle doctor`",
+            "doctor: {earlier}{failures} blocker{} — fix the FAIL lines, then rerun `tambo doctor`",
             if failures == 1 { "" } else { "s" }
         )?;
     }

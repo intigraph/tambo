@@ -34,7 +34,7 @@ Nothing installs or activates repository hooks without an opt-in.
 
 ## 1. Discovery and autoload
 
-**Convention, not a manifest.** Caboodle does not parse per-repo manifest
+**Convention, not a manifest.** Tambo does not parse per-repo manifest
 files ([convention over manifest](conventions.md)), and packs need none. A
 repository ships its packs at one conventional path:
 
@@ -49,7 +49,7 @@ of step with the packs it describes.
 
 **Triggers.** A `post-checkout` and `post-merge` hook, installed by
 `tambo init --pack-hooks` in repositories the user opts in, runs the same
-sync command (the `caboodle` compatibility executable supports it too):
+sync command (the `tambo` compatibility executable supports it too):
 
 ```bash
 tambo packs sync --repo . --shapes-from /path/to/trusted-authority.pendant.tar.gz
@@ -111,13 +111,13 @@ rollback and broader consumer installation remain explicit operator actions.
 A pack is data landing in the graph that agents query first, so loading is a
 trust decision.
 
-**Exists today** (aegis-2eckx0): `caboodle packs trust` keeps these decisions in
+**Exists today** (aegis-2eckx0): `tambo packs trust` keeps these decisions in
 `~/.config/caboodle/pack-trust.toml`, separate from the stack config.
 `owners` lists `host/owner` pairs whose packs autoload. `[[allow]]` admits one
 foreign archive and must name both `repo` and `pack_sha256`: an entry without
 the hash, an unknown key or a malformed value refuses the whole file, so every
 pack is refused until it is fixed. `[[allow_endpoint]]` admits one exact
-`http(s)` endpoint with no credentials in its URL. `caboodle packs trust check
+`http(s)` endpoint with no credentials in its URL. `tambo packs trust check
 <remote> <sha256> --pack <path>` exits 0 to load, or 3 with a refusal naming the
 pack and the exact `allow` command. `packs sync` asks this question before composing and before accepting a
 cached replay.
@@ -126,10 +126,10 @@ cached replay.
 pointer endpoint may join federation: exit 0 admits it, exit 3 refuses it.
 It reads the current trust file on every invocation and never changes it.
 An archive allow does not admit its endpoint; foreign endpoints need their own
-exact repository/URL allow. Both `tambo` and `caboodle` expose this command.
+exact repository/URL allow. Both `tambo` and `tambo` expose this command.
 
 - **Your own repositories load automatically**, meaning repositories whose
-  remote owner matches an allow-list in caboodle's configuration.
+  remote owner matches an allow-list in Tambo's configuration.
 - **A foreign pack needs an explicit allow**, recorded per repository and pack
   hash. A repository name appearing in a configuration file is not consent.
 - **Loading is not promotion.** An autoloaded pack stays in its named dataset,
@@ -147,7 +147,7 @@ A monorepo ships **one parent share and one derived share per project**.
   (`parent_share` set) whose stored CONSTRUCT scope filters by path prefix,
   such as `packages/api/`.
 - Each derived pack's own manifest records its path scope, so
-  `caboodle packs sync` can reload only the projects whose paths changed in
+  `tambo packs sync` can reload only the projects whose paths changed in
   the checkout, the same idea as yupana's per-file keys, grouped by project.
 - **Cross-project edges survive a reload.** Entity IRIs do not depend on the
   commit, so an edge from one project to another still resolves after either
@@ -227,7 +227,7 @@ endpoint = "https://quipu.example.org/sparql"
 ```
 
 - **`kind = "endpoint"`**: a live, large or fast-moving graph, such as a
-  homelab operations graph. `caboodle packs sync` adds it to quipu's declared
+  homelab operations graph. `tambo packs sync` adds it to quipu's declared
   federation list, so `SERVICE` and federated fan-out reach it with no local
   copy. The trust rule of section 2 applies to the endpoint: declaring it in a
   foreign pack does not authorise it.
@@ -252,7 +252,7 @@ this way.
 
 1. **quipu:** the per-repository current pointer and snapshot retention, with
    retraction carry-forward across snapshots of one pack.
-2. **caboodle:** the `.quipu/packs/` convention, `caboodle packs sync`, and
+2. **caboodle:** the `.quipu/packs/` convention, `tambo packs sync`, and
    the opt-in git hooks.
 3. **caboodle:** the trust allow-list for foreign packs and pointer endpoints.
 4. **quipu and caboodle:** monorepo derived shares by path prefix, proven on

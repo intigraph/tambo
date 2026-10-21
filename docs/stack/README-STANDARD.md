@@ -1,7 +1,7 @@
-# The caboodle stack README standard
+# The Tambo stack README standard
 
 One README shape and one theme for the six public repos of the stack:
-**caboodle, quipu, camayoc, bobbin, yupana, desire-path.**
+**Tambo, quipu, camayoc, bobbin, yupana, desire-path.**
 
 A stranger who lands on any of them should, within one screen, know what
 the tool is and whether it is for them. Within five minutes they should have
@@ -41,10 +41,10 @@ lacks is omitted. It is never renamed and never moved.
 **Length budget: the first install command appears within the first 60 lines,
 and the README stays under 250 lines.** Anything that does not fit is a book
 page with a one-line link left behind. Today the first install appears at
-line 49 in caboodle, 96 in bobbin, 108 in desire-path, 188 in yupana, 197 in
+line 49 in Tambo, 96 in bobbin, 108 in desire-path, 188 in yupana, 197 in
 quipu, and 245 in camayoc (measured on `main`, 2026-09-24).
 
-Caboodle is the one repo where installing *is* the first success. Its §3 and
+Tambo is the one repo where installing *is* the first success. Its §3 and
 §4 may be a single `## Install and prove it` section. That is the only
 permitted merge.
 
@@ -72,7 +72,7 @@ three lines. Leave one sentence and a link.
   "Know what a change will break before you make it", not "Live per-tenant
   code structure and a change-time policy engine".
 - **One emoji per repo, used in the tagline and nowhere else in the body.** It
-  is the repo's mark. Current marks, kept: caboodle 🧰, quipu 🪢, yupana 🧵;
+  is the repo's mark. Current marks, kept: Tambo 🧰, quipu 🪢, yupana 🧵;
   bobbin, camayoc and desire-path choose theirs in their rollout PRs.
 - **Emoji in headings: only the two shared closing sections**, `🧺 The stack`
   and `📜 License`, which are identical in every repo and so read as the
@@ -80,7 +80,7 @@ three lines. Leave one sentence and a link.
   `🚀 Quick Start`.
 - **Badges: at most 3, in this order**: License, then CI status (or the latest
   release), then `stack-quipu`. The stack badge is the shared mark:
-  `https://img.shields.io/badge/stack-quipu-8B5E3C.svg`, linking to caboodle.
+  `https://img.shields.io/badge/stack-quipu-8B5E3C.svg`, linking to Tambo.
   No language, toolchain or vanity badges. The platform table carries that.
   quipu may add its DOI as a fourth badge, because citation is a real use.
 - **Footer**: `assets/footer.svg` under the license line if the repo has one.
@@ -94,7 +94,7 @@ each book, and diverging from it is a review finding.
 ## 3. The shared stack block (identical everywhere)
 
 The canonical table is [docs/stack-table.md](../stack-table.md). Copy its complete
-marked block verbatim into the nine stack READMEs: Caboodle, Quipu, Camayoc,
+marked block verbatim into the nine stack READMEs: Tambo, Quipu, Camayoc,
 Bobbin, Yupana, Desire Path, Seeds, Shantytown and Rikuy. Keep the Shuttle row. Do not add a
 repository-specific self marker; every copy must remain byte-identical.
 

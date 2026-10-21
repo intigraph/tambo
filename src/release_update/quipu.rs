@@ -36,7 +36,7 @@ fn owned_pair() -> Result<[PathBuf; 2]> {
     let home = env::var_os("CARGO_HOME")
         .map(PathBuf::from)
         .or_else(|| env::var_os("HOME").map(|p| PathBuf::from(p).join(".cargo")))
-        .context("Quipu requires its Caboodle-owned cargo bin directory")?;
+        .context("Quipu requires its Tambo-owned cargo bin directory")?;
     let directory = home.join("bin").canonicalize()?;
     let mut paths = Vec::new();
     for binary in ["quipu", "quipu-server"] {

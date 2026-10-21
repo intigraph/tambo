@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 
-# This compatibility URL also redirects after the repository rename.
-repo=${TAMBO_REPOSITORY:-${CABOODLE_REPOSITORY:-scbrown/caboodle}}
+# Use the canonical repository; retain the legacy environment override.
+repo=${TAMBO_REPOSITORY:-${CABOODLE_REPOSITORY:-scbrown/tambo}}
 version=${TAMBO_VERSION:-${CABOODLE_VERSION:-}}
 install_dir=${TAMBO_INSTALL_DIR:-${CABOODLE_INSTALL_DIR:-${CARGO_HOME:-$HOME/.cargo}/bin}}
 

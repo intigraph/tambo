@@ -92,12 +92,12 @@ class Bootstrap(unittest.TestCase):
             self.assertTrue(os.access(self.root / 'installed' / name, os.X_OK))
 
     def test_default_uses_compatibility_repository_and_legacy_release(self):
-        self.routes['https://api.github.com/repos/scbrown/caboodle/releases/latest'] = {
+        self.routes['https://api.github.com/repos/scbrown/tambo/releases/latest'] = {
             'status': 200, 'body': '{"tag_name":"v0.2.23"}\n'}
         self.archive('caboodle', 'v0.2.23', ['caboodle'])
         self.run_installer()
         self.assert_installed(['caboodle'])
-        self.assertIn('https://api.github.com/repos/scbrown/caboodle/releases/latest',
+        self.assertIn('https://api.github.com/repos/scbrown/tambo/releases/latest',
                       self.requests.read_text().splitlines())
 
     def test_pinned_legacy_release(self):

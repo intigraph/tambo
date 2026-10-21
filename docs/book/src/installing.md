@@ -1,25 +1,13 @@
 # Installing and removing Tambo
 
-Tambo is the renamed Caboodle installer. For the transition release, both
-`tambo` and `caboodle` are available. Existing `caboodle-plan.toml` and
-`.caboodle` state paths remain compatible; no install-state move is required.
-The canonical archive is `tambo-vVERSION-TARGET.tar.gz`; a compatibility archive
-named `caboodle-vVERSION-TARGET.tar.gz` carries the same two commands for legacy
-self-update clients. Both have filename-bound SHA-256 checksum files.
+Tambo installs and verifies the stack from checksummed release archives. See
+[Compatibility](compatibility.md) for retained command and state contracts.
 
-The planned managed Linux and macOS cutover uses apt and Homebrew to update
-both commands as a package after the first official Tambo release. The Homebrew
-formula rename will migrate `caboodle` to `tambo`; the Linux transitional
-`caboodle` package will depend on `tambo`. The checksummed release
-installer remains the standalone fallback. A standalone self-update of a
-dual-command installation verifies and updates both commands together, restoring
-both prior files and state if either installed read-back fails.
-
-Caboodle publishes a release only when a `vVERSION` tag exactly matches the
+Tambo publishes a release only when a `vVERSION` tag exactly matches the
 version in `Cargo.toml`. Each supported archive has a sibling `.sha256` file;
 the installer verifies that checksum before replacing the binary.
 
-Caboodle's built-in HTTPS asset downloads make at most three attempts. Server
+Tambo's built-in HTTPS asset downloads make at most three attempts. Server
 errors (HTTP 5xx) and transient resolution, connection, timeout, partial-transfer,
 send/receive or HTTP/2 stream errors are retried after one and then two seconds.
 Each attempt has a 10-second connection timeout and a 120-second transfer limit.
@@ -27,7 +15,7 @@ Retry logs identify the URL, attempt, curl status, HTTP status and delay; recove
 logs name the successful attempt. Failed attempts use disposable files.
 HTTP 4xx (including missing assets), certificate and local file errors fail
 immediately. Checksum verification happens after downloading and is never
-retried or bypassed. This policy covers downloads made by the Caboodle binary,
+retried or bypassed. This policy covers downloads made by the Tambo binary,
 not the bootstrap shell installer above it or external package managers.
 
 ## Homebrew member updates
@@ -52,35 +40,28 @@ embedded release pins; it does not refresh package metadata.
 Run the checksummed release installer in one line:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/scbrown/caboodle/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/scbrown/tambo/main/scripts/install.sh | bash
 ```
 
 Pin a release by setting the version on the receiving shell:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/scbrown/caboodle/main/scripts/install.sh | CABOODLE_VERSION=vX.Y.Z bash
+curl -fsSL https://raw.githubusercontent.com/scbrown/tambo/main/scripts/install.sh | CABOODLE_VERSION=vX.Y.Z bash
 ```
 
 The script still verifies the release archive's SHA256 checksum before replacing
-the binary. Read the [installer source](https://github.com/scbrown/caboodle/blob/main/scripts/install.sh)
-when inspecting the bootstrap. After installation, `caboodle --version` reads
+the binary. Read the [installer source](https://github.com/scbrown/tambo/blob/main/scripts/install.sh)
+when inspecting the bootstrap. After installation, `tambo --version` reads
 back the installed release.
-
-The compatibility repository URL remains the bootstrap default through the
-rename. The installer prefers a `tambo-` archive with both commands. Only an
-HTTP 404 selects the historical `caboodle-` archive, which may contain just
-`caboodle`; pinned releases such as `v0.2.23` therefore remain installable.
-Checksum, server and transport failures stop installation without trying an
-alternative archive.
 
 Supported release targets are Linux x86_64, macOS x86_64, and macOS arm64.
 The default destination is `${CARGO_HOME:-$HOME/.cargo}/bin/caboodle`; override
 it with `CABOODLE_INSTALL_DIR` when that directory is managed elsewhere.
 
-`caboodle --version` prints the release version and the commit it was built
-from, for example `caboodle 0.2.3 (1a2b3c4d5e6f)`. Two builds of one release
-can then be told apart. The installer warns when a different `caboodle` comes
-earlier on PATH than the one it just installed, and `caboodle doctor` warns when
+`tambo --version` prints the release version and the commit it was built
+from, for example `tambo 0.4.0 (1a2b3c4d5e6f)`. Two builds of one release
+can then be told apart. The installer warns when a different `tambo` comes
+earlier on PATH than the one it just installed, and `tambo doctor` warns when
 PATH runs a different build from the one you invoked. Remove the stale copy or
 reorder PATH.
 
@@ -89,14 +70,14 @@ reorder PATH.
 A Rust toolchain can install the reviewed revision directly:
 
 ```bash
-cargo install --git https://github.com/scbrown/caboodle \
+cargo install --git https://github.com/scbrown/tambo \
   --rev <reviewed-commit-sha> --locked
-caboodle --version
+tambo --version
 ```
 
 ## Preflight
 
-`caboodle doctor` reports what would stop an install on this host and changes
+`tambo doctor` reports what would stop an install on this host and changes
 nothing. With a plan in the current directory it checks that plan; without one
 it checks every tool in the `everything` profile. It exits nonzero when any line
 is a `FAIL`:
@@ -121,10 +102,10 @@ The interview writes a plan and changes nothing else. Read the complete file
 before applying it:
 
 ```bash
-caboodle init --guided
+tambo init --guided
 less caboodle-plan.toml
-caboodle install
-caboodle verify-questions
+tambo install
+tambo verify-questions
 ```
 
 If input or an install is interrupted, rerun the same command. Interview
@@ -150,7 +131,7 @@ re-hashes the artifacts on disk).
 
 ## Registering MCP servers
 
-Caboodle owns binary installation, version convergence, and functional proof.
+Tambo owns binary installation, version convergence, and functional proof.
 Shantytown owns harness registration: it projects the MCP/skill manifest from
 Quipu into the workspaces named by the rig's crew cards. Installing binaries
 alone does not register servers.
@@ -158,15 +139,15 @@ alone does not register servers.
 After a green install, on a configured Shantytown rig:
 
 ```bash
-caboodle project-settings --root /path/to/.shanty
+tambo project-settings --root /path/to/.shanty
 # Optional: select one crew member or read identities directly from Quipu.
-caboodle project-settings --root /path/to/.shanty --agent ada --registry quipu
+tambo project-settings --root /path/to/.shanty --agent ada --registry quipu
 ```
 
 This delegates to `st --root /path/to/.shanty ops provision --json`. It reads the
 rig's existing crew, even when the installation plan has no crew profile, and
 requires the configured Quipu tooling manifest (`SHANTY_TOOLING_MANIFEST`).
-Server names, transports, and secret references come from that manifest; Caboodle
+Server names, transports, and secret references come from that manifest; Tambo
 does not maintain another server list. A rig whose manifest names yupana, bobbin,
 forgejo, and homelab registers all four. A missing crew reports
 "no crew on this rig yet - run st fleet init / st agent new first". Missing
@@ -191,7 +172,7 @@ claude mcp list
 ```
 
 Homelab MCP exposes the `quipu_*` tools; it is a separately operated proxy, not
-installed by Caboodle. Use your deployment's authentication procedure without
+installed by Tambo. Use your deployment's authentication procedure without
 putting credentials in the plan. Bobbin's knowledge tools are not a replacement
 for Homelab's Quipu tools. HTTP endpoints above are placeholders, not public
 services. For Codex, use the rig adapter to emit its harness-specific settings.
@@ -206,14 +187,14 @@ before the repo is available, which is why the file exists to be pasted from
 rather than executed.
 
 It bootstraps quipu (checksummed prebuilt `quipu` and `quipu-server` release
-binaries), caboodle itself (prebuilt release binary via `scripts/install.sh`),
+binaries), Tambo itself (prebuilt release binary via `scripts/install.sh`),
 the shared tooling the stack's quality gates need (`just`, `bd`,
 `pre-commit`, `mdbook`, `mdbook-mermaid`, `cffi`), and stages the stack
 knowledge packs into `~/.caboodle/packs/`, verified with
 `quipu pack --verify` — a pack that fails verification is deleted rather
 than trusted. It deliberately does **not** build the rest of the corpus:
-that is caboodle's own job, and a session that needs the full stack runs
-`caboodle install` against a reviewed plan so every tool is proved rather
+that is Tambo's own job, and a session that needs the full stack runs
+`tambo install` against a reviewed plan so every tool is proved rather
 than assumed.
 
 Set `CABOODLE_ALLOW_SOURCE_FALLBACK=1` only when the Quipu release artifact is
@@ -227,7 +208,7 @@ conflicting `qp` files in the destination or on PATH cause refusal. Verification
 checks the link, executable identity and matching version output without creating
 files. `--skip-install` requires the alias to be present already.
 
-An externally owned Quipu must provide its own command alias; Caboodle verifies
+An externally owned Quipu must provide its own command alias; Tambo verifies
 it but does not create it. A paired release update retains the alias across a
 CLI replacement or rollback because the link follows the canonical `quipu` path.
 
@@ -316,23 +297,23 @@ Bobbin's `.bbpack` index remains a separate binary release artifact.
 
 ## Uninstall
 
-Remove only the Caboodle binary and optional local Caboodle state. Installed
+Remove only the Tambo binary and optional local Tambo state. Installed
 corpus tools are intentionally left in place because they may be shared with
 other workflows:
 
 ```bash
 rm "${CARGO_HOME:-$HOME/.cargo}/bin/caboodle"
-# Optional, from the directory where Caboodle was run:
+# Optional, from the directory where Tambo was run:
 rm -r .caboodle
 ```
 
 ## Reviewed-pin drift
 
-`caboodle check-updates` proposes an update only when the installed version is
+`tambo check-updates` proposes an update only when the installed version is
 older than the reviewed pin. A newer version is reported as ahead of the pin;
 an unparseable or same-version identity mismatch is reported as version drift.
 These reports remain nonzero because the installation differs from the review.
-`caboodle update` refuses a reviewed-pin downgrade before replacing the tool.
+`tambo update` refuses a reviewed-pin downgrade before replacing the tool.
 There is no `--allow-downgrade` escape: a deliberate rollback requires a separately
 reviewed installation, rather than a normal stack update.
 
@@ -361,8 +342,8 @@ os.link(binary, backup, follow_symlinks=False)  # fails if backup already exists
 binary.unlink()
 print(f"Saved {backup}; rerun apply with your existing plan and state")
 PYTHON
-caboodle apply --plan caboodle-plan.toml --state .caboodle/state.json
-caboodle verify --plan caboodle-plan.toml --state .caboodle/state.json
+tambo apply --plan caboodle-plan.toml --state .caboodle/state.json
+tambo verify --plan caboodle-plan.toml --state .caboodle/state.json
 ```
 
 Keep `bobbin.before-tambo` until verification succeeds. If either command fails,
@@ -395,13 +376,13 @@ procedure instead of the regular-file steps above.
 ## Opt-in published binary updates
 
 After the initial install and plan review, track published stable releases for a
-selected binary without waiting for this Caboodle build's reviewed pins to change:
+selected binary without waiting for this Tambo build's reviewed pins to change:
 
 ```bash
-caboodle update-release --tool bobbin --check
-caboodle update-release --tool bobbin
-caboodle update-release --tool yupana
-caboodle update-release --tool desire-path
+tambo update-release --tool bobbin --check
+tambo update-release --tool bobbin
+tambo update-release --tool yupana
+tambo update-release --tool desire-path
 ```
 
 This path currently supports Linux x86_64. The tool must already be installed on
@@ -433,8 +414,8 @@ beside the state file to serialize release updates; backups are retained under
 bound total runtime and retain stdout/stderr. This command does not itself install
 a timer or claim that another host or a long-running process has updated.
 
-`caboodle update-self` applies the same release, checksum, downgrade, backup and
-interruption-recovery controls to Caboodle itself. Its post-install contract
+`tambo update-self` applies the same release, checksum, downgrade, backup and
+interruption-recovery controls to Tambo itself. Its post-install contract
 requires the new binary's version and `update-release --help` to answer correctly.
 Self-update supports Linux x86_64, macOS x86_64, and macOS arm64, selecting the
 matching published archive and its `.sha256` asset. Other platforms refuse before
@@ -443,7 +424,7 @@ restoring archive metadata, so archive extended attributes are not installed.
 Event consumers can select an exact stable release with `update-self --tag v0.2.14`.
 To bind the download to evidence obtained before installation, also supply
 `--archive-sha256` and `--binary-sha256`. Both values must be lowercase SHA256
-digests; both flags require the exact tag and each other. CABOODLE compares the
+digests; both flags require the exact tag and each other. Tambo compares the
 archive before extraction and the executable before running it or replacing the
 installed copy. A mismatch leaves the previous installer and state intact.
 
@@ -472,7 +453,7 @@ never touches the server at `QUIPU_SERVER`. To set camayoc up against your real 
 server, run the bundle's bootstrap yourself as a separate step:
 `QUIPU_SERVER=<your server> bash ~/.local/share/caboodle/camayoc/<revision>/scripts/bootstrap.sh`.
 
-To remove caboodle, delete `~/.cargo/bin/caboodle` and the `.caboodle/`
+To remove Tambo, delete `~/.cargo/bin/caboodle` and the `.caboodle/`
 directory. Installed tools stay, because other workflows may use them. The
 [install guide](installing.md) covers release pins, source
 installs, and updates.
@@ -481,12 +462,12 @@ installs, and updates.
 
 **Platforms.** Linux x86_64 needs no Rust toolchain: each tool comes from a
 checksummed release or source archive, and Go builds desire-path. On other
-platforms, availability depends on the tool as shown below; `caboodle doctor`
+platforms, availability depends on the tool as shown below; `tambo doctor`
 prints the exact source-build command where no reviewed release exists.
 
 | | Linux x86_64 | macOS arm64 | macOS x86_64 | Linux arm64 |
 |---|---|---|---|---|
-| caboodle | release | release | release | build with `cargo install --git` |
+| Tambo | release | release | release | build with `cargo install --git` |
 | quipu | release | release | release | release |
 | camayoc | source archive | source archive | source archive | source archive |
 | bobbin | release | release | release | release |
@@ -511,7 +492,7 @@ successful `update-release --tool seeds`. It requires the same selected plan,
 state file, executable path and exact current/prior SHA256 values:
 
 ```bash
-caboodle rollback-seeds --plan crew.toml --state state.json \
+tambo rollback-seeds --plan crew.toml --state state.json \
   --current-sha256 <installed-sha256> --prior-sha256 <retained-prior-sha256>
 ```
 
@@ -534,10 +515,10 @@ and deployment contract before using it on an installed tool.
 Maintainers can verify an embedded Rust release member before publishing a pin:
 
 ```bash
-caboodle verify-member seeds
+tambo verify-member seeds
 ```
 
-This stages the archive pinned by that Caboodle checkout, checks its digest,
+This stages the archive pinned by that Tambo checkout, checks its digest,
 identity and version, and runs the manifest's functional steps in temporary
 roots. It does not install a managed program. The `caboodle-verify` CI job runs
 this command against the PR checkout; Seeds pin automation requires that exact
