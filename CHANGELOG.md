@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/scbrown/tambo/compare/v0.4.0...v0.5.0) (2026-10-21)
+
+
+### Features
+
+* **members:** declare explicit compatible identity alternatives ([#174](https://github.com/scbrown/tambo/issues/174)) ([7ca1260](https://github.com/scbrown/tambo/commit/7ca1260652c384653e271fa0b67abed51b19e330))
+
 ## [0.4.0](https://github.com/scbrown/tambo/compare/v0.3.7...v0.4.0) (2026-10-19)
 
 
