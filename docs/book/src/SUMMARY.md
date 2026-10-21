@@ -4,6 +4,7 @@
 
 - [Getting started](getting-started.md)
 - [Installing and removing](installing.md)
+  - [Installation and agent reference](installation-reference.md)
 - [Using it with agents](agents.md)
 - [Using Caboodle](using.md)
 - [Reference](reference.md)
