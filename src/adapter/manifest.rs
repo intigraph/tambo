@@ -91,7 +91,10 @@ fn identify_via(path: &Path, program: &Program, wrapper: Option<&Path>) -> Resul
         String::from_utf8_lossy(&out.stdout),
         String::from_utf8_lossy(&out.stderr)
     );
-    if !text.contains(&program.identity_contains) {
+    if !std::iter::once(&program.identity_contains)
+        .chain(&program.identity_alternatives)
+        .any(|identity| text.contains(identity))
+    {
         bail!(
             "a different `{}` is at {} (its identity does not contain {:?})",
             program.name,
@@ -853,5 +856,30 @@ mod release_verification_tests {
         manifest.version = "0.1.0".to_owned();
         manifest.verify[2].present = Some("missing-positive-control".to_owned());
         assert!(verify_staged_member(&manifest, &unpack).is_err());
+    }
+}
+
+#[cfg(all(test, unix))]
+mod seeds_identity_tests {
+    use super::*;
+    use std::os::unix::fs::PermissionsExt;
+
+    #[test]
+    fn seeds_identity_accepts_both_editions_and_refuses_foreign_sd() {
+        let manifest = Manifest::parse(include_str!("../../members/seeds.toml")).unwrap();
+        let program = &manifest.programs[0];
+        let root = tempfile::tempdir().unwrap();
+        let executable = root.path().join("sd");
+        for (text, accepted) in [
+            ("seeds is the beads-compatible tracker", true),
+            ("seeds is the work-item tracker for the quipu stack", true),
+            ("sd 1.0.0", false),
+            ("sd is an intuitive find and replace CLI", false),
+            ("seeds is a different program", false),
+        ] {
+            std::fs::write(&executable, format!("#!/bin/sh\nprintf '%s\\n' '{text}'\n")).unwrap();
+            std::fs::set_permissions(&executable, std::fs::Permissions::from_mode(0o755)).unwrap();
+            assert_eq!(identify(&executable, program).is_ok(), accepted, "{text}");
+        }
     }
 }

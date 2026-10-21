@@ -19,13 +19,14 @@ x86_64-apple-darwin = "27d7af31e6ddfbf897a83820ac38d441a444285b5cc6c4eae7dbe659e
 x86_64-unknown-linux-gnu = "4814871f6f0b39079a07b3b77a345dd20d90a9a56e40420d99410be38bd12639"
 
 # `sd` also names chmln/sd (find and replace). Identity is the --help text, which
-# every released seeds carries ("seeds is the beads-compatible tracker ..."),
+# released Seeds editions carry one of the explicit identities below,
 # not the "(seeds)" version suffix, which only releases after 0.0.2 print: the
 # identity must match the OLDEST installed seeds or its first upgrade is refused.
 [[programs]]
 name = "sd"
 identity_argv = ["--help"]
 identity_contains = "seeds is the beads-compatible tracker"
+identity_alternatives = ["seeds is the work-item tracker for the quipu stack"]
 
 # In the hermetic root, sd uses a local store at ./.seeds/seeds.db (created on
 # the first write), so nothing touches the user's ledger or config.
