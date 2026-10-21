@@ -30,3 +30,33 @@ Run the offline demonstration with `cargo run --example skill_profile`. It
 prints the three selected releases and observes refusal after substituting an
 unavailable hash. The hashes and identifiers are synthetic fixtures; the output
 does not certify a published pendant or a loaded harness.
+
+## Native query bridge
+
+`skill_profile::query::plan` constructs one native Quipu request for an explicit
+profile IRI, graph IRI and positive source-local transaction. It uses the native
+`tx` field and verbose IRIs; it never combines unsupported read clocks or silently
+selects current state. No query is executed by the library. The caller must bind
+the response to that exact request and establish the server and shape authority.
+
+The query retains all properties of selected pins rather than inner-joining away
+malformed records. The decoder requires explicit record types, RDF term kinds
+and datatypes, complete columns, matching row count and `truncated: false`. A
+4 MiB byte budget and 8,192-row budget refuse oversized responses; the query
+requests one extra row as a saturation sentinel. Missing metadata and a partial
+profile refuse instead of becoming a smaller installation. Scope and harness
+checks run through the same pinned selector.
+
+The offline example prints a request without transport:
+
+```sh
+cargo run --example skill_catalogue_query -- plan urn:profile urn:catalogue 1
+```
+
+With a response obtained through that exact request, `decode` accepts a final
+response-file argument. The checked-in synthetic response fixture was produced
+by the native Quipu 0.15.0 query tool at source revision `c61eed92`, against a
+private 55-fact store: three releases selected for both harnesses; selecting an
+empty graph refused. It is a wire-format control, not a live catalogue receipt.
+CLI `query` text tables are not this JSON contract. No credential handling,
+server selection, graph writes, retirement or harness installation is added.

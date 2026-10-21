@@ -5,6 +5,8 @@
 //! is query coverage, not proof that a whole graph has been inventoried. Pendant
 //! verification and render ownership remain the native tools' responsibility.
 
+pub mod query;
+
 use anyhow::{bail, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
