@@ -57,10 +57,10 @@
     },
     {
       "kind": "decision",
-      "source": "Cargo.toml",
-      "subject": "http://aegis.gastown.local/ontology/code/tambo/Cargo.toml",
-      "summary": "The package and primary command are tambo, while the Rust library import name remains caboodle and a legacy caboodle binary is explicitly declared for compatibility.",
-      "source_sha256": "d1fbb60bb8460f96413ef15235be4b98e54dbd513793c66e339e99f286641bbc",
+      "source": "docs/book/src/compatibility.md",
+      "subject": "http://aegis.gastown.local/ontology/doc/tambo/docs%2Fbook%2Fsrc%2Fcompatibility.md",
+      "summary": "The product and primary command are tambo; the caboodle command, Rust crate imports, state paths and published vocabulary IRIs remain valid compatibility contracts.",
+      "source_sha256": "8a88bd07116fdac607c21fd3533b8f1c150d203f881805de002e09a855a7c2b9",
       "type": "DecisionRecord",
       "properties": {
         "status": "active",
@@ -90,10 +90,10 @@
     },
     {
       "kind": "start-here",
-      "source": "Cargo.toml",
-      "subject": "http://aegis.gastown.local/ontology/code/tambo/Cargo.toml",
-      "summary": "Read the declared library and binary names before integrating the crate or changing compatibility assumptions.",
-      "source_sha256": "d1fbb60bb8460f96413ef15235be4b98e54dbd513793c66e339e99f286641bbc",
+      "source": "docs/book/src/compatibility.md",
+      "subject": "http://aegis.gastown.local/ontology/doc/tambo/docs%2Fbook%2Fsrc%2Fcompatibility.md",
+      "summary": "Read the compatibility contracts before integrating the crate or changing naming assumptions: the caboodle alias, crate imports and stored identities are retained.",
+      "source_sha256": "8a88bd07116fdac607c21fd3533b8f1c150d203f881805de002e09a855a7c2b9",
       "properties": {
         "startHereOrder": 3
       }
