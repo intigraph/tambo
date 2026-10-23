@@ -195,10 +195,35 @@ jobs:
           echo 'Registry visibility is UNKNOWN; publication is not accepted.' >&2
           exit 1
 
+  # The pendant is produced by a trusted host publisher that must be ADMITTED for
+  # tambo before this verification can pass (aegis-dics; wu ruling 2026-10-23,
+  # option A, the seeds/desire-path shape). Admission is the reviewed repository
+  # variable TAMBO_PENDANT_PUBLICATION=enabled; unset is "not admitted". The state
+  # is recorded on every release, never reported as a passed verification.
+  repository-pendant-admission:
+    name: Record repository pendant admission
+    needs: [release-please, publish]
+    if: always() && needs.publish.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions: {}
+    env:
+      ADMISSION: ${{ vars.TAMBO_PENDANT_PUBLICATION }}
+    steps:
+      - name: Record admission state
+        run: |
+          if [ "$ADMISSION" = enabled ]; then
+            state="admitted: the trusted host publisher must deliver and Verify repository pendant runs"
+          else
+            state="NOT ADMITTED: pendant publication not admitted for tambo (no trusted producer), so no pendant is expected and Verify repository pendant is skipped by its condition (not a pass; aegis-dics)"
+          fi
+          echo "repository pendant publication: $state"
+          echo "Repository pendant publication: $state" >> "$GITHUB_STEP_SUMMARY"
+
   repository-pendant:
     name: Verify repository pendant
     needs: [release-please, publish]
-    if: always() && needs.publish.result == 'success'
+    if: always() && needs.publish.result == 'success' && vars.TAMBO_PENDANT_PUBLICATION == 'enabled'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
