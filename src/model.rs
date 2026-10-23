@@ -558,6 +558,13 @@ fn require_safe_text(field: &str, value: &str) -> Result<()> {
 }
 
 impl Plan {
+    /// Remote access is an explicit advanced option. Local embedded plans never
+    /// need a server or a client credential.
+    pub fn requires_remote_quipu(&self) -> bool {
+        self.quipu_mcp.is_some()
+            || std::env::var("QUIPU_SERVER").is_ok_and(|url| !url.trim().is_empty())
+    }
+
     pub fn for_profile(profile: Profile) -> Self {
         Self {
             schema_version: SCHEMA_VERSION,

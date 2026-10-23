@@ -23,6 +23,7 @@ check:
     scripts/test-release-install.sh
     python3 scripts/test-crate-version.py
     python3 scripts/test-stack-pendants.py
+    python3 tests/test_skill_render_source.py
 
 # Build the mdBook (requires mdbook)
 book:

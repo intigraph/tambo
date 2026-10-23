@@ -1,7 +1,8 @@
 # Design: pendant autoload, monorepo shares and graph pointers
 
-**Status:** proposal, not built. Every behaviour below is future work unless it
-says "exists today".
+**Status:** repository sync and opt-in hooks are implemented in source.
+Monorepo derived shares and unloaded graph pointers remain proposals. Source
+implementation is separate from release, installation and opt-in activation.
 
 Once repositories routinely ship a quipu pack (`.pendant.tar.gz`), a fresh clone
 should have that knowledge in the local graph without anyone running a command.
@@ -28,7 +29,8 @@ graphs that are not loaded yet.
   federated query fan-out, but only endpoints declared in the federation
   configuration.
 
-Nothing yet notices that a cloned repository ships a pack.
+Repository discovery is available through the explicit sync command below.
+Nothing installs or activates repository hooks without an opt-in.
 
 ## 1. Discovery and autoload
 
@@ -46,39 +48,63 @@ Discovery is a directory listing, and nothing in the repository can drift out
 of step with the packs it describes.
 
 **Triggers.** A `post-checkout` and `post-merge` hook, installed by
-`caboodle init` in repositories the user opts in, runs one command:
+`tambo init --pack-hooks` in repositories the user opts in, runs the same
+sync command (the `caboodle` compatibility executable supports it too):
 
 ```bash
-caboodle packs sync --repo .
+tambo packs sync --repo . --shapes-from /path/to/trusted-authority.pendant.tar.gz
 ```
 
-The command is idempotent. It fingerprints each archive under
-`.quipu/packs/` and compares it with the one it last loaded for that
-repository, doing nothing when they match. For environments without hooks
-(cloud sessions, CI), the same command runs from `setup-environment.sh`.
+The command fingerprints all discovered archives. Trust is checked on every
+run, including a replay. When any archive changes or disappears it composes the
+whole remaining set, not just the changed file. Quipu moves the repository's
+CURRENT pointer only on a successful composition. An unchanged receipt skips
+composition only while its authority, repository identity, database and WAL
+stamps still match. A missing database triggers a fresh composition. Receipt
+replay is a local cache check, not a fresh query proving every stored fact.
 
-**Loading goes through composition, never around it.** caboodle hands each
-changed pack to `quipu compose`, whose import verifies the pack's own content
-hash. The pack lands in its own
-named graph, keyed by repository, pack path and commit.
+A trusted authority pendant is required when there are packs to load. Supply
+one exported from the operator's reviewed store; it is not selected from the
+repository's data or used to install constraints. Its shapes govern the union,
+and its own facts also participate in the composed dataset, so use an empty-fact
+authority pendant when only its shapes should be included. Every repository
+archive is copied to private temporary storage before hashing and composing;
+Quipu verifies those exact frozen bytes. Sync accepts at most 64 archives and
+256 MiB of total archive bytes, including the authority. A refusal or quarantine
+never becomes a successful-load receipt, and no automatic retry is attempted.
 
-**A stable name to query.** Composition deliberately never replaces an earlier
-snapshot: a new commit's pack is a new composition. So autoload needs two things
-quipu does not have yet:
+By default the database and receipt live under the Git directory's
+`caboodle-pendants/`; `--db` selects a different local database. Repository
+identity comes from `origin` (`host/owner/name`), and pack identity is its stable
+file name. No per-repository manifest is needed. Only `.pendant.tar.gz` files are
+discovered; old `.qpack` names must be migrated deliberately. Symlinked discovery
+directories and archives are refused.
 
-1. A per-repository **current pointer**, for example
-   `urn:quipu:repo:<repo>:current`, that names the latest successful
-   composition. Agents query that name, not a hash that changes on every
-   commit. Moving the pointer is one atomic write.
-2. **Retention.** Keep the current snapshot and the previous one, so a bad
-   pack can be rolled back by moving the pointer. Drop older snapshot graphs.
-   Local retractions live in the source graph and must be carried forward when
-   a new snapshot of the same pack is loaded; quipu's composition already
-   preserves them within a snapshot.
+Opt in to both Git hooks with:
 
-**Refusals are loud.** A pack whose content does not match its own hash, or
-that needs a newer quipu than the one installed, is refused with a message
-naming the pack. It never loads partially.
+```bash
+tambo init --pack-hooks --repo . --shapes-from /path/to/trusted-authority.pendant.tar.gz
+```
+
+Existing hooks are retained, never appended to or replaced. If `core.hooksPath`
+is configured, have its owner call the sync command there instead. The generated
+hooks use the chosen executable and authority path. Hook installation does not
+compose immediately; a later checkout or merge runs sync. Git hooks can be
+shared by worktrees of one repository. Remove only these generated hooks to opt
+out; ordinary guided initialization does not install them.
+
+Cloud setup uses the same command when `CABOODLE_PACKS_REPO` names an available
+checkout and `CABOODLE_PACKS_SHAPES_FROM` names its trusted authority. If setup
+runs before checkout, it explicitly reports that sync did not run: invoke sync
+after checkout rather than treating the environment cache as an autoload proof.
+Optional setup failure is reported but still leaves the session's exit status 0.
+
+**Stable names and rollback.** Quipu's delivered repository mode provides
+`urn:quipu:repo:<host/owner/name>:current` and `:previous`, retains both snapshots
+and carries local retractions across snapshots. Query these dataset aliases with
+SPARQL `FROM`, not `GRAPH`. `quipu compose --repo host/owner/name --rollback
+--db <local-db>` swaps the pointers. Sync does not promote anything to ROOT;
+rollback and broader consumer installation remain explicit operator actions.
 
 ## 2. Trust
 
@@ -93,8 +119,14 @@ the hash, an unknown key or a malformed value refuses the whole file, so every
 pack is refused until it is fixed. `[[allow_endpoint]]` admits one exact
 `http(s)` endpoint with no credentials in its URL. `caboodle packs trust check
 <remote> <sha256> --pack <path>` exits 0 to load, or 3 with a refusal naming the
-pack and the exact `allow` command. `packs sync` (child 2) is still to be built
-and will ask this question before composing.
+pack and the exact `allow` command. `packs sync` asks this question before composing and before accepting a
+cached replay.
+
+`packs trust check-endpoint <remote> <url>` asks the same policy whether a
+pointer endpoint may join federation: exit 0 admits it, exit 3 refuses it.
+It reads the current trust file on every invocation and never changes it.
+An archive allow does not admit its endpoint; foreign endpoints need their own
+exact repository/URL allow. Both `tambo` and `caboodle` expose this command.
 
 - **Your own repositories load automatically**, meaning repositories whose
   remote owner matches an allow-list in caboodle's configuration.
@@ -103,9 +135,9 @@ and will ask this question before composing.
 - **Loading is not promotion.** An autoloaded pack stays in its named dataset,
   queryable through the current pointer. It never enters ROOT. Promotion
   remains a separate, reviewed step, as composition already enforces.
-- **Shape authority stays with the store.** Autoload always composes with the
-  store's own shapes as the authority (`--shapes-from` the local bundle). A pack
-  cannot install constraints.
+- **Shape authority stays with the store.** Sync requires an operator-controlled authority
+  pendant (`--shapes-from`), supplied independently of repository discovery.
+  Repository packs cannot choose that authority or install constraints.
 
 ## 3. Monorepos
 
@@ -129,6 +161,57 @@ A monorepo ships **one parent share and one derived share per project**.
   start is measured to be too slow.
 
 Test case: `scbrown/reckoning`, a real pnpm monorepo.
+
+The monorepo implementation adds an explicit `packs sync --monorepo` mode. It
+reads native share manifests, finds the one parent referenced by the derived
+shares, and excludes that parent from CURRENT. Each child uses the canonical
+CONSTRUCT path scope printed by `packs project-scope`. A child needs a visible tracked file whose index entry is not marked skip-worktree, under a directory without symlink redirects. An excluded directory left behind by untracked files does not count as a checked-out project; those files are preserved. Keep
+`.quipu/packs/` in a sparse checkout. Unchanged members reuse Quipu's committed
+pack graphs; changing one share creates only that member's new graph. Selection
+is part of the version-2 monorepo receipt, so changing sparse membership reconciles CURRENT. Flat mode retains the baseline version-1 receipt format. Downgrading a monorepo consumer requires its retained pre-upgrade receipt and database rollback; an older binary refuses version-2 metadata rather than silently loading all projects.
+The parent may itself name a previous snapshot. All archives, including excluded
+ones, are trust-checked and verified by native Quipu in an isolated temporary
+store before a changed composition is accepted.
+
+For a producer with an existing graph and loaded shapes, generate the scope,
+then use native `quipu share` with the parent share's identity:
+
+```sh
+tambo packs project-scope --graph urn:source:repo --path-predicate urn:source:path \
+  --prefix packages/client/ > client.construct
+quipu share --construct "$(cat client.construct)" --parent-share "$parent_share" \
+  --shapes project-schema --no-queries --db producer.db --output client-share
+```
+
+Archive the parent and each child as separate `.pendant.tar.gz` files under
+`.quipu/packs/`. No all-projects union pack or repository manifest is required.
+The native manifest binds both the query and `parent_share` into share identity.
+Scope readers deliberately refuse arbitrary query variants rather than guessing
+which paths they cover. Regenerate a scope with `packs project-scope`.
+
+To include CODEOWNERS-derived ownership, add `--repo . --db producer.db
+--ownership-predicate urn:source:owned_by` to `packs project-scope`. Supply the
+existing schema's predicates; these URNs are examples. The command reads the
+first CODEOWNERS in `.github/`, the repository root, or `docs/`, applies the last
+matching rule to tracked project files, and includes ownership in the native
+CONSTRUCT. It supports GitHub users, teams and email owners. Empty owner rules
+clear earlier matches. Unsupported patterns (`!`, bracket ranges and backslash
+escapes), invalid identities, symlinked CODEOWNERS, and bounded input overflows
+refuse. When CODEOWNERS is absent it invents no owners. Git's matcher runs in a
+private repository, with no global ignore file or case folding.
+
+Owner resources must already exist in the producer graph. Current native
+CONSTRUCT export can otherwise turn an unknown constant IRI into a literal;
+scope generation checks each resource and refuses unknown or unreadable owners.
+Register resources through the producer's governed ingest path before exporting.
+Generation reads the producer; it does not register owners or change ROOT.
+
+Opt-in hooks retain this mode with `init --pack-hooks --monorepo`. Cloud setup
+uses `CABOODLE_PACKS_MONOREPO=1` alongside the existing repository and authority
+settings. Neither mode is armed by default. See the replayable
+Reckoning demonstration in `docs/demos/monorepo-sync/`
+for the pinned checkout, explicit synthetic CODEOWNERS and isolated stores.
+
 
 ## 4. Pointers to graphs that are not loaded
 

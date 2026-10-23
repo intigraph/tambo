@@ -54,6 +54,7 @@ pub struct Scope {
     pub tools: Vec<ToolName>,
     pub quipu_flavor: QuipuFlavor,
     pub external_quipu: bool,
+    pub remote_quipu: Option<String>,
     pub crew: Option<CrewMode>,
     /// Doctor runs in the caboodle work directory, which holds the plan. MCP
     /// servers are registered per indexed repository, so none is expected
@@ -67,6 +68,10 @@ impl Scope {
             tools: plan.tools.clone(),
             quipu_flavor: plan.quipu_flavor,
             external_quipu: plan.external_quipu,
+            remote_quipu: env::var("QUIPU_SERVER")
+                .ok()
+                .filter(|url| !url.trim().is_empty())
+                .or_else(|| plan.quipu_mcp.as_ref().map(|mcp| mcp.url.clone())),
             crew: plan.crew.as_ref().map(|crew| crew.mode),
             work_dir: false,
         }
@@ -77,6 +82,9 @@ impl Scope {
             tools: Profile::Everything.tools(),
             quipu_flavor: QuipuFlavor::Release,
             external_quipu: false,
+            remote_quipu: env::var("QUIPU_SERVER")
+                .ok()
+                .filter(|url| !url.trim().is_empty()),
             crew: None,
             work_dir: false,
         }
@@ -230,8 +238,10 @@ pub fn diagnose(scope: &Scope) -> Vec<Finding> {
             findings.extend(check_tool(tool, scope.quipu_flavor, path.as_deref()));
         }
     }
-    if scope.tools.contains(&ToolName::Camayoc) || scope.tools.contains(&ToolName::Quipu) {
-        findings.extend(check_graph());
+    if let Some(server) = &scope.remote_quipu {
+        if scope.tools.contains(&ToolName::Camayoc) || scope.tools.contains(&ToolName::Quipu) {
+            findings.extend(check_graph(server));
+        }
     }
     findings.extend(check_mcp(scope));
     findings
@@ -378,17 +388,13 @@ pub(crate) fn classify_write_probe(code: u16, body: &str, token_set: bool) -> Fi
     }
 }
 
-fn check_graph() -> Vec<Finding> {
-    let explicit = env::var("QUIPU_SERVER").ok();
-    let server = explicit
-        .clone()
-        .unwrap_or_else(|| "http://localhost:3030".to_owned());
-    let mut findings = vec![check_quipu_server()];
+fn check_graph(server: &str) -> Vec<Finding> {
+    let mut findings = vec![check_quipu_server(server)];
     let reachable = findings[0].detail.contains("is live");
     // A rejected credential must not hide the checks that do not need it
     // (aegis-vgu): the namespace read below is public, so it still runs. Only
     // the write probe depends on the credential, and it is skipped.
-    let credential_ok = match crate::quipu_credential::verify(&server) {
+    let credential_ok = match crate::quipu_credential::verify(server) {
         Ok(source) => {
             findings.push(Finding::new(
                 Level::Ok,
@@ -602,11 +608,7 @@ fn source_hint(tool: ToolName) -> String {
     }
 }
 
-fn check_quipu_server() -> Finding {
-    let explicit = env::var("QUIPU_SERVER").ok();
-    let server = explicit
-        .clone()
-        .unwrap_or_else(|| "http://localhost:3030".to_owned());
+fn check_quipu_server(server: &str) -> Finding {
     let reachable = Command::new("curl")
         .args([
             "-sf",
@@ -618,20 +620,19 @@ fn check_quipu_server() -> Finding {
         .stderr(Stdio::null())
         .status()
         .is_ok_and(|status| status.success());
-    match (reachable, explicit.is_some()) {
-        (false, _) => Finding::new(
+    match reachable {
+        false => Finding::new(
             Level::Ok,
             "quipu server",
             format!(
                 "nothing answers at {server}; camayoc verification uses its own scratch server and never touches this address"
             ),
         ),
-        (true, source) => Finding::new(
+        true => Finding::new(
             Level::Ok,
             "quipu server",
             format!(
-                "{server} ({}) is live. camayoc verification does not write to it (it uses its own scratch server); run camayoc's scripts/bootstrap.sh yourself to set this server up",
-                if source { "from QUIPU_SERVER" } else { "the default" }
+                "{server} (explicit remote configuration) is live. camayoc verification does not write to it (it uses its own scratch server); run camayoc's scripts/bootstrap.sh yourself to set this server up"
             ),
         ),
     }

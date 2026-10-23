@@ -28,6 +28,16 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Install the local single-user stack with no interview, server, or token
+    Quickstart {
+        #[arg(long, default_value = "caboodle-plan.toml")]
+        plan: PathBuf,
+        #[arg(long, default_value = ".caboodle/state.json")]
+        state: PathBuf,
+        /// Use tools already installed by an external package manager
+        #[arg(long)]
+        skip_install: bool,
+    },
     /// Install an administrator-issued Quipu token after proving acceptance; never rotate
     ProvisionQuipuToken {
         #[arg(long = "from")]
@@ -53,6 +63,21 @@ enum Commands {
         output: PathBuf,
         #[arg(long, default_value = ".caboodle/interview.toml")]
         session: PathBuf,
+        /// Opt in to repository pendant sync hooks; retains existing hooks
+        #[arg(long, conflicts_with = "guided")]
+        pack_hooks: bool,
+        /// Select project shares by their native path scope in installed hooks
+        #[arg(long, requires = "pack_hooks")]
+        monorepo: bool,
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        /// Operator-controlled shape-authority pendant for local composition
+        #[arg(long, requires = "pack_hooks")]
+        shapes_from: Option<PathBuf>,
+        #[arg(long, requires = "pack_hooks")]
+        db: Option<PathBuf>,
+        #[arg(long, requires = "pack_hooks")]
+        trust_file: Option<PathBuf>,
     },
     /// Write a reviewable install plan without changing the machine
     Plan {
@@ -294,6 +319,39 @@ enum Commands {
 
 #[derive(Subcommand)]
 enum PacksCommand {
+    /// Print the native CONSTRUCT path scope used for one derived project share
+    ProjectScope {
+        /// Read CODEOWNERS from this checkout and attach ownership in the scope
+        #[arg(long, requires_all = ["ownership_predicate", "db"])]
+        repo: Option<PathBuf>,
+        /// Existing producer store; owner resources must already be registered
+        #[arg(long, requires = "repo")]
+        db: Option<PathBuf>,
+        /// Existing RDF ownership predicate, supplied by the producer's schema
+        #[arg(long, requires = "repo")]
+        ownership_predicate: Option<String>,
+        #[arg(long)]
+        graph: String,
+        #[arg(long)]
+        path_predicate: String,
+        #[arg(long)]
+        prefix: String,
+    },
+    /// Discover trusted .quipu/packs/*.pendant.tar.gz and update local CURRENT
+    Sync {
+        /// Exclude the parent and load only derived projects present in the checkout
+        #[arg(long)]
+        monorepo: bool,
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        #[arg(long)]
+        db: Option<PathBuf>,
+        /// Trusted local authority pendant, never chosen from repository data
+        #[arg(long)]
+        shapes_from: Option<PathBuf>,
+        #[arg(long)]
+        trust_file: Option<PathBuf>,
+    },
     /// Which packs and pointer endpoints may load (~/.config/caboodle/pack-trust.toml)
     Trust {
         /// Trust file to read and write instead of the default
@@ -321,6 +379,13 @@ enum TrustCommand {
         endpoint: String,
         #[arg(long)]
         note: Option<String>,
+    },
+    /// Decide one pointer endpoint: exit 0 to federate, 3 refused
+    CheckEndpoint {
+        /// The declaring repository's git remote URL
+        remote: String,
+        /// The exact endpoint URL
+        endpoint: String,
     },
     /// Print the trust file
     List,
@@ -419,6 +484,24 @@ fn update_release_tool(value: &str) -> Result<String, String> {
 
 fn main() -> Result<()> {
     match Cli::parse().command {
+        Commands::Quickstart {
+            plan,
+            state,
+            skip_install,
+        } => {
+            let selected = if plan.exists() {
+                Plan::read(&plan)?
+            } else {
+                let mut selected = Plan::for_profile(Profile::Retrieval);
+                selected.quipu_db = Some(PathBuf::from(".caboodle/quipu.db"));
+                selected.write(&plan)?;
+                selected
+            };
+            println!("plan: {}", plan.display());
+            engine::apply(&selected, &state, skip_install)?;
+            engine::verify(&selected, &state, &CrewEvidence::default())?;
+        }
+
         Commands::ProvisionQuipuToken { source, server } => {
             engine::provision_quipu_credential(&source, &server)?;
         }
@@ -448,7 +531,26 @@ fn main() -> Result<()> {
             guided,
             output,
             session,
+            pack_hooks,
+            monorepo,
+            repo,
+            shapes_from,
+            db,
+            trust_file,
         } => {
+            if pack_hooks {
+                let options = caboodle::pendant_sync::Options {
+                    repo: &repo,
+                    db: db.as_deref(),
+                    shapes_from: shapes_from.as_deref(),
+                    trust_file: trust_file.as_deref(),
+                    monorepo,
+                };
+                for path in caboodle::pendant_hooks::install(&options)? {
+                    println!("pendant hook: {}", path.display());
+                }
+                return Ok(());
+            }
             if !guided {
                 anyhow::bail!("caboodle init currently requires --guided");
             }
@@ -695,6 +797,52 @@ fn main() -> Result<()> {
             println!("delivered queued episodes: {count}");
         }
         Commands::Packs {
+            command:
+                PacksCommand::Sync {
+                    monorepo,
+                    repo,
+                    db,
+                    shapes_from,
+                    trust_file,
+                },
+        } => {
+            let result = caboodle::pendant_sync::sync(&caboodle::pendant_sync::Options {
+                repo: &repo,
+                db: db.as_deref(),
+                shapes_from: shapes_from.as_deref(),
+                trust_file: trust_file.as_deref(),
+                monorepo,
+            })?;
+            println!("{}", serde_json::to_string_pretty(&result)?);
+        }
+        Commands::Packs {
+            command:
+                PacksCommand::ProjectScope {
+                    graph,
+                    path_predicate,
+                    prefix,
+                    repo,
+                    ownership_predicate,
+                    db,
+                },
+        } => {
+            let owners = if let (Some(repo), Some(predicate)) = (repo, ownership_predicate) {
+                caboodle::pendant_ownership::resolve(&repo, &prefix, &predicate)?
+            } else {
+                Vec::new()
+            };
+            let query = caboodle::pendant_projects::enriched_query(
+                &graph,
+                &path_predicate,
+                &prefix,
+                &owners,
+            )?;
+            if let Some(db) = db {
+                caboodle::pendant_ownership::verify_owners(&graph, &db, &owners)?;
+            }
+            println!("{query}");
+        }
+        Commands::Packs {
             command: PacksCommand::Trust { file, command },
         } => run_pack_trust(file, command)?,
     }
@@ -718,6 +866,18 @@ fn run_pack_trust(file: Option<PathBuf>, command: TrustCommand) -> Result<()> {
             endpoint,
             note,
         } => trust.add_endpoint(&repo, &endpoint, note.as_deref())?,
+        TrustCommand::CheckEndpoint { remote, endpoint } => {
+            match trust.decide_endpoint(&remote, &endpoint) {
+                Decision::Allow { basis } => println!("federate: {basis}"),
+                Decision::Refuse { .. } => {
+                    // Policy errors can embed the raw URL, including userinfo.
+                    // Keep this read-only command's diagnostics free of input.
+                    eprintln!("refused: endpoint trust policy did not admit this request; check the repository and endpoint, then review packs trust --help");
+                    std::process::exit(3);
+                }
+            }
+            return Ok(());
+        }
         TrustCommand::List => {
             print!("{}", toml::to_string_pretty(&trust)?);
             return Ok(());

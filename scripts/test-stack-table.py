@@ -66,14 +66,14 @@ class StackTableControls(unittest.TestCase):
              redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
             self.assertEqual(CHECK.main(), 1)
 
-    def test_shantytown_is_audited_and_its_missing_block_fails(self):
+    def test_new_rikuy_and_shantytown_missing_blocks_fail(self):
         canonical = CANONICAL.read_bytes()
-        for missing, expected in ((False, 0), (True, 1)):
+        for missing, expected in ((None, 0), ("shantytown", 1), ("rikuy", 1)):
             seen = []
 
             def read(repo):
                 seen.append(repo)
-                return b"A README without a stack block.\n" if missing and repo == "shantytown" else canonical
+                return b"A README without a stack block.\n" if repo == missing else canonical
 
             with self.subTest(missing=missing), \
                  patch.object(CHECK, "remote_readme", side_effect=read), \
@@ -81,14 +81,15 @@ class StackTableControls(unittest.TestCase):
                  redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
                 self.assertEqual(CHECK.main(), expected)
                 self.assertEqual(seen.count("shantytown"), 1)
-                self.assertEqual(len(seen), 8)
+                self.assertEqual(seen.count("rikuy"), 1)
+                self.assertEqual(len(seen), 12)
 
     def test_remote_response_has_a_size_limit(self):
         response = MagicMock()
         response.__enter__.return_value.read.return_value = b"x" * (CHECK.MAX_BYTES + 1)
         with patch.object(CHECK, "urlopen", return_value=response):
             with self.assertRaisesRegex(ValueError, "size limit"):
-                CHECK.remote_readme("caboodle")
+                CHECK.remote_readme("tambo")
 
 
 if __name__ == "__main__":

@@ -79,7 +79,13 @@ The shell release installer also accepts `CABOODLE_VERSION`,
 `CABOODLE_RELEASE_BASE_URL`. The last two select the download authority; keep
 them unset for official releases. These are installer inputs, not plan keys.
 
-## Quipu credentials
+## Quipu credentials (advanced remote mode)
+
+The default `tambo quickstart` uses a local embedded store and needs no token
+or running server. Only explicit `QUIPU_SERVER` or `quipu_mcp` configuration
+selects authenticated remote verification. To return to local mode, unset the
+environment variable and deliberately remove any remote MCP plan configuration.
+
 
 Obtain an accepted credential from the target server administrator through your
 approved secret distribution channel. The administrator activates the shared

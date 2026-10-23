@@ -1,0 +1,13 @@
+Script started on 2026-10-17 00:24:23-04:00 [COMMAND="stty -onlcr; python3 docs/demos/pendant-sync/demo.py" <not executed on terminal>]
+Target: private temporary Git repository and SQLite stores
+BASELINE same sync command: refused (sync subcommand absent); consumer database absent
+CANDIDATE initial: composed
+repeat: unchanged
+changed: composed
+CURRENT two / PREVIOUS one: PASS
+tampered: 1 Error: pendant composition refused; receipt unchanged: composition error: share graph hash mismatch: manifest=sha256:7a3e52722bd0638bfbbb69cf86d342e405753ef50c0a12afca4ba2216e06546a actual=sha256:7ca75537d5497ef11081a4f39eeb97c6a7a4859f19cc5f57fcab7a6bb8f08e80
+Tampered archive refused; receipt/database/CURRENT unchanged: PASS
+Removed pack no longer in CURRENT: PASS
+ROOT untouched: PASS
+
+Script done on 2026-10-17 00:24:25-04:00 [COMMAND_EXIT_CODE="0"]
