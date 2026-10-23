@@ -83,7 +83,7 @@ QUIPU_PID=$!
 (
   # Prebuilt, sha256-verified release binary — seconds, not a cargo build.
   have caboodle || curl -fsSL \
-      https://raw.githubusercontent.com/scbrown/caboodle/main/scripts/install.sh \
+      https://raw.githubusercontent.com/intigraph/tambo/main/scripts/install.sh \
       | sh >/dev/null 2>&1 || true
 
 ) &

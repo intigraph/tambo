@@ -150,7 +150,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$GITHUB_REPOSITORY" = scbrown/tambo
+          test "$GITHUB_REPOSITORY" = intigraph/tambo
           version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "tambo") | .version')
           test "$VERSION" = "v$version"
           echo "TAMBO_PUBLISH_VERSION=$version" >> "$GITHUB_ENV"
