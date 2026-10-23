@@ -30,7 +30,7 @@ def verify(folder, tag, revision):
     proof = json.loads(archive.with_name(archive.name + ".provenance.json").read_text())
     expected = {
         "schema": "quipu.repository-share-producer/v1",
-        "source_repository": "scbrown/tambo",
+        "source_repository": publisher.REPOSITORY,
         "source_revision": revision,
         "release_tag": tag,
         "archive_sha256": sha,
@@ -74,7 +74,7 @@ def wait(tag, revision, attempts=80, pause=time.sleep, run=subprocess.run):
                         "download",
                         tag,
                         "--repo",
-                        "scbrown/tambo",
+                        publisher.REPOSITORY,
                         "--dir",
                         temp,
                         "--pattern",
