@@ -125,6 +125,15 @@ class Knowledge(unittest.TestCase):
         self.assertNotIn("/content>", text)
         self.assertNotIn("owl#sameAs", text)
 
+    def test_release_managed_files_are_never_witnesses(self):
+        # release-please rewrites these on every release PR and tag, so a witness on
+        # one fails every release's pendant controls and its tagged share build.
+        managed = {"Cargo.toml", "Cargo.lock", "CHANGELOG.md", ".release-please-manifest.json"}
+        self.assertEqual(managed & {r["source"] for r in self.registry["records"]}, set())
+        for name in managed:
+            (self.root / name).write_text("version bumped by the release PR\n")
+        self.render()
+
     def test_absent_or_ambiguous_index_pointer_refuses(self):
         for value in (None, False, ""):
             with self.subTest(value=value), self.assertRaisesRegex(ValueError, "absent or ambiguous"):
