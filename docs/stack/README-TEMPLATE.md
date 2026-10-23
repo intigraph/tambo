@@ -22,7 +22,7 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache-2.0"/></a>
   <a href="https://github.com/scbrown/TOOLNAME/actions/workflows/ci.yml"><img src="https://github.com/scbrown/TOOLNAME/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
-  <a href="https://github.com/scbrown/caboodle"><img src="https://img.shields.io/badge/stack-quipu-8B5E3C.svg" alt="Part of the caboodle stack"/></a>
+  <a href="https://github.com/intigraph/tambo"><img src="https://img.shields.io/badge/stack-quipu-8B5E3C.svg" alt="Part of the caboodle stack"/></a>
 </p>
 
 **TOOLNAME IS A WHAT-IT-IS FOR WHO-IT-IS-FOR. It comes as a CLI, an MCP server
@@ -126,7 +126,7 @@ when.
 
 | tool | what it gives your agents |
 |---|---|
-| [tambo](https://github.com/scbrown/tambo) | 🧰 Agent Platform Toolkit - installs and configures the quipu stack |
+| [tambo](https://github.com/intigraph/tambo) | 🧰 Agent Platform Toolkit - installs and configures the quipu stack |
 | [quipu](https://github.com/scbrown/quipu) | stores shared facts with provenance and history; can check writes against your rules |
 | [camayoc](https://github.com/scbrown/camayoc) | prepares knowledge and vocabulary for Quipu, with checks before it is admitted |
 | [quechua](https://github.com/scbrown/quechua) | shared vocabulary and shapes for interoperable knowledge |
