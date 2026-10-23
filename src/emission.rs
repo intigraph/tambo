@@ -34,7 +34,7 @@ pub fn queue_transition(
         &queue,
         transition,
         tool,
-        &format!("CABOODLE {transition}: {tool} at {version}"),
+        &format!("Tambo {transition}: {tool} at {version}"),
     )
 }
 

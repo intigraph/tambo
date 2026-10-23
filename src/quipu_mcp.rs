@@ -439,12 +439,12 @@ pub fn verify(url: &str) -> Result<Vec<String>> {
     let config = read_claude_config()?;
     let entries = quipu_entries(&config);
     match entries.iter().find(|(scope, _)| scope == "user scope") {
-        None => bail!("FAIL: no user-scope quipu MCP entry is registered; run `caboodle apply`"),
+        None => bail!("FAIL: no user-scope quipu MCP entry is registered; run `tambo apply`"),
         Some((_, entry)) if entry.get("headersHelper").is_none() => bail!(
-            "FAIL: the user-scope quipu MCP entry has no headersHelper, so MCP writes carry no bearer; run `caboodle apply`"
+            "FAIL: the user-scope quipu MCP entry has no headersHelper, so MCP writes carry no bearer; run `tambo apply`"
         ),
         Some((_, entry)) if entry != &desired => bail!(
-            "FAIL: the user-scope quipu MCP entry differs from the plan (expected {desired}, found {}); run `caboodle apply`",
+            "FAIL: the user-scope quipu MCP entry differs from the plan (expected {desired}, found {}); run `tambo apply`",
             redact(entry)
         ),
         Some(_) => {}

@@ -24,8 +24,8 @@ credential. See [configuration](configuration.md).
 
 ## Guided interview
 
-Use `caboodle init --guided` instead of the first two commands to describe
-your own use interactively. Run `caboodle doctor` before installing to see
+Use `tambo init --guided` instead of the first two commands to describe
+your own use interactively. Run `tambo doctor` before installing to see
 platform or prerequisite blockers.
 
 | prompt | what to type |
@@ -33,30 +33,30 @@ platform or prerequisite blockers.
 | `profile` | `retrieval` for a first install. See [profiles](profiles.md). |
 | `what should this installation help you do?` | One plain sentence. It is recorded in the plan. |
 | `how many themed crew members` | `0` unless you run a named team of agents. |
-| `how many ontology questions` | Press **enter** on a first install: caboodle uses a built-in self-test question that checks the store answers a query, and asks nothing else. Or type a number to write your own; each question is a check the finished graph must pass. |
+| `how many ontology questions` | Press **enter** on a first install: Tambo uses a built-in self-test question that checks the store answers a query, and asks nothing else. Or type a number to write your own; each question is a check the finished graph must pass. |
 | the question's five fields | Only if you typed a number. A question in words, its answer shape, the seed fact that answers it, a SPARQL `SELECT` or `ASK` query, and a word the answer must contain. |
 
 ## Recovery
 
-- **`caboodle doctor`** first. It names the blocker and the fix.
-- **`<tool> install step ... no checksummed CABOODLE release for <platform>`**:
+- **`tambo doctor`** first. It names the blocker and the fix.
+- **`<tool> install step ... no checksummed Tambo release for <platform>`**:
   build that tool with the `cargo install` command doctor prints, then rerun
-  `caboodle install`. Caboodle adopts an installed tool that passes its checks.
+  `tambo install`. Tambo adopts an installed tool that passes its checks.
 - **`<tool> functional verification`**: the tool installed but its round trip
   failed. The error includes the tool's own output. Fix it and rerun
-  `caboodle install`; tools that already passed are not redone.
-- **macOS with Bobbin before v0.18.0 (the pin CABOODLE carried before this release was v0.16.2): bobbin panics with `Failed to load ONNX Runtime dylib`**: bobbin
+  `tambo install`; tools that already passed are not redone.
+- **macOS with Bobbin before v0.18.0 (the pin Tambo carried before this release was v0.16.2): bobbin panics with `Failed to load ONNX Runtime dylib`**: bobbin
   looks for its bundled runtime next to the `~/.cargo/bin/bobbin` symlink rather
   than next to the real binary. For that release, run
   `export ORT_DYLIB_PATH="$HOME/.local/share/caboodle/bobbin/v0.16.2/lib/libonnxruntime.dylib"`
-  (add it to your shell profile) and rerun `caboodle install`.
+  (add it to your shell profile) and rerun `tambo install`.
 - **A new build still behaves like the old one**: another copy earlier on PATH
   wins. Doctor lists every copy in the order your shell finds them, and
-  `caboodle verify` fails with `SHADOWED` when the copy PATH runs reports a
-  different version from the one caboodle installed. Remove the stale copy or
+  `tambo verify` fails with `SHADOWED` when the copy PATH runs reports a
+  different version from the one Tambo installed. Remove the stale copy or
   move `~/.cargo/bin` earlier on PATH.
 - **`no plan at caboodle-plan.toml`**: you are in a different directory from the
-  one where you ran `caboodle init --guided`.
+  one where you ran `tambo init --guided`.
 
 Do not delete `.caboodle/` to recover. It holds your interview answers and the
 last proven state.

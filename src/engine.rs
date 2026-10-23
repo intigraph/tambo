@@ -26,7 +26,7 @@ struct ImportResult {
 }
 
 /// What `apply` should do about an installed tool whose version is not the one
-/// this Caboodle build reviewed (aegis-5ctwu3).
+/// this Tambo build reviewed (aegis-5ctwu3).
 ///
 /// Split out as a pure function ON PURPOSE: the act it decides is a network
 /// download, so a test that drove `apply` end to end would be measuring GitHub
@@ -83,7 +83,7 @@ pub fn apply(plan: &Plan, state_path: &Path, skip_install: bool) -> Result<State
         // aegis-5ctwu3: PRESENCE IS NOT CONVERGENCE. Until this match looked at
         // `is_current`, a binary that merely EXISTED was reported "applied" and
         // left at whatever version it was — bobbin sat at 0.1.0 while this build
-        // reviewed 0.17.0, and `caboodle install` then failed its own verify with
+        // reviewed 0.17.0, and `tambo install` then failed its own verify with
         // `error: unexpected argument '--source' found`. The installer knew the
         // newer contract, verified against it, and had never installed it; the
         // operator got a clap error instead of "your bobbin is 16 minors old".
@@ -99,45 +99,45 @@ pub fn apply(plan: &Plan, state_path: &Path, skip_install: bool) -> Result<State
                 // here — a SKEWED one reporting success was the inconsistency.
                 Ok(installed) => {
                     match decide_convergence(&installed, &desired, false, skip_install) {
-                    Convergence::Current => installed,
-                    Convergence::RefuseSkipInstall => bail!(
-                        "{} is installed at {installed} but this Caboodle build reviewed {desired}; \
+                        Convergence::Current => installed,
+                        Convergence::RefuseSkipInstall => bail!(
+                        "{} is installed at {installed} but this Tambo build reviewed {desired}; \
                          --skip-install refuses to converge it. Install {desired}, or drop \
                          --skip-install to let apply converge it.",
                         name.as_str()
                     ),
-                    Convergence::Decline => {
-                        println!(
-                            "{}: NOT converged — installed {installed}, reviewed {desired}. \
+                        Convergence::Decline => {
+                            println!(
+                                "{}: NOT converged — installed {installed}, reviewed {desired}. \
                              Apply does not downgrade or replace an unrecognised version; \
-                             use `caboodle update-release` deliberately if that is what you want.",
-                            name.as_str()
-                        );
-                        installed
-                    }
-                    Convergence::Converge => {
-                        eprintln!(
-                            "{}: stale ({installed}); converging to reviewed {desired}",
-                            name.as_str()
-                        );
-                        adapter.install().with_context(|| {
-                            format!("{} convergence to reviewed {desired}", name.as_str())
-                        })?;
-                        let after = adapter.version().with_context(|| {
-                            format!("{} version read-back after convergence", name.as_str())
-                        })?;
-                        // The read-back is the proof, not the install's exit code.
-                        if !adapter.is_current(&after) {
-                            bail!(
-                                "{} did not reach reviewed release {desired} (got {after}); \
-                                 refusing to record it as applied",
+                             use `tambo update-release` deliberately if that is what you want.",
                                 name.as_str()
                             );
+                            installed
                         }
-                        println!("{}: converged {installed} -> {after}", name.as_str());
-                        after
+                        Convergence::Converge => {
+                            eprintln!(
+                                "{}: stale ({installed}); converging to reviewed {desired}",
+                                name.as_str()
+                            );
+                            adapter.install().with_context(|| {
+                                format!("{} convergence to reviewed {desired}", name.as_str())
+                            })?;
+                            let after = adapter.version().with_context(|| {
+                                format!("{} version read-back after convergence", name.as_str())
+                            })?;
+                            // The read-back is the proof, not the install's exit code.
+                            if !adapter.is_current(&after) {
+                                bail!(
+                                    "{} did not reach reviewed release {desired} (got {after}); \
+                                 refusing to record it as applied",
+                                    name.as_str()
+                                );
+                            }
+                            println!("{}: converged {installed} -> {after}", name.as_str());
+                            after
+                        }
                     }
-                }
                 }
 
                 Err(error)
@@ -149,7 +149,7 @@ pub fn apply(plan: &Plan, state_path: &Path, skip_install: bool) -> Result<State
                     .install()
                     .with_context(|| {
                         format!(
-                            "{} install step (run `caboodle doctor` to list every blocker on this host)",
+                            "{} install step (run `tambo doctor` to list every blocker on this host)",
                             name.as_str()
                         )
                     })?;
@@ -218,7 +218,7 @@ pub fn apply(plan: &Plan, state_path: &Path, skip_install: bool) -> Result<State
         bail!(
             "{} tool(s) failed to apply:\n{}\nSuccessful tools were saved. Fix the failures and rerun the same command. \
              Stack configuration, model provisioning, crew setup, share imports and verification \
-             have not run; run `caboodle doctor` for preflight guidance.",
+             have not run; run `tambo doctor` for preflight guidance.",
             failures.len(),
             failures.join("\n")
         );
@@ -463,9 +463,9 @@ pub fn verify(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
             } else {
                 format!(
                     "{} functional verification — VERSION SKEW: {version} is installed, \
-                     this Caboodle build reviewed and verifies against {desired}. The error \
+                     this Tambo build reviewed and verifies against {desired}. The error \
                      below is most likely that skew, not a broken tool. Converge with \
-                     `caboodle apply` (or `caboodle update`), then re-verify.",
+                     `tambo apply` (or `tambo update`), then re-verify.",
                     name.as_str()
                 )
             }
@@ -539,7 +539,7 @@ pub fn verify(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
     Ok(state)
 }
 
-/// Compare the running toolchain to the releases reviewed by this Caboodle
+/// Compare the running toolchain to the releases reviewed by this Tambo
 /// build. Returns true only when every selected tool is current.
 pub(crate) fn reviewed_drift_status(installed: &str, desired: &str) -> &'static str {
     match crate::release_update::behind_reviewed(installed, desired) {

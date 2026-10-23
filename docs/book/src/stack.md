@@ -1,7 +1,7 @@
 # The stack
 
 ```text
-    caboodle                      (interview → plan → apply → verify → observe)
+    Tambo                      (interview → plan → apply → verify → observe)
         │  installs, proves, and watches ↓
         ▼
   quipu · bobbin · camayoc · yupana · desire-path · seeds · shuttle · shantytown / creel
@@ -10,7 +10,7 @@
     prometheus                    (every tool's metrics, consolidated)
 ```
 
-Caboodle never re-implements a tool's job. It installs the tool and then makes
+Tambo never re-implements a tool's job. It installs the tool and then makes
 the tool demonstrate its own job, through three proofs:
 
 1. **Installed**: proven by reading the version back, never by an exit code.
@@ -24,7 +24,7 @@ the tool demonstrate its own job, through three proofs:
    resolve an undeclared term.
    Every check first proves its marker is
    absent, so a pass is capable of failing.
-3. **Observable**: caboodle generates Prometheus scrape config, starter alerts,
+3. **Observable**: Tambo generates Prometheus scrape config, starter alerts,
    and one dashboard for the selected tools, for you to review and deploy.
 
 Install and verification outcomes are also queued as quipu episodes, so a fresh
@@ -44,7 +44,7 @@ design is in the [book](introduction.md).
 | [creel](https://github.com/scbrown/creel) | parallel agent bursts, entirely in the browser |
 | [shanty](https://github.com/scbrown/shanty) | a terminal multiplexer wrapper that makes tmux feel like home |
 | [beads](https://github.com/Dicklesworthstone/beads_rust) | issue tracking as agent memory — `br`, SQLite + JSONL |
-| [quechua](https://github.com/scbrown/quechua) | the stack's shared vocabulary; caboodle pins a release by digest and loads it into Quipu ([catalog](https://scbrown.github.io/quechua/ns)) |
+| [quechua](https://github.com/scbrown/quechua) | the stack's shared vocabulary; Tambo pins a release by digest and loads it into Quipu ([catalog](https://scbrown.github.io/quechua/ns)) |
 
 See [the corpus](corpus.md) for share import and [profiles](profiles.md) for
 which tools each selection installs.

@@ -1,6 +1,6 @@
 # Configuration reference
 
-Caboodle writes a reviewable TOML plan and a JSON progress file. Use the CLI to
+Tambo writes a reviewable TOML plan and a JSON progress file. Use the CLI to
 create the plan; keep credentials in the environment, never in intent text.
 The plan's schema rejects unknown keys.
 
@@ -94,8 +94,8 @@ installing a random token does not grant access.
 
 ```sh
 install -d -m 700 "$HOME/.config/quipu" && install -m 400 /secure/issued-token "$HOME/.config/quipu/token"
-caboodle provision-quipu-token --from /secure/issued-token --server https://your-quipu-server.example
-caboodle doctor
+tambo provision-quipu-token --from /secure/issued-token --server https://your-quipu-server.example
+tambo doctor
 ```
 
 `provision-quipu-token` proves the issued file against the authenticated server
@@ -118,7 +118,7 @@ accepted authorization, missing token, rejected token, read-only server, or an
 unknown write path (including no HTTP response). This is authorization evidence,
 not a successful storage commit. Doctor also requires a nonempty canonical file
 with mode `0400` and parent mode `0700`, and an authenticated `/shapes` read
-returning 2xx. `caboodle verify` runs that live credential proof before recording
+returning 2xx. `tambo verify` runs that live credential proof before recording
 Quipu as verified, then exercises installed tools in isolated scratch stores.
 Set `QUIPU_SERVER` to the intended server; without it, verify uses the plan's
 Quipu MCP URL or `http://localhost:3030`. Missing, rejected, or unproven
@@ -128,7 +128,7 @@ credentials leave verification incomplete. Public health is not an auth check.
 
 A Claude Code MCP entry for Quipu that holds only a URL sends no bearer. Reads
 work and every MCP write is refused with `missing_or_invalid_bearer_token`.
-`caboodle plan --quipu-mcp-url <server>` adds a reviewable `[quipu_mcp]` step.
+`tambo plan --quipu-mcp-url <server>` adds a reviewable `[quipu_mcp]` step.
 That step changes your Claude Code configuration, so it is opt-in.
 
 `apply` installs `~/.local/bin/quipu-mcp-headers` (mode 0755). Claude Code runs
@@ -188,13 +188,13 @@ agents pick up changed hooks on their next launch.
 ## Externally owned Quipu
 
 Set `external_quipu = true` in a reviewed plan when another mechanism owns
-Quipu installation. The default is false. Caboodle resolves `quipu` and
+Quipu installation. The default is false. Tambo resolves `quipu` and
 `quipu-server` from PATH, reads both versions, and records their canonical paths
 with the identity. It never installs, converges, or release-updates these files.
 Missing executables and incompatible versions fail; external ownership does not
 waive the isolated write/read round trip or hook registration checks. Other tools
 retain their managed-install and shadow checks. Build flavors are incompatible
-with external ownership because Caboodle does not build that installation.
+with external ownership because Tambo does not build that installation.
 
 Verify uses the resolved client for both the entity and vocabulary round trips.
 An external source build has to support those contracts; a version banner alone

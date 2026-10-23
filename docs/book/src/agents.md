@@ -1,6 +1,6 @@
 # Using it with agents
 
-Caboodle is a CLI that an agent can run with the
+Tambo is a CLI that an agent can run with the
 [Tambo skill](https://github.com/intigraph/tambo/blob/main/skills/tambo/SKILL.md).
 It does not expose its own MCP server. MCP (Model Context Protocol) lets an
 agent call servers supplied by the installed tools.
@@ -28,7 +28,7 @@ in their client-specific server configuration.
 
 ## Managed crew
 
-For a configured Shantytown rig, `caboodle project-settings` delegates
+For a configured Shantytown rig, `tambo project-settings` delegates
 registration to Shantytown and its Quipu tooling manifest. It does not launch
 or restart agents. See [registering MCP servers](installing.md#registering-mcp-servers)
 for prerequisites, selection flags, remote proxies and the policy-only mode.
@@ -160,7 +160,7 @@ existing key file.
   or a symlink to one, is still present on the agent's machine, older clients may
   keep authenticating through it. They then never report the missing or rejected
   identity. Remove such fallbacks once every client uses its own key, and confirm
-  with `caboodle doctor`, which names the credential source in use.
+  with `tambo doctor`, which names the credential source in use.
 
 ### Worked example: enrolling an agent on a second host
 

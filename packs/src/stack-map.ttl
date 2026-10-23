@@ -6,12 +6,12 @@
 # ── The stack map ───────────────────────────────────────────────────────────
 # What each tool IS and how the pieces relate. Facts true at write time:
 # roles and repository locations, not versions or health — those decay, and
-# caboodle's verify proofs exist to measure them live instead.
+# Tambo's verify proofs exist to measure them live instead.
 
 stack:caboodle a caboodle:StackComponent ;
-    rdfs:label "caboodle" ;
+    rdfs:label "tambo" ;
     rdfs:comment "The whole kit — an AI-installable install wizard that installs the stack, proves it works with paired negative controls, and watches it run." ;
-    caboodle:repository <https://github.com/scbrown/caboodle> ;
+    caboodle:repository <https://github.com/intigraph/tambo> ;
     caboodle:language "Rust" ;
     caboodle:installs stack:quipu, stack:camayoc, stack:bobbin, stack:yupana, stack:shantytown ;
     caboodle:observes stack:prometheus .
@@ -63,5 +63,5 @@ stack:creel a caboodle:StackComponent ;
 
 stack:prometheus a caboodle:StackComponent ;
     rdfs:label "prometheus" ;
-    rdfs:comment "Every tool's metrics, consolidated. Caboodle's third proof: observable means Prometheus actually scrapes each tool's declared exporter." ;
+    rdfs:comment "Every tool's metrics, consolidated. Tambo's third proof: observable means Prometheus actually scrapes each tool's declared exporter." ;
     caboodle:roleInStack "observability" .

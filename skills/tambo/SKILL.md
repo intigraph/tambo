@@ -5,9 +5,8 @@ description: Install, verify, diagnose, resume, or update the Quipu-stack tool c
 
 # Tambo
 
-Tambo is the renamed Caboodle installer. The `caboodle` command and skill remain
-compatibility entry points for the transition release. Keep the existing plan
-and state paths below; renaming the command does not migrate user state.
+Install, inspect, resume and verify the stack through the `tambo` CLI.
+Preserve the plan and state paths below.
 
 Use the local quickstart for a default install. Customized installs follow
 interview → plan review → apply → verify. Use the same CLI in every harness.
@@ -18,8 +17,7 @@ For Tambo itself, prefer the reviewed checksummed release path documented in
 `docs/book/src/installing.md`. A source install must pin a reviewed commit.
 
 1. If `tambo` is absent and the request authorizes installation, install the public source with:
-   `cargo install --git https://github.com/intigraph/tambo --bin tambo --locked`.
-   The compatibility repository URL remains valid through the repository rename.
+   `cargo install --git https://github.com/intigraph/tambo --rev <reviewed-commit> --bin tambo --locked`.
    Otherwise stop and request authorization; bootstrapping Tambo is itself an
    installation.
 2. Prove the binary answers: `tambo --version`.

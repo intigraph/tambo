@@ -292,7 +292,7 @@ pub struct Plan {
     pub quipu_db: Option<PathBuf>,
     #[serde(default, skip_serializing_if = "QuipuFlavor::is_release")]
     pub quipu_flavor: QuipuFlavor,
-    /// Quipu is owned outside Caboodle; prove the executables selected by PATH.
+    /// Quipu is owned outside Tambo; prove the executables selected by PATH.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub external_quipu: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -482,7 +482,7 @@ impl InstallIntent {
     pub fn read(path: &Path) -> Result<Self> {
         if !path.exists() {
             bail!(
-                "no intent file at {}; run `caboodle init --guided` to answer the interview instead, or write one (see the \"Using caboodle\" chapter of docs/book)",
+                "no intent file at {}; run `tambo init --guided` to answer the interview instead, or write one (see the \"Using caboodle\" chapter of docs/book)",
                 path.display()
             );
         }
@@ -594,7 +594,7 @@ impl Plan {
     pub fn read(path: &Path) -> Result<Self> {
         if !path.exists() {
             bail!(
-                "no plan at {}; run `caboodle init --guided` (or `caboodle plan`) first",
+                "no plan at {}; run `tambo init --guided` (or `tambo plan`) first",
                 path.display()
             );
         }
@@ -621,7 +621,7 @@ impl Plan {
             );
         }
         if self.external_quipu && self.quipu_flavor != QuipuFlavor::Release {
-            bail!("external_quipu cannot request a Caboodle build flavor");
+            bail!("external_quipu cannot request a Tambo build flavor");
         }
         if self.tools.is_empty() {
             bail!("plan selects no tools");

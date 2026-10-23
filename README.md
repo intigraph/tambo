@@ -55,6 +55,7 @@ tambo quickstart
 This saves a reviewed retrieval plan, installs Quipu, Camayoc and Bobbin, and
 checks each tool. Success is exit 0 and `quipu: verified`, `camayoc: verified`,
 `bobbin: verified`. Keep `caboodle-plan.toml` and `.caboodle/` to resume.
+See the [compatibility contracts](docs/book/src/compatibility.md) for retained aliases and state paths.
 Recheck the same install:
 
 ```bash

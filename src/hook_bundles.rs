@@ -1,7 +1,7 @@
 //! The Quipu stack's hook bundles, and the verification that st renders them.
 //!
 //! Each tool's hooks are declared as a bundle (schema `st.hook-bundle/1`) under
-//! `hook-bundles/`. CABOODLE ships them; st owns rendering them into every
+//! `hook-bundles/`. Tambo ships them; st owns rendering them into every
 //! emitted role file and checking them (aegis-u1ybxo, aegis-68j0ys). Here
 //! verification asks st's own check whether each bundle is configured.
 
@@ -10,7 +10,7 @@ use std::process::Command;
 use anyhow::{bail, Context, Result};
 use serde_json::Value;
 
-/// The bundles CABOODLE ships, as `(name, bundle JSON)`.
+/// The bundles Tambo ships, as `(name, bundle JSON)`.
 pub const BUNDLES: &[(&str, &str)] = &[
     ("bobbin", include_str!("../hook-bundles/bobbin.json")),
     (
@@ -87,7 +87,7 @@ pub fn missing_executables(bundle: &str, home: Option<&std::path::Path>) -> Vec<
 /// registered copy and answers `unchanged` without re-rendering anything.
 ///
 /// When `st` is not installed this is a NOTE, not a failure: st is optional on
-/// a host, and `caboodle verify` reports the bundles as unregistered there. A
+/// a host, and `tambo verify` reports the bundles as unregistered there. A
 /// bundle st REFUSES, or an answer outside st's contract, fails: that is a
 /// defect in the shipped bundle or a changed contract, never something to
 /// skip. Returns one report line per bundle.
@@ -123,7 +123,7 @@ pub fn register(bundles: &[(&str, &str)], st: &str) -> Result<Vec<String>> {
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
                 return Ok(vec![format!(
                     "NOT registered: `{st}` (shantytown) is not installed on this host. \
-                     Install it and rerun `caboodle apply`; verify reports the bundles until then"
+                     Install it and rerun `tambo apply`; verify reports the bundles until then"
                 )]);
             }
             Err(error) => {
@@ -591,7 +591,7 @@ mod tests {
     }
 
     /// Against the host's real st (`cargo test -- --ignored live_register`):
-    /// registers every shipped bundle, exactly the step `caboodle apply` runs.
+    /// registers every shipped bundle, exactly the step `tambo apply` runs.
     /// It WRITES the host's st registry; a second run must print `unchanged`
     /// for every bundle (idempotence on the real st).
     #[test]
@@ -603,7 +603,7 @@ mod tests {
     }
 
     /// Against the host's real st (`cargo test -- --ignored live_`): prints the
-    /// verdict so an operator can see what `caboodle verify` would say.
+    /// verdict so an operator can see what `tambo verify` would say.
     #[test]
     fn evidence_is_well_formed_and_fails_closed_without_its_source() {
         let mut seen = 0;

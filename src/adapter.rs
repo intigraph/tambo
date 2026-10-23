@@ -20,7 +20,7 @@ pub(crate) use manifest::{
 
 pub trait Adapter {
     fn name(&self) -> ToolName;
-    /// Release identity reviewed and pinned by this Caboodle build.
+    /// Release identity reviewed and pinned by this Tambo build.
     fn desired_version(&self) -> String;
     fn install(&self) -> Result<()>;
     fn version(&self) -> Result<String>;
@@ -333,7 +333,7 @@ fn require_minimum_version(output: &str, minimum: (u64, u64, u64), program: &str
     };
     if found < minimum {
         bail!(
-            "{program} {}.{}.{} is too old; CABOODLE requires at least {}.{}.{}",
+            "{program} {}.{}.{} is too old; Tambo requires at least {}.{}.{}",
             found.0,
             found.1,
             found.2,
@@ -402,7 +402,7 @@ impl Adapter for Quipu {
 
     fn install(&self) -> Result<()> {
         if self.external.is_some() {
-            bail!("external Quipu is not owned by Caboodle; installation refused");
+            bail!("external Quipu is not owned by Tambo; installation refused");
         }
         preflight_owned_quipu_alias()?;
         match self.flavor {
@@ -569,7 +569,7 @@ fn quipu_release_target_for(arch: &str, os: &str) -> Result<&'static str> {
         ("aarch64", "linux") => Ok("aarch64-unknown-linux-gnu"),
         ("x86_64", "macos") => Ok("x86_64-apple-darwin"),
         ("aarch64", "macos") => Ok("aarch64-apple-darwin"),
-        (arch, os) => bail!("Quipu has no checksummed CABOODLE release for {arch}-{os}"),
+        (arch, os) => bail!("Quipu has no checksummed Tambo release for {arch}-{os}"),
     }
 }
 
@@ -909,7 +909,7 @@ impl Adapter for Bobbin {
         fs::write(
             root.path().join("fixture.rs"),
             format!(
-                "/// A unique CABOODLE verification routine.\npub fn {marker}() -> &'static str {{\n    \"indexed\"\n}}\n"
+                "/// A unique Tambo verification routine.\npub fn {marker}() -> &'static str {{\n    \"indexed\"\n}}\n"
             ),
         )
         .context("write bobbin verification fixture")?;
@@ -1022,7 +1022,7 @@ fn yupana_release_for(arch: &str, os: &str) -> Result<(&'static str, &'static st
             "x86_64-apple-darwin",
             "94b872a6cd3ea9de4bf4271b1d16fa569f1979b4d216e0fd307d88e1b66364a2",
         )),
-        _ => bail!("Yupana v{YUPANA_VERSION} has no checksummed CABOODLE release for {arch}-{os}"),
+        _ => bail!("Yupana v{YUPANA_VERSION} has no checksummed Tambo release for {arch}-{os}"),
     }
 }
 
@@ -1239,7 +1239,7 @@ fn bobbin_release_target() -> Result<&'static str> {
         ("aarch64", "linux") => Ok("aarch64-unknown-linux-gnu"),
         ("x86_64", "macos") => Ok("x86_64-apple-darwin"),
         ("aarch64", "macos") => Ok("aarch64-apple-darwin"),
-        (arch, os) => bail!("bobbin has no CABOODLE release target for {arch}-{os}"),
+        (arch, os) => bail!("bobbin has no Tambo release target for {arch}-{os}"),
     }
 }
 

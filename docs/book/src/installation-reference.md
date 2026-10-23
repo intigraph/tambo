@@ -38,7 +38,7 @@ absolute path.
 
 Or build the latest release from source with Rust (`cargo install --git
 https://github.com/intigraph/tambo --tag vX.Y.Z --locked`). Either way,
-`caboodle --version` prints `caboodle X.Y.Z` for the release you installed.
+`tambo --version` prints `tambo X.Y.Z` for the release you installed.
 
 ### macOS with Homebrew
 
@@ -47,7 +47,11 @@ brew install scbrown/tap/caboodle
 caboodle --version
 ```
 
-Homebrew owns the installed command; Caboodle still composes and verifies the
+This formula currently installs only the `caboodle` compatibility command.
+For a Homebrew install, use `caboodle` wherever the examples below use `tambo`
+(for example, `caboodle quickstart` and `caboodle verify`).
+
+Homebrew owns the installed command; Tambo still composes and verifies the
 stack. Update it with `brew upgrade scbrown/tap/caboodle`. To hold the installed
 version, use `brew pin caboodle`; resume updates with `brew unpin caboodle`.
 The [tap channel guide](https://github.com/scbrown/homebrew-tap#caboodle-preview-channel)
@@ -108,11 +112,11 @@ review the resulting plan, then run `tambo install`. See the
 
 | I want to… | Command |
 |---|---|
-| Choose tools and describe my own use | `caboodle init --guided` |
-| Find install blockers before changing anything | `caboodle doctor` |
-| Install and prove the reviewed selection | `caboodle install` |
-| Recheck the selected tools | `caboodle verify` |
-| Compare against this build's reviewed versions | `caboodle check-updates` |
+| Choose tools and describe my own use | `tambo init --guided` |
+| Find install blockers before changing anything | `tambo doctor` |
+| Install and prove the reviewed selection | `tambo install` |
+| Recheck the selected tools | `tambo verify` |
+| Compare against this build's reviewed versions | `tambo check-updates` |
 
 [Full command and configuration reference](https://intigraph.github.io/tambo/reference.html).
 
@@ -147,11 +151,11 @@ failed to connect.
 
 MCP (Model Context Protocol) lets your agent call the installed server.
 [Agent setup](https://intigraph.github.io/tambo/agents.html) covers indexing, Yupana, other clients
-and managed crew registration through `caboodle project-settings`.
+and managed crew registration through `tambo project-settings`.
 
 ## Before you start
 
-| Platform | Caboodle | Quipu | Yupana |
+| Platform | Tambo | Quipu | Yupana |
 |---|---|---|---|
 | Linux x86_64 | Release | Release | Release |
 | macOS arm64 / x86_64 | Release | Release | Release |
@@ -161,7 +165,7 @@ Have `curl`, `tar`, `git`, `bash`, `python3` and `sha256sum` on PATH
 (`brew install coreutils` supplies `sha256sum` on macOS).
 The `everything` profile also needs Go. No account or remote server is needed.
 [Installation details](https://intigraph.github.io/tambo/installing.html) cover source builds,
-installed files and removal; `caboodle doctor` names missing prerequisites.
+installed files and removal; `tambo doctor` names missing prerequisites.
 
 ## What's next
 

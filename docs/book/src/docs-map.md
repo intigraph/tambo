@@ -2,11 +2,11 @@
 
 ## Start here
 
-- [Introduction](introduction.md): what Caboodle does and when to use it.
+- [Introduction](introduction.md): what Tambo does and when to use it.
 - [Getting started](getting-started.md): the smallest install, interview and recovery.
 - [Installing and removing](installing.md): platforms, source builds, files and updates.
 - [Using it with agents](agents.md): standalone MCP clients and managed crews.
-- [Using Caboodle](using.md): the guided and non-interactive workflows.
+- [Using Tambo](using.md): the guided and non-interactive workflows.
 - [Reference](reference.md): every command and the glossary.
 - [Configuration](configuration.md): plan, intent, environment and state.
 

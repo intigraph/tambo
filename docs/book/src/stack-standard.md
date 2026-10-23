@@ -1,6 +1,6 @@
 # The stack README standard
 
-Every public repo in the stack (caboodle, quipu, camayoc, bobbin, yupana,
+Every public repo in the stack (Tambo, quipu, camayoc, bobbin, yupana,
 desire-path) follows one README shape and one theme, so a reader who knows one
 can find their way around the others: try it first, then this book for depth.
 

@@ -160,7 +160,7 @@ enum Commands {
         #[arg(long)]
         host_profile: Option<String>,
     },
-    /// Report drift from the releases reviewed by this Caboodle build
+    /// Report drift from the releases reviewed by this Tambo build
     CheckUpdates {
         #[arg(short, long, default_value = "caboodle-plan.toml")]
         plan: PathBuf,

@@ -147,7 +147,7 @@ pub fn render(plan: &Plan, targets_path: &Path, output: &Path) -> Result<()> {
         output.join("dashboard.json"),
         serde_json::to_vec_pretty(&json!({
             "schemaVersion": 39,
-            "title": "CABOODLE selected corpus",
+            "title": "Tambo selected corpus",
             "panels": panels
         }))?,
     )?;

@@ -155,7 +155,7 @@ pub fn verify(dp: Option<&Path>, db: Option<&Path>) -> Result<Outcome> {
         Existing::Ours => Ok(Outcome::AlreadySet),
         Existing::Other(target) => Ok(Outcome::KeptLocal(target)),
         Existing::Absent => bail!(
-            "Desire Path has no {FROM} command alias; `caboodle apply` sets {FROM} -> {TO} for plans with seeds and desire-path"
+            "Desire Path has no {FROM} command alias; `tambo apply` sets {FROM} -> {TO} for plans with seeds and desire-path"
         ),
     }
 }

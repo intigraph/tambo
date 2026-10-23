@@ -5,41 +5,41 @@ command surface, for reviewed updates, shared graphs, observability, and install
 records:
 
 ```bash
-# Build caboodle from source instead of the release installer.
+# Build Tambo from source instead of the release installer.
 cargo install --git https://github.com/intigraph/tambo --locked
 
 # Report what would block an install here. Changes nothing; exits nonzero on a blocker.
-caboodle doctor
+tambo doctor
 
 # Answer the use-shaped interview. It asks who the themed crew members are and
 # which questions the finished graph must answer, then only writes a plan.
-caboodle init --guided
+tambo init --guided
 
 # Or supply the same intended-use contract non-interactively.
-caboodle plan --profile retrieval --intent caboodle-intent.toml
+tambo plan --profile retrieval --intent caboodle-intent.toml
 
 # Optionally add canonical Quipu share directories to the reviewed corpus.
 # The target database is explicit; apply stages imports but never promotes them.
-caboodle plan --profile retrieval --share ./team-share --quipu-db ./knowledge.db
+tambo plan --profile retrieval --share ./team-share --quipu-db ./knowledge.db
 
 # Converge the reviewed plan, then prove each tool with a round trip.
-caboodle apply
-caboodle verify
-caboodle verify-questions
+tambo apply
+tambo verify
+tambo verify-questions
 
 # Or run both phases together after review.
-caboodle install
+tambo install
 
-# Ask whether the running stack matches this Caboodle build's reviewed pins.
+# Ask whether the running stack matches this Tambo build's reviewed pins.
 # The command exits nonzero when anything is missing, unreadable, or drifted.
-caboodle check-updates
+tambo check-updates
 
 # Converge only drifted tools, read every version back, and functionally verify
 # each changed tool before recording it as current.
-caboodle update
+tambo update
 
 # A full tool + crew plan is explicit and reviewable.
-caboodle plan --profile everything --crew both
+tambo plan --profile everything --crew both
 ```
 
 `apply` installs a missing released tool and reads its version back; Bobbin comes
@@ -53,7 +53,7 @@ scratch quipu server (see
 verified result.
 
 `check-updates` compares the running identities with the release versions and
-source revisions pinned in the selected plan's Caboodle build. It does not use
+source revisions pinned in the selected plan's Tambo build. It does not use
 an unreviewed “latest” endpoint. `update` is the mutation half: it installs only
 drifted selections through their existing checksummed/source-pinned adapters,
 requires version read-back to match the reviewed identity, runs the adapter's
@@ -61,14 +61,14 @@ functional proof, and only then records an `updated` transition. A second run is
 current and performs no installation. This keeps release selection in review
 while making deployed-versus-released drift executable rather than anecdotal.
 
-If the interview loses input or its caller stops, rerun `caboodle init --guided`:
+If the interview loses input or its caller stops, rerun `tambo init --guided`:
 accepted answers resume from `.caboodle/interview.toml`. The session disappears
 only after the complete plan has been written successfully.
 
 The interview works backward from expected use. Each crew member has a free-form
 theme, domain, and role rather than a closed role enum. Each anticipated ontology
 question records its expected answer shape, the seed facts needed to exercise it,
-an executable `SELECT`/`ASK` query, and a result marker. `caboodle
+an executable `SELECT`/`ASK` query, and a result marker. `tambo
 verify-questions` runs those reader-path checks after installation. Empty,
 duplicate, credential-bearing, or non-executable entries are refused before a
 plan is written.
@@ -76,13 +76,13 @@ plan is written.
 Installable profiles today are `kg` (Quipu + Camayoc), `retrieval` (plus
 Bobbin), `code-intel` (plus Yupana), `everything` (plus Desire Path and,
 when selected with `--crew`, Shantytown/Creel), and `crew` (Shantytown, Creel,
-both, or standalone). CABOODLE installs
+both, or standalone). Tambo installs
 checksum-pinned Shantytown and Creel distributions. Creel verification remains
 browser-owned: it requires explicit machine-readable doctor and admission
 documents and refuses missing, unknown, unredacted, or non-admit evidence. See
 the [crew capability contracts](crew-contracts.md).
 
-Until Camayoc publishes `core.pendant`, CABOODLE installs its
+Until Camayoc publishes `core.pendant`, Tambo installs its
 checksum-pinned bootstrap distribution: ontology, shapes, queries, and the
 same fail-closed gate proof. Verification then proves a separate first ingest
 with an absent control, reader-path retrieval, and an idempotent replay.
@@ -90,11 +90,11 @@ Use `--skip-install` when package installation belongs to another system; the
 version and functional checks still run.
 
 Yupana installs from its checksum-pinned v0.12.7 release and proves `callers` on
-an isolated fixture repository. CABOODLE builds Desire Path from the revision its `v0.3.2` tag names (`1f457ec`), stamps
+an isolated fixture repository. Tambo builds Desire Path from the revision its `v0.3.2` tag names (`1f457ec`), stamps
 that identity into `dp version`, and proves an isolated ingest/list round trip. Neither
 verification can write into the user's normal Yupana state or Desire Path DB.
 
-`caboodle render-observability` converts the reviewed selection plus explicit
+`tambo render-observability` converts the reviewed selection plus explicit
 generic targets into Prometheus scrape config, starter alerts, a dashboard, and
 versioned contracts. `validate-observability` fails closed on missing targets or
 uncovered metrics; rendering is review-only and never claims a live scrape.
@@ -105,15 +105,15 @@ endpoint plus an environment-only token, proves a query marker first, and keeps
 the identical bytes pending on ambiguous delivery.
 
 Profiles can also consume one or more directories produced by `quipu share`.
-Caboodle passes each directory unchanged to `quipu import`, records the returned
+Tambo passes each directory unchanged to `quipu import`, records the returned
 share ID, staging graph, eligibility, and blockers in `.caboodle/state.json`,
 and leaves ROOT promotion to the explicit `quipu import promote` review step.
 Non-conforming or off-vocabulary shares remain quarantined and visible rather
-than being reshaped into a Caboodle-specific bundle.
+than being reshaped into a Tambo-specific bundle.
 
 ## Command and option index
 
-Run `caboodle <command> --help` for that command’s complete option syntax.
+Run `tambo <command> --help` for that command’s complete option syntax.
 The table covers the current source tree; published binaries may lag new commands.
 
 | Command | Purpose and options |
@@ -159,7 +159,7 @@ environment variables and observability targets.
 
 ### Quipu paired release updates
 
-`caboodle update-release --tool quipu --plan caboodle-plan.toml` selects the
+`tambo update-release --tool quipu --plan caboodle-plan.toml` selects the
 exact version and per-target SHA256 in `release-pins/quipu.toml`, rather than
 implicitly trusting the latest release or its downloaded checksum. The
 publication must provide the expected archive and checksum exactly once; both

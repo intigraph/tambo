@@ -2,7 +2,7 @@
 //!
 //! On a host whose stack is delivered by a package manager, that manager is
 //! the only writer. On apt hosts that is the root unattended-upgrades lane;
-//! automated caboodle runs never call apt or sudo. Caboodle still has to judge
+//! automated caboodle runs never call apt or sudo. Tambo still has to judge
 //! such a tool, so it reads the package receipt (the package that owns the
 //! binary PATH runs, and its version) and compares the upstream version with
 //! the reviewed pin: current, ahead (never downgraded) or behind (the package
