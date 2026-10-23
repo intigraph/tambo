@@ -44,12 +44,16 @@ https://github.com/intigraph/tambo --tag vX.Y.Z --locked`). Either way,
 
 ```bash
 brew install scbrown/tap/caboodle
-tambo --version
+caboodle --version
 ```
+
+This formula currently installs only the `caboodle` compatibility command.
+For a Homebrew install, use `caboodle` wherever the examples below use `tambo`
+(for example, `caboodle quickstart` and `caboodle verify`).
 
 Homebrew owns the installed command; Tambo still composes and verifies the
 stack. Update it with `brew upgrade scbrown/tap/caboodle`. To hold the installed
-version, use `brew pin Tambo`; resume updates with `brew unpin Tambo`.
+version, use `brew pin caboodle`; resume updates with `brew unpin caboodle`.
 The [tap channel guide](https://github.com/scbrown/homebrew-tap#caboodle-preview-channel)
 explains the opt-in nightly channel and switching back to stable.
 

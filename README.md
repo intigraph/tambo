@@ -5,7 +5,7 @@
 Install the Quipu stack from a plan you can review, then prove the selected tools
 work. Give an agent durable memory and code context, without assembling every tool
 by hand. Tambo is a CLI and [agent skill](skills/tambo/SKILL.md).
-The compatibility command `tambo` remains available.
+The compatibility command `caboodle` remains available.
 
 ## Install
 
@@ -14,7 +14,7 @@ curl -fsSL https://raw.githubusercontent.com/intigraph/tambo/main/install.sh | s
 ```
 
 Downloads the latest release, verifies its SHA-256 and version, and installs
-`tambo` and `tambo` in `${CARGO_HOME:-$HOME/.cargo}/bin`. Requires `curl`,
+`tambo` and `caboodle` in `${CARGO_HOME:-$HOME/.cargo}/bin`. Requires `curl`,
 `tar`, Python 3 and `sha256sum` or `shasum`. Add that directory to `PATH`.
 Published archives support Linux x86_64 and macOS arm64/x86_64; **Linux arm64
 has no published archive**. Source builds, pinned versions, removal and the
