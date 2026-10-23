@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/intigraph/tambo/compare/v0.6.0...v0.6.1) (2026-10-23)
+
+
+### Bug Fixes
+
+* **release:** record pendant admission and verify only when admitted ([#186](https://github.com/intigraph/tambo/issues/186)) ([45b2ffb](https://github.com/intigraph/tambo/commit/45b2ffb4d8802d9ec7310d03b6269195ad94db7b))
+
 ## [0.6.0](https://github.com/intigraph/tambo/compare/v0.5.0...v0.6.0) (2026-10-23)
 
 
