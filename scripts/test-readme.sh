@@ -26,7 +26,7 @@ install = text.split("## Install", 1)[1].split("## First success", 1)[0]
 local = text.split("## First success", 1)[1].split("### Advanced:", 1)[0]
 bootstrap = re.findall(r"```bash\n(.*?)```", install, re.S)[0]
 # Exercise this proposal's installer rather than fetching unrelated main bytes.
-bootstrap = bootstrap.replace('https://raw.githubusercontent.com/scbrown/tambo/main/install.sh', pathlib.Path(sys.argv[1]).parent.joinpath('install.sh').as_uri())
+bootstrap = bootstrap.replace('https://raw.githubusercontent.com/intigraph/tambo/main/install.sh', pathlib.Path(sys.argv[1]).parent.joinpath('install.sh').as_uri())
 commands = re.findall(r"```bash\n(.*?)```", local, re.S)
 assert commands == ["tambo quickstart\n", "tambo verify\n"], commands
 pathlib.Path(sys.argv[2]).write_text(bootstrap + '\nexport PATH="${CARGO_HOME:-$HOME/.cargo}/bin:$PATH"\n' + "\n".join(commands))

@@ -9,6 +9,17 @@ The compatibility command `caboodle` remains available.
 
 ## Install
 
+```bash
+curl -fsSL https://raw.githubusercontent.com/intigraph/tambo/main/install.sh | sh
+```
+
+Downloads the latest release, verifies its SHA-256 and version, and installs
+`tambo` and `caboodle` in `${CARGO_HOME:-$HOME/.cargo}/bin`. Requires `curl`,
+`tar`, Python 3 and `sha256sum` or `shasum`. Add that directory to `PATH`.
+Published archives support Linux x86_64 and macOS arm64/x86_64; **Linux arm64
+has no published archive**. Source builds, pinned versions, removal and the
+Homebrew alternative are in the [installation reference](https://intigraph.github.io/tambo/installation-reference.html).
+
 **Debian and Ubuntu (amd64):** install from the signed apt repository, which
 republishes each checksum-verified release. The package puts `tambo` and the
 compatibility `caboodle` command in `/usr/bin`. Check the signing key's
@@ -33,17 +44,6 @@ transitional package that depends on `tambo`.
 Channels, pinning and rollback:
 [scbrown/apt](https://github.com/scbrown/apt#channels-and-pinning).
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/scbrown/tambo/main/install.sh | sh
-```
-
-Downloads the latest release, verifies its SHA-256 and version, and installs
-`tambo` and `caboodle` in `${CARGO_HOME:-$HOME/.cargo}/bin`. Requires `curl`,
-`tar`, Python 3 and `sha256sum` or `shasum`. Add that directory to `PATH`.
-Published archives support Linux x86_64 and macOS arm64/x86_64; **Linux arm64
-has no published archive**. Source builds, pinned versions, removal and the
-Homebrew alternative are in the [installation reference](https://scbrown.github.io/caboodle/installation-reference.html).
-
 ## First success: local, single-user
 
 Run in an empty directory you intend to keep:
@@ -64,7 +64,7 @@ tambo verify
 ### Advanced: shared services and agents
 
 For issued credentials, remote stores and registering Bobbin with your agent,
-use the [agent and installation reference](https://scbrown.github.io/caboodle/installation-reference.html).
+use the [agent and installation reference](https://intigraph.github.io/tambo/installation-reference.html).
 The default quickstart is local and needs no account or remote server.
 
 From the code repository you want searchable, initialize and index it before
@@ -78,12 +78,12 @@ claude mcp add bobbin -- "$(command -v bobbin)" serve "$PWD"
 
 ## Where to go next
 
-- [Choose a profile](https://scbrown.github.io/caboodle/profiles.html) or use `tambo init --guided`.
+- [Choose a profile](https://intigraph.github.io/tambo/profiles.html) or use `tambo init --guided`.
 - [Camayoc](https://github.com/scbrown/camayoc): vocabulary, shapes and governed agent memory.
-- [Getting started](https://scbrown.github.io/caboodle/getting-started.html) and [command reference](https://scbrown.github.io/caboodle/reference.html).
+- [Getting started](https://intigraph.github.io/tambo/getting-started.html) and [command reference](https://intigraph.github.io/tambo/reference.html).
 - **Load this repository's graph:** repository-pendant publication is pending.
   When a release provides the archive, checksum and provenance, follow Quipu's
-  [verified import workflow](https://scbrown.github.io/quipu/sharing/index.html).
+  [verified import workflow](https://intigraph.github.io/quipu/sharing/index.html).
   Import stages knowledge; it does not promote it into ROOT automatically.
 
 ## The stack
@@ -97,7 +97,7 @@ when.
 
 | tool | what it gives your agents |
 |---|---|
-| [tambo](https://github.com/scbrown/tambo) | 🧰 Agent Platform Toolkit - installs and configures the quipu stack |
+| [tambo](https://github.com/intigraph/tambo) | 🧰 Agent Platform Toolkit - installs and configures the quipu stack |
 | [quipu](https://github.com/scbrown/quipu) | stores shared facts with provenance and history; can check writes against your rules |
 | [camayoc](https://github.com/scbrown/camayoc) | prepares knowledge and vocabulary for Quipu, with checks before it is admitted |
 | [quechua](https://github.com/scbrown/quechua) | shared vocabulary and shapes for interoperable knowledge |

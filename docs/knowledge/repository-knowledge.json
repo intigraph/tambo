@@ -8,7 +8,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/tambo/README.md",
       "summary": "Tambo installs and verifies the knowledge-tool stack from a reviewable plan. The transition retains the caboodle command and existing plan/state paths; publication and installed verification remain separate.",
-      "source_sha256": "78bcc065cd3a6d88a7c54e71aa69ccff2199db705210943018c4cae348106688",
+      "source_sha256": "ca22562a35bf26d17fd4e9d9ce34d8309768898bf8d714775fe79df713a31264",
       "type": "Concept"
     },
     {
@@ -60,7 +60,7 @@
       "source": "Cargo.toml",
       "subject": "http://aegis.gastown.local/ontology/code/tambo/Cargo.toml",
       "summary": "The package and primary command are tambo, while the Rust library import name remains caboodle and a legacy caboodle binary is explicitly declared for compatibility.",
-      "source_sha256": "79c08b5213243be342e58e23c1ae53091c1fce03e3e347d9fd121fba8ae799ba",
+      "source_sha256": "d1fbb60bb8460f96413ef15235be4b98e54dbd513793c66e339e99f286641bbc",
       "type": "DecisionRecord",
       "properties": {
         "status": "active",
@@ -72,7 +72,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/tambo/README.md",
       "summary": "Start with the local single-user quickstart and its verified-tool success checks before selecting remote service mode.",
-      "source_sha256": "78bcc065cd3a6d88a7c54e71aa69ccff2199db705210943018c4cae348106688",
+      "source_sha256": "ca22562a35bf26d17fd4e9d9ce34d8309768898bf8d714775fe79df713a31264",
       "properties": {
         "startHereOrder": 1,
         "glossaryTerm": "https://scbrown.github.io/quechua/ns#Tool"
@@ -93,7 +93,7 @@
       "source": "Cargo.toml",
       "subject": "http://aegis.gastown.local/ontology/code/tambo/Cargo.toml",
       "summary": "Read the declared library and binary names before integrating the crate or changing compatibility assumptions.",
-      "source_sha256": "79c08b5213243be342e58e23c1ae53091c1fce03e3e347d9fd121fba8ae799ba",
+      "source_sha256": "d1fbb60bb8460f96413ef15235be4b98e54dbd513793c66e339e99f286641bbc",
       "properties": {
         "startHereOrder": 3
       }

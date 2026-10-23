@@ -9,8 +9,8 @@ src = "src"
 default-theme = "coal"
 preferred-dark-theme = "coal"
 # Keep working GitHub alias links until the repository rename is verified.
-git-repository-url = "https://github.com/scbrown/caboodle"
-edit-url-template = "https://github.com/scbrown/caboodle/edit/main/docs/book/{path}"
+git-repository-url = "https://github.com/intigraph/tambo"
+edit-url-template = "https://github.com/intigraph/tambo/edit/main/docs/book/{path}"
 additional-css = ["custom/css/custom.css"]
 site-url = "/tambo/"
 

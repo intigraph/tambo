@@ -9,13 +9,13 @@ Checksummed releases: Linux x86_64, macOS arm64 and macOS x86_64.
 The installer verifies SHA256 before placing the binary in `~/.cargo/bin`.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/scbrown/caboodle/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/intigraph/tambo/main/scripts/install.sh | bash
 ```
 
 To pin a release, pass the version to the receiving shell:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/scbrown/caboodle/main/scripts/install.sh | CABOODLE_VERSION=vX.Y.Z bash
+curl -fsSL https://raw.githubusercontent.com/intigraph/tambo/main/scripts/install.sh | CABOODLE_VERSION=vX.Y.Z bash
 ```
 
 Add the install directory to this shell's PATH:
@@ -37,7 +37,7 @@ not read that file, which is why the agent step below registers servers by
 absolute path.
 
 Or build the latest release from source with Rust (`cargo install --git
-https://github.com/scbrown/caboodle --tag vX.Y.Z --locked`). Either way,
+https://github.com/intigraph/tambo --tag vX.Y.Z --locked`). Either way,
 `caboodle --version` prints `caboodle X.Y.Z` for the release you installed.
 
 ### macOS with Homebrew
@@ -102,7 +102,7 @@ remains remote until you remove that configuration deliberately.
 To customize the tools and intended-use contract instead, use
 `tambo init --guided` or `tambo plan --profile retrieval --intent caboodle-intent.toml`,
 review the resulting plan, then run `tambo install`. See the
-[walkthrough](https://scbrown.github.io/caboodle/getting-started.html).
+[walkthrough](https://intigraph.github.io/tambo/getting-started.html).
 
 ## On your own code
 
@@ -114,11 +114,11 @@ review the resulting plan, then run `tambo install`. See the
 | Recheck the selected tools | `caboodle verify` |
 | Compare against this build's reviewed versions | `caboodle check-updates` |
 
-[Full command and configuration reference](https://scbrown.github.io/caboodle/reference.html).
+[Full command and configuration reference](https://intigraph.github.io/tambo/reference.html).
 
 ## Wire it into your agent
 
-Tambo is a CLI, with an [agent skill](https://github.com/scbrown/tambo/blob/main/skills/tambo/SKILL.md), not an MCP
+Tambo is a CLI, with an [agent skill](https://github.com/intigraph/tambo/blob/main/skills/tambo/SKILL.md), not an MCP
 server. Bobbin, which the `retrieval` profile installed above, is one. It
 searches one repository: the code you want your agent to work on, such as your
 own project's git checkout. Do not use `~/caboodle`, which holds only the plan.
@@ -146,7 +146,7 @@ serve` exits with `Bobbin not initialized` and Claude Code reports the server as
 failed to connect.
 
 MCP (Model Context Protocol) lets your agent call the installed server.
-[Agent setup](https://scbrown.github.io/caboodle/agents.html) covers indexing, Yupana, other clients
+[Agent setup](https://intigraph.github.io/tambo/agents.html) covers indexing, Yupana, other clients
 and managed crew registration through `caboodle project-settings`.
 
 ## Before you start
@@ -160,12 +160,12 @@ and managed crew registration through `caboodle project-settings`.
 Have `curl`, `tar`, `git`, `bash`, `python3` and `sha256sum` on PATH
 (`brew install coreutils` supplies `sha256sum` on macOS).
 The `everything` profile also needs Go. No account or remote server is needed.
-[Installation details](https://scbrown.github.io/caboodle/installing.html) cover source builds,
+[Installation details](https://intigraph.github.io/tambo/installing.html) cover source builds,
 installed files and removal; `caboodle doctor` names missing prerequisites.
 
 ## What's next
 
-- [Read the book](https://scbrown.github.io/caboodle/introduction.html)
-- [Find a topic in the docs map](https://scbrown.github.io/caboodle/docs-map.html)
-- [Choose your profile](https://scbrown.github.io/caboodle/profiles.html)
+- [Read the book](https://intigraph.github.io/tambo/introduction.html)
+- [Find a topic in the docs map](https://intigraph.github.io/tambo/docs-map.html)
+- [Choose your profile](https://intigraph.github.io/tambo/profiles.html)
 

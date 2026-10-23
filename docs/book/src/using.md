@@ -4,7 +4,7 @@ Caboodle ships a resumable interview and the plan/apply/verify engine with
 adapters for Quipu, Camayoc, Bobbin, Yupana, and Desire Path.
 
 ```bash
-cargo install --git https://github.com/scbrown/caboodle --locked
+cargo install --git https://github.com/intigraph/tambo --locked
 
 # Guided: use, crew themes, and anticipated graph questions are checkpointed.
 caboodle init --guided
