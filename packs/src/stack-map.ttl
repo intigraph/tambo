@@ -11,7 +11,7 @@
 stack:caboodle a caboodle:StackComponent ;
     rdfs:label "tambo" ;
     rdfs:comment "The whole kit — an AI-installable install wizard that installs the stack, proves it works with paired negative controls, and watches it run." ;
-    caboodle:repository <https://github.com/scbrown/tambo> ;
+    caboodle:repository <https://github.com/intigraph/tambo> ;
     caboodle:language "Rust" ;
     caboodle:installs stack:quipu, stack:camayoc, stack:bobbin, stack:yupana, stack:shantytown ;
     caboodle:observes stack:prometheus .

@@ -640,7 +640,6 @@
     },
     "packs/src/stack-map.ttl": {
       "lines": {
-        "13ee3c094941186fec724bca7231baf4781785966c5fe5b2c211ec7828b2b959": 1,
         "157f6fd0161372e1ee2f94aed010a54aa316b616f44d6bc3fd6576f9ca8c7f3c": 1,
         "18cb850492bf965a89c245fe7405c31bff2277b33a787437bfb7a9d76af6b9bd": 1,
         "20ca8c5f8c9dc5b8a53c17a94484f082544c72fa3c7202fa433146d805ae5259": 1,
@@ -655,6 +654,7 @@
         "570118b40ce452adfa1dbe3c68fb4266ea263518017f9a174511074caf1d38ce": 1,
         "5953d113ab8259cfd22473a5ed939588264a4b4ed7dba9361299af843c7d3346": 1,
         "6cdd65d688a68c7e505d60092d730405eb0830e30ce49211443081ee11d0ced7": 1,
+        "8cd6ffadab7eaeb0c05a56d6955ecae0ee819e2138f824de4ef05601a83a4d67": 1,
         "8d1b91e0c4cc1d51747c1309bde515501ba441a421fa3b89495fd74a2b463502": 1,
         "8f2af82b76bcf90ba4e9afa9b4c4a27cb4ab1fcc7bd3509b40fc48e641f7d5ba": 1,
         "9137fb73f8eaa85cdd53f5ace2a75a50a678c8870975618d0de46dc21962bce6": 1,
@@ -683,7 +683,6 @@
         "123bb9283b57964eeefac32d74e047f3c688ae17076f3fbb766f5b1e9ef2f485": 1,
         "16cee0b7c360efc7e93c8b205c3627ea93cdad27270f784f9a23d182d690866d": 1,
         "179c075df3b99b9c97c528367d320874f40687334317f02d3e5c948b559881d7": 1,
-        "23e08f46a86124ee0083ac1a6064cd05d8415ba9f089cf820ad8367d5534f942": 1,
         "365abc52ccf8b023fcd21fa306f8c130391894bb265bf32507c2ca111ea441ce": 1,
         "4f1d7e1d092afeb4aa5500f017e0fd972fc13f0b523dbf155cbb3e549a0341c0": 1,
         "52d5d9d3e94ce1e264e83f4aff70a3aa46d83706ff6d51dbb3bed686191c9dc8": 2,
@@ -705,6 +704,7 @@
         "dca93c5c63d9a43b765d979a04dded060f03dafe609e282e37c7b4dfc24cc6ba": 1,
         "df8249d7a6d7a359606f7f8ab5583f8c5b8a6fa2147687bc7841566528fd6251": 1,
         "f21e932b271da6a6978829be92f73e8f2ec5a417b1f517bfceac5853856b9ca9": 1,
+        "f4e1ad5e557a1591aae39b006b0637cb3bc580b58f02f2d835b014fd4e1e6704": 1,
         "f84bba92ef2c787cad6c418fbc1bf5c56140dd65fbdf48ba53047a3bb22b418c": 4
       },
       "reason": "Immutable vocabulary, graph and subject IRIs or verified text-share policy metadata. Product labels and repository links are canonical."
@@ -717,7 +717,6 @@
         "082d7d1510095ea144a49691ed6e9704de1e9b64dc62b954e4bf86b315fb5484": 1,
         "0f35125ad84ec3eec2d7fecd343ecbb110cd881fff88d282ba4598c8f2c2a213": 1,
         "0f8924bc5543d114da28ed7addc44f3e967d48936dfd39017016136f61ac2a05": 1,
-        "124a3dfefd376ecb833d27da9a1af0ca1dfc0158ea9a78575cf304c3e1ec3fb5": 1,
         "127c3c4cfab0c23673d561e1892fee37548c0ec8f60d920560fbb2c7e26db23f": 1,
         "1970672b830b8a648a1e9c7449adf49a95af7eaf11fdf7e4d5ab778715319f8e": 1,
         "1b95c7db4d91c41137ffaed6614752b8d411e4914d1196fe47e842d3a5e31e06": 1,
@@ -751,6 +750,7 @@
         "a21557f8ff8657963263f459fd3144de7d0bfbef706ea2a952762f481a052a8d": 1,
         "a4d10f1f722f73c93f2a8afb639ed480e6eb81bbbcf34bb926751b2e9db849b1": 1,
         "a9bbd23f6614661f7d3b2803a727fedb8800b95833b93ca515cced3018d4f9cf": 1,
+        "af8abc7c772969d1a2a208e97f391a02474794708ab65f66d70449f2bfbce8db": 1,
         "b88a654c9bc0c8e4f6f68e1764a41d35326dd685a3fa5677962889219ca07d19": 1,
         "bdf7541835b7cc911155fcf210f30de07d8190db50c67274572563def0e59394": 1,
         "c2d975ccebb1108fd60d0dc69a12c97768d3b46f6d2ee6bd5ba42713f0ccece1": 1,
@@ -770,7 +770,7 @@
     },
     "packs/stack-map/pendant/manifest.json": {
       "lines": {
-        "b16ecf756f83f51015aeb7e35e57bde6b7e30ecdab4ee4654373bbb6e997011d": 1
+        "70a949172e1f37fa6fd0e6f8bde908d0c8e275e3eabca4ac3767a5b336631b58": 1
       },
       "reason": "Immutable vocabulary, graph and subject IRIs or verified text-share policy metadata. Product labels and repository links are canonical."
     },
@@ -806,9 +806,9 @@
         "c94f10fac318a57c20ae5f8d50789f7db7a6a69df70d7a522f3a9bbb1a129c7e": 1,
         "ca682abeb13d21e890bc40b68c2103bc740a916065db347c99c0bdcfe4f45039": 1,
         "cc881e0c85666b4cbf3f0ff42ae9602e627494e5e472d4d23c03597748e564e1": 1,
+        "d2da822fbfcb743b92daeb4e9b163a347c18b5dbe1467577f01343e429433cf4": 1,
         "dd5e4e8199baac82e9957b301d51e515d7e4ba438c26ab4583de957120f788a5": 1,
         "ddd8125076ebfbe31eea440879a84af95bae914890c8d22c4c534456fdd5633b": 1,
-        "e60b39894d91afcee775ed29c8c6508fc45cac4e92b2bfa19421de18ca94c7f9": 1,
         "e6decbc9b4dbabe8f14340b3e15547cf594fdd398fe1f333ecafea88680ddc51": 1,
         "f7101a6958a05b45effb739f84c78e2c7330ef4a8dc91d6f874d756c02b69f59": 1,
         "f9fdc2853014c30a000e6d77d90861f7628e23efcbe677e61673eced7c520d90": 1,
@@ -818,7 +818,7 @@
     },
     "packs/stack-operations/pendant/manifest.json": {
       "lines": {
-        "55e39fb590e2c35a27cab88cf2a20e4c6a04aee0231442af903d7dfa2f99079d": 1
+        "e92f41999f55f95b8ed9a13ad4d5982771786cebe81b654fef354684ad9cc75f": 1
       },
       "reason": "Immutable vocabulary, graph and subject IRIs or verified text-share policy metadata. Product labels and repository links are canonical."
     },
