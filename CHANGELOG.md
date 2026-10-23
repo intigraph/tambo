@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.6.0](https://github.com/intigraph/tambo/compare/v0.5.0...v0.6.0) (2026-10-23)
+
+
+### Features
+
+* add repository knowledge pendant source ([#172](https://github.com/intigraph/tambo/issues/172)) ([6db2109](https://github.com/intigraph/tambo/commit/6db2109095785981ced864106c14a0a6949636cd))
+
+
+### Bug Fixes
+
+* complete Tambo branding and preserve compatibility contracts ([#173](https://github.com/intigraph/tambo/issues/173)) ([032919c](https://github.com/intigraph/tambo/commit/032919cca58cb656da69cf09c46e6af57e8a0482))
+* **knowledge:** stop witnessing Cargo.toml, which every release rewrites ([#185](https://github.com/intigraph/tambo/issues/185)) ([154fbb0](https://github.com/intigraph/tambo/commit/154fbb05c6b90948bcf69d2df6e619ad92667123))
+* **release:** use canonical Tambo owner and retain repository guard ([#183](https://github.com/intigraph/tambo/issues/183)) ([60744cf](https://github.com/intigraph/tambo/commit/60744cf5fbfa5eba724b38818c8b1a7a12b780c3))
+* **share:** publish and verify the repository share as intigraph/tambo ([#184](https://github.com/intigraph/tambo/issues/184)) ([8ed2f2d](https://github.com/intigraph/tambo/commit/8ed2f2d8b5fa8cdba2b3ee6d911877d20a460cc3))
+
 ## [0.5.0](https://github.com/scbrown/tambo/compare/v0.4.0...v0.5.0) (2026-10-21)
 
 

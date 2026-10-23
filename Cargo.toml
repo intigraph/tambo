@@ -1,6 +1,6 @@
 [package]
 name = "tambo"
-version = "0.5.0"
+version = "0.6.0"
 edition = "2021"
 description = "Install and prove the whole AI knowledge-tool kit"
 license = "Apache-2.0"
