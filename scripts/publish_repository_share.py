@@ -17,7 +17,9 @@ import tempfile
 # Release source must stay clean when modules load.
 sys.dont_write_bytecode = True
 
-REPOSITORY = "scbrown/tambo"
+# The one source identity. No release before the 2026-10-22 move published a
+# share, so the former owner has no provenance to honour and is refused.
+REPOSITORY = "intigraph/tambo"
 MEMBERS = {"export.nt", "export.ttl", "payload.nq", "manifest.json", "manifest.ttl", "shapes.ttl", "queries.ttl"}
 
 

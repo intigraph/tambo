@@ -120,6 +120,8 @@ class Knowledge(unittest.TestCase):
         self.assertIn('interfaceKind> "file-format"', text)
         self.assertIn('supersessionStatus> "not-recorded-in-source"', text)
         self.assertIn('startHereOrder> "3"^^', text)
+        self.assertIn("wasDerivedFrom> <https://github.com/intigraph/tambo/blob/" + "1" * 40 + "/", text)
+        self.assertNotIn("github.com/scbrown/tambo", text)
         self.assertNotIn("/content>", text)
         self.assertNotIn("owl#sameAs", text)
 

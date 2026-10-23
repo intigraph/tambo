@@ -50,7 +50,7 @@ class Publication(unittest.TestCase):
         self.archive.with_name(self.archive.name + ".sha256").write_text(sha + "  " + self.archive.name + "\n")
         self.proof = {
             "schema": "quipu.repository-share-producer/v1",
-            "source_repository": "scbrown/tambo",
+            "source_repository": "intigraph/tambo",
             "source_revision": self.revision,
             "release_tag": "v1.2.3",
             "archive_sha256": sha,
@@ -95,6 +95,10 @@ class Publication(unittest.TestCase):
         self.prepare()
         for field, value in [
             ("source_repository", "scbrown/quipu"),
+            # The pre-move owner never published a share; it is not a valid source.
+            ("source_repository", "scbrown/tambo"),
+            ("source_repository", "foreign/tambo"),
+            ("source_repository", "intigraph/tambo-fork"),
             ("source_revision", "f" * 40),
             ("release_tag", "v9.9.9"),
             ("archive_sha256", "f" * 64),
@@ -212,6 +216,17 @@ class Publication(unittest.TestCase):
             verifier.wait("v1.2.3", self.revision, attempts=2, pause=pauses.append, run=run)
         self.assertEqual(len(calls), 2)
         self.assertEqual(pauses, [30])
+        for args in calls:
+            self.assertEqual(args[args.index("--repo") + 1], "intigraph/tambo")
+
+    def test_moved_repository_is_the_only_source_identity(self):
+        self.assertEqual(publisher.REPOSITORY, "intigraph/tambo")
+        self.prepare()
+        self.assertEqual(verifier.verify(self.root, "v1.2.3", self.revision)["source_repository"], "intigraph/tambo")
+        for name in ("publish_repository_share.py", "build-repository-share.py",
+                     "verify-repository-share.py", "build-repository-knowledge.py"):
+            with self.subTest(script=name):
+                self.assertNotIn("scbrown/tambo", (ROOT / name).read_text())
 
 
 if __name__ == "__main__":

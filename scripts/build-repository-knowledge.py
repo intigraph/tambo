@@ -87,7 +87,7 @@ def render(source, revision, lookup):
         fact(
             subject,
             PROV + "wasDerivedFrom",
-            "https://github.com/scbrown/tambo/blob/" + revision + "/" + path,
+            "https://github.com/intigraph/tambo/blob/" + revision + "/" + path,
             iri=True,
         )
         for key, value in record.get("properties", {}).items():

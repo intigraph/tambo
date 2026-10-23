@@ -208,11 +208,11 @@ def alignment_carrier(source):
 
 
 def build(revision, source, tooling, binary, bobbin, output):
-    repository = "scbrown/tambo"
+    repository = "intigraph/tambo"
     source, tooling, output = map(Path, (source, tooling, output))
     if output.exists():
         raise ValueError("repository share output already exists")
-    if not re.fullmatch(r"scbrown/[a-z][a-z0-9-]*", repository):
+    if not re.fullmatch(r"intigraph/[a-z][a-z0-9-]*", repository):
         raise ValueError("invalid repository identity")
     slug = repository.split("/")[1]
     if (
