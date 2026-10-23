@@ -28,7 +28,7 @@
 These links point to the source repository so they work on both GitHub and the
 published book. Every loose document under `docs/` is listed here.
 
-- [Stack README standard](https://github.com/scbrown/tambo/blob/main/docs/stack/README-STANDARD.md): section order, theme, shared stack block and review checklist.
-- [README template](https://github.com/scbrown/tambo/blob/main/docs/stack/README-TEMPLATE.md): fill-in template implementing the standard.
-- [Design vision](https://github.com/scbrown/tambo/blob/main/docs/design/vision.md): **Historical** design proposal; use the reference for shipped commands.
-- [txtai gap analysis](https://github.com/scbrown/tambo/blob/main/docs/design/txtai-gap-analysis.md): **Historical** comparison and design opportunities, not a current capability guarantee.
+- [Stack README standard](https://github.com/intigraph/tambo/blob/main/docs/stack/README-STANDARD.md): section order, theme, shared stack block and review checklist.
+- [README template](https://github.com/intigraph/tambo/blob/main/docs/stack/README-TEMPLATE.md): fill-in template implementing the standard.
+- [Design vision](https://github.com/intigraph/tambo/blob/main/docs/design/vision.md): **Historical** design proposal; use the reference for shipped commands.
+- [txtai gap analysis](https://github.com/intigraph/tambo/blob/main/docs/design/txtai-gap-analysis.md): **Historical** comparison and design opportunities, not a current capability guarantee.

@@ -6,7 +6,7 @@ records:
 
 ```bash
 # Build Tambo from source instead of the release installer.
-cargo install --git https://github.com/scbrown/tambo --locked
+cargo install --git https://github.com/intigraph/tambo --locked
 
 # Report what would block an install here. Changes nothing; exits nonzero on a blocker.
 tambo doctor

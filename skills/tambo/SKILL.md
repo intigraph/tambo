@@ -17,7 +17,7 @@ For Tambo itself, prefer the reviewed checksummed release path documented in
 `docs/book/src/installing.md`. A source install must pin a reviewed commit.
 
 1. If `tambo` is absent and the request authorizes installation, install the public source with:
-   `cargo install --git https://github.com/scbrown/tambo --rev <reviewed-commit> --bin tambo --locked`.
+   `cargo install --git https://github.com/intigraph/tambo --rev <reviewed-commit> --bin tambo --locked`.
    Otherwise stop and request authorization; bootstrapping Tambo is itself an
    installation.
 2. Prove the binary answers: `tambo --version`.

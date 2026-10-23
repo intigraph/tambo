@@ -9,8 +9,8 @@ src = "src"
 default-theme = "coal"
 preferred-dark-theme = "coal"
 # Canonical source links for the published Tambo book.
-git-repository-url = "https://github.com/scbrown/tambo"
-edit-url-template = "https://github.com/scbrown/tambo/edit/main/docs/book/{path}"
+git-repository-url = "https://github.com/intigraph/tambo"
+edit-url-template = "https://github.com/intigraph/tambo/edit/main/docs/book/{path}"
 additional-css = ["custom/css/custom.css"]
 site-url = "/tambo/"
 

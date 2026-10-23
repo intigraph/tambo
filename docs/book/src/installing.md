@@ -40,17 +40,17 @@ embedded release pins; it does not refresh package metadata.
 Run the checksummed release installer in one line:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/scbrown/tambo/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/intigraph/tambo/main/scripts/install.sh | bash
 ```
 
 Pin a release by setting the version on the receiving shell:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/scbrown/tambo/main/scripts/install.sh | CABOODLE_VERSION=vX.Y.Z bash
+curl -fsSL https://raw.githubusercontent.com/intigraph/tambo/main/scripts/install.sh | CABOODLE_VERSION=vX.Y.Z bash
 ```
 
 The script still verifies the release archive's SHA256 checksum before replacing
-the binary. Read the [installer source](https://github.com/scbrown/tambo/blob/main/scripts/install.sh)
+the binary. Read the [installer source](https://github.com/intigraph/tambo/blob/main/scripts/install.sh)
 when inspecting the bootstrap. After installation, `tambo --version` reads
 back the installed release.
 
@@ -70,7 +70,7 @@ reorder PATH.
 A Rust toolchain can install the reviewed revision directly:
 
 ```bash
-cargo install --git https://github.com/scbrown/tambo \
+cargo install --git https://github.com/intigraph/tambo \
   --rev <reviewed-commit-sha> --locked
 tambo --version
 ```

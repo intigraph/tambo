@@ -61,6 +61,8 @@ jobs:
         run: scripts/test-release-install.sh
       - name: Bootstrap legacy and renamed release controls
         run: python3 scripts/test-install-bootstrap.py
+      - name: Canonical release repository refusal controls
+        run: python3 scripts/test-release-repository.py
       - name: Registry visibility refusal controls
         run: python3 scripts/test-crate-version.py
 

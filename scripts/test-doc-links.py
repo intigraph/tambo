@@ -14,7 +14,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 REPO = Path(__file__).resolve().parent.parent
 OWN = "https://github.com/scbrown/caboodle/blob/main/"
-CANONICAL = "https://github.com/scbrown/tambo/blob/main/"
+LEGACY = "https://github.com/scbrown/tambo/blob/main/"
+CANONICAL = "https://github.com/intigraph/tambo/blob/main/"
 TARGETS = [
     "skills/tambo/SKILL.md",
     "docs/design/txtai-gap-analysis.md",
@@ -57,14 +58,14 @@ class DocumentationLinks(unittest.TestCase):
             dest = self.root / target
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(REPO / target, dest)
-        links = [prefix + target for prefix in (OWN, CANONICAL) for target in TARGETS]
+        links = [prefix + target for prefix in (OWN, LEGACY, CANONICAL) for target in TARGETS]
         rc, result = self.check(links)
         self.assertEqual(rc, 0, result)
-        self.assertEqual((result["successful"], result["remaps"], result["excludes"]), (10, 10, 0))
+        self.assertEqual((result["successful"], result["remaps"], result["excludes"]), (15, 15, 0))
         (self.root / TARGETS[0]).unlink()
         rc, result = self.check(links)
         self.assertNotEqual(rc, 0)
-        self.assertEqual((result["successful"], result["errors"], result["excludes"]), (8, 2, 0))
+        self.assertEqual((result["successful"], result["errors"], result["excludes"]), (12, 3, 0))
         self.assertIn("SKILL.md", json.dumps(result["error_map"]))
 
     def test_existing_anchor_passes_missing_anchor_fails(self):
@@ -83,13 +84,13 @@ class DocumentationLinks(unittest.TestCase):
         page.write_text('<h2 id="why-use-it">Why use it</h2>')
         link = "https://scbrown.github.io/caboodle/introduction.html#why-use-it"
         canonical = "https://scbrown.github.io/tambo/introduction.html#why-use-it"
-        rc, result = self.check([link, canonical])
+        rc, result = self.check([link, canonical, "https://intigraph.github.io/tambo/introduction.html#why-use-it"])
         self.assertEqual(rc, 0, result)
-        self.assertEqual((result["successful"], result["remaps"], result["excludes"]), (2, 2, 0))
+        self.assertEqual((result["successful"], result["remaps"], result["excludes"]), (3, 3, 0))
         page.write_text('<h2 id="new-heading">New heading</h2>')
-        rc, result = self.check([link, canonical])
+        rc, result = self.check([link, canonical, "https://intigraph.github.io/tambo/introduction.html#why-use-it"])
         self.assertNotEqual(rc, 0, result)
-        self.assertEqual((result["errors"], result["excludes"]), (2, 0))
+        self.assertEqual((result["errors"], result["excludes"]), (3, 0))
 
     def test_other_pages_books_are_not_remapped(self):
         rc, result = self.check([
@@ -111,10 +112,13 @@ class DocumentationLinks(unittest.TestCase):
             "https://github.com/scbrown/caboodle/tree/main/missing.md",
             "https://github.com/other/tambo/blob/main/missing.md",
             "https://github.com/scbrown/tambo/blob/v1.0.0/missing.md",
+            "https://github.com/intigraph/other/blob/main/missing.md",
+            "https://github.com/intigraph/tambo/blob/v1.0.0/missing.md",
+            "https://github.com/intigraph/tambo/tree/main/missing.md",
         ]
         rc, result = self.check(links)
         self.assertEqual(rc, 0, result)
-        self.assertEqual((result["remaps"], result["excludes"], result["successful"]), (0, 6, 0))
+        self.assertEqual((result["remaps"], result["excludes"], result["successful"]), (0, 9, 0))
 
     def test_normal_mode_still_checks_unrelated_remote_failure(self):
         # A real disposable HTTP server supplies a positive 200 control and a

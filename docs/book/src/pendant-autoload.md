@@ -21,7 +21,7 @@ graphs that are not loaded yet.
   Different shape bundles need an explicit `--shapes-from`. A nonconforming
   union stays in quarantine, and nothing is promoted to ROOT. A local
   retraction survives a reload of the same snapshot. See quipu's
-  [pack composition](https://scbrown.github.io/quipu/concepts/pack-composition.html).
+  [pack composition](https://intigraph.github.io/quipu/concepts/pack-composition.html).
 - **Manual loading.** `install-stack.sh --pendant PATH` loads a pack by hand, and
   `scripts/setup-environment.sh` stages and verifies packs in cloud
   environments.

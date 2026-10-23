@@ -70,7 +70,7 @@ class Bootstrap(unittest.TestCase):
         checksum = '0' * 64 if corrupt_checksum else hashlib.sha256(path.read_bytes()).hexdigest()
         self.routes[f'{self.base}/{name}.sha256'] = {'status': 200, 'body': f'{checksum}  {name}\n'}
 
-    def run_installer(self, version=None):
+    def run_installer(self, version=None, repository=None, legacy_repository=None):
         route_file = self.root / 'routes.json'
         route_file.write_text(json.dumps(self.routes))
         env = {k: v for k, v in os.environ.items() if not k.startswith(('TAMBO_', 'CABOODLE_'))}
@@ -79,6 +79,10 @@ class Bootstrap(unittest.TestCase):
                    CABOODLE_INSTALL_DIR=str(self.root / 'installed'),
                    CABOODLE_TARGET=self.target, CABOODLE_RELEASE_BASE_URL=self.base,
                    FIXTURE_ROUTES=str(route_file), FIXTURE_REQUESTS=str(self.requests))
+        if repository is not None:
+            env['TAMBO_REPOSITORY'] = repository
+        if legacy_repository is not None:
+            env['CABOODLE_REPOSITORY'] = legacy_repository
         if version:
             env['CABOODLE_VERSION'] = version
         self.result = subprocess.run(['bash', str(ROOT / 'scripts/install.sh')], env=env,
@@ -91,14 +95,31 @@ class Bootstrap(unittest.TestCase):
         for name in names:
             self.assertTrue(os.access(self.root / 'installed' / name, os.X_OK))
 
-    def test_default_uses_compatibility_repository_and_legacy_release(self):
-        self.routes['https://api.github.com/repos/scbrown/tambo/releases/latest'] = {
+    def test_default_uses_canonical_repository_and_legacy_release(self):
+        self.routes['https://api.github.com/repos/intigraph/tambo/releases/latest'] = {
             'status': 200, 'body': '{"tag_name":"v0.2.23"}\n'}
         self.archive('caboodle', 'v0.2.23', ['caboodle'])
         self.run_installer()
         self.assert_installed(['caboodle'])
-        self.assertIn('https://api.github.com/repos/scbrown/tambo/releases/latest',
+        self.assertIn('https://api.github.com/repos/intigraph/tambo/releases/latest',
                       self.requests.read_text().splitlines())
+
+    def test_legacy_repository_override_still_works(self):
+        url = 'https://api.github.com/repos/scbrown/caboodle/releases/latest'
+        self.routes[url] = {'status': 200, 'body': '{"tag_name":"v0.2.23"}'}
+        self.archive('caboodle', 'v0.2.23', ['caboodle'])
+        self.run_installer(legacy_repository='scbrown/caboodle')
+        self.assert_installed(['caboodle'])
+        self.assertIn(url, self.requests.read_text().splitlines())
+
+    def test_tambo_repository_override_wins_over_legacy(self):
+        url = 'https://api.github.com/repos/fixture-owner/tambo/releases/latest'
+        self.routes[url] = {'status': 200, 'body': '{"tag_name":"v0.2.23"}'}
+        self.archive('caboodle', 'v0.2.23', ['caboodle'])
+        self.run_installer(repository='fixture-owner/tambo', legacy_repository='scbrown/caboodle')
+        self.assert_installed(['caboodle'])
+        self.assertIn(url, self.requests.read_text().splitlines())
+        self.assertNotIn('repos/scbrown/caboodle', self.requests.read_text())
 
     def test_pinned_legacy_release(self):
         self.archive('caboodle', 'v0.2.23', ['caboodle'])

@@ -8,7 +8,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/tambo/README.md",
       "summary": "Tambo installs and verifies the knowledge-tool stack from a reviewable plan. The transition retains the caboodle command and existing plan/state paths; publication and installed verification remain separate.",
-      "source_sha256": "8bb36e408f903090f2f78a481dcb3a2214b45feea2071a6a77285a0168d6b19c",
+      "source_sha256": "392c1176bd02e118bbc7e9f3e9849400e33a838363b4577a204293d3f3af9ad2",
       "type": "Concept"
     },
     {
@@ -16,7 +16,7 @@
       "source": "docs/book/src/architecture.md",
       "subject": "http://aegis.gastown.local/ontology/doc/tambo/docs%2Fbook%2Fsrc%2Farchitecture.md",
       "summary": "The architecture separates plan, apply and verify. Guided intended-use answers become reviewable plan data and executable reader-path contracts rather than implicit permission to install.",
-      "source_sha256": "21fb4ce1e2827a14a6550a5154c7b9f15e92435dd265721ab4d4ed6f819ba97e",
+      "source_sha256": "5a1f2354e5cf75cac27b0aafaebbc0ced96f8cfcdcd44837af1f7f41266d6e39",
       "type": "Concept"
     },
     {
@@ -24,7 +24,7 @@
       "source": "src/main.rs",
       "subject": "http://aegis.gastown.local/ontology/code/tambo/src%2Fmain.rs",
       "summary": "The Clap command tree defines quickstart, plan, apply, verify and doctor, with explicit plan/state paths and opt-in remote credential provisioning.",
-      "source_sha256": "1062af6157fec196ffe42ea259c8714573bcdb0964e00d1ab9b96e40abb1c1da",
+      "source_sha256": "906f1ab1f6458120456e593b124c252742bca0d82f7189725d9fd4a630c28e59",
       "properties": {
         "interfaceKind": "CLI",
         "publicName": "tambo and compatible caboodle command tree"
@@ -35,7 +35,7 @@
       "source": "src/model.rs",
       "subject": "http://aegis.gastown.local/ontology/code/tambo/src%2Fmodel.rs",
       "summary": "The serialized Plan schema defines profiles, ordered tools, optional shares and destination database, intended-use contracts and host exclusions. Unknown plan fields are rejected.",
-      "source_sha256": "8cde1e7890d525cb5f38f8ff5bebccb69a0489699435dc68d6a843618f9f8932",
+      "source_sha256": "6df656921ea4b7423f0ff8c2b2bb96a2a79bdf91bd6063b663f402451748c660",
       "properties": {
         "interfaceKind": "file-format",
         "publicName": "caboodle-plan.toml Plan and JSON State"
@@ -46,7 +46,7 @@
       "source": "src/adapter.rs",
       "subject": "http://aegis.gastown.local/ontology/code/tambo/src%2Fadapter.rs",
       "summary": "The Adapter trait separates desired version, installation, version read-back and functional verification. Built-in adapters integrate the selected stack tools; package adapters may bind verification to PATH executables.",
-      "source_sha256": "7ff5434afe2a2fbcdaf600341127447316498c6f211ff804621e9f6f77b9b343",
+      "source_sha256": "88ad05b97e3a7f3a0760482c567d49034da4148abcfc1aba48488fd01aa51386",
       "properties": {
         "interfaceKind": "library",
         "publicName": "caboodle::adapter::Adapter"
@@ -60,7 +60,7 @@
       "source": "Cargo.toml",
       "subject": "http://aegis.gastown.local/ontology/code/tambo/Cargo.toml",
       "summary": "The package and primary command are tambo, while the Rust library import name remains caboodle and a legacy caboodle binary is explicitly declared for compatibility.",
-      "source_sha256": "7e31dcd35cb941031963d783120fc1653cf113914b5b0fe473760c08b898f752",
+      "source_sha256": "d1fbb60bb8460f96413ef15235be4b98e54dbd513793c66e339e99f286641bbc",
       "type": "DecisionRecord",
       "properties": {
         "status": "active",
@@ -72,7 +72,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/tambo/README.md",
       "summary": "Start with the local single-user quickstart and its verified-tool success checks before selecting remote service mode.",
-      "source_sha256": "8bb36e408f903090f2f78a481dcb3a2214b45feea2071a6a77285a0168d6b19c",
+      "source_sha256": "392c1176bd02e118bbc7e9f3e9849400e33a838363b4577a204293d3f3af9ad2",
       "properties": {
         "startHereOrder": 1,
         "glossaryTerm": "https://scbrown.github.io/quechua/ns#Tool"
@@ -83,7 +83,7 @@
       "source": "docs/book/src/configuration.md",
       "subject": "http://aegis.gastown.local/ontology/doc/tambo/docs%2Fbook%2Fsrc%2Fconfiguration.md",
       "summary": "Read the TOML plan, JSON progress state and explicit remote credential boundaries before changing installation targets or endpoint configuration.",
-      "source_sha256": "45754e285dd180793bc1c1daf866d5d8455512d96aa4dbec4050e90cc8115fda",
+      "source_sha256": "2ebb34b38d876434dbedb48fd58009dd95da962a856568791ba38dd42623a216",
       "properties": {
         "startHereOrder": 2
       }
@@ -93,7 +93,7 @@
       "source": "Cargo.toml",
       "subject": "http://aegis.gastown.local/ontology/code/tambo/Cargo.toml",
       "summary": "Read the declared library and binary names before integrating the crate or changing compatibility assumptions.",
-      "source_sha256": "7e31dcd35cb941031963d783120fc1653cf113914b5b0fe473760c08b898f752",
+      "source_sha256": "d1fbb60bb8460f96413ef15235be4b98e54dbd513793c66e339e99f286641bbc",
       "properties": {
         "startHereOrder": 3
       }
