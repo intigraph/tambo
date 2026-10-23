@@ -20,6 +20,30 @@ Published archives support Linux x86_64 and macOS arm64/x86_64; **Linux arm64
 has no published archive**. Source builds, pinned versions, removal and the
 Homebrew alternative are in the [installation reference](https://intigraph.github.io/tambo/installation-reference.html).
 
+**Debian and Ubuntu (amd64):** install from the signed apt repository, which
+republishes each checksum-verified release. The package puts `tambo` and the
+compatibility `caboodle` command in `/usr/bin`. Check the signing key's
+fingerprint before trusting it; the commands stop if it does not match:
+
+```bash
+curl -fsSL https://scbrown.github.io/apt/key.gpg -o scbrown-stack.gpg \
+  && gpg --show-keys --with-colons scbrown-stack.gpg \
+  | grep -qx 'fpr:::::::::AB5625C5612F643BF76464DF0DC99924994EC959:' \
+  && sudo install -D -m 0644 scbrown-stack.gpg /etc/apt/keyrings/scbrown-stack.gpg \
+  && echo "deb [signed-by=/etc/apt/keyrings/scbrown-stack.gpg] https://scbrown.github.io/apt stable main" \
+     | sudo tee /etc/apt/sources.list.d/scbrown-stack.list \
+  && sudo apt update && sudo apt install tambo
+```
+
+`apt upgrade` then picks up new releases. unattended-upgrades only installs
+from origins it allows, so to have it upgrade tambo too, add
+`"origin=scbrown,codename=stable";` to `Unattended-Upgrade::Origins-Pattern`.
+A host with the older `caboodle 0.3.4` package moves over with
+`sudo apt install tambo` (or `apt full-upgrade`): `caboodle 0.3.4-1` is a
+transitional package that depends on `tambo`.
+Channels, pinning and rollback:
+[scbrown/apt](https://github.com/scbrown/apt#channels-and-pinning).
+
 ## First success: local, single-user
 
 Run in an empty directory you intend to keep:
