@@ -85,9 +85,11 @@
     },
     "README.md": {
       "lines": {
+        "0a72892c82983c6bfa4534553f19ebdf33cc5cedd78b3312ee6ef4aa9a17e75e": 1,
         "35676aaad176b1ef84ebf6b7e2a4385680595bc28799f3e45f09e2259ddbbe7c": 1,
         "a1baf0b159f81bcfabf31f51dd50be756dad895f07581a4b08ef63383a872745": 1,
         "b2f9b0c55ee1ed7b69c84e2cc918fbba49d7202d821b111926fb58f138c5f8fc": 1,
+        "c88874bacd2c2691e49e7ff69ce26220321dd0d6268dd0a215ed66ca38e4cca5": 1,
         "cc8b0161d55a2b70fc766b60b09aa5775a559e0add51e9346fc1fc7612b2ce7b": 1
       },
       "reason": "Existing state/cache filename, command alias, environment, package, immutable vocabulary IRI or live compatibility anchor."
@@ -162,12 +164,17 @@
     "docs/book/src/installation-reference.md": {
       "lines": {
         "0d714756291eb50ab1bc0cb785e04e36c3c92537ac33658751cfcef9c0bfcaf7": 1,
+        "1db9d94f6ad572c31b0064f036037f4619c22235a5cd686aa21f509012511103": 1,
         "20a38aa80de5d1242f2b7320daa45d849c8a8adf2234f0791e12b7f0491b953b": 1,
         "4582e4025781d8afd3016c1b923af37425eababce38faa494deabdd7dbaee2df": 1,
+        "7ef33cb5760d671a1e71b55939e90ccf768afbcdf6bf0c2465fde6a57be45982": 1,
         "8558afef7784dffbb7b380d8a7c64913c488a305814c29e26c1075a398dac447": 1,
+        "a91a78bb7479979990e4e7abe116dab724315872279487cac4324b19eebd37a0": 1,
         "c6ccd5fa09c072a8f2f4256c21a9f653378413852ccd9264154ac8bd72da92b5": 1,
         "cb7847483b79e02ae3849b8460e3422daede2b4091f83563e9de9eac02d43589": 1,
+        "ebba26e4674089a2d484a0f39a679c40e4692be746efb23ed5e3fe427649f435": 1,
         "ede13c63ae06f69a6b705f9ac9d3c0a423a2ccbf27ca1f68dbe505f0a374ce5a": 1,
+        "f577490d2d8e5fb075b2266ae6546027565d9dedbe2d22f59106c0f6ed495ebd": 1,
         "fae4574c4b96521f6b03f4471693f0864155e34dfcbcc7562f0a277b35870dfe": 1
       },
       "reason": "Existing state/cache filename, command alias, environment, package, immutable vocabulary IRI or live compatibility anchor."
