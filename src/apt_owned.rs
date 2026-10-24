@@ -66,12 +66,11 @@ fn refuse_if_owned(tool: &str, path: &Path, owner: Option<String>) -> anyhow::Re
 #[cfg(all(test, unix))]
 mod tests {
     use super::*;
-    use std::os::unix::fs::{symlink, PermissionsExt};
+    use std::os::unix::fs::symlink;
 
     fn fake_dpkg_query(dir: &Path, body: &str) -> std::path::PathBuf {
         let path = dir.join("dpkg-query");
-        fs::write(&path, format!("#!/bin/sh\n{body}\n")).unwrap();
-        fs::set_permissions(&path, fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_exec::write_executable(&path, &format!("#!/bin/sh\n{body}\n"));
         path
     }
 
