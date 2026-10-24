@@ -29,15 +29,15 @@ class CaptureControls(unittest.TestCase):
             root = Path(folder)
             (root / ".terminal-demo-sandbox").touch()
             tool = root / "fixture-tool"
-            tool.write_text('#!/usr/bin/python3\nimport sys\n'
+            tool.write_text('#!/usr/bin/python3\nimport sys, os\n'
                             'if "--version" in sys.argv: sys.exit(2)\n'
-                            'print("fixture 2" if "version" in sys.argv else "ok")\n')
+                            'print("fixture 2" if "version" in sys.argv else "ok gpu=" + os.environ.get("BOBBIN_GPU", "missing"))\n')
             tool.chmod(0o700)
             tape = {"title": "Public fixture", "description": "Control",
                     "width": 1000, "height": 620, "font_size": 24,
                     "line_height": 32, "version_args": {"fixture": ["version"]},
                     "steps": [{"tool": "fixture", "args": ["run"],
-                               "requires": ["ok"], "hold": 10}]}
+                               "requires": ["ok gpu=0"], "hold": 10}]}
             path = root / "tape.json"
             path.write_text(json.dumps(tape))
             subprocess.run([sys.executable, str(HERE / "render.py"), str(path),

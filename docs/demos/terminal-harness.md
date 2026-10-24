@@ -25,6 +25,7 @@ provide an accessible static alternative.
 The caller must prepare a private workspace containing the explicit
 `.terminal-demo-sandbox` marker. The recorder uses its `.demo-home` and an
 allowlisted environment, never the caller's endpoints, credentials or config.
+`BOBBIN_GPU=0` forces CPU mode even before a Bobbin fixture config exists.
 Commands can write to that sandbox. Review recipes before running; this helper
 is not an operating-system sandbox. It never installs tools itself.
 

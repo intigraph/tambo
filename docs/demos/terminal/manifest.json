@@ -17,7 +17,7 @@
     ]
   },
   "inputs_sha256": {
-    "render.py": "67a98242a3a841415d0bc91d64a81aaa71bbf29e33ef6865075ecc3dfbd04122",
+    "render.py": "bebbe000565314f18a58731f2a1a4690577db127b3673fa10a45ce74eef0f23c",
     "tape": "3069263bfe250b0f73710836793d91043b567d782a0445dae4e1e6d85563c765",
     "answers.txt": "632e07ab3eca4b532362ca670a416426bf0a487242af7250930d62cf2427b89c",
     "review-plan.py": "c963de74418a7b0107d711e82709d3c9080d8c2f4ffefa5430c40da0473b9f6a",
@@ -35,7 +35,7 @@
         "--guided"
       ],
       "exit": 0,
-      "seconds": 0.005007,
+      "seconds": 0.001714,
       "stdout": "profile [kg/retrieval/code-intel/crew/everything]: what should this installation help you do? how many themed crew members should be configured? how many ontology questions must the finished graph answer? (press enter to use the built-in self-test question) using the built-in self-test question; add your own later by editing the plan's [intent]\nplan: caboodle-plan.toml\n",
       "stderr": ""
     },
@@ -45,7 +45,7 @@
         "review-plan.py"
       ],
       "exit": 0,
-      "seconds": 0.024154,
+      "seconds": 0.018066,
       "stdout": "Profile: kg\nWould install: quipu, camayoc\nPurpose: Explore a local knowledge graph\nQuestion: does the knowledge store answer a query about a fact written to it?\nReview the full caboodle-plan.toml before applying.\n",
       "stderr": ""
     },
@@ -55,7 +55,7 @@
         "verify"
       ],
       "exit": 0,
-      "seconds": 6.649685,
+      "seconds": 4.31584,
       "stdout": "hook bundle NOT verified: `st` (shantytown) is not installed on this host, so no hook bundle is registered here\nquipu: verified\ncamayoc: verified\n",
       "stderr": ""
     }
