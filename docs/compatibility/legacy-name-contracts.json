@@ -420,6 +420,55 @@
       },
       "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
     },
+    "docs/demos/terminal/demo.cast": {
+      "lines": {
+        "49066669dfc1e7b97d590b4afecd1902724a5b1339e1605b0e0deca16fd6eab9": 1,
+        "592fb6a9d618ec783c5e58a6bcad2d5091aa1640fc0d46e39949954542e48916": 1
+      },
+      "reason": "Native sandbox demo output and helpers retain the actual compatibility plan/state filenames and command alias; no product rename is introduced."
+    },
+    "docs/demos/terminal/demo.svg": {
+      "lines": {
+        "1850f12502c17e379486d16a899d99e8caf0a40a453fcc8b7746dc4a9b2b6081": 1,
+        "a5a646ddc3598fcd0a7d1aa9b9160947944e9982b82171902db3ed251402f04e": 1
+      },
+      "reason": "Native sandbox demo output and helpers retain the actual compatibility plan/state filenames and command alias; no product rename is introduced."
+    },
+    "docs/demos/terminal/demo.tape.json": {
+      "lines": {
+        "6b411bd61edf2857de157a1d73825519b8127ed8725118237b93d591de58f28a": 1
+      },
+      "reason": "Native sandbox demo output and helpers retain the actual compatibility plan/state filenames and command alias; no product rename is introduced."
+    },
+    "docs/demos/terminal/fixture/review-plan.py": {
+      "lines": {
+        "3e7d54cf2d17cdb12b5e61c911c9c56c4a38d656eeec0db9e99ca261b0508969": 1,
+        "aa449a7496dabaa89bff8dd202fe57b9645ebbf86b5f996ac2be8a2462fa9a1b": 1
+      },
+      "reason": "Native sandbox demo output and helpers retain the actual compatibility plan/state filenames and command alias; no product rename is introduced."
+    },
+    "docs/demos/terminal/manifest.json": {
+      "lines": {
+        "1f410a10a388ce619c6c0a053445cfa8f488e0bf55cc9bbb0534ea7047e15f45": 1,
+        "cf5238d2aae8a278cd3b63c9fc7195edc7ddc2de2ae7aeb8aa1257a489ddda66": 1
+      },
+      "reason": "Native sandbox demo output and helpers retain the actual compatibility plan/state filenames and command alias; no product rename is introduced."
+    },
+    "docs/demos/terminal/prepare.py": {
+      "lines": {
+        "553269ab8ddca1d99ae5b2e7c035dddc7715c5a55bb8ed45b4bdad31e8588e79": 1,
+        "56f7620fb4bb582e2e1678fdce5cf73aea91ff6d24eb12e77ec0bad881314515": 1,
+        "d14cf24cb689c11506d77301d63c2a38ee1a15c6187e0505cc84bd08c76c4e31": 1
+      },
+      "reason": "Native sandbox demo output and helpers retain the actual compatibility plan/state filenames and command alias; no product rename is introduced."
+    },
+    "docs/demos/terminal/transcript.txt": {
+      "lines": {
+        "2cae20ff93bbcd39b6f53d05c182c060d11abe661329999571ec555313c333d7": 1,
+        "6f9b5cbc29b121acbf22090dcffef4fb69195dc09c95e860712de7fd6b5394b2": 1
+      },
+      "reason": "Native sandbox demo output and helpers retain the actual compatibility plan/state filenames and command alias; no product rename is introduced."
+    },
     "docs/design/local-quickstart-demo.md": {
       "lines": {
         "2c433bca4b3fe0b33d91243d27827da11fa983d62659b70c305f44e28c45c6f9": 1
@@ -472,9 +521,10 @@
       "lines": {
         "12434b0bae9d6239cf06eb190cf3554c679e23b783ebfde7c58c7da031b720de": 1,
         "2377db69c04a8c024551d1e8fd4b0e63828e5528940f720264a7c1ed84bb83dc": 1,
+        "7af8bab8361fc03c730c0109aa7fa657575c57d936d49a1990b182e1976a9ded": 1,
         "8d4726ac5d61fb94a8218d5d5a317f9b76529469ca6fa39a3d3cf1a4fe379789": 1,
         "c0da7dc970ef6eec67dae9aba667decabf2c76abc3cbd77f183280a93996f49c": 1,
-        "f9767e16bc058384c673b331f3b3cc8f982c02b04e58d0e3eff693ddb1df9adb": 1
+        "df94495ee4d07147eb2faeecd3870179737ca0b486dde5cdf1386886c8728e98": 1
       },
       "reason": "Stable caboodle intent/configuration and Rust library ABI references in source-backed knowledge records."
     },
