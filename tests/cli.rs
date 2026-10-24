@@ -207,9 +207,10 @@ exit 2
     // applied: verify asserts the bundles, and tests about other steps must
     // not trip on them. A test about registration clears this first.
     let mut seeded = String::new();
-    for entry in fs::read_dir(Path::new(env!("CARGO_MANIFEST_DIR")).join("hook-bundles")).unwrap() {
-        let bundle: serde_json::Value =
-            serde_json::from_str(&fs::read_to_string(entry.unwrap().path()).unwrap()).unwrap();
+    // Use the runtime's bundle inventory: provenance sidecars in the same
+    // directory are not hook bundles and must not enter the fake registry.
+    for (_, raw) in caboodle::hook_bundles::BUNDLES {
+        let bundle: serde_json::Value = serde_json::from_str(raw).unwrap();
         seeded.push_str(&format!(
             "{} {}\n",
             bundle["name"].as_str().unwrap(),
