@@ -185,7 +185,6 @@ fn rollback_at(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::os::unix::fs::PermissionsExt;
     fn fixture() -> (tempfile::TempDir, Plan, PathBuf, PathBuf, String, String) {
         let dir = tempfile::tempdir().unwrap();
         let state_path = dir.path().join("state.json");
@@ -213,10 +212,8 @@ mod tests {
         };
         let destination = dir.path().join("sd");
         let prior = dir.path().join("prior");
-        fs::write(&destination, script("0.2.2")).unwrap();
-        fs::write(&prior, script("0.2.0")).unwrap();
-        fs::set_permissions(&destination, fs::Permissions::from_mode(0o755)).unwrap();
-        fs::set_permissions(&prior, fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_exec::write_executable(&destination, &script("0.2.2"));
+        crate::test_exec::write_executable(&prior, &script("0.2.0"));
         let current_hash = hash(&destination).unwrap();
         let prior_hash = hash(&prior).unwrap();
         let backup = dir.path().join("release-backups/sd").join(&prior_hash);
@@ -260,8 +257,7 @@ mod tests {
     fn failed_functional_proof_restores_current_bytes_and_state() {
         let (dir, plan, state, destination, current, _prior) = fixture();
         let prior = dir.path().join("broken");
-        fs::write(&prior, "#!/bin/sh\ncase \"$1\" in --help) echo 'seeds is the beads-compatible tracker';; --version) echo 'sd 0.2.0 (seeds)';; *) exit 7;; esac\n").unwrap();
-        fs::set_permissions(&prior, fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_exec::write_executable(&prior, "#!/bin/sh\ncase \"$1\" in --help) echo 'seeds is the beads-compatible tracker';; --version) echo 'sd 0.2.0 (seeds)';; *) exit 7;; esac\n");
         let prior_hash = hash(&prior).unwrap();
         let backup = dir.path().join("release-backups/sd").join(&prior_hash);
         atomic_copy(&prior, &backup).unwrap();
