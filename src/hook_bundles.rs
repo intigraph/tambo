@@ -670,5 +670,8 @@ fn codex_edit_guard_targets_native_patches_once() {
         .collect();
     assert_eq!(edits.len(), 1);
     assert_eq!(edits[0]["matcher"], "apply_patch");
-    assert_eq!(edits[0]["command"], "yupana hook pre-edit");
+    assert_eq!(
+        edits[0]["command"],
+        "out=$(yupana hook pre-edit) || exit 0; printf %s \"$out\""
+    );
 }
