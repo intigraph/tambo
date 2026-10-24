@@ -1,0 +1,16 @@
+$ tambo init --guided < answers.txt
+profile [kg/retrieval/code-intel/crew/everything]: what should this installation help you do? how many themed crew members should be configured? how many ontology questions must the finished graph answer? (press enter to use the built-in self-test question) using the built-in self-test question; add your own later by editing the plan's [intent]
+plan: caboodle-plan.toml
+[exit 0]
+$ python3 review-plan.py
+Profile: kg
+Would install: quipu, camayoc
+Purpose: Explore a local knowledge graph
+Question: does the knowledge store answer a query about a fact written to it?
+Review the full caboodle-plan.toml before applying.
+[exit 0]
+$ tambo verify
+hook bundle NOT verified: `st` (shantytown) is not installed on this host, so no hook bundle is registered here
+quipu: verified
+camayoc: verified
+[exit 0]

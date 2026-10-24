@@ -1,0 +1,52 @@
+{
+  "title": "Tambo | review the plan, then verify",
+  "description": "A real guided interview creates a plan. A sandbox-only installation was prepared before recording; verification proves its local tools. Hook registration is explicitly not verified.",
+  "width": 1000,
+  "height": 620,
+  "font_size": 24,
+  "line_height": 32,
+  "inputs": [
+    "answers.txt",
+    "review-plan.py",
+    "setup-plan.toml",
+    "setup.provenance.json"
+  ],
+  "steps": [
+    {
+      "tool": "tambo",
+      "args": [
+        "init",
+        "--guided"
+      ],
+      "stdin": "answers.txt",
+      "requires": [
+        "plan: caboodle-plan.toml"
+      ],
+      "hold": 7
+    },
+    {
+      "tool": "python3",
+      "args": [
+        "review-plan.py"
+      ],
+      "requires": [
+        "Would install: quipu, camayoc",
+        "Review the full"
+      ],
+      "hold": 7
+    },
+    {
+      "tool": "tambo",
+      "args": [
+        "verify"
+      ],
+      "requires": [
+        "quipu: verified",
+        "camayoc: verified",
+        "hook bundle NOT verified"
+      ],
+      "timeout": 90,
+      "hold": 7
+    }
+  ]
+}

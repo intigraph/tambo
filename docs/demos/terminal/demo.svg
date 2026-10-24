@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="620" viewBox="0 0 1000 620" role="img" aria-labelledby="title desc">
+<title id="title">Tambo | review the plan, then verify</title>
+<desc id="desc">A real guided interview creates a plan. A sandbox-only installation was prepared before recording; verification proves its local tools. Hook registration is explicitly not verified. The animation repeats. The adjacent transcript provides a static alternative.</desc>
+<rect width="100%" height="100%" rx="16" fill="#101827"/>
+<path d="M0 54H1000" stroke="#334155"/>
+<circle cx="28" cy="27" r="7" fill="#fb7185"/>
+<circle cx="52" cy="27" r="7" fill="#fbbf24"/>
+<circle cx="76" cy="27" r="7" fill="#34d399"/>
+<text x="110" y="34" fill="#e2e8f0" font-family="monospace" font-size="20">Tambo | review the plan, then verify</text>
+<g id="frame0" visibility="hidden" font-family="DejaVu Sans Mono, Menlo, monospace" font-size="24">
+<animate attributeName="visibility" calcMode="discrete" values="visible;hidden;hidden" keyTimes="0.000000;0.333333;1.000000" dur="21.000s" repeatCount="indefinite"/>
+<text x="28" y="94" fill="#6ee7b7" xml:space="preserve">$ tambo init --guided &lt; answers.txt</text>
+<text x="28" y="126" fill="#f1f5f9" xml:space="preserve">profile [kg/retrieval/code-intel/crew/everything]: what should </text>
+<text x="28" y="158" fill="#f1f5f9" xml:space="preserve">this installation help you do? how many themed crew members </text>
+<text x="28" y="190" fill="#f1f5f9" xml:space="preserve">should be configured? how many ontology questions must the </text>
+<text x="28" y="222" fill="#f1f5f9" xml:space="preserve">finished graph answer? (press enter to use the built-in self-test</text>
+<text x="28" y="254" fill="#f1f5f9" xml:space="preserve"> question) using the built-in self-test question; add your own </text>
+<text x="28" y="286" fill="#f1f5f9" xml:space="preserve">later by editing the plan&#x27;s [intent]</text>
+<text x="28" y="318" fill="#f1f5f9" xml:space="preserve">plan: caboodle-plan.toml</text>
+</g>
+<g id="frame1" visibility="hidden" font-family="DejaVu Sans Mono, Menlo, monospace" font-size="24">
+<animate attributeName="visibility" calcMode="discrete" values="hidden;visible;hidden;hidden" keyTimes="0.000000;0.333333;0.666667;1.000000" dur="21.000s" repeatCount="indefinite"/>
+<text x="28" y="94" fill="#6ee7b7" xml:space="preserve">$ python3 review-plan.py</text>
+<text x="28" y="126" fill="#f1f5f9" xml:space="preserve">Profile: kg</text>
+<text x="28" y="158" fill="#f1f5f9" xml:space="preserve">Would install: quipu, camayoc</text>
+<text x="28" y="190" fill="#f1f5f9" xml:space="preserve">Purpose: Explore a local knowledge graph</text>
+<text x="28" y="222" fill="#f1f5f9" xml:space="preserve">Question: does the knowledge store answer a query about a fact </text>
+<text x="28" y="254" fill="#f1f5f9" xml:space="preserve">written to it?</text>
+<text x="28" y="286" fill="#f1f5f9" xml:space="preserve">Review the full caboodle-plan.toml before applying.</text>
+</g>
+<g id="frame2" visibility="visible" font-family="DejaVu Sans Mono, Menlo, monospace" font-size="24">
+<animate attributeName="visibility" calcMode="discrete" values="hidden;visible;visible" keyTimes="0.000000;0.666667;1.000000" dur="21.000s" repeatCount="indefinite"/>
+<text x="28" y="94" fill="#6ee7b7" xml:space="preserve">$ tambo verify</text>
+<text x="28" y="126" fill="#f1f5f9" xml:space="preserve">hook bundle NOT verified: `st` (shantytown) is not installed on </text>
+<text x="28" y="158" fill="#f1f5f9" xml:space="preserve">this host, so no hook bundle is registered here</text>
+<text x="28" y="190" fill="#f1f5f9" xml:space="preserve">quipu: verified</text>
+<text x="28" y="222" fill="#f1f5f9" xml:space="preserve">camayoc: verified</text>
+</g>
+</svg>

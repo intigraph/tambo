@@ -1,0 +1,68 @@
+{
+  "theme": "stack-terminal-24",
+  "versions": {
+    "tambo": "tambo 0.6.1 (a197b513a21e)",
+    "python3": "Python 3.14.4"
+  },
+  "binary_sha256": {
+    "tambo": "70c96607a1b3b2f00456804b867527f9cfd664fb3a64b80f373147a8f971bf71",
+    "python3": "52e0a13e60a981d8c4b6478be2ba5176f69da07948a056bf49cf6f077e30cb41"
+  },
+  "version_args": {
+    "tambo": [
+      "--version"
+    ],
+    "python3": [
+      "--version"
+    ]
+  },
+  "inputs_sha256": {
+    "render.py": "bebbe000565314f18a58731f2a1a4690577db127b3673fa10a45ce74eef0f23c",
+    "tape": "3069263bfe250b0f73710836793d91043b567d782a0445dae4e1e6d85563c765",
+    "answers.txt": "632e07ab3eca4b532362ca670a416426bf0a487242af7250930d62cf2427b89c",
+    "review-plan.py": "c963de74418a7b0107d711e82709d3c9080d8c2f4ffefa5430c40da0473b9f6a",
+    "setup-plan.toml": "d04273034ea1337e813995d9c9f4e221a34243a4bd42a7b0757a345cfb748b7d",
+    "setup.provenance.json": "28c6dcdb1e5d4e70f87400d48ab20e2d2138fb8f0b9d801e6e7eecb83af71594"
+  },
+  "duration_seconds": 21.0,
+  "timeline": "deliberate reading holds; execution times recorded separately",
+  "frames_checked": 3,
+  "commands": [
+    {
+      "tool": "tambo",
+      "args": [
+        "init",
+        "--guided"
+      ],
+      "exit": 0,
+      "seconds": 0.001714,
+      "stdout": "profile [kg/retrieval/code-intel/crew/everything]: what should this installation help you do? how many themed crew members should be configured? how many ontology questions must the finished graph answer? (press enter to use the built-in self-test question) using the built-in self-test question; add your own later by editing the plan's [intent]\nplan: caboodle-plan.toml\n",
+      "stderr": ""
+    },
+    {
+      "tool": "python3",
+      "args": [
+        "review-plan.py"
+      ],
+      "exit": 0,
+      "seconds": 0.018066,
+      "stdout": "Profile: kg\nWould install: quipu, camayoc\nPurpose: Explore a local knowledge graph\nQuestion: does the knowledge store answer a query about a fact written to it?\nReview the full caboodle-plan.toml before applying.\n",
+      "stderr": ""
+    },
+    {
+      "tool": "tambo",
+      "args": [
+        "verify"
+      ],
+      "exit": 0,
+      "seconds": 4.31584,
+      "stdout": "hook bundle NOT verified: `st` (shantytown) is not installed on this host, so no hook bundle is registered here\nquipu: verified\ncamayoc: verified\n",
+      "stderr": ""
+    }
+  ],
+  "sha256": {
+    "demo.svg": "a0dc190381daaadfa333ae1ae7089ec5ca91e94e3c72dd10972f1498e47154ae",
+    "transcript.txt": "27ba2b1119dafda1e523951308034731c0943de127f54565677706ba63b62494",
+    "demo.cast": "f9ab53991d1e47728e65ae12c0dc74a996382b19965c3c320d207d31effe96e9"
+  }
+}
