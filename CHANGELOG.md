@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.2](https://github.com/intigraph/tambo/compare/v0.6.1...v0.6.2) (2026-10-24)
+
+
+### Bug Fixes
+
+* **hooks:** refresh the shipped Yupana bundle to 0.15.4 ([#190](https://github.com/intigraph/tambo/issues/190)) ([bcf91fc](https://github.com/intigraph/tambo/commit/bcf91fc36c75417b9fb758e081bb8bad9d3fbcf4))
+
 ## [0.6.1](https://github.com/intigraph/tambo/compare/v0.6.0...v0.6.1) (2026-10-23)
 
 
