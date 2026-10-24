@@ -34,7 +34,8 @@ Preparation copies the real Tambo executable, runs the same interview, then
 stops at the first failure and preserves logs/state rather than resetting them.
 It downloads Tambo's embedded checksummed tool releases and local vocabulary;
 allow network and disk for that setup. This is the only installation step.
-The recorded interview reads `fixture/answers.txt`, not simulated keystrokes.
+Preparation turns `fixture/answers.json` into `answers.txt`, including the final
+Enter that selects the built-in question. The recorded interview reads that file.
 `review-plan.py` reads the complete generated TOML and prints its selected tools,
 purpose and question; review the full file before applying it elsewhere.
 
