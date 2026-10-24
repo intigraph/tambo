@@ -35,3 +35,7 @@ The manifest records native versions, executable and input digests, exact output
 execution time and artifact digests. Real execution time may vary, while the
 explicit reading timeline stays stable. No external fonts, images or scripts
 are embedded in the SVG. No CI workflow or README integration is introduced.
+
+The existing `pytest tests -q` CI lane collects
+`tests/test_terminal_harness.py`. Each control prints its node ID so the hosted
+log proves it ran even in quiet mode. No separate workflow is required.

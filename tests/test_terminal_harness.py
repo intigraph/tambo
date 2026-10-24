@@ -8,10 +8,19 @@ import sys
 import tempfile
 import unittest
 
-HERE = Path(__file__).resolve().parent
+import pytest
+
+HERE = Path(__file__).resolve().parents[1] / "docs/demos/terminal-harness"
 spec = importlib.util.spec_from_file_location("recorder", HERE / "render.py")
 recorder = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(recorder)
+
+
+@pytest.fixture(autouse=True)
+def report_collected_control(request, capsys):
+    # This existing CI lane uses -q; retain a named execution witness in its log.
+    with capsys.disabled():
+        print("terminal harness control:", request.node.nodeid, flush=True)
 
 
 class CaptureControls(unittest.TestCase):
