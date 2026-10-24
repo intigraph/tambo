@@ -1,0 +1,10 @@
+{
+  "repository": "https://github.com/intigraph/yupana",
+  "commit": "564281c0edc4ca9e9aefe5531d1af6017403ada7",
+  "tag": "v0.15.4",
+  "path": "hooks/yupana.bundle.json",
+  "substitution": {
+    "{{VERSION}}": "0.15.4"
+  },
+  "sha256": "650098cc77a3520f23632b9716a5ca19f237dd2184ea1f024311b719cb776b23"
+}
