@@ -1899,12 +1899,11 @@ pub fn verify_member(name: &str) -> Result<()> {
 #[cfg(all(test, unix))]
 mod quipu_alias_layout_tests {
     use super::verify_quipu_alias;
-    use std::os::unix::fs::{symlink, PermissionsExt};
+    use std::os::unix::fs::symlink;
     use std::{fs, path::Path};
 
     fn script(path: &Path, version: &str) {
-        fs::write(path, format!("#!/bin/sh\necho '{version}'\n")).unwrap();
-        fs::set_permissions(path, fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_exec::write_executable(path, &format!("#!/bin/sh\necho '{version}'\n"));
     }
 
     #[test]

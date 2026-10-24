@@ -862,7 +862,6 @@ mod release_verification_tests {
 #[cfg(all(test, unix))]
 mod seeds_identity_tests {
     use super::*;
-    use std::os::unix::fs::PermissionsExt;
 
     #[test]
     fn seeds_identity_accepts_both_editions_and_refuses_foreign_sd() {
@@ -877,8 +876,10 @@ mod seeds_identity_tests {
             ("sd is an intuitive find and replace CLI", false),
             ("seeds is a different program", false),
         ] {
-            std::fs::write(&executable, format!("#!/bin/sh\nprintf '%s\\n' '{text}'\n")).unwrap();
-            std::fs::set_permissions(&executable, std::fs::Permissions::from_mode(0o755)).unwrap();
+            crate::test_exec::write_executable(
+                &executable,
+                &format!("#!/bin/sh\nprintf '%s\\n' '{text}'\n"),
+            );
             assert_eq!(identify(&executable, program).is_ok(), accepted, "{text}");
         }
     }
