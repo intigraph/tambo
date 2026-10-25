@@ -32,6 +32,9 @@ box's first knowledge is a record of the box itself. The agent-facing version of
 this workflow is the [`tambo` skill](https://github.com/intigraph/tambo/blob/main/skills/tambo/SKILL.md), and the full
 design is in the [book](introduction.md).
 
+For concrete starting points, see [tools for your use case](personas.md).
+The table below is the shared project roster, not a list installed by every profile.
+
 ## Related projects
 
 {{#include ../../stack-table.md:table}}

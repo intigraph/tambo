@@ -1,5 +1,8 @@
 # Profiles
 
+Start with [tools for your use case](personas.md) if you are choosing by goal.
+Those recommendations are not additional profile names.
+
 - `kg` — quipu + camayoc
 - `retrieval` — + bobbin
 - `code-intel` — retrieval + Yupana; isolated `analyze`/`callers` proof
@@ -10,8 +13,9 @@
 Both harnesses are first-class: **Claude Code and codex** can each drive the
 install, and when a crew is chosen the wizard asks which harness each role runs
 on, emitting the right per-harness configuration. The `crew` profile also
-installs seeds (`sd`), the crew's work tracker, and shuttle, its workflow engine.
-- `everything` — code-intel + Desire Path + seeds + shuttle; isolated
+installs Chaski for reactions and notifications, seeds (`sd`) for work tracking,
+and shuttle for signed workflows.
+- `everything` — code-intel + Desire Path + Chaski + seeds + shuttle; isolated
   failure-ingest/read proof, a seeds marker round trip, and a shuttle run round
   trip
 

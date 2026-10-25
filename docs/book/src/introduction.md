@@ -21,6 +21,10 @@ for the settings and their defaults.
 
 ![The quipu stack loop: agents send activity to Camayoc, which sends tagged, quarantined episodes to Quipu. Quipu supplies knowledge to Bobbin, which feeds the next agent turn. Yupana enforces code policies and contributes committed structure to Quipu and code context to Bobbin. Desire Path turns hallucinations into feature requests. Seeds tracks work items in the Quipu knowledge base. Tambo installs, proves, and observes the tools.](images/stack-loop.svg)
 
+Choose a starting set in [tools for your use case](personas.md). The guide maps
+developers, crew leads, knowledge curators, service operators and individual
+planners to the parts they need.
+
 ## Three ways in
 
 ### 1. Try it in your browser

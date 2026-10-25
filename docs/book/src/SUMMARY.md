@@ -2,6 +2,7 @@
 
 [The quipu stack](introduction.md)
 
+- [Choose tools for your use case](personas.md)
 - [Getting started](getting-started.md)
 - [Installing and removing](installing.md)
   - [Installation and agent reference](installation-reference.md)
