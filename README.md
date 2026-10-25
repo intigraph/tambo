@@ -87,6 +87,17 @@ claude mcp add bobbin -- "$(command -v bobbin)" serve "$PWD"
   [verified import workflow](https://intigraph.github.io/quipu/sharing/index.html).
   Import stages knowledge; it does not promote it into ROOT automatically.
 
+## Delivery events and DORA
+
+After installing Quipu and Camayoc, bring deployment outcomes and change history
+into the same governed memory. Camayoc supports CDEvents on CloudEvents from
+Actions, Ansible, Terraform and native producers; see the
+[delivery emitter catalog](https://github.com/intigraph/camayoc/blob/main/catalog/README.md).
+Adapter setup and event coverage are separate from installing the stack.
+Tambo does not enable deployment emitters or prove DORA coverage.
+The four metrics need recorded deployment and change history for the selected
+service and time window; missing history is not a measured zero.
+
 ## The stack
 
 <!-- stack-table:start -->
