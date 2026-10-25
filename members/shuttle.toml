@@ -7,8 +7,8 @@
 # ed25519) is resolved by pip from the package index at install time.
 name = "shuttle"
 kind = "python-wheel"
-repo = "scbrown/shuttle"
-version = "0.5.0"
+repo = "intigraph/shuttle"
+version = "0.6.1"
 tag = "v{version}"
 asset = "shuttle-{version}-py3-none-any.whl"
 version_argv = ["version"]
@@ -17,7 +17,7 @@ prerequisites = ["python3"]
 profiles = ["crew", "everything"]
 
 [sha256]
-any = "537630cd798cbce99c82dcf209529c8408076e8b812dbcdd941b9c78bfba6dee"
+any = "a25ecb134aa2c5238ec533297dde0445952bca99c34abb9bba95247d8df55b86"
 
 # Every released shuttle (0.2.0 onward) prints this line in --help.
 [[programs]]
