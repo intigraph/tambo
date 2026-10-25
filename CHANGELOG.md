@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.3](https://github.com/intigraph/tambo/compare/v0.6.2...v0.6.3) (2026-10-25)
+
+
+### Bug Fixes
+
+* **stack:** pin Bobbin 0.30.0, Yupana 0.16.2, Desire Path v0.10.0 and Shuttle 0.6.1 ([#193](https://github.com/intigraph/tambo/issues/193)) ([39c134d](https://github.com/intigraph/tambo/commit/39c134df8e8eb279a70aa33ca0fc7a522f221c17))
+
 ## [0.6.2](https://github.com/intigraph/tambo/compare/v0.6.1...v0.6.2) (2026-10-24)
 
 
