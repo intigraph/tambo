@@ -7,6 +7,27 @@ work. Give an agent durable memory and code context, without assembling every to
 by hand. Tambo is a CLI and [agent skill](skills/tambo/SKILL.md).
 The compatibility command `caboodle` remains available.
 
+## What you can do with the toolkit
+
+Choose the parts that solve your problem; you do not need every tool.
+
+- **Keep knowledge you can explain:** Quipu stores facts, provenance and history;
+  Camayoc checks incoming knowledge, using shared vocabulary and shapes from Quechua.
+  Write enforcement depends on your configured rules.
+- **Give a coding assistant useful context:** Bobbin searches your code and supplies
+  context; Yupana follows code structure and can check actions against policy.
+- **Track work across people and agents:** Seeds keeps work items in Quipu;
+  Shantytown runs agent crews against that work.
+- **Connect events to action:** Chaski delivers reactions and notifications, Shuttle
+  records signed workflow transitions, and Rikuy presents a live brief.
+- **Learn from failed tool calls:** Desire Path collects failures into signposts and
+  feature requests, and can also run on its own.
+
+Tambo composes a reviewable installation plan and verifies the selected tools.
+Installing them does not automatically connect every workflow or enable every
+policy. [Choose tools for your use case](https://intigraph.github.io/tambo/personas.html),
+then [choose an installation profile](https://intigraph.github.io/tambo/profiles.html).
+
 ## Install
 
 ```bash
