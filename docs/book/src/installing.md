@@ -476,7 +476,7 @@ prints the exact source-build command where no reviewed release exists.
 
 **Commands on PATH.** `curl`, `tar`, `git`, `bash`, `python3`, and `sha256sum`
 (`brew install coreutils` supplies `sha256sum` on macOS). Yupana verifies its
-three pinned v0.12.7 archives in-process and needs only `curl` and `tar` for installation. The `everything`
+three pinned v0.16.2 archives in-process and needs only `curl` and `tar` for installation. The `everything`
 profile also needs Go 1.22+. Rust is only needed for the source builds above.
 
 **Accounts and servers.** The default local single-user install needs neither
