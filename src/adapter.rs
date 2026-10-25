@@ -766,7 +766,7 @@ struct Yupana;
 struct DesirePath;
 
 struct Camayoc;
-const BOBBIN_VERSION: &str = "0.27.3";
+const BOBBIN_VERSION: &str = "0.30.0";
 
 impl Adapter for Camayoc {
     fn name(&self) -> ToolName {
@@ -938,7 +938,7 @@ impl Adapter for Bobbin {
     }
 }
 
-const YUPANA_VERSION: &str = "0.12.7";
+const YUPANA_VERSION: &str = "0.16.2";
 
 impl Adapter for Yupana {
     fn name(&self) -> ToolName {
@@ -1012,15 +1012,15 @@ fn yupana_release_for(arch: &str, os: &str) -> Result<(&'static str, &'static st
     match (arch, os) {
         ("x86_64", "linux") => Ok((
             "x86_64-linux-gnu",
-            "44bfefb529a5977cd6ced67e662ca1cab87ec53e62a4cdf173ebbb367b5f8667",
+            "565507459d3d67b2cc73b6ebd91f784f0522689c5b62257a8fde82793580dc5d",
         )),
         ("aarch64", "macos") => Ok((
             "aarch64-apple-darwin",
-            "7f02e1c96b97a21abbc5478341d5ee44d10ea860b803e45d721b1c5a66647770",
+            "9f3682c6f4dffd7365248ae2d686e9fcdca26ba08ebd915f8ce692e8111179a2",
         )),
         ("x86_64", "macos") => Ok((
             "x86_64-apple-darwin",
-            "94b872a6cd3ea9de4bf4271b1d16fa569f1979b4d216e0fd307d88e1b66364a2",
+            "7763d171c7f6e2df395bdf9961a79991b66b4876c3394ce970d1f3e2cddcb4ed",
         )),
         _ => bail!("Yupana v{YUPANA_VERSION} has no checksummed Tambo release for {arch}-{os}"),
     }
@@ -1104,8 +1104,8 @@ fn desire_path_program() -> Result<PathBuf> {
     Ok(PathBuf::from(home).join(".local/bin/dp"))
 }
 
-const DESIRE_PATH_REVISION: &str = "1f457ec2f30c4a0d47b6f4d1b4cc0f3078f39662";
-const DESIRE_PATH_VERSION: &str = "v0.3.2";
+const DESIRE_PATH_REVISION: &str = "06812336fda6a6fd3fe4cbcae2d50a303e95a024";
+const DESIRE_PATH_VERSION: &str = "v0.10.0";
 
 impl Adapter for DesirePath {
     fn name(&self) -> ToolName {
