@@ -17,7 +17,7 @@ use serde::Deserialize;
 
 use crate::adapter::download_https;
 use crate::members::Manifest;
-use crate::release_update::{checksum, hash, stable_version, text};
+use crate::release_update::{checksum, hash, stable_version};
 
 #[derive(Deserialize)]
 struct Release {
@@ -83,24 +83,10 @@ fn release(manifest: &Manifest, tag: Option<&str>) -> Result<Release> {
         }
         None => "latest".to_owned(),
     };
-    let raw = text(
-        "curl",
-        &[
-            "--fail",
-            "--silent",
-            "--show-error",
-            "--max-time",
-            "30",
-            "--proto",
-            "=https",
-            "-H",
-            "Accept: application/vnd.github+json",
-            &format!(
-                "https://api.github.com/repos/{}/releases/{path}",
-                manifest.repo
-            ),
-        ],
-    )?;
+    let raw = crate::release_update::release_metadata(&format!(
+        "https://api.github.com/repos/{}/releases/{path}",
+        manifest.repo
+    ))?;
     let release: Release = serde_json::from_str(&raw).context("parse published release")?;
     if release.draft || release.prerelease {
         bail!("refusing draft/prerelease {}", release.tag_name);

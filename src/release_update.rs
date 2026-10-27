@@ -476,6 +476,50 @@ pub fn update_self_pinned(
     )
 }
 
+/// GitHub owner of each published release. Tambo moved from scbrown/caboodle to
+/// intigraph/tambo; the other tools still publish under scbrown.
+fn release_owner(tool: Option<ToolName>) -> &'static str {
+    if tool.is_none() {
+        "intigraph"
+    } else {
+        "scbrown"
+    }
+}
+
+/// curl arguments for a GitHub release-metadata GET. GitHub answers a renamed or
+/// transferred repository with `301 Moved Permanently` and a JSON body, which
+/// `--fail` does not reject; without `--location` that body was parsed as the
+/// release and failed with "missing field `tag_name`". Follow a bounded number of
+/// HTTPS-only redirects so a rename never strands an installed updater again.
+pub(crate) fn release_metadata_args(url: &str) -> Vec<String> {
+    [
+        "--fail",
+        "--silent",
+        "--show-error",
+        "--location",
+        "--max-redirs",
+        "3",
+        "--proto",
+        "=https",
+        "--proto-redir",
+        "=https",
+        "--max-time",
+        "30",
+        "-H",
+        "Accept: application/vnd.github+json",
+        url,
+    ]
+    .iter()
+    .map(|arg| (*arg).to_owned())
+    .collect()
+}
+
+pub(crate) fn release_metadata(url: &str) -> Result<String> {
+    let args = release_metadata_args(url);
+    let args: Vec<&str> = args.iter().map(String::as_str).collect();
+    text("curl", &args)
+}
+
 fn release_path(tag: Option<&str>) -> Result<String> {
     match tag {
         None => Ok("releases/latest".into()),
@@ -531,21 +575,10 @@ fn update_binary(
         &[version_arg],
     )?;
     let installed = installed_version(&before)?;
-    let raw = text(
-        "curl",
-        &[
-            "--fail",
-            "--silent",
-            "--show-error",
-            "--max-time",
-            "30",
-            "--proto",
-            "=https",
-            "-H",
-            "Accept: application/vnd.github+json",
-            &format!("https://api.github.com/repos/scbrown/{repo}/{endpoint}"),
-        ],
-    )?;
+    let owner = release_owner(tool);
+    let raw = release_metadata(&format!(
+        "https://api.github.com/repos/{owner}/{repo}/{endpoint}"
+    ))?;
     let release: Release = serde_json::from_str(&raw).context("parse published release")?;
     if requested_tag.is_some_and(|tag| tag != release.tag_name) {
         bail!("published metadata tag differs from requested installer release");
@@ -578,7 +611,7 @@ fn update_binary(
     let archive = temporary.path().join(&archive_name);
     let sums = temporary.path().join(&sums_name);
     let base = format!(
-        "https://github.com/scbrown/{repo}/releases/download/{}",
+        "https://github.com/{owner}/{repo}/releases/download/{}",
         release.tag_name
     );
     download_https(&format!("{base}/{archive_name}"), &archive)?;
@@ -865,6 +898,25 @@ mod tests {
         assert_eq!(behind_reviewed("bobbin dev-build", "bobbin 0.16.2"), None);
         assert_eq!(behind_reviewed("bobbin", "bobbin 0.16.2"), None);
     }
+    #[test]
+    fn self_update_reads_intigraph_tambo_and_follows_renames() {
+        assert_eq!(release_owner(None), "intigraph");
+        assert_eq!(release_owner(Some(ToolName::Bobbin)), "scbrown");
+        let (repo, ..) = names_for_platform(None, "v0.6.3", "macos", "aarch64").unwrap();
+        assert_eq!(format!("{}/{repo}", release_owner(None)), "intigraph/tambo");
+        let args =
+            release_metadata_args("https://api.github.com/repos/scbrown/tambo/releases/latest");
+        for flag in ["--location", "--fail", "--max-redirs"] {
+            assert!(args.iter().any(|a| a == flag), "{flag}");
+        }
+        let redir = args.iter().position(|a| a == "--proto-redir").unwrap();
+        assert_eq!(args[redir + 1], "=https");
+        assert_eq!(
+            args.last().unwrap(),
+            "https://api.github.com/repos/scbrown/tambo/releases/latest"
+        );
+    }
+
     #[test]
     fn self_update_uses_only_published_platform_archives() {
         for (os, arch, triple) in [
