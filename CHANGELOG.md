@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.4](https://github.com/intigraph/tambo/compare/v0.6.3...v0.6.4) (2026-10-27)
+
+
+### Bug Fixes
+
+* **update-self:** follow GitHub renames and read intigraph/tambo ([#196](https://github.com/intigraph/tambo/issues/196)) ([df6454e](https://github.com/intigraph/tambo/commit/df6454e980c9a702978e9d707ffae5eef702025a))
+
 ## [0.6.3](https://github.com/intigraph/tambo/compare/v0.6.2...v0.6.3) (2026-10-25)
 
 
