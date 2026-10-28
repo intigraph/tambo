@@ -9,6 +9,7 @@
   - [Compatibility](compatibility.md)
 - [Using it with agents](agents.md)
   - [Agent primer](agent-primer.md)
+  - [Agent memory setup](agent-memory.md)
 - [Using Tambo](using.md)
 - [Reference](reference.md)
   - [Configuration](configuration.md)

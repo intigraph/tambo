@@ -1,4 +1,6 @@
 pub mod adapter;
+#[cfg(unix)]
+pub mod agent_memory;
 pub mod apt_owned;
 pub mod configuration;
 pub mod crew;
