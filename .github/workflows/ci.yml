@@ -65,6 +65,8 @@ jobs:
         run: python3 scripts/test-release-repository.py
       - name: Registry visibility refusal controls
         run: python3 scripts/test-crate-version.py
+      - name: Camayoc memory-redirect hook install and verify controls
+        run: python3 scripts/test-memory-redirect-hook.py
 
   evaluation-tests:
     # The Text2KGBench harness is Python and its guards (provider drift, gold
