@@ -28,6 +28,12 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Review memory setup or inspect actual firing evidence (never disables auto-memory)
+    #[cfg(unix)]
+    Memory {
+        #[command(subcommand)]
+        command: MemoryCommand,
+    },
     /// Print the agent primer and each installed stack tool's `prime --brief`
     Prime {
         /// At most 10 lines: version, stack tools found, which have prime
@@ -503,8 +509,143 @@ fn update_release_tool(value: &str) -> Result<String, String> {
     }
 }
 
+#[cfg(unix)]
+#[derive(Subcommand)]
+enum MemoryCommand {
+    /// Prepare private reviewed edits and producer-generated skills; no live writes
+    Plan {
+        #[arg(long)]
+        root: PathBuf,
+        #[arg(long)]
+        bobbin_config: PathBuf,
+        #[arg(long)]
+        person: String,
+        #[arg(long)]
+        issuer_name: Option<String>,
+        #[arg(long)]
+        camayoc_source: PathBuf,
+        #[arg(long)]
+        claude_home: Option<PathBuf>,
+        #[arg(long)]
+        codex_home: Option<PathBuf>,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Install a reviewed memory setup through the existing settings owner
+    Apply {
+        #[arg(long)]
+        plan: PathBuf,
+    },
+    /// Restore only unchanged files and bundles owned by this plan
+    Restore {
+        #[arg(long)]
+        plan: PathBuf,
+    },
+    /// Check current configuration, generated tools and actual hook firing
+    Verify {
+        #[arg(long)]
+        plan: PathBuf,
+    },
+    /// Refuse disabling auto-memory until all rollout acceptance gates are proven
+    DisableAutoMemory {
+        #[arg(long)]
+        plan: PathBuf,
+    },
+    /// Internal harness hook: delegate to Camayoc and record metadata-only evidence
+    #[command(hide = true)]
+    Hook {
+        #[arg(long)]
+        plan: PathBuf,
+        #[arg(long, value_parser=["claude","codex"])]
+        harness: String,
+        #[arg(long)]
+        event: String,
+    },
+    /// Read a matching successful firing receipt (one Unix timestamp)
+    #[command(hide = true)]
+    Evidence {
+        #[arg(long)]
+        plan: PathBuf,
+        #[arg(long, value_parser=["claude","codex"])]
+        harness: String,
+        #[arg(long)]
+        event: String,
+    },
+}
+
 fn main() -> Result<()> {
     match Cli::parse().command {
+        #[cfg(unix)]
+        Commands::Memory { command } => {
+            use caboodle::agent_memory::{self, hooks, lifecycle};
+            let mut runner = lifecycle::System;
+            match command {
+                MemoryCommand::Plan {
+                    root,
+                    bobbin_config,
+                    person,
+                    issuer_name,
+                    camayoc_source,
+                    claude_home,
+                    codex_home,
+                    output,
+                } => {
+                    let home = std::env::var_os("HOME").map(PathBuf::from);
+                    let claude = claude_home
+                        .or_else(|| home.as_ref().map(|p| p.join(".claude")))
+                        .ok_or_else(|| anyhow::anyhow!("HOME or --claude-home required"))?;
+                    let codex = codex_home
+                        .or_else(|| std::env::var_os("CODEX_HOME").map(PathBuf::from))
+                        .or_else(|| home.as_ref().map(|p| p.join(".codex")))
+                        .ok_or_else(|| anyhow::anyhow!("HOME or --codex-home required"))?;
+                    lifecycle::create(
+                        lifecycle::Create {
+                            root: &root,
+                            bobbin: &bobbin_config,
+                            person: &person,
+                            output: &output,
+                            source: &camayoc_source,
+                            claude_home: &claude,
+                            codex_home: &codex,
+                            issuer_name: issuer_name.as_deref(),
+                        },
+                        &mut runner,
+                    )?;
+                    println!(
+                        "memory plan: {} (private; review plan.json before applying)",
+                        output.display()
+                    );
+                }
+                MemoryCommand::Apply { plan } => {
+                    lifecycle::apply(&plan, &mut runner)?;
+                    println!("memory setup applied; restart sessions and run memory verify; auto-memory unchanged");
+                }
+                MemoryCommand::Restore { plan } => {
+                    lifecycle::restore(&plan, &mut runner)?;
+                    println!("memory setup restored; restart sessions to load restored settings");
+                }
+                MemoryCommand::Verify { plan } => {
+                    let report = agent_memory::verify(&plan, &mut runner)?;
+                    println!("{}", serde_json::to_string_pretty(&report)?);
+                    if report["hook_setup_status"] != "verified" {
+                        anyhow::bail!("memory setup firing/configuration is not verified");
+                    }
+                }
+                MemoryCommand::DisableAutoMemory { plan } => {
+                    agent_memory::disable_auto_memory(&plan, &mut runner)?
+                }
+                MemoryCommand::Hook {
+                    plan,
+                    harness,
+                    event,
+                } => std::process::exit(hooks::run(&plan, &harness, &event)),
+                MemoryCommand::Evidence {
+                    plan,
+                    harness,
+                    event,
+                } => println!("{}", hooks::evidence(&plan, &harness, &event)?),
+            }
+        }
         Commands::Prime {
             brief,
             json,
