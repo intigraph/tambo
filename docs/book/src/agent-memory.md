@@ -20,6 +20,7 @@ tambo memory plan \
   --root /path/to/shantytown \
   --bobbin-config /path/to/bobbin/config.toml \
   --person http://example.org/people/operator \
+  --redirect-mode copy \
   --camayoc-source /path/to/camayoc \
   --output /private/path/memory-plan
 ```
@@ -27,6 +28,12 @@ tambo memory plan \
 Review `plan.json` and the staged bundle files locally before applying. The
 private plan contains original configuration bytes for restoration and may
 therefore contain credentials. Keep it outside repositories and shared logs.
+`--redirect-mode copy|block|off` records the redirect choice. The default `copy`
+preserves memory-file writes. Choose `block` explicitly to refuse those writes,
+or `off` to omit the redirect hook and its firing requirement. An existing
+standalone redirect installed by `scripts/memory-redirect-hook.py` must be
+uninstalled before planning or applying this setup; Tambo refuses duplicates.
+
 `--issuer-name` optionally supplies the person's display alias for capture.
 
 ```sh
@@ -50,6 +57,9 @@ Bobbin's prompt hook, with no second retrieval hook.
 Apply can resume after an interrupted operation. Restore accepts only the
 original or planned bytes and bundles, preserves intervening user edits by
 refusing them, and restores the exact prior bundles including evidence fields.
+Empty memory
+skill directories created by apply are removed; preexisting directories and
+user additions are preserved.
 Keep the private plan until restoration is no longer needed. Restoring requires
 the settings owner to reprovision successfully; inspect failures before retrying.
 
@@ -84,7 +94,7 @@ accepted proof path. It never edits the user's auto-memory setting, including
 an explicit existing true or false value. Hook firing does not establish recall
 quality, migration completeness or successful typed promotion.
 
-## Learnings and validation limits
+## Learnings
 
 The Cognee study informed reversible rollout, memory-file redirection, bounded
 capture, promotion and offline replay. Existing Bobbin prompt recall remains the
@@ -93,12 +103,3 @@ Read or Grep, or send whole session histories as recall queries. Producer-owned
 schemas and skills reduce drift between setup instructions and create tools.
 See Camayoc's `docs/design/agent-memory-entities.md` for the entity and rollout
 contract, and `docs/design/memory-capture.md` for capture behavior.
-
-Source validation passed default-feature compilation and Clippy. The patch
-includes isolated fixture tests, which have not run on this host. Runtime tests
-and real two-harness acceptance must
-run in an approved test environment. On the development Mac, the required test
-guard fails before launching its child because its mount reader expects
-`/proc/self/mountinfo`. No guard bypass or live installation was used to claim
-acceptance. Reviewers must run the fixture tests in their own approved venvs;
-the rollout gates above still require actual session evidence afterward.
