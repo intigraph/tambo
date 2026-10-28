@@ -10,7 +10,7 @@ use std::{
     process::Command,
 };
 
-use super::{render, BUNDLE_NAME};
+use super::BUNDLE_NAME;
 
 pub trait Runner {
     fn run(&mut self, program: &str, args: &[String]) -> Result<String>;
@@ -114,6 +114,9 @@ pub struct Plan {
     pub schema: u32,
     pub root: PathBuf,
     pub source_revision: String,
+    pub redirect_mode: super::RedirectMode,
+    pub harness_configs: Vec<PathBuf>,
+    pub skill_directories: Vec<PathBuf>,
     pub changes: Vec<Change>,
     pub bundles: Vec<Value>,
     pub expected_tools: Value,
@@ -206,6 +209,7 @@ pub struct Create<'a> {
     pub claude_home: &'a Path,
     pub codex_home: &'a Path,
     pub issuer_name: Option<&'a str>,
+    pub redirect_mode: super::RedirectMode,
 }
 pub fn create(options: Create<'_>, runner: &mut impl Runner) -> Result<()> {
     let Create {
@@ -217,6 +221,7 @@ pub fn create(options: Create<'_>, runner: &mut impl Runner) -> Result<()> {
         claude_home,
         codex_home,
         issuer_name,
+        redirect_mode,
     } = options;
     use std::os::unix::fs::DirBuilderExt;
     let output = absolute(output)?;
@@ -224,15 +229,22 @@ pub fn create(options: Create<'_>, runner: &mut impl Runner) -> Result<()> {
         bail!("plan output already exists; retain it for review/resume");
     }
     let root = absolute(root)?;
+    let harness_configs = vec![
+        absolute(&claude_home.join("settings.json"))?,
+        absolute(&codex_home.join("config.toml"))?,
+    ];
+    check_existing_redirect(&harness_configs)?;
+    let mut skill_directories = Vec::new();
     let mut changes = Vec::new();
     let crew_path = root.join("shantytown.toml");
     let bobbin = absolute(bobbin)?;
     let crew_before = read(&crew_path)?;
     let bobbin_before = read(&bobbin)?;
-    let (mut crew, config) = render(
+    let (mut crew, config) = super::render_with_mode(
         crew_before.as_deref().unwrap_or(""),
         bobbin_before.as_deref().unwrap_or(""),
         person,
+        redirect_mode,
     )?;
     let capture_path = output.join("capture.json");
     let mut document: toml_edit::DocumentMut = crew.parse()?;
@@ -302,6 +314,11 @@ pub fn create(options: Create<'_>, runner: &mut impl Runner) -> Result<()> {
             bail!("source does not contain the generated memory skill");
         }
         let path = absolute(&destination)?;
+        skill_directories.push(
+            path.parent()
+                .context("skill has no directory")?
+                .to_path_buf(),
+        );
         changes.push(Change {
             before: read(&path)?,
             path,
@@ -344,11 +361,14 @@ pub fn create(options: Create<'_>, runner: &mut impl Runner) -> Result<()> {
         schema: 1,
         root,
         source_revision: revision,
+        redirect_mode,
+        harness_configs,
+        skill_directories,
         changes,
         expected_tools: catalogue["tools"].clone(),
         bundles: vec![
             serde_json::from_str(&bobbin_bundle[0].1)?,
-            super::hooks::bundle(&output),
+            super::hooks::bundle(&output, redirect_mode),
         ],
         id: String::new(),
     };
@@ -489,6 +509,7 @@ fn exact_bundles(plan: &Plan, directory: &Path, current: &[Value], prior: &[Valu
 pub fn apply(directory: &Path, runner: &mut impl Runner) -> Result<()> {
     let plan = load(directory)?;
     let _lock = lock(directory)?;
+    check_existing_redirect(&plan.harness_configs)?;
     let saved = directory.join("registry-before.json");
     let current = existing(&plan, runner)?;
     if !saved.exists() {
@@ -574,6 +595,18 @@ pub fn apply(directory: &Path, runner: &mut impl Runner) -> Result<()> {
         &["hook".into(), "memory-refresh".into(), "--help".into()],
     )?;
     check_tools(&plan, runner)?;
+    let created = directory.join("created-skill-directories.json");
+    let restored = read(&directory.join("state.json"))?
+        .and_then(|text| serde_json::from_str::<Value>(&text).ok())
+        .is_some_and(|state| state["phase"] == "restored");
+    if !created.exists() || restored {
+        let missing: Vec<_> = plan
+            .skill_directories
+            .iter()
+            .filter(|p| !p.exists())
+            .collect();
+        private_write(&created, &serde_json::to_vec(&missing)?)?;
+    }
     journal(directory, "applying")?;
     for c in &plan.changes {
         if read(&c.path)?.as_deref() != Some(c.after.as_str()) {
@@ -621,6 +654,17 @@ pub fn apply(directory: &Path, runner: &mut impl Runner) -> Result<()> {
 pub fn restore(directory: &Path, runner: &mut impl Runner) -> Result<()> {
     let plan = load(directory)?;
     let _lock = lock(directory)?;
+    let created_dirs: Vec<PathBuf> = match read(&directory.join("created-skill-directories.json"))?
+    {
+        Some(text) => serde_json::from_str(&text)?,
+        None => Vec::new(),
+    };
+    if created_dirs
+        .iter()
+        .any(|p| !plan.skill_directories.contains(p))
+    {
+        bail!("created skill directory is outside this plan");
+    }
     let saved: Vec<Value> = serde_json::from_slice(
         &fs::read(directory.join("registry-before.json")).context("plan was never applied")?,
     )?;
@@ -680,6 +724,54 @@ pub fn restore(directory: &Path, runner: &mut impl Runner) -> Result<()> {
             fs::remove_file(&c.path)?;
         }
     }
+    for path in created_dirs {
+        match fs::symlink_metadata(&path) {
+            Ok(meta) if meta.is_dir() && fs::read_dir(&path)?.next().is_none() => {
+                fs::remove_dir(&path)?
+            }
+            Ok(_) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => return Err(error.into()),
+        }
+    }
     st(&plan, &["ops", "provision", "--json"], runner)?;
     journal(directory, "restored")
+}
+
+/// Refuse standalone #202 installations before adding an owner-managed hook.
+/// Parse commands, so JSON escapes or TOML quoting cannot hide a duplicate.
+pub fn check_existing_redirect(paths: &[PathBuf]) -> Result<()> {
+    fn command(value: &Value) -> bool {
+        match value {
+            Value::Object(fields) => fields.iter().any(|(key, val)| {
+                (key == "command"
+                    && val
+                        .as_str()
+                        .is_some_and(|s| s.contains("hook memory-redirect")))
+                    || command(val)
+            }),
+            Value::Array(values) => values.iter().any(command),
+            _ => false,
+        }
+    }
+    for path in paths {
+        let Some(text) = read(path)? else {
+            continue;
+        };
+        if text.contains("# >>> tambo: camayoc memory-redirect hook") {
+            bail!("standalone memory redirect installed in {}; uninstall it with scripts/memory-redirect-hook.py before planning/applying", path.display());
+        }
+        let value: Value = if path.extension().is_some_and(|s| s == "json") {
+            serde_json::from_str(&text).context("parse existing Claude settings")?
+        } else {
+            serde_json::to_value(
+                text.parse::<toml::Value>()
+                    .context("parse existing Codex settings")?,
+            )?
+        };
+        if command(&value) {
+            bail!("standalone memory redirect installed in {}; uninstall it with scripts/memory-redirect-hook.py before planning/applying", path.display());
+        }
+    }
+    Ok(())
 }

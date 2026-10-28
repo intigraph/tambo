@@ -13,9 +13,45 @@ pub mod lifecycle;
 #[cfg(test)]
 mod tests;
 
+#[derive(
+    Clone,
+    Copy,
+    Default,
+    Debug,
+    PartialEq,
+    Eq,
+    serde::Serialize,
+    serde::Deserialize,
+    clap::ValueEnum,
+)]
+#[serde(rename_all = "lowercase")]
+pub enum RedirectMode {
+    #[default]
+    Copy,
+    Block,
+    Off,
+}
+impl RedirectMode {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Copy => "copy",
+            Self::Block => "block",
+            Self::Off => "off",
+        }
+    }
+}
+
 /// Build the exact reviewable edits without changing a host. Bobbin continues
 /// to own recall; no second recall hook or MCP server is invented here.
 pub fn render(root_config: &str, bobbin_config: &str, person: &str) -> Result<(String, String)> {
+    render_with_mode(root_config, bobbin_config, person, RedirectMode::Copy)
+}
+pub fn render_with_mode(
+    root_config: &str,
+    bobbin_config: &str,
+    person: &str,
+    mode: RedirectMode,
+) -> Result<(String, String)> {
     if person.is_empty() || person.chars().any(|c| c.is_whitespace() || c.is_control()) {
         bail!("person must be a nonempty IRI or local entity name");
     }
@@ -23,7 +59,7 @@ pub fn render(root_config: &str, bobbin_config: &str, person: &str) -> Result<(S
     let mut bobbin: DocumentMut = bobbin_config.parse().context("parse bobbin config")?;
     for (key, val) in [
         ("CAMAYOC_CAPTURE", "1"),
-        ("CAMAYOC_MEMORY_REDIRECT", "block"),
+        ("CAMAYOC_MEMORY_REDIRECT", mode.as_str()),
         ("CAMAYOC_PERSON", person),
         ("SHANTY_STOP_RULING_MEMORY", "1"),
         ("BOBBIN_MEMORY_RECALL", "1"),
@@ -56,6 +92,9 @@ pub fn render(root_config: &str, bobbin_config: &str, person: &str) -> Result<(S
 /// be configured, carried by a live harness, AND observed firing. We never
 /// translate a not-checked/unknown report to success or fabricate timestamps.
 pub fn assess(report: &Value) -> Result<Value> {
+    assess_with_mode(report, RedirectMode::Copy)
+}
+pub fn assess_with_mode(report: &Value, mode: RedirectMode) -> Result<Value> {
     if report["schema"] != "st.hook-check/1" {
         bail!("unsupported settings-owner hook report");
     }
@@ -78,6 +117,9 @@ pub fn assess(report: &Value) -> Result<Value> {
             (BUNDLE_NAME, "PreToolUse"),
             (BUNDLE_NAME, "Stop"),
         ] {
+            if mode == RedirectMode::Off && event == "PreToolUse" {
+                continue;
+            }
             let rows: Vec<_> = items
                 .iter()
                 .filter(|r| r["harness"] == harness && r["bundle"] == name && r["event"] == event)
@@ -146,8 +188,12 @@ pub fn verify(directory: &Path, runner: &mut impl lifecycle::Runner) -> Result<V
         ],
     )?;
     let owner: Value = serde_json::from_str(&owner).context("no readable owner hook report")?;
-    let mut result = assess(&owner)?;
+    let mut result = assess_with_mode(&owner, plan.redirect_mode)?;
+    result["redirect_mode"] = json!(plan.redirect_mode);
     let mut drift = Vec::new();
+    if lifecycle::check_existing_redirect(&plan.harness_configs).is_err() {
+        drift.push("existing standalone redirect hook conflicts with this plan".to_string());
+    }
     if owner["root"] != plan.root.display().to_string() {
         drift.push("owner report is for another or unknown store".to_string());
     }

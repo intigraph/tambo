@@ -15,7 +15,7 @@ use std::{
 pub fn quote(value: &str) -> String {
     format!("'{}'", value.replace('\'', "'\"'\"'"))
 }
-pub fn bundle(directory: &Path) -> Value {
+pub fn bundle(directory: &Path, mode: super::RedirectMode) -> Value {
     let mut hooks = Vec::new();
     for harness in ["claude", "codex"] {
         for event in [
@@ -25,7 +25,9 @@ pub fn bundle(directory: &Path) -> Value {
             "Stop",
             "SessionEnd",
         ] {
-            if harness == "codex" && event == "SessionEnd" {
+            if (harness == "codex" && event == "SessionEnd")
+                || (mode == super::RedirectMode::Off && event == "PreToolUse")
+            {
                 continue;
             }
             let base = format!(
@@ -136,12 +138,42 @@ pub fn evidence(directory: &Path, harness: &str, event: &str) -> Result<f64> {
     }
     Ok(stamp)
 }
+pub(crate) fn producer_calls(
+    harness: &str,
+    event: &str,
+    mode: super::RedirectMode,
+) -> Result<Vec<Vec<&'static str>>> {
+    if !valid(harness, event) {
+        bail!("unsupported memory hook");
+    }
+    if event == "PreToolUse" && mode == super::RedirectMode::Off {
+        return Ok(vec![]);
+    }
+    let mut calls = match event {
+        "SessionStart" => vec![vec!["flush", "--hook"]],
+        "UserPromptSubmit" => vec![vec!["hook", "user-prompt-submit"]],
+        "PreToolUse" => vec![vec!["hook", "memory-redirect", "--mode", mode.as_str()]],
+        "Stop" => vec![vec!["hook", "stop"]],
+        "SessionEnd" => vec![vec!["hook", "session-end"]],
+        _ => bail!("unsupported event"),
+    };
+    // Codex has no observed SessionEnd hook. Consolidate on its supported
+    // Stop event, using the producer's existing bounded detached path.
+    if harness == "codex" && event == "Stop" {
+        calls.push(vec!["hook", "session-end"]);
+    }
+    Ok(calls)
+}
+
 /// Run only supported producer hooks. The receipt is metadata, never payload
 /// text. A child failure/timeout is fail-open and cannot create success evidence.
 pub fn run(directory: &Path, harness: &str, event: &str) -> i32 {
     fn inner(directory: &Path, harness: &str, event: &str) -> Result<i32> {
-        load(directory)?;
+        let plan = load(directory)?;
         applied_at(directory)?;
+        if event == "PreToolUse" && plan.redirect_mode == super::RedirectMode::Off {
+            return Ok(0);
+        }
         receipt_path(directory, harness, event)?;
         let mut bytes = Vec::new();
         std::io::stdin()
@@ -155,19 +187,7 @@ pub fn run(directory: &Path, harness: &str, event: &str) -> i32 {
             .as_str()
             .or_else(|| payload["sessionId"].as_str())
             .context("no session identity")?;
-        let mut calls = match event {
-            "SessionStart" => vec![vec!["flush", "--hook"]],
-            "UserPromptSubmit" => vec![vec!["hook", "user-prompt-submit"]],
-            "PreToolUse" => vec![vec!["hook", "memory-redirect", "--mode", "block"]],
-            "Stop" => vec![vec!["hook", "stop"]],
-            "SessionEnd" => vec![vec!["hook", "session-end"]],
-            _ => bail!("unsupported event"),
-        };
-        // Codex has no observed SessionEnd hook. Consolidate on its supported
-        // Stop event, using the producer's existing bounded detached path.
-        if harness == "codex" && event == "Stop" {
-            calls.push(vec!["hook", "session-end"]);
-        }
+        let calls = producer_calls(harness, event, plan.redirect_mode)?;
         let deadline = Instant::now() + Duration::from_secs(8);
         let mut code = 0;
         for args in calls {

@@ -522,6 +522,9 @@ enum MemoryCommand {
         person: String,
         #[arg(long)]
         issuer_name: Option<String>,
+        /// Preserve file writes by default; blocking requires an explicit choice
+        #[arg(long, value_enum, default_value_t = caboodle::agent_memory::RedirectMode::Copy)]
+        redirect_mode: caboodle::agent_memory::RedirectMode,
         #[arg(long)]
         camayoc_source: PathBuf,
         #[arg(long)]
@@ -585,6 +588,7 @@ fn main() -> Result<()> {
                     bobbin_config,
                     person,
                     issuer_name,
+                    redirect_mode,
                     camayoc_source,
                     claude_home,
                     codex_home,
@@ -608,6 +612,7 @@ fn main() -> Result<()> {
                             claude_home: &claude,
                             codex_home: &codex,
                             issuer_name: issuer_name.as_deref(),
+                            redirect_mode,
                         },
                         &mut runner,
                     )?;
@@ -1100,4 +1105,45 @@ fn read_plan(path: &std::path::Path, host_profile: Option<&str>) -> anyhow::Resu
         println!("{line}");
     }
     Ok(plan)
+}
+
+#[cfg(all(test, unix))]
+mod memory_cli_tests {
+    use super::*;
+
+    #[test]
+    fn redirect_mode_defaults_to_copy_and_requires_a_known_choice() {
+        let required = [
+            "tambo",
+            "memory",
+            "plan",
+            "--root",
+            "/tmp/crew",
+            "--bobbin-config",
+            "/tmp/bobbin.toml",
+            "--person",
+            "person-fixture",
+            "--camayoc-source",
+            "/tmp/source",
+            "--output",
+            "/tmp/private-plan",
+        ];
+        for choice in [None, Some("copy"), Some("block"), Some("off")] {
+            let mut args = required.to_vec();
+            if let Some(mode) = choice {
+                args.extend(["--redirect-mode", mode]);
+            }
+            let cli = Cli::try_parse_from(args).unwrap();
+            let Commands::Memory {
+                command: MemoryCommand::Plan { redirect_mode, .. },
+            } = cli.command
+            else {
+                panic!("expected memory plan");
+            };
+            assert_eq!(redirect_mode.as_str(), choice.unwrap_or("copy"));
+        }
+        let mut bad = required.to_vec();
+        bad.extend(["--redirect-mode", "surprise"]);
+        assert!(Cli::try_parse_from(bad).is_err());
+    }
 }

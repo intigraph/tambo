@@ -116,6 +116,9 @@ impl Runner for Owner {
     }
 }
 fn prepare(root: &Path) -> (PathBuf, Owner) {
+    prepare_mode(root, super::RedirectMode::Copy)
+}
+fn prepare_mode(root: &Path, mode: super::RedirectMode) -> (PathBuf, Owner) {
     let crew = root.join("crew");
     fs::create_dir_all(&crew).unwrap();
     fs::write(
@@ -141,6 +144,7 @@ fn prepare(root: &Path) -> (PathBuf, Owner) {
             claude_home: &root.join("claude"),
             codex_home: &root.join("codex"),
             issuer_name: Some("Fixture"),
+            redirect_mode: mode,
         },
         &mut owner,
     )
@@ -248,6 +252,8 @@ fn apply_and_restore_are_lossless_and_keep_prior_bundle_evidence() {
         .path()
         .join("codex/skills/camayoc-memory/SKILL.md")
         .exists());
+    assert!(!temp.path().join("claude/skills/camayoc-memory").exists());
+    assert!(!temp.path().join("codex/skills/camayoc-memory").exists());
     let restored: Value =
         serde_json::from_slice(&fs::read(plan.root.join("hook-bundles/bobbin.json")).unwrap())
             .unwrap();
@@ -438,7 +444,7 @@ fn idle_roles_are_reported_without_demanding_a_fleet_restart() {
 }
 #[test]
 fn bundle_does_not_emit_unsupported_codex_events_or_a_second_recall_hook() {
-    let bundle = hooks::bundle(Path::new("/tmp/private plan"));
+    let bundle = hooks::bundle(Path::new("/tmp/private plan"), super::RedirectMode::Copy);
     for row in bundle["hooks"].as_array().unwrap() {
         assert!(!row["command"].as_str().unwrap().contains("inject-context"));
         if row["harnesses"][0] == "codex" {
@@ -450,4 +456,138 @@ fn bundle_does_not_emit_unsupported_codex_events_or_a_second_recall_hook() {
             .unwrap()
             .contains("--plan '/tmp/private plan'"));
     }
+}
+
+#[test]
+fn redirect_choice_is_pinned_and_off_needs_no_pre_tool_firing() {
+    use super::RedirectMode;
+    for mode in [RedirectMode::Copy, RedirectMode::Block, RedirectMode::Off] {
+        let temp = tempfile::tempdir().unwrap();
+        let (directory, mut owner) = prepare_mode(temp.path(), mode);
+        let plan = lifecycle::load(&directory).unwrap();
+        assert_eq!(plan.redirect_mode, mode);
+        let config: toml::Value = plan
+            .changes
+            .iter()
+            .find(|c| c.path.ends_with("shantytown.toml"))
+            .unwrap()
+            .after
+            .parse()
+            .unwrap();
+        assert_eq!(
+            config["env"]["CAMAYOC_MEMORY_REDIRECT"].as_str(),
+            Some(mode.as_str())
+        );
+        let pre: Vec<_> = plan.bundles[1]["hooks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|h| h["event"] == "PreToolUse")
+            .collect();
+        if mode == RedirectMode::Off {
+            assert!(pre.is_empty());
+            assert!(hooks::producer_calls("claude", "PreToolUse", mode)
+                .unwrap()
+                .is_empty());
+        } else {
+            assert_eq!(pre.len(), 2);
+            assert_eq!(
+                hooks::producer_calls("claude", "PreToolUse", mode).unwrap(),
+                vec![vec!["hook", "memory-redirect", "--mode", mode.as_str()]]
+            );
+        }
+        lifecycle::apply(&directory, &mut owner).unwrap();
+        owner.report["items"]
+            .as_array_mut()
+            .unwrap()
+            .retain(|r| r["event"] != "PreToolUse");
+        let result = verify(&directory, &mut owner).unwrap();
+        assert_eq!(
+            result["hook_setup_status"],
+            if mode == RedirectMode::Off {
+                "verified"
+            } else {
+                "pending"
+            }
+        );
+        assert_eq!(result["auto_memory_eligible"], false);
+    }
+    assert_eq!(RedirectMode::default(), RedirectMode::Copy);
+}
+
+#[test]
+fn standalone_redirect_is_refused_in_markers_and_parsed_commands() {
+    for (relative, text) in [
+        ("claude/settings.json", r#"{"hooks":{"PreToolUse":[{"hooks":[{"command":"cy hook memory\u002dredirect --mode copy"}]}]}}"#),
+        ("codex/config.toml", "# >>> tambo: camayoc memory-redirect hook (aegis-gshu.1) >>>\n"),
+        ("codex/config.toml", "[[hooks.PreToolUse]]\n[[hooks.PreToolUse.hooks]]\ncommand='cy hook memory-redirect --mode block'\n"),
+    ] {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join(relative);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(&path, text).unwrap();
+        let before = fs::read(&path).unwrap();
+        let mut owner = Owner::new(temp.path().join("crew"));
+        let result = lifecycle::create(lifecycle::Create {
+            root: &temp.path().join("crew"), bobbin: &temp.path().join("bobbin.toml"), person: "person-fixture",
+            output: &temp.path().join("plan"), source: &temp.path().join("source"),
+            claude_home: &temp.path().join("claude"), codex_home: &temp.path().join("codex"),
+            issuer_name: None, redirect_mode: super::RedirectMode::Copy,
+        }, &mut owner);
+        assert!(result.unwrap_err().to_string().contains("uninstall"));
+        assert!(!temp.path().join("plan").exists());
+        assert_eq!(before, fs::read(path).unwrap());
+    }
+}
+
+#[test]
+fn standalone_redirect_added_after_planning_refuses_apply_before_targets() {
+    let temp = tempfile::tempdir().unwrap();
+    let (directory, mut owner) = prepare(temp.path());
+    let plan = lifecycle::load(&directory).unwrap();
+    let path = temp.path().join("claude/settings.json");
+    fs::create_dir_all(path.parent().unwrap()).unwrap();
+    fs::write(
+        &path,
+        r#"{"hooks":{"PreToolUse":[{"hooks":[{"command":"cy hook memory-redirect"}]}]}}"#,
+    )
+    .unwrap();
+    assert!(lifecycle::apply(&directory, &mut owner)
+        .unwrap_err()
+        .to_string()
+        .contains("uninstall"));
+    for change in &plan.changes {
+        let now = fs::read_to_string(&change.path).ok();
+        assert_eq!(now, change.before);
+    }
+}
+
+#[test]
+fn restore_preserves_preexisting_or_nonempty_skill_directories() {
+    let temp = tempfile::tempdir().unwrap();
+    let existing = temp.path().join("claude/skills/camayoc-memory");
+    fs::create_dir_all(&existing).unwrap();
+    let (directory, mut owner) = prepare(temp.path());
+    lifecycle::apply(&directory, &mut owner).unwrap();
+    let added = temp.path().join("codex/skills/camayoc-memory/keep.txt");
+    fs::write(&added, "user addition").unwrap();
+    lifecycle::restore(&directory, &mut owner).unwrap();
+    assert!(existing.is_dir());
+    assert_eq!(fs::read_to_string(added).unwrap(), "user addition");
+    lifecycle::restore(&directory, &mut owner).unwrap();
+    assert!(existing.is_dir());
+}
+
+#[test]
+fn reapply_takes_fresh_skill_directory_ownership_after_restore() {
+    let temp = tempfile::tempdir().unwrap();
+    let (directory, mut owner) = prepare(temp.path());
+    lifecycle::apply(&directory, &mut owner).unwrap();
+    lifecycle::restore(&directory, &mut owner).unwrap();
+    let user_dir = temp.path().join("claude/skills/camayoc-memory");
+    fs::create_dir_all(&user_dir).unwrap();
+    lifecycle::apply(&directory, &mut owner).unwrap();
+    lifecycle::restore(&directory, &mut owner).unwrap();
+    assert!(user_dir.is_dir());
+    assert!(!temp.path().join("codex/skills/camayoc-memory").exists());
 }
