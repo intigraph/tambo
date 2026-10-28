@@ -8,6 +8,7 @@
   - [Installation and agent reference](installation-reference.md)
   - [Compatibility](compatibility.md)
 - [Using it with agents](agents.md)
+  - [Agent primer](agent-primer.md)
 - [Using Tambo](using.md)
 - [Reference](reference.md)
   - [Configuration](configuration.md)
@@ -22,4 +23,5 @@
 - [Roadmap](roadmap.md)
   - [Proposal: pendant autoload](pendant-autoload.md)
 - [The stack README standard](stack-standard.md)
+- [The stack prime contract](prime-contract.md)
 - [Docs map](docs-map.md)

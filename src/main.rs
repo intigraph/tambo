@@ -28,6 +28,24 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Print the agent primer and each installed stack tool's `prime --brief`
+    Prime {
+        /// At most 10 lines: version, stack tools found, which have prime
+        #[arg(long)]
+        brief: bool,
+        /// One object in the stack prime contract's common shape
+        #[arg(long)]
+        json: bool,
+        /// Skip the live part; print only the static primer
+        #[arg(long = "static")]
+        offline: bool,
+        /// Print one primer section, by case-insensitive heading prefix
+        #[arg(long)]
+        section: Option<String>,
+        /// Per-tool timeout for `<tool> prime --brief`, in milliseconds
+        #[arg(long, default_value_t = 2000, hide = true)]
+        timeout_ms: u64,
+    },
     /// Install the local single-user stack with no interview, server, or token
     Quickstart {
         #[arg(long, default_value = "caboodle-plan.toml")]
@@ -484,6 +502,28 @@ fn update_release_tool(value: &str) -> Result<String, String> {
 
 fn main() -> Result<()> {
     match Cli::parse().command {
+        Commands::Prime {
+            brief,
+            json,
+            offline,
+            section,
+            timeout_ms,
+        } => {
+            let opts = caboodle::prime::Options {
+                brief,
+                json,
+                offline,
+                section: section.as_deref(),
+                timeout: std::time::Duration::from_millis(timeout_ms),
+            };
+            match caboodle::prime::run(&opts) {
+                Ok(text) => print!("{text}"),
+                Err(e) => {
+                    eprintln!("{e}");
+                    std::process::exit(2);
+                }
+            }
+        }
         Commands::Quickstart {
             plan,
             state,
