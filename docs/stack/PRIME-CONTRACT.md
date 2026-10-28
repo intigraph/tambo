@@ -45,9 +45,11 @@ anchor; chaski: subscriptions; yupana: base ref and tiers).
 ## `--brief`
 
 At most 10 lines, at least 5: line 1 is `<tool> <version>: <one-line job>`,
-then the live summary condensed to its key lines, then the line
+then the live summary condensed to its key lines (or, with `--static`, the
+"What <tool> is" lines), then the line
 ``Run `<tool> prime` for the full primer.`` This is what `tambo prime` shows,
-and it truncates anything longer.
+and it truncates anything longer. `<tool> prime --brief` answers in well under
+1 s including process start-up, because `tambo prime` gives each tool 1 s.
 
 ## `--json`
 
@@ -56,6 +58,7 @@ Plain text is the default. `--json` prints one object with this shape, and
 
 ```json
 {
+  "schema": "stack-prime/1",
   "tool": "quipu",
   "version": "0.42.0",
   "primer": { "sections": ["What Quipu is", "Agent workflow"], "text": "# Quipu agent primer\n..." },
@@ -64,6 +67,8 @@ Plain text is the default. `--json` prints one object with this shape, and
 }
 ```
 
+- `schema` is `stack-prime/1`. Only a breaking change bumps it. Consumers
+  ignore fields they do not know, so adding a field is not breaking.
 - `live.status`: `ok`, `partial`, `absent`, `unreachable`, `unreadable` or
   `skipped` (`--static`). `live.summary` holds the tool's own fields.
 - `status`: `ok` when the live summary is `ok` or `skipped`, else `degraded`.
@@ -79,10 +84,36 @@ Plain text is the default. `--json` prints one object with this shape, and
 - A test in the normal CI run fails when a copy drifts, and says the one
   command that regenerates it (quipu: `QUIPU_BLESS_GOLDENS=1 cargo test --test prime_sync`).
 
+## Conformance tests
+
+Every repo runs these in its normal CI, next to the drift test:
+
+| Test | Passes when |
+| --- | --- |
+| Missing store | Exit 0, full primer printed, `live.status` is `absent`, and the path is not created |
+| Unreachable server | Exit 0, full primer printed, `live.status` is `unreachable` |
+| Read-only | No file or directory created or changed under a temp `HOME`, the store path or the working directory (compare before and after) |
+| Time budget | Against a slow backend stub, `live.status` is `partial` and `live.elapsed_ms` is under 1000 |
+| Brief | `--brief` and `--brief --static` print 5 to 10 lines |
+| JSON | `--json` parses and has `schema`, `tool`, `version`, `primer.sections`, `live.status` and `status` |
+| Drift | The skill and docs copies match the primer source |
+
+Skip a row only when the tool has no such state (a tool with no server has no
+unreachable case).
+
 ## `tambo prime`
 
 `tambo prime` prints Tambo's own primer, then, for each tool in the
-[stack table](https://github.com/intigraph/tambo/blob/main/docs/stack-table.md) found on `PATH`, the output of
-`<tool> prime --brief` (2 s timeout, run in parallel). A tool without a
-working `prime` is listed as `no prime yet`; a tool past its timeout as
-`timed out`; neither fails the command.
+[stack table](https://github.com/intigraph/tambo/blob/main/docs/stack-table.md)
+found on `PATH`:
+
+1. Checks the program is that tool (its `--help` or `--version` text, with a
+   throwaway `HOME`). A same-named program (a sed replacement `sd`, the
+   suckless `st`) is listed as `not the stack tool` and never run with
+   `prime`. `qp` is never probed; it is an alias of `quipu`.
+2. Runs `<tool> prime --brief` with stdin closed and output capped at 64 KiB.
+
+Tools run in parallel inside one 1 s deadline each, so the live part stays
+under 1 s. At the deadline Tambo kills the tool's process group and lists it as
+`timed out`. A tool whose prime fails or prints nothing is listed as
+`no prime yet`. Neither fails the command.

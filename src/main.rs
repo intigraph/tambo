@@ -43,7 +43,7 @@ enum Commands {
         #[arg(long)]
         section: Option<String>,
         /// Per-tool timeout for `<tool> prime --brief`, in milliseconds
-        #[arg(long, default_value_t = 2000, hide = true)]
+        #[arg(long, default_value_t = 1000, hide = true)]
         timeout_ms: u64,
     },
     /// Install the local single-user stack with no interview, server, or token
