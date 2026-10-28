@@ -22,8 +22,9 @@ fn curl_path() -> OsString {
     curl.parent().unwrap().as_os_str().to_owned()
 }
 
-// A byte-for-byte copy of the native transport isolates PATH without a shell
-// stub or symlink to any installed stack executable.
+// Resolve the native curl in place: copying a platform binary can break its
+// loader/signature assumptions on macOS. This read-only transport reference is
+// never rewritten or stubbed; no managed stack program is placed on PATH.
 fn private_curl() -> tempfile::TempDir {
     let dir = tempfile::tempdir().unwrap();
     let path = std::env::var_os("PATH");
@@ -31,7 +32,7 @@ fn private_curl() -> tempfile::TempDir {
         .into_iter()
         .next()
         .unwrap();
-    std::fs::copy(curl, dir.path().join("curl")).unwrap();
+    std::os::unix::fs::symlink(curl.canonicalize().unwrap(), dir.path().join("curl")).unwrap();
     dir
 }
 
@@ -156,7 +157,7 @@ fn current_producer_without_time_stays_reachable_with_unknown_generation() {
     body.as_object_mut().unwrap().remove("generated_at");
     let server = Server::new("200 OK", body.to_string().into_bytes(), Duration::ZERO);
     let result = check(&server);
-    assert_eq!(result.status, "partial");
+    assert_eq!(result.status, "ok");
     assert_eq!(result.reachable, Some(true));
     assert!(result.generated_at.is_none());
     assert!(result.line().contains("generated-at: unknown"));
@@ -278,7 +279,7 @@ fn compiled_cli_renders_site_separately_and_preserves_private_home_and_cwd() {
             let sites = &value["live"]["summary"]["sites"];
             assert_eq!(sites[0]["tool"], "rikuy");
             assert_eq!(sites[0]["kind"], "site");
-            assert_eq!(sites[0]["reachable"], true);
+            assert_eq!(sites[0]["reachable"], true, "{sites}");
             assert!(!value["live"]["summary"]["tools"]
                 .as_array()
                 .unwrap()
@@ -339,6 +340,70 @@ fn environment_url_works_and_explicit_url_takes_precedence() {
         let out = cmd.output().unwrap();
         assert!(out.status.success());
         let value: Value = serde_json::from_slice(&out.stdout).unwrap();
-        assert_eq!(value["live"]["summary"]["sites"][0]["reachable"], true);
+        assert_eq!(
+            value["live"]["summary"]["sites"][0]["reachable"], true,
+            "{value}"
+        );
+    }
+}
+
+#[test]
+fn unconfigured_optional_site_does_not_degrade_the_stack() {
+    let home = tempfile::tempdir().unwrap();
+    let cwd = tempfile::tempdir().unwrap();
+    for args in [vec!["--json"], vec!["--brief", "--json"], vec!["--brief"]] {
+        let out = Command::cargo_bin("tambo")
+            .unwrap()
+            .env_remove("RIKUY_URL")
+            .env("PATH", cwd.path())
+            .env("HOME", home.path())
+            .current_dir(cwd.path())
+            .arg("prime")
+            .args(&args)
+            .output()
+            .unwrap();
+        assert!(out.status.success());
+        let text = String::from_utf8(out.stdout).unwrap();
+        if args.contains(&"--json") {
+            let v: Value = serde_json::from_str(&text).unwrap();
+            assert_eq!(v["status"], "ok", "{v}");
+            assert_eq!(v["live"]["status"], "ok", "{v}");
+            assert_eq!(v["live"]["summary"]["sites"][0]["status"], "absent");
+            assert_eq!(v["live"]["summary"]["sites"][0]["configured"], false);
+        } else {
+            assert!(text.contains("Rikuy site: not configured"));
+        }
+    }
+}
+
+#[test]
+fn configured_failure_categories_are_not_fabricated_deadlines() {
+    let bin = private_curl();
+    let home = tempfile::tempdir().unwrap();
+    let cwd = tempfile::tempdir().unwrap();
+    let mut no_time = identity();
+    no_time.as_object_mut().unwrap().remove("generated_at");
+    for (code, body, expected) in [
+        ("503 Unavailable", vec![], "unreachable"),
+        ("200 OK", b"not JSON".to_vec(), "unreadable"),
+        ("200 OK", no_time.to_string().into_bytes(), "ok"),
+    ] {
+        let server = Server::new(code, body, Duration::ZERO);
+        let out = Command::cargo_bin("tambo")
+            .unwrap()
+            .env_remove("RIKUY_URL")
+            .env("PATH", bin.path())
+            .env("HOME", home.path())
+            .current_dir(cwd.path())
+            .args(["prime", "--json", "--rikuy-url", &server.url])
+            .output()
+            .unwrap();
+        assert!(out.status.success());
+        let v: Value = serde_json::from_slice(&out.stdout).unwrap();
+        assert_eq!(v["live"]["status"], expected, "{v}");
+        assert_eq!(
+            v["status"],
+            if expected == "ok" { "ok" } else { "degraded" }
+        );
     }
 }

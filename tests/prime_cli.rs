@@ -102,7 +102,10 @@ fn text_lists_primed_no_prime_timed_out_foreign_and_missing_tools() {
     let text = String::from_utf8(out).unwrap();
     assert!(text.starts_with("# Tambo agent primer"));
     assert!(text.contains("## Live state"));
-    assert!(text.contains("Stack tools on PATH: 5 of 11."));
+    assert!(text.contains(&format!(
+        "Stack tools on PATH: 5 of {}.",
+        caboodle::prime::ROSTER.len()
+    )));
     assert!(text.contains("    quipu 0.42.0: knowledge graph for agents"));
     let bobbin = text.split("### bobbin").nth(1).unwrap();
     assert!(bobbin.contains("no prime yet"), "{text}");

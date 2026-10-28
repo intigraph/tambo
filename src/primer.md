@@ -44,6 +44,8 @@ site's `source.json`. It runs beside binary probes with a subsecond deadline,
 The result reports static-site reachability, revision and `generated_at` when
 present. Missing generation time stays unknown; it is never the HTTP Date or
 check time. This does not measure live brief freshness or activate a reader.
+An unconfigured optional site does not degrade the stack summary. A configured
+failure keeps its unreachable/unreadable category; only a deadline is partial.
 `--static` skips this GET as well as all binary probes.
 
 ## Next steps

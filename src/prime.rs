@@ -590,8 +590,12 @@ pub fn run(opts: &Options) -> Result<String, String> {
         let mut value = to_json(primer_text, probes.as_deref(), elapsed);
         if let Some(site) = &site {
             value["live"]["summary"]["sites"] = json!([site.value()]);
-            if site.status != "ok" {
-                value["live"]["status"] = json!("partial");
+            if site.reason != "url_not_configured" && site.status != "ok" {
+                // A binary deadline remains partial. Other site failures retain
+                // their own category; optional, unconfigured sites do not gate.
+                if value["live"]["status"] != "partial" {
+                    value["live"]["status"] = json!(site.status);
+                }
                 value["status"] = json!("degraded");
             }
         }

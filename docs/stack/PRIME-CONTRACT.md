@@ -124,3 +124,6 @@ probes and reports it separately under `live.summary.sites`. Configure
 means absent, and `--static` skips the request. Reachability describes the
 static source identity, not live reader admission or data freshness. A missing
 `generated_at` is unknown even when the identity is reachable.
+An unconfigured Rikuy site does not degrade the stack. Configured failures
+retain their own category; `partial` is reserved for a site deadline. A valid
+identity without optional generation time stays reachable with unknown time.

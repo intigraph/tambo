@@ -23,11 +23,13 @@ impl Site {
         json!({"tool":"rikuy","kind":"site","url":self.url,"status":self.status,
             "reachable":self.reachable,"generated_at":self.generated_at,"revision":self.revision,
             "reason":self.reason,"elapsed_ms":self.elapsed_ms,"scope":"static-site-identity",
-            "live_brief":"not_measured","next":"tambo prime --rikuy-url <site-url>"})
+            "live_brief":"not_measured","configured":self.reason != "url_not_configured","next":"tambo prime --rikuy-url <site-url>"})
     }
 
     pub fn line(&self) -> String {
-        let status = if self.reachable == Some(true) {
+        let status = if self.reason == "url_not_configured" {
+            "not configured"
+        } else if self.reachable == Some(true) {
             "reachable"
         } else {
             self.status
@@ -248,7 +250,9 @@ pub fn probe(url: Option<&str>, path: Option<&OsStr>, timeout: Duration) -> Site
     site.revision = Some(revision.to_owned());
     match value.get("generated_at") {
         None | Some(Value::Null) => {
-            site.status = "partial";
+            // The deployed producer does not supply this optional timestamp.
+            // Identity is reachable; unknown generation is not a deadline.
+            site.status = "ok";
             site.reason = "generated_at_unknown";
         }
         Some(Value::String(at)) if timestamp(at) => {
