@@ -25,6 +25,9 @@ use serde_json::{json, Value};
 
 use crate::adapter::which_all;
 
+#[path = "prime_site.rs"]
+pub mod site;
+
 /// The static primer. One source: the skill and the book carry copies of it.
 pub const PRIMER: &str = include_str!("primer.md");
 
@@ -56,7 +59,7 @@ pub struct Tool {
     pub identity: &'static [&'static str],
 }
 
-/// The stack tools, in stack-table order (Tambo itself is the caller). Member
+/// The stack binaries, in stack-table order (Tambo calls; Rikuy is a site). Member
 /// identities match their `members/*.toml` manifests (tested below); generic
 /// short names (`sd`, `st`, `dp`) are identified by text a same-named tool
 /// (sed replacement, suckless terminal) would not print.
@@ -117,12 +120,6 @@ pub const ROSTER: &[Tool] = &[
         program: "st",
         identity_argv: &["--help"],
         identity: &["sling"],
-    },
-    Tool {
-        name: "rikuy",
-        program: "rikuy",
-        identity_argv: &["--version"],
-        identity: &["rikuy"],
     },
     Tool {
         name: "shuttle",
@@ -555,6 +552,7 @@ pub struct Options<'a> {
     pub offline: bool,
     pub section: Option<&'a str>,
     pub timeout: Duration,
+    pub rikuy_url: Option<&'a str>,
 }
 
 /// Entry point. Returns the text to print, or a usage error.
@@ -565,11 +563,42 @@ pub fn run(opts: &Options) -> Result<String, String> {
     };
     let started = Instant::now();
     let path = std::env::var_os("PATH");
+    let rikuy_url = opts
+        .rikuy_url
+        .map(str::to_owned)
+        .or_else(|| std::env::var("RIKUY_URL").ok());
+    let site_handle = (!opts.offline).then(|| {
+        let path = path.clone();
+        let timeout = opts.timeout;
+        thread::spawn(move || site::probe(rikuy_url.as_deref(), path.as_deref(), timeout))
+    });
     let probes = (!opts.offline).then(|| probe(path.as_deref(), opts.timeout));
+    let site = site_handle.map(|h| {
+        h.join().unwrap_or(site::Site {
+            url: None,
+            status: "unreadable",
+            reachable: None,
+            generated_at: None,
+            revision: None,
+            reason: "reader_failed",
+            elapsed_ms: 0,
+        })
+    });
     let elapsed = started.elapsed().as_millis();
     if opts.json {
         let primer_text = (!opts.brief).then_some(text.as_str());
-        let value = to_json(primer_text, probes.as_deref(), elapsed);
+        let mut value = to_json(primer_text, probes.as_deref(), elapsed);
+        if let Some(site) = &site {
+            value["live"]["summary"]["sites"] = json!([site.value()]);
+            if site.reason != "url_not_configured" && site.status != "ok" {
+                // A binary deadline remains partial. Other site failures retain
+                // their own category; optional, unconfigured sites do not gate.
+                if value["live"]["status"] != "partial" {
+                    value["live"]["status"] = json!(site.status);
+                }
+                value["status"] = json!("degraded");
+            }
+        }
         return Ok(format!(
             "{}\n",
             serde_json::to_string_pretty(&value).unwrap_or_default()
@@ -577,13 +606,27 @@ pub fn run(opts: &Options) -> Result<String, String> {
     }
     if opts.brief {
         return Ok(match &probes {
-            Some(probes) => render_brief(probes),
+            Some(probes) => {
+                let mut brief = render_brief(probes);
+                if let Some(site) = &site {
+                    let end = "Run `tambo prime` for the full primer.\n";
+                    brief = brief.replace(end, &format!("{}\n{end}", site.line()));
+                }
+                brief
+            }
             None => render_static_brief(),
         });
     }
     let mut out = text;
     if let Some(probes) = &probes {
         out.push_str(&render_live(probes));
+        if let Some(site) = &site {
+            out.push_str(&format!("\n### rikuy (static site)\n\n{}\n", site.line()));
+            out.push_str(&format!(
+                "Read: {} ({}); live brief state not measured.\n",
+                site.status, site.reason
+            ));
+        }
     }
     Ok(out)
 }
@@ -659,7 +702,7 @@ mod tests {
             .lines()
             .filter_map(|l| l.strip_prefix("| ["))
             .filter_map(|l| l.split(']').next())
-            .filter(|name| *name != "tambo")
+            .filter(|name| !matches!(*name, "tambo" | "rikuy"))
             .collect();
         let roster: Vec<&str> = ROSTER.iter().map(|t| t.name).collect();
         assert_eq!(roster, listed);

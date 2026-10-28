@@ -84,7 +84,8 @@ touch {}/foreign-ran"#,
 
 fn tambo(path: &Path) -> Command {
     let mut cmd = Command::cargo_bin("tambo").unwrap();
-    cmd.env("PATH", format!("{}:/bin:/usr/bin", path.display()))
+    cmd.env_remove("RIKUY_URL")
+        .env("PATH", format!("{}:/bin:/usr/bin", path.display()))
         .args(["prime", "--timeout-ms", "2500"]);
     cmd
 }
@@ -101,7 +102,10 @@ fn text_lists_primed_no_prime_timed_out_foreign_and_missing_tools() {
     let text = String::from_utf8(out).unwrap();
     assert!(text.starts_with("# Tambo agent primer"));
     assert!(text.contains("## Live state"));
-    assert!(text.contains("Stack tools on PATH: 5 of 11."));
+    assert!(text.contains(&format!(
+        "Stack tools on PATH: 5 of {}.",
+        caboodle::prime::ROSTER.len()
+    )));
     assert!(text.contains("    quipu 0.42.0: knowledge graph for agents"));
     let bobbin = text.split("### bobbin").nth(1).unwrap();
     assert!(bobbin.contains("no prime yet"), "{text}");
@@ -153,6 +157,7 @@ fn live_part_stays_under_one_second_and_creates_nothing() {
     let mut cmd = Command::cargo_bin("tambo").unwrap();
     let out = cmd
         .env("PATH", format!("{}:/bin:/usr/bin", stack.path().display()))
+        .env_remove("RIKUY_URL")
         .env("HOME", home.path())
         .current_dir(work.path())
         .args(["prime", "--json"])
@@ -225,8 +230,10 @@ fn json_follows_the_contract_shape() {
     let quipu = tools.iter().find(|t| t["tool"] == "quipu").unwrap();
     assert_eq!(quipu["status"], "primed");
     assert_eq!(quipu["brief"][1], "Store: ok");
-    let rikuy = tools.iter().find(|t| t["tool"] == "rikuy").unwrap();
-    assert_eq!(rikuy["status"], "not-installed");
+    assert!(!tools.iter().any(|t| t["tool"] == "rikuy"));
+    let sites = v["live"]["summary"]["sites"].as_array().unwrap();
+    assert_eq!(sites[0]["tool"], "rikuy");
+    assert_eq!(sites[0]["status"], "absent");
 }
 
 #[test]
