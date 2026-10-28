@@ -83,7 +83,7 @@
       "source": "docs/book/src/configuration.md",
       "subject": "http://aegis.gastown.local/ontology/doc/tambo/docs%2Fbook%2Fsrc%2Fconfiguration.md",
       "summary": "Read the TOML plan, JSON progress state and explicit remote credential boundaries before changing installation targets or endpoint configuration.",
-      "source_sha256": "2ebb34b38d876434dbedb48fd58009dd95da962a856568791ba38dd42623a216",
+      "source_sha256": "ce27e3fea802efdef1f2cbd861cfa0258fb835840726436fff146a66c8ceb72a",
       "properties": {
         "startHereOrder": 2
       }

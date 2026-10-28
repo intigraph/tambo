@@ -196,7 +196,7 @@ camayoc entities. `tambo install` never enables it. Wire it in with
 ```bash
 python3 scripts/memory-redirect-hook.py install --harness claude --mode copy --person person-you
 python3 scripts/memory-redirect-hook.py status  --harness both
-python3 scripts/memory-redirect-hook.py verify  --harness claude --live
+CLAUDE_CODE_OAUTH_TOKEN=... python3 scripts/memory-redirect-hook.py verify --harness claude --live
 python3 scripts/memory-redirect-hook.py uninstall --harness both
 ```
 
@@ -218,18 +218,30 @@ without editing settings.
   build that emits native `apply_patch` PreToolUse events, as the Yupana edit
   hook does.
 
-Install replaces only its own entry and keeps a one-time copy at
-`<file>.before-memory-redirect`. A missing `cy` makes the hook exit 0, so an
-uninstalled camayoc never breaks the agent.
+Install needs a person to record rulings and preferences under. It takes
+`--person`, then `$CAMAYOC_PERSON`, then `person` under `[memory]` in
+`~/.config/camayoc/config.toml`. Without a person, every directive, decision
+and preference would be refused, so install refuses unless you pass
+`--no-person`.
+
+Install replaces only its own entry. It keeps the file's indent and non-ASCII
+text, and it saves a one-time copy at `<file>.before-memory-redirect`. The
+hook finds `cy` when it runs: first at the path found on PATH at install time
+(the shim or symlink, never its target, so an upgrade keeps working), then on
+the hook's PATH. With no `cy` at all, the hook exits 0, so an uninstalled
+camayoc never breaks the agent.
 
 `verify` reads the entry back. It then runs the configured command on a
 synthetic memory write in a scratch directory, with
 `CAMAYOC_REDIRECT_VERIFY` set, so the hook maps and prechecks the probe but
 never contacts a store. Block mode must exit 2 naming a `cy record` call. Copy
 mode must return silently, and its background worker must log the probe.
-`--live` (Claude only) also runs one `claude -p` session whose only added
-settings are this hook in block mode. It passes when Claude Code itself
-invokes the hook and the memory file is not written. The Codex check does not
+`--live` (Claude only) also runs one `claude -p` session in a scratch `HOME`
+and `CLAUDE_CONFIG_DIR`. Its only settings are this hook in block mode, and it
+gets a minimal environment. It passes when Claude Code itself invokes the hook,
+the memory file is not written, and nothing lands in the real `~/.claude`. A
+scratch `HOME` has no login, so set `CLAUDE_CODE_OAUTH_TOKEN` (from
+`claude setup-token`) or `ANTHROPIC_API_KEY` first. The Codex check does not
 launch Codex itself.
 
 ## Externally owned Quipu

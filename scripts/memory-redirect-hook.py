@@ -26,8 +26,14 @@ memory-file write inside a scratch directory, with `CAMAYOC_REDIRECT_VERIFY`
 set, so the hook maps and prechecks the file but never contacts a store.
 block mode must refuse with a `cy` call; copy mode must return at once and its
 background worker must log the probe. `--live` (Claude only) also runs one
-`claude -p` session whose only settings are this hook in block mode, and
-asserts that Claude itself invoked the hook and that the file was not written.
+`claude -p` session in a scratch HOME whose only settings are this hook in
+block mode (needs CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_API_KEY, since a scratch
+HOME has no login), and asserts that Claude itself invoked the hook, that the
+file was not written and that nothing landed in the real ~/.claude.
+
+Install needs a person to record rulings under: --person, $CAMAYOC_PERSON,
+or `person` under [memory] in ~/.config/camayoc/config.toml (--no-person to
+install without one).
 """
 from __future__ import annotations
 
@@ -68,14 +74,21 @@ class Refusal(RuntimeError):
 # ---- the command ----------------------------------------------------------------------
 
 def hook_command(cy: str, mode: str, person: str | None) -> str:
-    """`cy` missing at run time exits 0 (the agent is never broken); else exec, so block's exit 2 stands."""
+    """The hook's shell command.
+
+    `cy` is looked up at run time: the install-time path first (as found on
+    PATH, never symlink-resolved, so a Homebrew or uv upgrade that moves the
+    real file keeps working), then `cy` on the hook's PATH. No cy at all exits
+    0, so the agent is never broken; otherwise exec, so block's exit 2 stands.
+    """
     if mode not in MODES:
         raise Refusal(f"mode must be one of {', '.join(MODES)}")
     if person is not None and not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:/#~-]{0,199}", person):
         raise Refusal("--person must be an entity IRI or local name")
     q = shlex.quote(cy)
     tail = f" --person {shlex.quote(person)}" if person else ""
-    return f"[ -x {q} ] || exit 0; exec {q} {HOOK_SUBCOMMAND} --mode {mode}{tail}"
+    return (f'c={q}; [ -x "$c" ] || c=$(command -v cy) || exit 0; '
+            f'exec "$c" {HOOK_SUBCOMMAND} --mode {mode}{tail}')
 
 
 def is_ours(command: str) -> bool:
@@ -87,11 +100,41 @@ def mode_of(command: str) -> str | None:
     return m.group(1) if m else None
 
 
+def camayoc_config() -> Path:
+    base = os.environ.get("XDG_CONFIG_HOME") or str(Path.home() / ".config")
+    return Path(base) / "camayoc/config.toml"
+
+
+def resolve_person(explicit: str | None, allow_none: bool) -> str | None:
+    """--person, else $CAMAYOC_PERSON, else `person` under [memory] in ~/.config/camayoc/config.toml.
+
+    Without one the worker refuses every directive, decision and preference,
+    so install refuses unless --no-person says that is intended.
+    """
+    if explicit:
+        return explicit
+    if os.environ.get("CAMAYOC_PERSON"):
+        return os.environ["CAMAYOC_PERSON"]
+    cfg = camayoc_config()
+    if cfg.exists() and tomllib is not None:
+        try:
+            person = (tomllib.loads(cfg.read_text(encoding="utf-8")).get("memory") or {}).get("person")
+        except tomllib.TOMLDecodeError:
+            raise Refusal(f"{cfg} does not parse as TOML; nothing was changed") from None
+        if person:
+            return str(person)
+    if allow_none:
+        return None
+    raise Refusal("no person to record rulings and preferences under: pass --person <IRI>, set CAMAYOC_PERSON, "
+                  f"or put person = \"<IRI>\" under [memory] in {cfg}. Without one every directive, decision "
+                  "and preference is refused; pass --no-person to install anyway")
+
+
 def resolve_cy(explicit: str | None) -> str:
     cy = explicit or shutil.which("cy")
     if not cy:
         raise Refusal("cy is not on PATH; " + INSTALL_HINT)
-    path = Path(cy).expanduser().resolve()
+    path = Path(os.path.abspath(os.path.expanduser(cy)))  # keep the shim/symlink, never its target
     if not (path.is_file() and os.access(path, os.X_OK)):
         raise Refusal(f"{cy} is not an executable file; " + INSTALL_HINT)
     try:
@@ -131,6 +174,22 @@ def _write_atomic(path: Path, text: str) -> None:
 
 
 # ---- Claude settings.json ------------------------------------------------------------------
+
+def _indent_of(path: Path):
+    """The file's own indent (spaces or a tab), default 2, so a rewrite is a minimal diff."""
+    try:
+        for line in path.read_text(encoding="utf-8").splitlines()[1:]:
+            lead = line[: len(line) - len(line.lstrip())]
+            if lead:
+                return "\t" if lead.startswith("\t") else len(lead)
+    except OSError:
+        pass
+    return 2
+
+
+def _claude_dump(path: Path, data: dict) -> str:
+    return json.dumps(data, indent=_indent_of(path), ensure_ascii=False) + "\n"
+
 
 def _claude_load(path: Path) -> dict:
     if not path.exists():
@@ -178,7 +237,7 @@ def claude_install(path: Path, command: str) -> str:
                                                           "timeout": TIMEOUT_S}]})
     hooks["PreToolUse"] = groups
     _backup(path)
-    _write_atomic(path, json.dumps(data, indent=2) + "\n")
+    _write_atomic(path, _claude_dump(path, data))
     return f"claude: PreToolUse {CLAUDE_MATCHER} -> {command} ({path})"
 
 
@@ -194,7 +253,7 @@ def claude_uninstall(path: Path) -> str:
         if not data["hooks"]:
             del data["hooks"]
     _backup(path)
-    _write_atomic(path, json.dumps(data, indent=2) + "\n")
+    _write_atomic(path, _claude_dump(path, data))
     return f"claude: removed the memory-redirect hook from {path}"
 
 
@@ -323,7 +382,8 @@ def fire(harness: str, command: str, *, wait_s: float = 20.0) -> list[str]:
         target.parent.mkdir(parents=True)
         state = root / "state"
         env = {k: v for k, v in os.environ.items() if k != "CAMAYOC_MEMORY_REDIRECT"}
-        env.update({"XDG_STATE_HOME": str(state), "CAMAYOC_REDIRECT_VERIFY": nonce,
+        env.pop("CLAUDE_CONFIG_DIR", None)
+        env.update({"HOME": str(root / "home"), "XDG_STATE_HOME": str(state), "CAMAYOC_REDIRECT_VERIFY": nonce,
                     "QUIPU_SERVER": f"http://127.0.0.1:{_closed_port()}"})
         start = time.monotonic()
         try:
@@ -357,35 +417,72 @@ def fire(harness: str, command: str, *, wait_s: float = 20.0) -> list[str]:
         raise Refusal(f"{harness}: copy mode returned but its background worker logged nothing in {wait_s:.0f}s")
 
 
+LIVE_CREDENTIALS = ("CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY")
+
+
+def _real_claude_projects() -> set[str]:
+    root = Path.home() / ".claude/projects"
+    try:
+        return {p.name for p in root.iterdir()}
+    except OSError:
+        return set()
+
+
 def live_claude(command: str, claude: str = "claude", timeout: int = 240) -> list[str]:
-    """One real Claude Code session with only this hook (forced to block) in its settings."""
-    if not shutil.which(claude):
+    """One real Claude Code session in a scratch HOME whose only settings are this hook, forced to block.
+
+    HOME and CLAUDE_CONFIG_DIR point at a scratch directory, so no user
+    settings, hooks, plugins or transcripts are read or written: nothing lands
+    in the real ~/.claude. A scratch HOME has no login (the keychain entry is
+    tied to the real config dir), so the session needs CLAUDE_CODE_OAUTH_TOKEN
+    (from `claude setup-token`) or ANTHROPIC_API_KEY in the environment.
+    """
+    exe = shutil.which(claude)
+    if not exe:
         raise Refusal("--live needs the claude CLI on PATH")
+    creds = {k: os.environ[k] for k in LIVE_CREDENTIALS if os.environ.get(k)}
+    if not creds:
+        raise Refusal("--live runs Claude Code in a scratch HOME, which has no login: set CLAUDE_CODE_OAUTH_TOKEN "
+                      "(claude setup-token) or ANTHROPIC_API_KEY in this shell")
     nonce = "tambo-live-" + uuid.uuid4().hex[:12]
+    before = _real_claude_projects()
     with tempfile.TemporaryDirectory(prefix="tambo-memredirect-live-") as tmp:
         root = Path(tmp)
-        target = root / ".claude/projects/tambo-live/memory/tambo-live.md"
+        home = root / "home"
+        work = root / "work"
+        work.mkdir(parents=True)
+        target = home / ".claude/projects/tambo-live/memory/tambo-live.md"
         target.parent.mkdir(parents=True)
         settings = root / "settings.json"
         settings.write_text(json.dumps({"hooks": {"PreToolUse": [{"matcher": CLAUDE_MATCHER, "hooks": [
             {"type": "command", "command": command, "timeout": TIMEOUT_S}]}]}}))
         state = root / "state"
-        env = {**os.environ, "XDG_STATE_HOME": str(state), "CAMAYOC_REDIRECT_VERIFY": nonce,
-               "CAMAYOC_MEMORY_REDIRECT": "block", "QUIPU_SERVER": f"http://127.0.0.1:{_closed_port()}"}
+        env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "HOME": str(home),
+               "CLAUDE_CONFIG_DIR": str(home / ".claude"), "XDG_STATE_HOME": str(state),
+               "XDG_CONFIG_HOME": str(home / ".config"), "TMPDIR": str(root),
+               "CAMAYOC_REDIRECT_VERIFY": nonce, "CAMAYOC_MEMORY_REDIRECT": "block",
+               "QUIPU_SERVER": f"http://127.0.0.1:{_closed_port()}", **creds}
         prompt = (f"Use the Write tool exactly once to create the file {target} with the content "
                   f"'---\\nname: tambo-live\\n---\\nprobe\\n'. If the write is refused, stop and reply DONE.")
         try:
-            subprocess.run([claude, "-p", prompt, "--settings", str(settings), "--allowedTools", "Write",
-                            "--max-turns", "3"], capture_output=True, text=True, env=env, cwd=str(root),
-                           timeout=timeout)
+            proc = subprocess.run([exe, "-p", prompt, "--settings", str(settings), "--setting-sources", "",
+                                   "--allowedTools", "Write", "--max-turns", "3"], capture_output=True, text=True,
+                                  env=env, cwd=str(work), timeout=timeout)
         except subprocess.TimeoutExpired:
             raise Refusal(f"claude --live: the session did not finish in {timeout}s") from None
+        if "not logged in" in (proc.stdout + proc.stderr).lower():
+            raise Refusal("claude --live: the scratch session is not logged in; check the credential in "
+                          + "/".join(creds))
         fired = [r for r in _read_log(state) if r.get("event") == "fired" and r.get("verify") == nonce]
         if not fired:
             raise Refusal("claude --live: Claude Code did not invoke the hook (no `fired` event for this session)")
         if target.exists():
             raise Refusal("claude --live: the hook fired but the memory file was still written")
-        return [f"claude --live: Claude Code invoked the hook {len(fired)}x and the memory file was not written"]
+    leaked = {p for p in _real_claude_projects() - before if "tambo-memredirect-live" in p}
+    if leaked:
+        raise Refusal(f"claude --live: the session left {sorted(leaked)} in the real ~/.claude/projects")
+    return [f"claude --live: Claude Code (scratch HOME, only this hook) invoked it {len(fired)}x; the memory file "
+            "was not written and nothing was left in the real ~/.claude"]
 
 
 # ---- commands --------------------------------------------------------------------------------------
@@ -400,6 +497,8 @@ def run(argv: list[str]) -> int:
     ap.add_argument("--harness", choices=("claude", "codex", "both"), required=True)
     ap.add_argument("--mode", choices=MODES, default="copy", help="install only (default copy)")
     ap.add_argument("--person", help="install only: who issues the rulings in memory files (entity IRI)")
+    ap.add_argument("--no-person", action="store_true", help="install only: install without a person (most "
+                    "records will be refused)")
     ap.add_argument("--cy", help="install only: path to cy (default: cy on PATH)")
     ap.add_argument("--claude-settings", type=Path, default=None)
     ap.add_argument("--codex-config", type=Path, default=None)
@@ -411,7 +510,10 @@ def run(argv: list[str]) -> int:
     failed = False
     try:
         if args.action == "install":
-            command = hook_command(resolve_cy(args.cy), args.mode, args.person)
+            person = resolve_person(args.person, args.no_person)
+            command = hook_command(resolve_cy(args.cy), args.mode, person)
+            if person is None:
+                print("warning: installed without --person; directives, decisions and preferences will be refused")
             for h in _harnesses(args.harness):
                 print((claude_install if h == "claude" else codex_install)(paths[h], command))
             return 0

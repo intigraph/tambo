@@ -79,14 +79,81 @@ class Base(unittest.TestCase):
         self.claude = self.root / "claude/settings.json"
         self.codex = self.root / "codex/config.toml"
         self.common = ["--cy", str(self.cy), "--claude-settings", str(self.claude), "--codex-config", str(self.codex)]
-        os.environ.pop("CAMAYOC_MEMORY_REDIRECT", None)
-        os.environ.pop("STUB_NO_WORKER", None)
+        for k in ("CAMAYOC_MEMORY_REDIRECT", "STUB_NO_WORKER", "CAMAYOC_PERSON", "CLAUDE_CODE_OAUTH_TOKEN",
+                  "ANTHROPIC_API_KEY"):
+            os.environ.pop(k, None)
+        os.environ["XDG_CONFIG_HOME"] = str(self.root / "xdg-config")
+        os.environ["CAMAYOC_PERSON"] = "person-test"
 
     def tearDown(self):
+        for k in ("XDG_CONFIG_HOME", "CAMAYOC_PERSON"):
+            os.environ.pop(k, None)
         self.tmp.cleanup()
+
+    def command(self) -> str:
+        return mrh.claude_entries(self.claude)[0]["command"]
 
 
 class InstallTests(Base):
+
+    def test_person_comes_from_flag_env_or_camayoc_config_and_is_required(self):
+        os.environ.pop("CAMAYOC_PERSON")
+        code, _, err = run("install", "--harness", "claude", *self.common)
+        self.assertEqual(2, code)
+        self.assertIn("--no-person", err)
+        self.assertFalse(self.claude.exists(), "a refused install writes nothing")
+        code, out, _ = run("install", "--harness", "claude", "--no-person", *self.common)
+        self.assertEqual(0, code)
+        self.assertIn("warning: installed without --person", out)
+        self.assertNotIn("--person", self.command())
+        cfg = self.root / "xdg-config/camayoc/config.toml"
+        cfg.parent.mkdir(parents=True)
+        cfg.write_text('[memory]\nperson = "person-from-config"\n')
+        run("install", "--harness", "claude", *self.common)
+        self.assertIn("--person person-from-config", self.command())
+        os.environ["CAMAYOC_PERSON"] = "person-from-env"
+        run("install", "--harness", "claude", *self.common)
+        self.assertIn("--person person-from-env", self.command())
+        run("install", "--harness", "claude", "--person", "person-flag", *self.common)
+        self.assertIn("--person person-flag", self.command())
+
+    def test_settings_keep_non_ascii_and_their_indent(self):
+        self.claude.parent.mkdir()
+        self.claude.write_text('{\n    "statusLine": "caf\u00e9 \u2014 ok"\n}\n')
+        run("install", "--harness", "claude", *self.common)
+        text = self.claude.read_text()
+        self.assertIn("caf\u00e9 \u2014 ok", text)
+        self.assertNotIn("\\u2014", text)
+        self.assertTrue(text.startswith('{\n    "statusLine"'), "the file's 4-space indent is kept")
+
+    def test_cy_is_not_pinned_to_its_resolved_target(self):
+        real = self.root / "Cellar/camayoc/0.1.4/bin/cy"
+        real.parent.mkdir(parents=True)
+        real.write_text(STUB)
+        real.chmod(0o755)
+        link = self.root / "brew/bin/cy"
+        link.parent.mkdir(parents=True)
+        link.symlink_to(real)
+        run("install", "--harness", "claude", "--mode", "block", "--cy", str(link),
+            "--claude-settings", str(self.claude))
+        cmd = self.command()
+        self.assertIn(str(link), cmd)
+        self.assertNotIn("Cellar", cmd)
+        # an upgrade moves the real file: the symlinked path keeps working
+        new = self.root / "Cellar/camayoc/0.1.5/bin/cy"
+        new.parent.mkdir(parents=True)
+        real.rename(new)
+        link.unlink()
+        link.symlink_to(new)
+        code, out, _ = run("verify", "--harness", "claude", "--claude-settings", str(self.claude))
+        self.assertEqual(0, code, out)
+        # the install-time path gone entirely: the hook falls back to cy on PATH
+        link.unlink()
+        import subprocess
+        payload = json.dumps(mrh._probe_payload("claude", self.root / "home/.claude/projects/p/memory/x.md"))
+        env = {**os.environ, "PATH": f"{new.parent}:/usr/bin:/bin", "XDG_STATE_HOME": str(self.root / "st")}
+        proc = subprocess.run(["sh", "-c", cmd], input=payload, capture_output=True, text=True, env=env)
+        self.assertEqual(2, proc.returncode, proc.stderr)
 
     def test_off_until_installed(self):
         code, out, _ = run("status", "--harness", "both", *self.common)
@@ -196,6 +263,70 @@ class VerifyTests(Base):
             os.environ.pop("STUB_NO_WORKER")
         self.assertEqual(1, code)
         self.assertIn("background worker logged nothing", out)
+
+
+CLAUDE_STUB = textwrap.dedent("""\
+    #!/usr/bin/env python3
+    # A stand-in for `claude -p`: honours --settings PreToolUse hooks for one Write, like Claude Code.
+    import json, os, re, subprocess, sys
+    args = sys.argv[1:]
+    here = os.path.dirname(os.path.abspath(__file__))
+    # the live run passes a minimal environment, so the test talks to this stub through files
+    real_home = open(os.path.join(here, "real-home")).read()
+    assert not any(k.startswith("STUB_") for k in os.environ), "the live run leaked the caller's environment"
+    assert os.environ["HOME"] != real_home and os.environ["CLAUDE_CONFIG_DIR"].startswith(os.environ["HOME"])
+    assert args[args.index("--setting-sources") + 1] == ""
+    os.makedirs(os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "projects", "scratch-session"), exist_ok=True)
+    target = re.search(r"create the file (\\S+) with", args[args.index("-p") + 1]).group(1)
+    settings = json.load(open(args[args.index("--settings") + 1]))
+    payload = json.dumps({"tool_name": "Write", "tool_input": {"file_path": target, "content": "x"}})
+    allowed = True
+    if not os.path.exists(os.path.join(here, "ignore-hooks")):
+        for group in settings["hooks"]["PreToolUse"]:
+            for h in group["hooks"]:
+                if subprocess.run(["sh", "-c", h["command"]], input=payload, text=True).returncode == 2:
+                    allowed = False
+    if allowed:
+        open(target, "w").write("x")
+    print("DONE")
+    """)
+
+
+class LiveTests(Base):
+
+    def setUp(self):
+        super().setUp()
+        self.bin = self.root / "claude-bin"
+        self.bin.mkdir()
+        stub = self.bin / "claude"
+        stub.write_text(CLAUDE_STUB)
+        stub.chmod(0o755)
+        self.path = os.environ["PATH"]
+        os.environ["PATH"] = f"{self.bin}:{self.path}"
+        (self.bin / "real-home").write_text(str(Path.home()))
+        os.environ["STUB_LEAK_CANARY"] = "1"
+        run("install", "--harness", "claude", "--mode", "copy", *self.common)
+
+    def tearDown(self):
+        os.environ["PATH"] = self.path
+        for k in ("STUB_LEAK_CANARY", "CLAUDE_CODE_OAUTH_TOKEN"):
+            os.environ.pop(k, None)
+        super().tearDown()
+
+    def test_live_needs_an_explicit_credential(self):
+        code, out, _ = run("verify", "--harness", "claude", "--live", *self.common)
+        self.assertEqual(1, code)
+        self.assertIn("scratch HOME, which has no login", out)
+
+    def test_live_runs_in_a_scratch_home_with_only_the_hook(self):
+        os.environ["CLAUDE_CODE_OAUTH_TOKEN"] = "fake-for-stub"
+        code, out, _ = run("verify", "--harness", "claude", "--live", *self.common)
+        self.assertEqual(0, code, out)
+        self.assertIn("OK claude --live: Claude Code (scratch HOME, only this hook) invoked it 1x", out)
+        (self.bin / "ignore-hooks").write_text("")
+        code, out, _ = run("verify", "--harness", "claude", "--live", *self.common)
+        self.assertEqual(1, code)
+        self.assertIn("did not invoke the hook", out)
 
 
 @unittest.skipUnless(os.environ.get("CAMAYOC_SRC"), "set CAMAYOC_SRC to a camayoc checkout to verify the real hook")
