@@ -20,6 +20,7 @@ pub mod pendant_hooks;
 pub mod pendant_ownership;
 pub mod pendant_projects;
 pub mod pendant_sync;
+pub mod prime;
 pub mod projection;
 pub mod skill_profile;
 pub mod tool_bundles;
