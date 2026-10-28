@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.7.0](https://github.com/intigraph/tambo/compare/v0.6.4...v0.7.0) (2026-10-28)
+
+
+### Features
+
+* **install:** wire camayoc's memory-file redirect hook into Claude and Codex, with verify (aegis-gshu.1) ([#202](https://github.com/intigraph/tambo/issues/202)) ([610cbe6](https://github.com/intigraph/tambo/commit/610cbe69eba94109b94a22513d121f5682f70c65))
+* **memory:** plan/apply/restore/verify for the agent-memory setup (aegis-gshu.9) ([#203](https://github.com/intigraph/tambo/issues/203)) ([76ee7c8](https://github.com/intigraph/tambo/commit/76ee7c88a02fbd9c61414587563caa339706699a))
+* **prime:** rikuy brief site reachability in tambo prime (aegis-sp21) ([#201](https://github.com/intigraph/tambo/issues/201)) ([3ce2863](https://github.com/intigraph/tambo/commit/3ce2863e5f7790686e6e97c125c520b6f53642b8))
+* **prime:** stack prime contract and tambo prime ([#200](https://github.com/intigraph/tambo/issues/200)) ([4cbc9b3](https://github.com/intigraph/tambo/commit/4cbc9b3bd46065270efe816eba8e9ec0719b142c))
+
+
+### Bug Fixes
+
+* reconcile the reviewed product-name inventory ledger (aegis-i0p2) ([#198](https://github.com/intigraph/tambo/issues/198)) ([3973eda](https://github.com/intigraph/tambo/commit/3973edaa8c8458cfb6d21e26f5c5e513e143b394))
+
 ## [0.6.4](https://github.com/intigraph/tambo/compare/v0.6.3...v0.6.4) (2026-10-27)
 
 
