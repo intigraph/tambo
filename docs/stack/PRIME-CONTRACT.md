@@ -46,7 +46,7 @@ anchor; chaski: subscriptions; yupana: base ref and tiers).
 
 At most 10 lines, at least 5: line 1 is `<tool> <version>: <one-line job>`,
 then the live summary condensed to its key lines (or, with `--static`, the
-"What <tool> is" lines), then the line
+`What <tool> is` lines), then the line
 ``Run `<tool> prime` for the full primer.`` This is what `tambo prime` shows,
 and it truncates anything longer. `<tool> prime --brief` answers in well under
 1 s including process start-up, because `tambo prime` gives each tool 1 s.
