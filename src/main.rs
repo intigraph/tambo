@@ -45,6 +45,9 @@ enum Commands {
         /// Per-tool timeout for `<tool> prime --brief`, in milliseconds
         #[arg(long, default_value_t = 1000, hide = true)]
         timeout_ms: u64,
+        /// Rikuy static-site URL; otherwise RIKUY_URL. Reads only source.json.
+        #[arg(long)]
+        rikuy_url: Option<String>,
     },
     /// Install the local single-user stack with no interview, server, or token
     Quickstart {
@@ -508,6 +511,7 @@ fn main() -> Result<()> {
             offline,
             section,
             timeout_ms,
+            rikuy_url,
         } => {
             let opts = caboodle::prime::Options {
                 brief,
@@ -515,6 +519,7 @@ fn main() -> Result<()> {
                 offline,
                 section: section.as_deref(),
                 timeout: std::time::Duration::from_millis(timeout_ms),
+                rikuy_url: rikuy_url.as_deref(),
             };
             match caboodle::prime::run(&opts) {
                 Ok(text) => print!("{text}"),

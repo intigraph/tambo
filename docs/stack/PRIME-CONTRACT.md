@@ -117,3 +117,10 @@ Tools run in parallel inside one 1 s deadline each, so the live part stays
 under 1 s. At the deadline Tambo kills the tool's process group and lists it as
 `timed out`. A tool whose prime fails or prints nothing is listed as
 `no prime yet`. Neither fails the command.
+
+Rikuy ships a static site rather than a binary. Tambo excludes it from PATH
+probes and reports it separately under `live.summary.sites`. Configure
+`RIKUY_URL` or `--rikuy-url` for one bounded GET of its `source.json`; no URL
+means absent, and `--static` skips the request. Reachability describes the
+static source identity, not live reader admission or data freshness. A missing
+`generated_at` is unknown even when the identity is reachable.

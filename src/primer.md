@@ -35,6 +35,17 @@ Run `tambo help <command>` for the exact syntax of any command.
 
 None. Tambo registers the stack's MCP servers (`tambo project-settings`) but serves none.
 
+## Rikuy site
+
+Rikuy is a static browser brief, with no stack binary to probe. Set `RIKUY_URL`
+or pass `tambo prime --rikuy-url https://your-brief.example/` to read only the
+site's `source.json`. It runs beside binary probes with a subsecond deadline,
+64 KiB response cap and no redirects, retries, credentials or curl config.
+The result reports static-site reachability, revision and `generated_at` when
+present. Missing generation time stays unknown; it is never the HTTP Date or
+check time. This does not measure live brief freshness or activate a reader.
+`--static` skips this GET as well as all binary probes.
+
 ## Next steps
 
 - Book: <https://intigraph.github.io/tambo/>
