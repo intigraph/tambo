@@ -26,6 +26,7 @@ check:
     python3 scripts/test-release-repository.py
     python3 scripts/test-install-bootstrap.py
     python3 scripts/test-crate-version.py
+    python3 scripts/test-memory-redirect-hook.py
     python3 scripts/test-stack-pendants.py
     python3 tests/test_skill_render_source.py
 

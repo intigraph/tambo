@@ -185,6 +185,53 @@ Verify a real edit's session-attributed `guard` metric and advisory output;
 rendered configuration alone does not prove edit coverage. Existing running
 agents pick up changed hooks on their next launch.
 
+## Camayoc memory-file redirect (off by default)
+
+Camayoc's `cy hook memory-redirect` moves writes to Claude memory files
+(`*/.claude/projects/*/memory/*`, every file including `MEMORY.md`) into typed
+camayoc entities. `tambo install` never enables it. Wire it in with
+`scripts/memory-redirect-hook.py`. It needs a camayoc `cy` on PATH that has
+`cy hook memory-redirect`, and it refuses an older one:
+
+```bash
+python3 scripts/memory-redirect-hook.py install --harness claude --mode copy --person person-you
+python3 scripts/memory-redirect-hook.py status  --harness both
+python3 scripts/memory-redirect-hook.py verify  --harness claude --live
+python3 scripts/memory-redirect-hook.py uninstall --harness both
+```
+
+| Mode | Effect |
+|---|---|
+| `copy` (default) | The write goes ahead. A background worker records the file as a camayoc entity, queueing it when Quipu is unreachable. The agent never waits on it. |
+| `block` | The write is refused, and the message names the exact `cy record <entity> ...` call to run. |
+
+To change the mode, run `install` again with the other `--mode`. Setting
+`CAMAYOC_MEMORY_REDIRECT=off` in the harness environment switches the hook off
+without editing settings.
+
+- **Claude Code:** a `PreToolUse` group on `Write|Edit|MultiEdit` in
+  `~/.claude/settings.json` (`--claude-settings` picks another file).
+- **Codex:** a `PreToolUse` group on `apply_patch`, Codex's native file edits,
+  appended to `$CODEX_HOME/config.toml` (`--codex-config`) between marker
+  comments. Your comments and key order survive. Codex runs a new hook only
+  after you trust it, so approve it at the next launch. It also needs a Codex
+  build that emits native `apply_patch` PreToolUse events, as the Yupana edit
+  hook does.
+
+Install replaces only its own entry and keeps a one-time copy at
+`<file>.before-memory-redirect`. A missing `cy` makes the hook exit 0, so an
+uninstalled camayoc never breaks the agent.
+
+`verify` reads the entry back. It then runs the configured command on a
+synthetic memory write in a scratch directory, with
+`CAMAYOC_REDIRECT_VERIFY` set, so the hook maps and prechecks the probe but
+never contacts a store. Block mode must exit 2 naming a `cy record` call. Copy
+mode must return silently, and its background worker must log the probe.
+`--live` (Claude only) also runs one `claude -p` session whose only added
+settings are this hook in block mode. It passes when Claude Code itself
+invokes the hook and the memory file is not written. The Codex check does not
+launch Codex itself.
+
 ## Externally owned Quipu
 
 Set `external_quipu = true` in a reviewed plan when another mechanism owns
