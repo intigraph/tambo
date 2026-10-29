@@ -199,7 +199,7 @@ mod native {
     use fs2::FileExt;
     use std::{
         fs::{File, OpenOptions},
-        io::Read,
+        io::{Read, Seek},
         os::unix::fs::{DirBuilderExt, MetadataExt, OpenOptionsExt, PermissionsExt},
         process::{Command, Stdio},
         thread,
@@ -218,50 +218,58 @@ mod native {
         Ok(())
     }
     fn run(args: &[String]) -> Result<(bool, String)> {
+        // Regular private capture files cannot wait for EOF from a descendant
+        // retaining a pipe after the fixed native command has exited.
+        let mut stdout = tempfile::tempfile()?;
+        let stderr = tempfile::tempfile()?;
         let mut child = Command::new(&args[0])
             .args(&args[1..])
             .env_clear()
             .env("PATH", "/usr/bin:/bin:/usr/sbin:/sbin")
             .env("LC_ALL", "C")
             .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
+            .stdout(Stdio::from(stdout.try_clone()?))
+            .stderr(Stdio::from(stderr.try_clone()?))
             .spawn()?;
-        let out = child.stdout.take().context("native stdout missing")?;
-        let err = child.stderr.take().context("native stderr missing")?;
-        let capture = |stream: Box<dyn Read + Send>| {
-            thread::spawn(move || {
-                let mut bytes = Vec::new();
-                stream
-                    .take(1_048_577)
-                    .read_to_end(&mut bytes)
-                    .map(|_| bytes)
-            })
-        };
-        let stdout = capture(Box::new(out));
-        let stderr = capture(Box::new(err));
         let start = Instant::now();
         let status = loop {
+            let oversized =
+                stdout.metadata()?.len() > 1_048_576 || stderr.metadata()?.len() > 1_048_576;
+            if oversized || start.elapsed() > Duration::from_secs(10) {
+                let _ = child.kill();
+                child.wait()?;
+                bail!("native account command exceeded time/byte budget; preserve reservation");
+            }
             if let Some(status) = child.try_wait()? {
                 break status;
             }
-            if start.elapsed() > Duration::from_secs(10) {
-                child.kill()?;
-                child.wait()?;
-                bail!("native account command timed out; preserve reservation");
-            }
             thread::sleep(Duration::from_millis(20));
         };
-        let bytes = stdout
-            .join()
-            .map_err(|_| anyhow::anyhow!("native read failed"))??;
-        let errors = stderr
-            .join()
-            .map_err(|_| anyhow::anyhow!("native read failed"))??;
-        if bytes.len() > 1_048_576 || errors.len() > 1_048_576 {
+        stdout.rewind()?;
+        let mut bytes = Vec::new();
+        stdout.take(1_048_577).read_to_end(&mut bytes)?;
+        if bytes.len() > 1_048_576 || stderr.metadata()?.len() > 1_048_576 {
             bail!("native account answer exceeded byte budget");
         }
         Ok((status.success(), String::from_utf8(bytes)?))
+    }
+
+    #[test]
+    fn inherited_output_descriptor_does_not_block_native_readback() {
+        let started = Instant::now();
+        let answer = run(&[
+            "/bin/sh".into(),
+            "-c".into(),
+            "sleep 3 & printf fixture".into(),
+        ]);
+        let elapsed = started.elapsed();
+        // Let this fixture's own descendant finish even if an assertion fails.
+        thread::sleep(Duration::from_secs(3));
+        assert_eq!(answer.unwrap(), (true, "fixture".into()));
+        assert!(
+            elapsed < Duration::from_secs(1),
+            "readback waited {elapsed:?}"
+        );
     }
     fn inventory(kind: &str, property: &str) -> Result<BTreeMap<String, u32>> {
         let (ok, text) = run(&[
