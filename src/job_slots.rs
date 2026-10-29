@@ -30,6 +30,7 @@ pub struct Account {
     pub principal: String,
     pub username: String,
     pub uid: u32,
+    pub controller_uid: u32,
     pub home: String,
     pub manifest_sha256: String,
 }
@@ -137,7 +138,7 @@ pub fn load(directory: &Path) -> Result<Plan> {
             || value["gid"] != slot.uid
             || value["home"] != home
             || value["root"] != format!("/var/lib/shantytown/job-stores/{name}")
-            || controller == 0
+            || controller < 10000
             || controller > u32::MAX as u64
             || controller == slot.uid as u64
             || !(username == "_stjobs"
@@ -151,6 +152,7 @@ pub fn load(directory: &Path) -> Result<Plan> {
             principal: name,
             username: username.to_owned(),
             uid: slot.uid,
+            controller_uid: controller as u32,
             home,
             manifest_sha256: slot.sha256,
         });
@@ -218,15 +220,23 @@ mod native {
         Ok(())
     }
     fn run(args: &[String]) -> Result<(bool, String)> {
+        run_with_caller(args, None)
+    }
+    fn run_with_caller(args: &[String], caller: Option<u32>) -> Result<(bool, String)> {
         // Regular private capture files cannot wait for EOF from a descendant
         // retaining a pipe after the fixed native command has exited.
         let mut stdout = tempfile::tempfile()?;
         let stderr = tempfile::tempfile()?;
-        let mut child = Command::new(&args[0])
+        let mut command = Command::new(&args[0]);
+        command
             .args(&args[1..])
             .env_clear()
             .env("PATH", "/usr/bin:/bin:/usr/sbin:/sbin")
-            .env("LC_ALL", "C")
+            .env("LC_ALL", "C");
+        if let Some(uid) = caller {
+            command.env("SUDO_UID", uid.to_string());
+        }
+        let mut child = command
             .stdin(Stdio::null())
             .stdout(Stdio::from(stdout.try_clone()?))
             .stderr(Stdio::from(stderr.try_clone()?))
@@ -252,6 +262,114 @@ mod native {
             bail!("native account answer exceeded byte budget");
         }
         Ok((status.success(), String::from_utf8(bytes)?))
+    }
+    pub(super) fn require_root() -> Result<()> {
+        if !cfg!(any(target_os = "macos", target_os = "linux")) {
+            bail!("unsupported native provisioning platform");
+        }
+        protected(&std::env::current_exe()?)?;
+        protected(Path::new("/usr/bin/id"))?;
+        let (known, uid) = run(&["/usr/bin/id".into(), "-u".into()])?;
+        if !known || uid.trim() != "0" {
+            bail!("provisioning requires separately admitted root execution");
+        }
+        Ok(())
+    }
+    fn protected_plan(directory: &Path) -> Result<Plan> {
+        let expected = if cfg!(target_os = "macos") {
+            BASE
+        } else {
+            "/etc/shantytown/jobs"
+        };
+        if directory != Path::new(expected) {
+            bail!("fixed protected host inventory required");
+        }
+        protected(directory)?;
+        protected(&directory.join("slots.json"))?;
+        let plan = load(directory)?;
+        for row in &plan.accounts {
+            protected(&directory.join(format!("{}.json", row.principal)))?;
+        }
+        Ok(plan)
+    }
+    pub(super) fn metadata(directory: &Path) -> Result<bool> {
+        require_root()?;
+        let plan = protected_plan(directory)?;
+        let helper = "/usr/local/libexec/st-job-launcher";
+        protected(Path::new(helper))?;
+        let mut changed = false;
+        for row in plan.accounts {
+            // Root provisioning prepares public files only. No actor is assumed
+            // and no launch/probe/signing operation is available on this path.
+            let (ok, answer) = run_with_caller(
+                &[
+                    helper.into(),
+                    "prepare".into(),
+                    row.principal,
+                    row.manifest_sha256.clone(),
+                ],
+                Some(row.controller_uid),
+            )?;
+            let created = format!("PREPARED {} CREATED", row.manifest_sha256);
+            let same = format!("PREPARED {} UNCHANGED", row.manifest_sha256);
+            if !ok || (answer.trim() != created && answer.trim() != same) {
+                bail!("job metadata preparation unproved; retain its state");
+            }
+            changed |= answer.trim() == created;
+        }
+        Ok(changed)
+    }
+    pub(super) fn policy(directory: &Path) -> Result<bool> {
+        require_root()?;
+        protected_plan(directory)?;
+        let text = super::sudoers(directory)?;
+        let parent = Path::new(if cfg!(target_os = "macos") {
+            "/private/etc/sudoers.d"
+        } else {
+            "/etc/sudoers.d"
+        });
+        root_dir(parent)?;
+        let target = parent.join("st-job-slots");
+        if !absent(&target)? {
+            protected(&target)?;
+            if bounded(&target, 1_048_576)? != text.as_bytes()
+                || fs::symlink_metadata(&target)?.mode() & 0o777 != 0o440
+            {
+                bail!("different job policy installed; explicit recovery required");
+            }
+            return Ok(false);
+        }
+        let staged = parent.join(".st-job-slots.pending");
+        use std::io::Write;
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .mode(0o600)
+            .custom_flags(if cfg!(target_os = "macos") {
+                0x100
+            } else {
+                0x20000
+            })
+            .open(&staged)?;
+        file.write_all(text.as_bytes())?;
+        file.sync_all()?;
+        protected(Path::new("/usr/sbin/visudo"))?;
+        if !run(&[
+            "/usr/sbin/visudo".into(),
+            "-cf".into(),
+            staged.to_str().context("policy path")?.into(),
+        ])?
+        .0
+        {
+            bail!("candidate job policy refused; retain staging");
+        }
+        fs::set_permissions(&staged, fs::Permissions::from_mode(0o440))?;
+        file.sync_all()?;
+        fs::hard_link(&staged, &target)?; // create-only: never replace concurrent policy
+        File::open(parent)?.sync_all()?;
+        fs::remove_file(staged)?;
+        File::open(parent)?.sync_all()?;
+        Ok(true)
     }
 
     #[test]
@@ -390,11 +508,7 @@ mod native {
         if !cfg!(target_os = "macos") {
             bail!("macOS account apply requires native Darwin; Linux uses its IaC role");
         }
-        let (root, uid) = run(&["/usr/bin/id".into(), "-u".into()])?;
-        if !root || uid.trim() != "0" {
-            bail!("account apply requires separately admitted root execution");
-        }
-        protected(&std::env::current_exe()?)?;
+        require_root()?;
         if directory != Path::new(BASE) {
             bail!("account apply requires the fixed protected host inventory");
         }
@@ -513,6 +627,47 @@ mod native {
 #[cfg(unix)]
 pub use native::apply;
 
+pub(crate) fn require_root() -> Result<()> {
+    native::require_root()
+}
+
+/// Reviewable exact-argument policy; no wildcard, shell, interpreter or installer grant.
+pub fn sudoers(directory: &Path) -> Result<String> {
+    let plan = load(directory)?;
+    let mut lines = vec![
+        "# Explicit protected job slots; never a general impersonation grant.".to_string(),
+        "Defaults!/usr/local/libexec/st-job-launcher use_pty".to_string(),
+    ];
+    for row in plan.accounts {
+        for (uid, operations) in [
+            (
+                row.controller_uid,
+                &["prepare", "check", "launch", "stop", "poll"][..],
+            ),
+            (row.uid, &["submit"][..]),
+        ] {
+            let commands = operations
+                .iter()
+                .map(|operation| {
+                    format!(
+                        "/usr/local/libexec/st-job-launcher {operation} {} {}",
+                        row.principal, row.manifest_sha256
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join(", ");
+            lines.push(format!("#{uid} ALL=(root) NOPASSWD: NOSETENV: {commands}"));
+        }
+    }
+    Ok(lines.join("\n") + "\n")
+}
+pub fn apply_policy(directory: &Path) -> Result<bool> {
+    native::policy(directory)
+}
+pub fn prepare_metadata(directory: &Path) -> Result<bool> {
+    native::metadata(directory)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -520,7 +675,7 @@ mod tests {
         let root = tempfile::tempdir().unwrap();
         let name = "eph-task-123abc";
         let raw = serde_json::to_vec(&serde_json::json!({"version":1,"principal":name,"uid":51001,"gid":51001,
-            "controller_uid":501,"username":"_stjobs_123abc","home":format!("/var/lib/shantytown/agents/crew-{name}"),
+            "controller_uid":51000,"username":"_stjobs_123abc","home":format!("/var/lib/shantytown/agents/crew-{name}"),
             "root":format!("/var/lib/shantytown/job-stores/{name}")})).unwrap();
         fs::write(root.path().join(format!("{name}.json")), &raw).unwrap();
         fs::write(
@@ -588,6 +743,73 @@ mod tests {
         assert_eq!(native_id("-2").unwrap(), 4294967294);
         assert_eq!(native_id("51001").unwrap(), 51001);
         assert!(native_id("4294967296").is_err());
+    }
+    #[test]
+    fn shared_login_controller_refuses_with_a_matching_manifest_hash() {
+        let root = fixture();
+        let path = root.path().join("eph-task-123abc.json");
+        let mut row: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        row["controller_uid"] = 501.into();
+        let raw = serde_json::to_vec(&row).unwrap();
+        fs::write(&path, &raw).unwrap();
+        let catalog = root.path().join("slots.json");
+        let mut plan: Value = serde_json::from_slice(&fs::read(&catalog).unwrap()).unwrap();
+        plan["slots"]["eph-task-123abc"]["sha256"] = format!("{:x}", Sha256::digest(raw)).into();
+        fs::write(catalog, serde_json::to_vec(&plan).unwrap()).unwrap();
+        assert!(load(root.path())
+            .unwrap_err()
+            .to_string()
+            .contains("not isolated"));
+    }
+    #[test]
+    fn permission_fragment_has_exact_roles_and_passes_native_syntax_control() {
+        let root = fixture();
+        let text = super::sudoers(root.path()).unwrap();
+        assert!(text
+            .lines()
+            .any(|line| line == "Defaults!/usr/local/libexec/st-job-launcher use_pty"));
+        let job = text
+            .lines()
+            .find(|line| line.starts_with("#51001 "))
+            .unwrap();
+        assert!(job.contains(" submit eph-task-123abc "));
+        for operation in ["prepare", "check", "launch", "stop", "poll"] {
+            assert!(!job.contains(&format!(" {operation} ")));
+        }
+        let controller = text
+            .lines()
+            .find(|line| line.starts_with("#51000 "))
+            .unwrap();
+        assert!(!controller.contains(" submit "));
+        assert_eq!(
+            job.split_once("NOSETENV: ").unwrap().1.split(',').count(),
+            1
+        );
+        assert_eq!(
+            controller
+                .split_once("NOSETENV: ")
+                .unwrap()
+                .1
+                .split(',')
+                .count(),
+            5
+        );
+        assert!(!text.contains('*') && !text.contains("/bin/sh") && !text.contains("SETENV: ALL"));
+        let path = root.path().join("sudoers-fixture");
+        fs::write(&path, &text).unwrap();
+        let check = || {
+            std::process::Command::new("/usr/sbin/visudo")
+                .arg("-cf")
+                .arg(&path)
+                .output()
+                .unwrap()
+        };
+        assert!(check().status.success(), "candidate fragment failed syntax");
+        fs::write(&path, "root ALL=(root) NOPASSWD:\n").unwrap();
+        assert!(
+            !check().status.success(),
+            "malformed policy was not refused"
+        );
     }
     #[cfg(not(target_os = "macos"))]
     #[test]
