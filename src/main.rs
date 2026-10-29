@@ -28,6 +28,15 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Review protected per-job accounts; apply only a separately admitted macOS host inventory
+    #[cfg(unix)]
+    JobSlots {
+        #[arg(long)]
+        directory: PathBuf,
+        /// Create only the exact reviewed accounts; requires native macOS and root-owned input
+        #[arg(long)]
+        apply: bool,
+    },
     /// Review memory setup or inspect actual firing evidence (never disables auto-memory)
     #[cfg(unix)]
     Memory {
@@ -578,6 +587,15 @@ enum MemoryCommand {
 
 fn main() -> Result<()> {
     match Cli::parse().command {
+        #[cfg(unix)]
+        Commands::JobSlots { directory, apply } => {
+            let plan = if apply {
+                caboodle::job_slots::apply(&directory)?
+            } else {
+                caboodle::job_slots::load(&directory)?
+            };
+            println!("{}", serde_json::to_string_pretty(&plan)?);
+        }
         #[cfg(unix)]
         Commands::Memory { command } => {
             use caboodle::agent_memory::{self, hooks, lifecycle};
