@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/header.svg" width="100%" alt="Tambo toolkit"/></p>
+<p align="center"><img src="docs/stack/thread-workshop/renders/tambo.png" width="704" alt="Tambo: a toolkit connects the components, in the shared Thread Workshop illustration style"/></p>
 
 # Tambo
 
@@ -66,6 +66,13 @@ Channels, pinning and rollback:
 [scbrown/apt](https://github.com/scbrown/apt#channels-and-pinning).
 
 ## First success: local, single-user
+
+![Animated terminal: review a local Tambo plan and verify the selected tools](docs/demos/terminal/demo.svg)
+
+The 21-second recording shows a real interview, plan review and verification
+in a private fixture. Setup finishes before recording; agent-hook registration
+is not verified. [Read the transcript](docs/demos/terminal/transcript.txt) or
+[reproduce the demo](docs/demos/terminal.md).
 
 Run in an empty directory you intend to keep:
 

@@ -1,4 +1,6 @@
 <!--
+  Shared hero art: thread-workshop/THEME.md; use the tool-specific card.
+  Embed the reproducible terminal demo near first success, with transcript and recipe.
   Tambo stack README template: see README-STANDARD.md for the rules.
   Replace every ALL-CAPS placeholder. Delete a section only if the tool truly
   lacks it; never rename or reorder a heading.
@@ -6,7 +8,7 @@
 -->
 
 <p align="center">
-  <img src="assets/header.svg" width="100%" alt="ALT TEXT FOR THE BANNER"/>
+  <img src="assets/header.png" width="704" alt="TOOLNAME: DESCRIBE ITS THREAD WORKSHOP MOTIF"/>
 </p>
 
 <p align="center">
