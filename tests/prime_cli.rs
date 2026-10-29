@@ -25,12 +25,21 @@ fn warm(dir: &Path, names_and_args: &[(&str, &str)]) {
     }
 }
 
-/// A PATH holding only the fakes plus the system shell utilities, so real
-/// stack tools installed on the host never reach the test. Each fake answers
-/// its identity probe the way the real tool does.
+/// A PATH holding only the fakes and copies of their two shell utilities.
+/// Including /usr/bin would admit any real stack tool installed there.
 fn fake_stack() -> tempfile::TempDir {
     let dir = tempfile::tempdir().unwrap();
     let bin = dir.path();
+    for name in ["sleep", "touch"] {
+        let source = [
+            Path::new("/bin").join(name),
+            Path::new("/usr/bin").join(name),
+        ]
+        .into_iter()
+        .find(|path| path.is_file())
+        .expect("fixture shell utility is installed");
+        fs::copy(source, bin.join(name)).unwrap();
+    }
     fake_tool(
         bin,
         "quipu",
@@ -85,7 +94,7 @@ touch {}/foreign-ran"#,
 fn tambo(path: &Path) -> Command {
     let mut cmd = Command::cargo_bin("tambo").unwrap();
     cmd.env_remove("RIKUY_URL")
-        .env("PATH", format!("{}:/bin:/usr/bin", path.display()))
+        .env("PATH", path)
         .args(["prime", "--timeout-ms", "2500"]);
     cmd
 }
@@ -156,7 +165,7 @@ fn live_part_stays_under_one_second_and_creates_nothing() {
     let work = tempfile::tempdir().unwrap();
     let mut cmd = Command::cargo_bin("tambo").unwrap();
     let out = cmd
-        .env("PATH", format!("{}:/bin:/usr/bin", stack.path().display()))
+        .env("PATH", stack.path())
         .env_remove("RIKUY_URL")
         .env("HOME", home.path())
         .current_dir(work.path())
