@@ -23,8 +23,8 @@
       "kind": "interface",
       "source": "src/main.rs",
       "subject": "http://aegis.gastown.local/ontology/code/tambo/src%2Fmain.rs",
-      "summary": "The Clap command tree defines quickstart, plan, apply, verify and doctor, with explicit plan/state paths and opt-in remote credential provisioning.",
-      "source_sha256": "7e3097bf0958ab3519837a216128efcb10b4edac7f29338836a45723ed83f75c",
+      "summary": "The Clap command tree defines quickstart, plan, apply, verify and doctor, with explicit plan/state paths and opt-in remote credential provisioning. Explicit job-slots, job-runtime, job-metadata and job-policy commands separate read-only planning from protected root apply operations.",
+      "source_sha256": "c450d1d3e3e82ce87ea1803bcd221194be50b216eeb8f7a792b76202e8fbe513",
       "properties": {
         "interfaceKind": "CLI",
         "publicName": "tambo and compatible caboodle command tree"
