@@ -1,4 +1,4 @@
-# Protected job account slots (e579 source)
+# Protected job account slots
 
 `tambo job-slots --directory <reviewed-directory>` reads an explicit Shantytown
 `slots.json` and its exact hashed manifests. It prints account metadata only.
