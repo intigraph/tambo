@@ -74,19 +74,26 @@ in a private fixture. Setup finishes before recording; agent-hook registration
 is not verified. [Read the transcript](docs/demos/terminal/transcript.txt) or
 [reproduce the demo](docs/demos/terminal.md).
 
-Run in an empty directory you intend to keep. These three commands check the
-CLI, install a reviewed local plan and recheck the result:
+Run in an empty directory you intend to keep:
 
 ```bash
-tambo --version
 tambo quickstart
-tambo verify
 ```
 
 This saves a reviewed retrieval plan, installs Quipu, Camayoc and Bobbin, and
 checks each tool. Success is exit 0 and `quipu: verified`, `camayoc: verified`,
 `bobbin: verified`. Keep `caboodle-plan.toml` and `.caboodle/` to resume.
 See the [compatibility contracts](docs/book/src/compatibility.md) for retained aliases and state paths.
+
+Recheck the same install:
+
+```bash
+tambo verify
+```
+
+### Advanced: use your own projects and agents
+
+The following sections cover existing projects and shared-service setup.
 
 ## On your own code
 
