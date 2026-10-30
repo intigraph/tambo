@@ -1,0 +1,24 @@
+Script started on 2026-10-30 01:05:17-04:00 [COMMAND="python3 demo.py base-seeds.toml seeds.toml" <not executed on terminal>]
+Source configuration demonstration; no installed service is changed.
+
+BASE
+repo: scbrown/seeds
+version: 0.9.0
+tag: seeds-ai-v{version}
+asset: sd-{tag}-{target}.tar.gz
+aarch64-apple-darwin: 3ffe85a8834458e21ffa46cf53e8ff1ff1d43bdb728ac69f66bb0603e61685e8
+aarch64-unknown-linux-gnu: 6751c1815391563026364c4077da0ea79e4d05d974571579a8c60707f290508e
+x86_64-apple-darwin: 4ede57f5e8f4d1df393e95307d9156ac31b03fb1d50e496331e3415ee5334b79
+x86_64-unknown-linux-gnu: a2d4c6e3e3bd85e435741e20e4c20711a321826bfdc9fdf33688b0d325d1f914
+
+CANDIDATE
+repo: scbrown/seeds
+version: 0.10.0
+tag: seeds-ai-v{version}
+asset: sd-{tag}-{target}.tar.gz
+aarch64-apple-darwin: 436c5c09e4322f92822bf987e5c86ea6e4fdf3dd20d57136e44672775d153790
+aarch64-unknown-linux-gnu: cfd2d6df820ec9b4db10deef415185409b24622eedac57bb8f5fdac78a13bc3f
+x86_64-apple-darwin: 3cad55e9674998154ba2f2b864c648b6b51bccd9f5bf6aaf520e64c3cf7655bd
+x86_64-unknown-linux-gnu: ecd87b502c1a56182cadd223f5ce928e31d235704f35622d32f9bd4c04a08a7e
+
+Script done on 2026-10-30 01:05:17-04:00 [COMMAND_EXIT_CODE="0"]
