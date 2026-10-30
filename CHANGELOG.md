@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/intigraph/tambo/compare/v0.7.0...v0.7.1) (2026-10-30)
+
+
+### Bug Fixes
+
+* **tests:** keep brew PATH fixture aligned with seeds pin (aegis-ko21) ([#209](https://github.com/intigraph/tambo/issues/209)) ([b40e46a](https://github.com/intigraph/tambo/commit/b40e46a8202062151c9102a13c6ee5681b7b1d87))
+
 ## [0.7.0](https://github.com/intigraph/tambo/compare/v0.6.4...v0.7.0) (2026-10-28)
 
 
