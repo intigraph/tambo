@@ -8,7 +8,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/tambo/README.md",
       "summary": "Tambo installs and verifies the knowledge-tool stack from a reviewable plan. The transition retains the caboodle command and existing plan/state paths; publication and installed verification remain separate.",
-      "source_sha256": "0fb7b5ae7383afcf739e879abfa7327b477f2206a2fd1662541b44c90965c3d6",
+      "source_sha256": "6481b92f5317526b214be3b2e5d57e3ec3eb749ce13b7fe3a5d0864b8887335a",
       "type": "Concept"
     },
     {
@@ -23,8 +23,8 @@
       "kind": "interface",
       "source": "src/main.rs",
       "subject": "http://aegis.gastown.local/ontology/code/tambo/src%2Fmain.rs",
-      "summary": "The Clap command tree defines quickstart, plan, apply, verify and doctor, with explicit plan/state paths and opt-in remote credential provisioning.",
-      "source_sha256": "7e3097bf0958ab3519837a216128efcb10b4edac7f29338836a45723ed83f75c",
+      "summary": "The Clap command tree defines quickstart, plan, apply, verify and doctor, with explicit plan/state paths and opt-in remote credential provisioning. Explicit job-slots, job-runtime, job-metadata and job-policy commands separate read-only planning from protected root apply operations.",
+      "source_sha256": "c450d1d3e3e82ce87ea1803bcd221194be50b216eeb8f7a792b76202e8fbe513",
       "properties": {
         "interfaceKind": "CLI",
         "publicName": "tambo and compatible caboodle command tree"
@@ -72,7 +72,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/tambo/README.md",
       "summary": "Start with the local single-user quickstart and its verified-tool success checks before selecting remote service mode.",
-      "source_sha256": "0fb7b5ae7383afcf739e879abfa7327b477f2206a2fd1662541b44c90965c3d6",
+      "source_sha256": "6481b92f5317526b214be3b2e5d57e3ec3eb749ce13b7fe3a5d0864b8887335a",
       "properties": {
         "startHereOrder": 1,
         "glossaryTerm": "https://scbrown.github.io/quechua/ns#Tool"

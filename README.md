@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/header.svg" width="100%" alt="Tambo toolkit"/></p>
+<p align="center"><img src="docs/stack/thread-workshop/renders/tambo.png" width="704" alt="Tambo: a toolkit connects the components, in the shared Thread Workshop illustration style"/></p>
 
 # Tambo
 
@@ -7,7 +7,7 @@ work. Give an agent durable memory and code context, without assembling every to
 by hand. Tambo is a CLI and [agent skill](skills/tambo/SKILL.md).
 The compatibility command `caboodle` remains available.
 
-## What you can do with the toolkit
+## Why you would want it
 
 Choose the parts that solve your problem; you do not need every tool.
 
@@ -65,7 +65,14 @@ transitional package that depends on `tambo`.
 Channels, pinning and rollback:
 [scbrown/apt](https://github.com/scbrown/apt#channels-and-pinning).
 
-## First success: local, single-user
+## First success in three commands
+
+![Animated terminal: review a local Tambo plan and verify the selected tools](docs/demos/terminal/demo.svg)
+
+The 21-second recording shows a real interview, plan review and verification
+in a private fixture. Setup finishes before recording; agent-hook registration
+is not verified. [Read the transcript](docs/demos/terminal/transcript.txt) or
+[reproduce the demo](docs/demos/terminal.md).
 
 Run in an empty directory you intend to keep:
 
@@ -77,13 +84,30 @@ This saves a reviewed retrieval plan, installs Quipu, Camayoc and Bobbin, and
 checks each tool. Success is exit 0 and `quipu: verified`, `camayoc: verified`,
 `bobbin: verified`. Keep `caboodle-plan.toml` and `.caboodle/` to resume.
 See the [compatibility contracts](docs/book/src/compatibility.md) for retained aliases and state paths.
+
 Recheck the same install:
 
 ```bash
 tambo verify
 ```
 
-### Advanced: shared services and agents
+### Advanced: use your own projects and agents
+
+The following sections cover existing projects and shared-service setup.
+
+## On your own code
+
+Run Tambo in a directory where you can keep its plan and installation state.
+
+| You want to | Run |
+|---|---|
+| Choose tools and review an installation plan | `tambo init --guided` |
+| Check prerequisites before installing | `tambo doctor --plan caboodle-plan.toml` |
+| Recheck the selected tools | `tambo verify --plan caboodle-plan.toml` |
+
+Flags and plan fields: [command reference](https://intigraph.github.io/tambo/reference.html).
+
+## Wire it into your agent
 
 For issued credentials, remote stores and registering Bobbin with your agent,
 use the [agent and installation reference](https://intigraph.github.io/tambo/installation-reference.html).
@@ -98,7 +122,21 @@ bobbin index
 claude mcp add bobbin -- "$(command -v bobbin)" serve "$PWD"
 ```
 
-## Where to go next
+## Before you start
+
+The local quickstart needs no account or remote server. Keep its plan and state
+in a writable directory. The release installer needs `curl`, `tar`, Python 3
+and a SHA-256 utility; source builds need Rust. Linux x86_64 and macOS
+arm64/x86_64 have release archives; Linux arm64 requires a source build.
+Remote stores need their own endpoint and issued credentials.
+
+## What's next
+
+- [The Tambo book](https://intigraph.github.io/tambo/): installation, verification and profiles.
+- [Docs map](https://intigraph.github.io/tambo/docs-map.html): find the detailed guides.
+- [Getting started](https://intigraph.github.io/tambo/getting-started.html): review your first plan.
+
+### Profiles and repository knowledge
 
 - [Choose a profile](https://intigraph.github.io/tambo/profiles.html) or use `tambo init --guided`.
 - [Camayoc](https://github.com/scbrown/camayoc): vocabulary, shapes and governed agent memory.
@@ -108,7 +146,7 @@ claude mcp add bobbin -- "$(command -v bobbin)" serve "$PWD"
   [verified import workflow](https://intigraph.github.io/quipu/sharing/index.html).
   Import stages knowledge; it does not promote it into ROOT automatically.
 
-## Delivery events and DORA
+### Delivery events and DORA
 
 After installing Quipu and Camayoc, bring deployment outcomes and change history
 into the same governed memory. Camayoc supports CDEvents on CloudEvents from
@@ -119,7 +157,7 @@ Tambo does not enable deployment emitters or prove DORA coverage.
 The four metrics need recorded deployment and change history for the selected
 service and time window; missing history is not a measured zero.
 
-## The stack
+## 🧺 The stack
 
 <!-- stack-table:start -->
 
@@ -148,5 +186,7 @@ when.
 ## Contributing
 
 Run `just check`, `just book` and `just docs-check`.
+
+## 📜 License
 
 [Apache-2.0 license](LICENSE).

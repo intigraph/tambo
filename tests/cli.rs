@@ -4427,11 +4427,16 @@ exit 2
 
 #[test]
 fn brew_manifest_reads_path_member_instead_of_stale_managed_copy() {
+    // Keep the fake tap at the reviewed member pin: this test exercises PATH
+    // selection, not the older-tap fallback. A fixed tap version makes a member
+    // bump accidentally turn the fresh-install case into that other lane.
+    let member: toml::Value = toml::from_str(include_str!("../members/seeds.toml")).unwrap();
+    let stable = member["version"].as_str().unwrap();
     for (path_version, identity, succeeds, fresh) in [
-        ("0.4.2", true, true, false),
-        ("0.4.2", true, true, true),
-        ("0.4.1", true, false, false),
-        ("0.4.2", false, false, false),
+        (stable, true, true, false),
+        (stable, true, true, true),
+        ("0.0.0", true, false, false),
+        (stable, false, false, false),
     ] {
         let root = tempfile::tempdir().unwrap();
         let bin = root.path().join("bin");
@@ -4472,8 +4477,8 @@ fn brew_manifest_reads_path_member_instead_of_stale_managed_copy() {
 case "$*" in
  "update --quiet") exit 0;;
  "info --json=v2 scbrown/tap/seeds")
- rec=''; if [ -f "$HOME/seed-installed" ]; then rec='{"version":"0.4.2"}'; fi
- printf '{"formulae":[{"full_name":"scbrown/tap/seeds","tap":"scbrown/tap","pinned":false,"versions":{"stable":"0.4.2"},"installed":[%s]}]}' "$rec"; exit 0;;
+ rec=''; if [ -f "$HOME/seed-installed" ]; then rec=$(printf '{"version":"%s"}' "$FAKE_SEEDS_STABLE"); fi
+ printf '{"formulae":[{"full_name":"scbrown/tap/seeds","tap":"scbrown/tap","pinned":false,"versions":{"stable":"%s"},"installed":[%s]}]}' "$FAKE_SEEDS_STABLE" "$rec"; exit 0;;
  "install scbrown/tap/seeds") cp "$HOME/seed-template" "$HOME/bin/sd"; chmod +x "$HOME/bin/sd"; touch "$HOME/seed-installed"; exit 0;;
  info*) echo '{"formulae":[]}'; exit 0;;
 esac
@@ -4507,7 +4512,9 @@ exit 2
         )
         .unwrap();
         let mut cmd = command(root.path(), &bin);
-        cmd.env("CABOODLE_BREW", bin.join("brew")).arg("update");
+        cmd.env("CABOODLE_BREW", bin.join("brew"))
+            .env("FAKE_SEEDS_STABLE", stable)
+            .arg("update");
         if succeeds {
             cmd.assert()
                 .success()

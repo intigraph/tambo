@@ -12,6 +12,10 @@ pub mod engine;
 pub mod hook_bundles;
 pub mod interview;
 #[cfg(unix)]
+pub mod job_runtime;
+#[cfg(unix)]
+pub mod job_slots;
+#[cfg(unix)]
 pub mod member_bump;
 pub mod members;
 pub mod model;

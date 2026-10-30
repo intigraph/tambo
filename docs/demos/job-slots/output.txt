@@ -1,0 +1,27 @@
+Script started on 2026-10-29 16:59:10-04:00 [COMMAND="/usr/bin/python3 -I docs/demos/job-slots/run.py" <not executed on terminal>]
+$ demo-bin/tambo-base job-slots --directory <disposable-fixture>
+error: unrecognized subcommand 'job-slots'
+
+Usage: tambo-base <COMMAND>
+
+For more information, try '--help'.
+$ demo-bin/tambo-head job-slots --directory <disposable-fixture>
+{
+  "uid_min": 51001,
+  "uid_max": 51016,
+  "accounts": [
+    {
+      "principal": "eph-task-123abc",
+      "username": "_stjobs_123abc",
+      "uid": 51001,
+      "controller_uid": 51000,
+      "home": "/var/lib/shantytown/agents/crew-eph-task-123abc",
+      "manifest_sha256": "1d4ff4af02d267de9618ad0156af0b92be0b266fbca4a77a3ab16362c9eedb94"
+    }
+  ]
+}
+$ demo-bin/tambo-head job-slots --directory <tampered-fixture>
+Error: manifest digest differs from reviewed slot
+No apply operation: planned account only; tampered manifest refused.
+
+Script done on 2026-10-29 16:59:10-04:00 [COMMAND_EXIT_CODE="0"]

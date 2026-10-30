@@ -1,0 +1,138 @@
+{
+  "theme": "The Thread Workshop",
+  "revision": 2,
+  "canvas": [
+    352,
+    176
+  ],
+  "display_pixels": [
+    704,
+    352
+  ],
+  "retina_pixels": [
+    1408,
+    704
+  ],
+  "assets": [
+    {
+      "tool": "quipu",
+      "repository": "intigraph/quipu",
+      "source": "source/quipu.pxl",
+      "png": "renders/quipu.png",
+      "png_2x": "renders/quipu@2x.png",
+      "dark_preview": "previews/quipu-dark.png",
+      "light_preview": "previews/quipu-light.png",
+      "alt": "quipu: Knotted cords hold connected facts. Original pixel art in the Thread Workshop style."
+    },
+    {
+      "tool": "seeds",
+      "repository": "intigraph/seeds",
+      "source": "source/seeds.pxl",
+      "png": "renders/seeds.png",
+      "png_2x": "renders/seeds@2x.png",
+      "dark_preview": "previews/seeds-dark.png",
+      "light_preview": "previews/seeds-light.png",
+      "alt": "seeds: A sprout grows from an ordered work card. Original pixel art in the Thread Workshop style."
+    },
+    {
+      "tool": "shantytown",
+      "repository": "intigraph/shantytown",
+      "source": "source/shantytown.pxl",
+      "png": "renders/shantytown.png",
+      "png_2x": "renders/shantytown@2x.png",
+      "dark_preview": "previews/shantytown-dark.png",
+      "light_preview": "previews/shantytown-light.png",
+      "alt": "shantytown: Four workshop houses share a courtyard. Original pixel art in the Thread Workshop style."
+    },
+    {
+      "tool": "bobbin",
+      "repository": "intigraph/bobbin",
+      "source": "source/bobbin.pxl",
+      "png": "renders/bobbin.png",
+      "png_2x": "renders/bobbin@2x.png",
+      "dark_preview": "previews/bobbin-dark.png",
+      "light_preview": "previews/bobbin-light.png",
+      "alt": "bobbin: A thread spool gathers lines into context. Original pixel art in the Thread Workshop style."
+    },
+    {
+      "tool": "yupana",
+      "repository": "intigraph/yupana",
+      "source": "source/yupana.pxl",
+      "png": "renders/yupana.png",
+      "png_2x": "renders/yupana@2x.png",
+      "dark_preview": "previews/yupana-dark.png",
+      "light_preview": "previews/yupana-light.png",
+      "alt": "yupana: A counting board makes relationships visible. Original pixel art in the Thread Workshop style."
+    },
+    {
+      "tool": "camayoc",
+      "repository": "intigraph/camayoc",
+      "source": "source/camayoc.pxl",
+      "png": "renders/camayoc.png",
+      "png_2x": "renders/camayoc@2x.png",
+      "dark_preview": "previews/camayoc-dark.png",
+      "light_preview": "previews/camayoc-light.png",
+      "alt": "camayoc: Loose strands pass through a checked gate. Original pixel art in the Thread Workshop style."
+    },
+    {
+      "tool": "quechua",
+      "repository": "intigraph/quechua",
+      "source": "source/quechua.pxl",
+      "png": "renders/quechua.png",
+      "png_2x": "renders/quechua@2x.png",
+      "dark_preview": "previews/quechua-dark.png",
+      "light_preview": "previews/quechua-light.png",
+      "alt": "quechua: An open vocabulary book shares matching marks. Original pixel art in the Thread Workshop style."
+    },
+    {
+      "tool": "chaski",
+      "repository": "intigraph/chaski",
+      "source": "source/chaski.pxl",
+      "png": "renders/chaski.png",
+      "png_2x": "renders/chaski@2x.png",
+      "dark_preview": "previews/chaski-dark.png",
+      "light_preview": "previews/chaski-light.png",
+      "alt": "chaski: A winged envelope carries an event onward. Original pixel art in the Thread Workshop style."
+    },
+    {
+      "tool": "shuttle",
+      "repository": "intigraph/shuttle",
+      "source": "source/shuttle.pxl",
+      "png": "renders/shuttle.png",
+      "png_2x": "renders/shuttle@2x.png",
+      "dark_preview": "previews/shuttle-dark.png",
+      "light_preview": "previews/shuttle-light.png",
+      "alt": "shuttle: A wooden shuttle crosses ordered warp threads. Original pixel art in the Thread Workshop style."
+    },
+    {
+      "tool": "rikuy",
+      "repository": "intigraph/rikuy",
+      "source": "source/rikuy.pxl",
+      "png": "renders/rikuy.png",
+      "png_2x": "renders/rikuy@2x.png",
+      "dark_preview": "previews/rikuy-dark.png",
+      "light_preview": "previews/rikuy-light.png",
+      "alt": "rikuy: An eye-shaped instrument looks across status panes. Original pixel art in the Thread Workshop style."
+    },
+    {
+      "tool": "desire-path",
+      "repository": "intigraph/desire-path",
+      "source": "source/desire-path.pxl",
+      "png": "renders/desire-path.png",
+      "png_2x": "renders/desire-path@2x.png",
+      "dark_preview": "previews/desire-path-dark.png",
+      "light_preview": "previews/desire-path-light.png",
+      "alt": "desire-path: A wandering stone path finds a useful route. Original pixel art in the Thread Workshop style."
+    },
+    {
+      "tool": "tambo",
+      "repository": "intigraph/tambo",
+      "source": "source/tambo.pxl",
+      "png": "renders/tambo.png",
+      "png_2x": "renders/tambo@2x.png",
+      "dark_preview": "previews/tambo-dark.png",
+      "light_preview": "previews/tambo-light.png",
+      "alt": "tambo: A toolkit brings stack components together. Original pixel art in the Thread Workshop style."
+    }
+  ]
+}

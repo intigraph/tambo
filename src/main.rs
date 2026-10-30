@@ -28,6 +28,41 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Render or separately install the exact per-slot helper permission fragment
+    #[cfg(unix)]
+    JobPolicy {
+        #[arg(long)]
+        directory: PathBuf,
+        #[arg(long)]
+        apply: bool,
+    },
+    /// Prepare public own-job metadata only, from the protected host inventory
+    #[cfg(unix)]
+    JobMetadata {
+        #[arg(long)]
+        directory: PathBuf,
+        #[arg(long)]
+        apply: bool,
+    },
+    /// Inspect or separately apply one pinned immutable job runtime artifact
+    #[cfg(unix)]
+    JobRuntime {
+        #[arg(long)]
+        directory: PathBuf,
+        #[arg(long)]
+        manifest_sha256: String,
+        #[arg(long)]
+        apply: bool,
+    },
+    /// Review protected per-job accounts; apply only a separately admitted macOS host inventory
+    #[cfg(unix)]
+    JobSlots {
+        #[arg(long)]
+        directory: PathBuf,
+        /// Create only the exact reviewed accounts; requires native macOS and root-owned input
+        #[arg(long)]
+        apply: bool,
+    },
     /// Review memory setup or inspect actual firing evidence (never disables auto-memory)
     #[cfg(unix)]
     Memory {
@@ -578,6 +613,53 @@ enum MemoryCommand {
 
 fn main() -> Result<()> {
     match Cli::parse().command {
+        #[cfg(unix)]
+        Commands::JobPolicy { directory, apply } => {
+            if apply {
+                println!(
+                    "{}",
+                    serde_json::json!({"changed":caboodle::job_slots::apply_policy(&directory)?})
+                );
+            } else {
+                print!("{}", caboodle::job_slots::sudoers(&directory)?);
+            }
+        }
+        #[cfg(unix)]
+        Commands::JobMetadata { directory, apply } => {
+            if apply {
+                println!(
+                    "{}",
+                    serde_json::json!({"changed":caboodle::job_slots::prepare_metadata(&directory)?})
+                );
+            } else {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&caboodle::job_slots::load(&directory)?)?
+                );
+            }
+        }
+        #[cfg(unix)]
+        Commands::JobRuntime {
+            directory,
+            manifest_sha256,
+            apply,
+        } => {
+            let plan = if apply {
+                caboodle::job_runtime::apply(&directory, &manifest_sha256)?
+            } else {
+                caboodle::job_runtime::preview(&directory, &manifest_sha256)?
+            };
+            println!("{}", serde_json::to_string_pretty(&plan)?);
+        }
+        #[cfg(unix)]
+        Commands::JobSlots { directory, apply } => {
+            let plan = if apply {
+                caboodle::job_slots::apply(&directory)?
+            } else {
+                caboodle::job_slots::load(&directory)?
+            };
+            println!("{}", serde_json::to_string_pretty(&plan)?);
+        }
         #[cfg(unix)]
         Commands::Memory { command } => {
             use caboodle::agent_memory::{self, hooks, lifecycle};
