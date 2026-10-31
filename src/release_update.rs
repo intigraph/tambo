@@ -396,6 +396,7 @@ fn update_member(
     transaction::begin(
         state_path,
         &transaction::Pending {
+            restore_alias: None,
             tool: tool_id.into(),
             destination: destination.clone(),
             backup: backup.clone(),
@@ -723,6 +724,7 @@ fn update_binary(
         bail!("installed binary changed concurrently");
     }
     let primary = transaction::Pending {
+        restore_alias: None,
         tool: tool_id.into(),
         destination: destination.clone(),
         backup: backup.clone(),
@@ -738,6 +740,7 @@ fn update_binary(
         transaction::begin_pair(
             state_path,
             &transaction::PairPending {
+                runtime_aliases: false,
                 artifacts: vec![primary, c.pending()],
                 previous_state,
             },

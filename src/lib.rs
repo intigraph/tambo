@@ -36,6 +36,7 @@ pub mod release_update;
 
 mod quipu_auth;
 mod quipu_credential;
+mod quipu_layout;
 #[cfg(unix)]
 pub mod quipu_mcp;
 #[cfg(all(test, unix))]
