@@ -1,6 +1,7 @@
 @prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix caboodle: <https://caboodle.dev/ns#> .
-@prefix stack:    <https://caboodle.dev/stack/> .
+@prefix stack:    <https://w3id.org/intigraph/tambo/id/stack/> .
+@prefix owl:      <http://www.w3.org/2002/07/owl#> .
 
 # ── Working the stack ───────────────────────────────────────────────────────
 # The operational knowledge an agent needs on arrival: how each repo builds,
@@ -61,3 +62,15 @@ stack:caboodle
 stack:quipu caboodle:knowledgeFlow
     "structured sources -> camayoc RML executor -> quipu governed named graphs -> bobbin retrieval / quipu packs. Packs (.qpack.db) are ordinary quipu SQLite stores with a manifest: quipu unpack <pack> attaches one; quipu pack --verify <pack> proves integrity." ;
     rdfs:seeAlso <https://github.com/scbrown/quipu/blob/main/docs/design/spanner-capabilities.md> .
+
+# ── Former names (aegis-ro425e.18) ──────────────────────────────────────────
+# Public entity names live under w3id.org/intigraph/tambo/id/stack/. Each
+# links to its former caboodle.dev name so stores holding an older pack still
+# resolve it. The caboodle: vocabulary and the pack graph IRIs are unchanged.
+stack:bobbin owl:sameAs <https://caboodle.dev/stack/bobbin> .
+stack:caboodle owl:sameAs <https://caboodle.dev/stack/caboodle> .
+stack:camayoc owl:sameAs <https://caboodle.dev/stack/camayoc> .
+stack:creel owl:sameAs <https://caboodle.dev/stack/creel> .
+stack:quipu owl:sameAs <https://caboodle.dev/stack/quipu> .
+stack:shantytown owl:sameAs <https://caboodle.dev/stack/shantytown> .
+stack:yupana owl:sameAs <https://caboodle.dev/stack/yupana> .

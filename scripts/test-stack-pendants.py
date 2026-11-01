@@ -12,7 +12,7 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-NAMES = {"stack-map": 54, "stack-operations": 37}
+NAMES = {"stack-map": 62, "stack-operations": 44}
 MEMBERS = {"manifest.json", "manifest.ttl", "export.nt", "shapes.ttl"}
 QUIPU = shutil.which(os.environ.get("QUIPU", "quipu"))
 
@@ -86,7 +86,7 @@ class TextPendants(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         receipt = json.loads(result.stdout)
         self.assertEqual(receipt["outcome"], "staged")
-        self.assertEqual(receipt["triples"], {"accepted": 54, "quarantined": 0})
+        self.assertEqual(receipt["triples"], {"accepted": 62, "quarantined": 0})
 
     def test_rebuild_preserves_semantic_graphs(self):
         output = self.work / "rebuilt"
