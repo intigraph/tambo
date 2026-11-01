@@ -26,7 +26,7 @@ jobs:
       - name: Install and functionally verify the pinned Chaski wheel
         run: cargo test --locked --test chaski_member_live -- --ignored
   chaski-macos-verify:
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
