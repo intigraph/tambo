@@ -475,6 +475,13 @@
       },
       "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
     },
+    "docs/design/macos-job-account-packet.md": {
+      "lines": {
+        "2a208d4d5c11292a88a3b5ccf5333e0113f1724a9570d8c5a07caf1b83f787e2": 1,
+        "93eb0e776bf2db6f2794790e879c38603d74f59f52e2fae715e51b05138addf8": 1
+      },
+      "reason": "Exact pre-existing legacy executable path for the checksum-pinned 0.7.1 compatibility artifact; operator must not silently select a newer executable."
+    },
     "docs/design/skill-profile-selection.md": {
       "lines": {
         "a20eb4c92699cc6e2fbdc4b2562a21eb8833e6e7d2a3198ae380c05f53c7f282": 1
