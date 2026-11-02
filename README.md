@@ -139,7 +139,7 @@ Remote stores need their own endpoint and issued credentials.
 ### Profiles and repository knowledge
 
 - [Choose a profile](https://intigraph.github.io/tambo/profiles.html) or use `tambo init --guided`.
-- [Camayoc](https://github.com/scbrown/camayoc): vocabulary, shapes and governed agent memory.
+- [Camayoc](https://github.com/intigraph/camayoc): vocabulary, shapes and governed agent memory.
 - [Getting started](https://intigraph.github.io/tambo/getting-started.html) and [command reference](https://intigraph.github.io/tambo/reference.html).
 - **Load this repository's graph:** repository-pendant publication is pending.
   When a release provides the archive, checksum and provenance, follow Quipu's

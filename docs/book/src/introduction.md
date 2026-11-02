@@ -38,14 +38,14 @@ a fact, and export a knowledge pack.
 Add the Camayoc plugin, then run its bootstrap:
 
 ```text
-/plugin marketplace add scbrown/camayoc
+/plugin marketplace add intigraph/camayoc
 /plugin install camayoc@camayoc
 /camayoc:bootstrap
 ```
 
 Camayoc brings its own Quipu, loads the ontology, and proves the write gate
 with probes that must be refused. See the
-[Camayoc setup guide](https://github.com/scbrown/camayoc#install).
+[Camayoc setup guide](https://github.com/intigraph/camayoc#install).
 
 ### 3. Install the whole kit
 
