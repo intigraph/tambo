@@ -86,6 +86,35 @@ class CaptureControls(unittest.TestCase):
                 self.assertEqual((out / "demo.svg").read_text(), "prior")
                 self.assertFalse((out / "manifest.json").exists())
 
+    def test_a_wrapped_command_keeps_the_prompt_colour_on_every_row(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / ".terminal-demo-sandbox").touch()
+            tool = root / "fixture-tool"
+            tool.write_text('#!/usr/bin/python3\nimport sys\n'
+                            'print("fixture 1" if "--version" in sys.argv else "answer row")\n')
+            tool.chmod(0o700)
+            query = "SELECT ?person ?thing WHERE { ?person <urn:demo:studies> ?thing }"
+            tape = {"title": "Public fixture", "description": "Control",
+                    "width": 1000, "height": 620, "font_size": 24, "line_height": 32,
+                    "steps": [{"tool": "fixture", "args": ["read", query, "--db", "demo.db"],
+                               "requires": ["answer row"], "hold": 10}]}
+            path = root / "tape.json"
+            path.write_text(json.dumps(tape))
+            subprocess.run([sys.executable, str(HERE / "render.py"), str(path),
+                            "--workspace", str(root), "--output", str(root / "out"),
+                            "--tool", "fixture=" + str(root / "fixture-tool")],
+                           check=True, capture_output=True)
+            svg = (root / "out/demo.svg").read_text()
+            rows = [line for line in svg.splitlines() if 'xml:space="preserve"' in line]
+            self.assertEqual(len(rows), 3, rows)
+            self.assertIn("$ fixture read", rows[0])
+            self.assertIn("--db demo.db", rows[1])
+            self.assertIn('fill="#6ee7b7"', rows[0])
+            self.assertIn('fill="#6ee7b7"', rows[1])
+            self.assertIn("answer row", rows[2])
+            self.assertIn('fill="#f1f5f9"', rows[2])
+
 
 if __name__ == "__main__":
     unittest.main()
