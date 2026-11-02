@@ -1361,7 +1361,7 @@ fn install_camayoc_bundle() -> Result<()> {
     let download = tempfile::tempdir().context("create Camayoc download directory")?;
     let archive = download.path().join("camayoc.tar.gz");
     download_https(
-        &format!("https://github.com/scbrown/camayoc/archive/{CAMAYOC_REVISION}.tar.gz"),
+        &format!("https://github.com/intigraph/camayoc/archive/{CAMAYOC_REVISION}.tar.gz"),
         &archive,
     )?;
     let digest = checked("sha256sum", [archive.as_os_str()], None)?;

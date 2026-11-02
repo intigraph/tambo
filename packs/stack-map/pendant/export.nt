@@ -20,7 +20,7 @@
 <https://caboodle.dev/stack/camayoc> <http://www.w3.org/2000/01/rdf-schema#comment> "The knot-keeper: bootstrap ontology, knowledge ingress discipline, and knowledge-pack production. Owns what facts MEAN and how they earn their way into the graph; runs the governed RML executor for structured sources." .
 <https://caboodle.dev/stack/camayoc> <http://www.w3.org/2000/01/rdf-schema#label> "camayoc" .
 <https://caboodle.dev/stack/camayoc> <https://caboodle.dev/ns#language> "Python" .
-<https://caboodle.dev/stack/camayoc> <https://caboodle.dev/ns#repository> <https://github.com/scbrown/camayoc> .
+<https://caboodle.dev/stack/camayoc> <https://caboodle.dev/ns#repository> <https://github.com/intigraph/camayoc> .
 <https://caboodle.dev/stack/camayoc> <https://caboodle.dev/ns#roleInStack> "ingress keeper" .
 <https://caboodle.dev/stack/camayoc> <https://caboodle.dev/ns#writesTo> <https://caboodle.dev/stack/quipu> .
 <https://caboodle.dev/stack/creel> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://caboodle.dev/ns#StackComponent> .
