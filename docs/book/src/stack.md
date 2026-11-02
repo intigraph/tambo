@@ -46,7 +46,6 @@ The table below is the shared project roster, not a list installed by every prof
 | [shantytown](https://github.com/scbrown/shantytown) | a small harness for running a crew of coding agents |
 | [creel](https://github.com/scbrown/creel) | parallel agent bursts, entirely in the browser |
 | [shanty](https://github.com/scbrown/shanty) | a terminal multiplexer wrapper that makes tmux feel like home |
-| [beads](https://github.com/Dicklesworthstone/beads_rust) | issue tracking as agent memory — `br`, SQLite + JSONL |
 | [quechua](https://github.com/scbrown/quechua) | the stack's shared vocabulary; Tambo pins a release by digest and loads it into Quipu ([catalog](https://scbrown.github.io/quechua/ns)) |
 
 See [the corpus](corpus.md) for share import and [profiles](profiles.md) for

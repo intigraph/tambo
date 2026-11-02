@@ -99,7 +99,7 @@ generic targets into Prometheus scrape config, starter alerts, a dashboard, and
 versioned contracts. `validate-observability` fails closed on missing targets or
 uncovered metrics; rendering is review-only and never claims a live scrape.
 
-Applied/verified transitions and `br` JSONL lifecycle snapshots queue as
+Applied/verified transitions and legacy beads (`br`) JSONL exports queue as
 redacted, content-addressed Quipu episodes. `flush-episodes` requires an HTTPS
 endpoint plus an environment-only token, proves a query marker first, and keeps
 the identical bytes pending on ambiguous delivery.
@@ -154,7 +154,8 @@ environment variables and observability targets.
 | ontology, shapes | The vocabulary quipu accepts and the rules (SHACL) that reject bad facts. |
 | share, pendant | A portable export of a quipu graph that another store can import. "Share" names the protocol; a pendant is the artifact that travels. |
 | crew | Several named coding agents that work together, run by shantytown (terminal) or creel (browser). |
-| bead, `br` | An issue in [beads](https://github.com/Dicklesworthstone/beads_rust), a git-friendly issue tracker agents use as memory. |
+| work item, `sd` | An item in [Seeds](https://github.com/scbrown/seeds), the work tracker stored in Quipu. |
+| bead, `br` | An issue in the older [beads](https://github.com/Dicklesworthstone/beads_rust) tracker; import its JSONL exports with `tambo queue-br`. <!-- legacy-tracker --> |
 | MCP | Model Context Protocol, how an agent calls a tool's server. |
 
 ### Quipu paired release updates

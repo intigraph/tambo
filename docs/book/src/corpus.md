@@ -11,7 +11,7 @@
 | shuttle | workflow engine — signed runs, windowed export, frozen history |
 | creel | browser-native crew — tabs as workers |
 | shanty | the tmux the crew lives in |
-| beads (`br`) | issue tracking as agent memory — SQLite + JSONL |
+| seeds (`sd`) | work items as agent memory, stored in Quipu |
 
 ## Extending the corpus with Quipu shares
 
