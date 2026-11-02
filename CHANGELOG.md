@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.8.0](https://github.com/intigraph/tambo/compare/v0.7.1...v0.8.0) (2026-11-02)
+
+
+### Features
+
+* **jobs:** prepare a pinned Mac account operator packet ([#212](https://github.com/intigraph/tambo/issues/212)) ([b196d44](https://github.com/intigraph/tambo/commit/b196d441c2cbe29ebbeb110212663bd2ca3dcb42))
+
+
+### Bug Fixes
+
+* **compat:** classify the eight drifted legacy-name files ([#217](https://github.com/intigraph/tambo/issues/217)) ([36eb5a5](https://github.com/intigraph/tambo/commit/36eb5a5366310fc850d7dde2c8cbe4f16bc169d9))
+* **demos:** keep the prompt colour on every row of a wrapped command ([#218](https://github.com/intigraph/tambo/issues/218)) ([c4406c9](https://github.com/intigraph/tambo/commit/c4406c9a94f874059812a2c4ee63a448ca273986))
+* **install:** install Camayoc from intigraph/camayoc ([#215](https://github.com/intigraph/tambo/issues/215)) ([d1e0f48](https://github.com/intigraph/tambo/commit/d1e0f48feae89605ea7c01df9289fc31e414e15b))
+
 ## [0.7.1](https://github.com/intigraph/tambo/compare/v0.7.0...v0.7.1) (2026-10-30)
 
 
