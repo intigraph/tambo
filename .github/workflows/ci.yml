@@ -8,6 +8,16 @@ permissions:
   contents: read
 
 jobs:
+  product-name:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check reviewed compatibility names
+        run: python3 -B scripts/check-product-name.py
+      - name: Prove new branding leaks and changed contracts are rejected
+        run: python3 -B scripts/test-product-name.py
+
   text-pendants:
     runs-on: ubuntu-latest
     timeout-minutes: 10
