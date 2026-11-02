@@ -26,7 +26,7 @@ stack:quipu a caboodle:StackComponent ;
 stack:camayoc a caboodle:StackComponent ;
     rdfs:label "camayoc" ;
     rdfs:comment "The knot-keeper: bootstrap ontology, knowledge ingress discipline, and knowledge-pack production. Owns what facts MEAN and how they earn their way into the graph; runs the governed RML executor for structured sources." ;
-    caboodle:repository <https://github.com/scbrown/camayoc> ;
+    caboodle:repository <https://github.com/intigraph/camayoc> ;
     caboodle:language "Python" ;
     caboodle:roleInStack "ingress keeper" ;
     caboodle:writesTo stack:quipu .
