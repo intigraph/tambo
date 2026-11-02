@@ -71,7 +71,6 @@ into feature requests, and
 [Seeds](https://github.com/scbrown/seeds) tracks work items in the Quipu knowledge base.
 Agents can run under [Shantytown](https://github.com/scbrown/shantytown) or Creel.
 
-Work-tracking dependencies include the
-[beads_rust fork](https://github.com/scbrown/beads_rust), based on
-[Dicklesworthstone/beads_rust](https://github.com/Dicklesworthstone/beads_rust).
+Track work with Seeds: `sd ready` lists unblocked items, `sd show <id>` reads one,
+`sd create`, `sd update` and `sd comments add` record work, and `sd close` finishes it.
 See [the stack](stack.md) for the component and dependency list.

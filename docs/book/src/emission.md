@@ -9,11 +9,13 @@ no duplicate. A failed delivery leaves the exact bytes pending; a later replay
 can safely receive Quipu's `unchanged` outcome and then move the file to
 `sent/`.
 
-**Beads emits.** Bead lifecycle — created, closed, commented — flows to quipu
-as episodes through the same discipline. `tambo queue-br export.jsonl`
-projects each issue row into created, comment, and (when closed) closure events;
-re-reading a snapshot is idempotent. Because `br` is upstream, this integration
-lives in Tambo and requires no fork patch.
+**Work items need no emitter.** Seeds (`sd`) stores work items in Quipu
+directly, so their lifecycle is already in the graph.
+
+**Importing a legacy beads export.** `tambo queue-br export.jsonl` projects
+each row of a beads (`br`) JSONL export into created, comment, and (when
+closed) closure events; re-reading a snapshot is idempotent. Use it only to
+bring history from a beads tracker into Quipu; new work is tracked with `sd`.
 
 Flush only after reviewing the queue. The endpoint must be HTTPS (or explicit
 localhost HTTP), and the bearer comes only from `QUIPU_AUTH_TOKEN`; it is never
