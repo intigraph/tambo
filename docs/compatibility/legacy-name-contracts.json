@@ -86,7 +86,9 @@
     "README.md": {
       "lines": {
         "0a72892c82983c6bfa4534553f19ebdf33cc5cedd78b3312ee6ef4aa9a17e75e": 1,
+        "1066e7aa04d501ef86ab57b046b583b91b52b157364df0bbd46b67e8cf92b830": 1,
         "35676aaad176b1ef84ebf6b7e2a4385680595bc28799f3e45f09e2259ddbbe7c": 1,
+        "54052e955bd9895469e35f276e2ee1389a8fa1a83a6dde7959c711588a7fae78": 1,
         "a1baf0b159f81bcfabf31f51dd50be756dad895f07581a4b08ef63383a872745": 1,
         "b2f9b0c55ee1ed7b69c84e2cc918fbba49d7202d821b111926fb58f138c5f8fc": 1,
         "c88874bacd2c2691e49e7ff69ce26220321dd0d6268dd0a215ed66ca38e4cca5": 1,
@@ -700,6 +702,7 @@
       "lines": {
         "157f6fd0161372e1ee2f94aed010a54aa316b616f44d6bc3fd6576f9ca8c7f3c": 1,
         "18cb850492bf965a89c245fe7405c31bff2277b33a787437bfb7a9d76af6b9bd": 1,
+        "2090b97ab19dc4995a84e3d6ea7c219c1fd9f3d00cee2a1a1d942c012513da7f": 1,
         "20ca8c5f8c9dc5b8a53c17a94484f082544c72fa3c7202fa433146d805ae5259": 1,
         "337e42294719a615743c13a9e6a010368c324a0fa0e0ca4b18045eb32d92e39e": 1,
         "344228d39a64d17a47ebf81c0cf97ef7770e164668e90c08e5905bffd7980db0": 4,
@@ -728,7 +731,6 @@
         "e610e7db598d73fd43ce631978ae390dcf75f19c001a1456c9ebf41ac5821cd6": 1,
         "e7cd91634335fb162a904c1c3ab9d0ae0d56ec8c37dbb7a4069454f5194cb45e": 1,
         "e91322234023cbcf7b5715426345f9b27c7c44aa4bbb7769988d36e9656432e2": 1,
-        "eb6aef9d8ef29bfc89654f2b7b6ff3da99547228c000f722e048fa96e60285f8": 1,
         "fc242c9ec82aab1869806b15ca40bdf6cf27275c20344ebd71c435e8dd4d2bc7": 2
       },
       "reason": "Immutable vocabulary, graph and subject IRIs or verified text-share policy metadata. Product labels and repository links are canonical."
@@ -770,6 +772,7 @@
     "packs/stack-map/pendant/export.nt": {
       "lines": {
         "02db0a76e9bc6fe25e53f1b06fc235e644013ae3f2ec4e44ee0a78b6ec5f5e26": 1,
+        "0307207536fe5f323d320286febe50f61afcc28bf0bb1f6d59cf57b02ca5074f": 1,
         "056b5874d276a2c477a93e148fa93c307181c6ae5510c2dbaebbd51ac23cdf3b": 1,
         "07e7c337d7adbd94b902ab8484537f5dd02035b4303e06d806d576d58dec390d": 1,
         "082d7d1510095ea144a49691ed6e9704de1e9b64dc62b954e4bf86b315fb5484": 1,
@@ -777,7 +780,6 @@
         "0f8924bc5543d114da28ed7addc44f3e967d48936dfd39017016136f61ac2a05": 1,
         "127c3c4cfab0c23673d561e1892fee37548c0ec8f60d920560fbb2c7e26db23f": 1,
         "1970672b830b8a648a1e9c7449adf49a95af7eaf11fdf7e4d5ab778715319f8e": 1,
-        "1b95c7db4d91c41137ffaed6614752b8d411e4914d1196fe47e842d3a5e31e06": 1,
         "1cf11d81088602ed90c50dfe20c622c54989a45b3c16f4d73c8f2b185e9dec9e": 1,
         "1ec8d6fa68494f61a46877041d30cd9aaf2b6fd7c08cf279799009517db051f8": 1,
         "20a8719a500753ed4db5dd6532246d94b1e161e38bb1351f2cfba1cc55ea58c7": 1,
@@ -828,7 +830,7 @@
     },
     "packs/stack-map/pendant/manifest.json": {
       "lines": {
-        "70a949172e1f37fa6fd0e6f8bde908d0c8e275e3eabca4ac3767a5b336631b58": 1
+        "26520dbd2653cf5f879a595d32763e3c3a36dc296f4b3eb475cb4a7ec9ce7b4a": 1
       },
       "reason": "Immutable vocabulary, graph and subject IRIs or verified text-share policy metadata. Product labels and repository links are canonical."
     },
@@ -1232,24 +1234,35 @@
         "0b0c04469bfe8662bdb4b941418c3a1539d32535a546488b740a833a3e3a0c1f": 1,
         "0f626f582b5ac1f5ae4e3929aefa6979861b650c5c8d77c064abf944f33f0d6c": 1,
         "0fe929e2beab3fc79e3af8a50cce69d5799720ebed9c2dda5d38429dbaaf3b14": 1,
+        "120407ffc5df787f60ba9a60a0670a2a1969b76966efd03f90cd6bc8809fdb49": 1,
+        "194965730c613dc68a54de1163ee3f9cc8361d6ae057fddf3acf11144ffc9a87": 1,
         "1c12704b94999d809bbaab1141bdad65eeeceba47db9e0483b312c95fa503632": 1,
         "2330a20785b809215424331126d53467773660ee30d07e6bdcca839df4d745f2": 1,
         "290ae03465cf4cac2db4192f9ce876783635d328b5a5c4178d8701a13eadae68": 1,
+        "29b6fd43cc03d8b5dad6a28461ec3acafc7416692b6c20ae471c1a70824508cc": 1,
         "2bac90b1440b4aba1271775b7f010eaee1ea7213e4336b80936c75278c834e25": 1,
+        "36bf9fdface7bfcfe3e21faa92bb624f8e30ae3c4621d7ebef4b2fc439176cfb": 1,
         "3c695b70c57f06b59e256403d63b5b85743399fcbf0b02b0b75965de435c9afb": 1,
+        "3cd39f1637b947fb342ae1db9b264a8f8ea83435ec58fe403c31021f8876db42": 1,
+        "4429197da43dcbb832ec165871049e2bbd682fc8539515802d684308091b2937": 1,
+        "4a90eda2a486c01ce368d83c05922108d13dea43f7365f2bcdb92dbcb8ca7d48": 1,
         "52fb24f85fb0cdcb7b04a048b4123a4e4a5b3aebab1e4ba3397f93e9ce1855d8": 1,
         "582c3d9e78262c992545a06fd392196f1ae7f4793f4d81db308d40ac90c01524": 1,
         "63413b1a1d1cc2c27fffb3e95ffbbe8ccfcdd25f2fa4cc69e599d9e43f981513": 1,
         "67212a08721766df995f75975aa52b3bfaef95c5df50ed2c0c893ad681280d4c": 1,
+        "6759bd0e97efd6dc5b986f1074584f521df52aebb8ce53122677891074359c42": 1,
         "6bfab99ebaf909a12f81afde09da09074651069db44126007db3d02d8a70ce0c": 1,
         "7349844672aef38af94d26514284e57a9f8c535ce1e6aca3ef78901a6744ac98": 1,
         "7dc222a15899e07f70f7e577cb0ec2acaa229e0c58af6999793e30104c048084": 1,
+        "82f70c1270e175b1694a1cd1c7d181838afc4cd5a4c8dc783958c749b2a1fc44": 1,
         "841f01a74b963b20866a212044db03f832b337102a3dcf2daae3cf143ca3b25a": 1,
         "84c4e19221966b08321435fb0fd2ec0d8f46a4b02d1d8e4a8fdae688c9748b5a": 11,
         "8d5f172ae9223ab1318846edbdfcb773cb57061de046decec2a5cd03c8a6fc0e": 1,
         "9b45543ca9a25ff3cf9dd073607ec47f755aa3f62f99db00e27bfa7bb5f599dc": 1,
         "a0f5f9aded0f6b337ca8802591b4b1264d4c2e6305c231604aa1fd6ae75ee30a": 1,
+        "a454efce87dbba217edcc035ada40e2e02202a01ca159b5c81eed460d5702604": 1,
         "b1f1a65a5411d9e66e2df3ec8d3cde814a188e7f69a8eb1a70dc55a0ad0ec7d2": 1,
+        "b1f963de69bafd1f488396709c3cb9217c8c741eabd2e2ac175960129125eaa1": 1,
         "b22ed16db4cda9a6b5c743ce5427359984c3ae4cdf12c882519d81c20d072721": 1,
         "b5437f382a122c18fa0b62bb5e380e1a9c2ca2a202e85176d1cb09b3032f7646": 1,
         "b7f63569dfe487f4743ac5cfd77a383f59bf285cf463166ff487a57feb378410": 1,
@@ -1260,11 +1273,13 @@
         "c46555797f4d20a35a858c260c7de3fcffa0092486aa0c39e424f5d621d6ad40": 1,
         "c6d38a3168cadfa64987e9b41f1284fc58301a0fd91ea60047e2e2529a013b28": 1,
         "cd76c363c336bb3090b4014952931d433a906c8def8c3c2a3e2e00f8f5b06377": 1,
+        "cfc563def8d8147b0d311dbe1da4e9a0eacd7b13581227f9aab3783e98cf174d": 1,
         "d1745f2296f1c0601036aadfc05bea17dcbc5b81d1aeaf960a2917a991f92109": 8,
         "d46311e20db82a24eaf04295664ddb292fbea09b758018d310a837ac4ccdc978": 1,
         "e818169f4da5b0b687345fedcbdfa21ce0e868b9e054b4cb5bd21bea06edc881": 2,
         "effa922ce28fe64ecf20fe247754000b29f6c70c74dbef69e2cf14f7f328b28b": 1,
-        "fde11d975d066817870dd8f7faa3e06621da33462d5f85aa02321161fe450b58": 1
+        "fde11d975d066817870dd8f7faa3e06621da33462d5f85aa02321161fe450b58": 1,
+        "ff07d99f78e09ad32860960604e84bb750059119c073a30943ac46469ad2ab90": 1
       },
       "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
     },
@@ -1514,6 +1529,7 @@
         "acb9ea142447e7b70df7cf1406c9c8a6669dd6271b6c424047fe9bd1b115fb49": 1,
         "b3109b179e94ad12583f82dace9941db4790373102bae43803d931a2c96714bb": 1,
         "bce9e96ae286a0d44948734561da0c42e0175c99d39d1c6bfa1428f8c71a6119": 1,
+        "c0aeb95a57ba3a753312a88da724f0ec113af998370d1251c9f829ea72d5563c": 1,
         "c153625df64ec2e1bf9c77d0438c0810c27a075f706e271e98360500ddc82bf1": 1,
         "c16ec09fb917266ba6cdf7acc2361fce0fc800654ea9903b2482880a2d3a6cea": 1,
         "c46d543b654908801373fb4d4085914c7780e21f5f6451a5c205053042ffa4c3": 5,
@@ -1534,7 +1550,7 @@
         "e13a6dea9a0f57053cf18dd5cc75253fbef1466ae68eb7c65b442d294dfbae65": 1,
         "e3347665445042c5ec8a95f0f2759c38a1e06b7bf01435476b54fbb6ff54900e": 2,
         "e7eba4ca1990e21a4000311e55fdbe21c71862c02ac56665048a76b519b733ad": 1,
-        "e809f537f0911a1b9c407ef127092b74735cca5858ebc9cd13c755fc40a071b5": 2,
+        "e809f537f0911a1b9c407ef127092b74735cca5858ebc9cd13c755fc40a071b5": 1,
         "ec5b1c3584e7fa4070055a94874a2fede18162561f7aba8a0fa6e69036535400": 1,
         "f4f5923d03d0081ee123e5610d38db5ac07a0e0996b0e4b9f12f9f68a507834d": 1,
         "f56108b64ebd5219b0fb5c59abebd32b95b5b700a2563062b3ace5ca8d95180a": 1,
@@ -1635,6 +1651,19 @@
         "a5bf65699c6d9293f90b36c2d43c8a5484e816b110aed8bdbf14db94b06ab040": 1,
         "ae0fb5f39b0e9fd8b617d4742f280d040d74f8ab22f58a383195329f61da74e1": 2,
         "e7a405d5c3b4eb32862f3fb4c85da969da227bdf5b8a31fb4035875502f887c8": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "tests/prime_cli.rs": {
+      "lines": {
+        "80d139fdf71fddb4c545cc025ae0d172834c3e3026e8521aecda33d82a6d4a59": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "tests/prime_site.rs": {
+      "lines": {
+        "4d22a02237a4ddf58fa5e0807448451cae79dd71e98eeecc3e02081f6ba04f67": 1,
+        "e5bc21e8bda0850883c1049d97bd8286d5385382bb5676512bc26da36b5165c5": 2
       },
       "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
     },
