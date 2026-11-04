@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
+#[cfg(unix)]
+use caboodle::harness_hooks;
 use caboodle::{
     crew::CrewEvidence,
     doctor,
@@ -99,6 +101,9 @@ enum Commands {
         /// Use tools already installed by an external package manager
         #[arg(long)]
         skip_install: bool,
+        /// Do not add the query-first hooks to Claude Code and Codex
+        #[arg(long)]
+        no_agent_hooks: bool,
     },
     /// Install an administrator-issued Quipu token after proving acceptance; never rotate
     ProvisionQuipuToken {
@@ -106,6 +111,19 @@ enum Commands {
         source: PathBuf,
         #[arg(long)]
         server: String,
+    },
+    /// Install, verify or remove the query-first hooks for Claude Code and Codex
+    #[cfg(unix)]
+    Hooks {
+        #[command(subcommand)]
+        command: HooksCommand,
+    },
+    /// Internal harness hook entry points
+    #[cfg(unix)]
+    #[command(hide = true)]
+    Hook {
+        #[command(subcommand)]
+        command: HookCommand,
     },
     /// Report, without changing anything, what would stop an install on this host
     Doctor {
@@ -221,6 +239,9 @@ enum Commands {
         /// Apply this plan host profile (e.g. exclude crew a different lane owns)
         #[arg(long)]
         host_profile: Option<String>,
+        /// Do not add the query-first hooks to Claude Code and Codex
+        #[arg(long)]
+        no_agent_hooks: bool,
     },
     /// Report drift from the releases reviewed by this Tambo build
     CheckUpdates {
@@ -546,6 +567,33 @@ fn update_release_tool(value: &str) -> Result<String, String> {
 
 #[cfg(unix)]
 #[derive(Subcommand)]
+enum HooksCommand {
+    /// Add the query-first hooks to ~/.claude/settings.json and ~/.codex/config.toml
+    Install {
+        /// Plan whose local Quipu store the directive names
+        #[arg(short, long, default_value = "caboodle-plan.toml")]
+        plan: PathBuf,
+    },
+    /// Report whether each harness has working query-first hooks
+    Verify,
+    /// Remove the hooks; restore the exact prior file when nothing else changed
+    Uninstall,
+}
+
+#[cfg(unix)]
+#[derive(Subcommand)]
+enum HookCommand {
+    /// Print the query-first directive and count the firing (always exits 0)
+    QueryFirst {
+        #[arg(long, value_parser = ["claude", "codex"])]
+        harness: String,
+        #[arg(long, value_parser = ["SessionStart", "UserPromptSubmit"])]
+        event: String,
+    },
+}
+
+#[cfg(unix)]
+#[derive(Subcommand)]
 enum MemoryCommand {
     /// Prepare private reviewed edits and producer-generated skills; no live writes
     Plan {
@@ -761,6 +809,7 @@ fn main() -> Result<()> {
             plan,
             state,
             skip_install,
+            no_agent_hooks,
         } => {
             let selected = if plan.exists() {
                 Plan::read(&plan)?
@@ -773,10 +822,54 @@ fn main() -> Result<()> {
             println!("plan: {}", plan.display());
             engine::apply(&selected, &state, skip_install)?;
             engine::verify(&selected, &state, &CrewEvidence::default())?;
+            #[cfg(unix)]
+            if !no_agent_hooks {
+                install_agent_hooks(Some(&selected), false)?;
+            }
         }
 
         Commands::ProvisionQuipuToken { source, server } => {
             engine::provision_quipu_credential(&source, &server)?;
+        }
+        #[cfg(unix)]
+        Commands::Hooks { command } => match command {
+            HooksCommand::Install { plan } => {
+                let read = if plan.exists() {
+                    Some(Plan::read(&plan)?)
+                } else {
+                    None
+                };
+                install_agent_hooks(read.as_ref(), true)?;
+            }
+            HooksCommand::Verify => {
+                let paths = harness_hooks::Paths::from_env()?;
+                let findings = harness_hooks::verify(&paths);
+                for f in &findings {
+                    let label = match f.level {
+                        doctor::Level::Ok => "ok  ",
+                        doctor::Level::Warn => "warn",
+                        doctor::Level::Fail => "FAIL",
+                    };
+                    println!("{label} {}: {}", f.subject, f.detail);
+                }
+                if findings.iter().any(|f| f.level != doctor::Level::Ok) {
+                    std::process::exit(1);
+                }
+            }
+            HooksCommand::Uninstall => {
+                let paths = harness_hooks::Paths::from_env()?;
+                for (harness, outcome) in harness_hooks::uninstall(&paths)? {
+                    println!("{}: {}", harness.name(), outcome.describe());
+                }
+            }
+        },
+        #[cfg(unix)]
+        Commands::Hook {
+            command: HookCommand::QueryFirst { harness, event },
+        } => {
+            let harness = harness_hooks::Harness::parse(&harness)?;
+            // A hook must never block or fail a session.
+            let _ = harness_hooks::run_hook(harness, &event);
         }
         Commands::Doctor { plan, state } => {
             let mut installed = false;
@@ -794,7 +887,10 @@ fn main() -> Result<()> {
                 );
                 doctor::Scope::everything()
             };
-            let findings = doctor::diagnose(&scope);
+            #[allow(unused_mut)]
+            let mut findings = doctor::diagnose(&scope);
+            #[cfg(unix)]
+            findings.extend(harness_hooks::verify(&harness_hooks::Paths::from_env()?));
             let stdout = std::io::stdout();
             if !doctor::report(&findings, installed, &mut stdout.lock())? {
                 std::process::exit(1);
@@ -913,6 +1009,7 @@ fn main() -> Result<()> {
             creel_doctor,
             creel_admission,
             host_profile,
+            no_agent_hooks,
         } => {
             let plan = read_plan(&plan, host_profile.as_deref())?;
             engine::apply(&plan, &state, skip_install)?;
@@ -924,6 +1021,10 @@ fn main() -> Result<()> {
                     creel_admission,
                 },
             )?;
+            #[cfg(unix)]
+            if !no_agent_hooks {
+                install_agent_hooks(Some(&plan), false)?;
+            }
         }
         Commands::CheckUpdates { plan, host_profile } => {
             let plan = read_plan(&plan, host_profile.as_deref())?;
@@ -1228,4 +1329,38 @@ mod memory_cli_tests {
         bad.extend(["--redirect-mode", "surprise"]);
         assert!(Cli::try_parse_from(bad).is_err());
     }
+}
+
+/// Add the query-first hooks, naming the plan's local store when it has one.
+#[cfg(unix)]
+fn install_agent_hooks(plan: Option<&Plan>, explicit: bool) -> Result<()> {
+    use harness_hooks::{install, Paths, Target};
+    let plan_crew = plan
+        .and_then(|p| p.crew.as_ref())
+        .is_some_and(|c| matches!(c.mode, CrewMode::Shantytown | CrewMode::Both));
+    if let Some(reason) =
+        harness_hooks::crew_host_reason(std::env::var_os("SHANTY_ROOT").as_deref(), plan_crew)
+    {
+        if explicit {
+            anyhow::bail!(
+                "this is a shantytown crew host ({reason}): st already gives crew sessions the \
+                 query-first directive, and user-level hooks would add a second copy; nothing was written"
+            );
+        }
+        println!("agent hooks: skipped on this shantytown crew host ({reason}); st provides the query-first directive");
+        return Ok(());
+    }
+    let db = match plan.and_then(|p| p.quipu_db.as_deref()) {
+        Some(db) if db.is_absolute() => Some(db.to_path_buf()),
+        Some(db) => Some(std::env::current_dir()?.join(db)),
+        None => None,
+    };
+    let tambo = std::env::current_exe()?;
+    for (harness, outcome) in install(&Paths::from_env()?, &tambo, &Target { db })? {
+        println!("{} hooks: {}", harness.name(), outcome.describe());
+        if harness == harness_hooks::Harness::Codex && outcome == harness_hooks::Outcome::Written {
+            println!("codex hooks: the next `codex` start asks you to review them; Codex runs them only after you trust them");
+        }
+    }
+    Ok(())
 }

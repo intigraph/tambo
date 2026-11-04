@@ -9,6 +9,8 @@ pub mod dp_alias;
 pub mod embedding;
 pub mod emission;
 pub mod engine;
+#[cfg(unix)]
+pub mod harness_hooks;
 pub mod hook_bundles;
 pub mod interview;
 #[cfg(unix)]
