@@ -2,7 +2,6 @@
 """Exercise the actual probe with private fixture installers; no network or packages."""
 import hashlib
 import importlib.util
-import io
 import json
 from pathlib import Path
 import tempfile
@@ -24,7 +23,10 @@ row['installer_sha256'] = hashlib.sha256(script).hexdigest()
 
 def case(name, changes, payload, expected):
     with tempfile.TemporaryDirectory(prefix='probe-control-') as directory:
-        with patch.object(probe.urllib.request, 'urlopen', return_value=io.BytesIO(payload)), patch.object(probe, 'latest_release', return_value=changes.get('release_tag', row['release_tag'])):
+        def download(url, destination, environment, workspace):
+            destination.write_bytes(payload)
+            return 0, ''
+        with patch.object(probe, 'fetch_installer', side_effect=download), patch.object(probe, 'latest_release', return_value=changes.get('release_tag', row['release_tag'])):
             result = probe.probe(dict(row, **changes), Path(directory))
         assert result['outcome'] == expected, (name, result)
         print('PASS', name, expected)
