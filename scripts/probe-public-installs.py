@@ -110,7 +110,12 @@ def probe(row, workspace):
         args = ['version'] if command == 'dp' else ['--version']
         rc, text = run([found, *args], environment, workspace, timeout=30)
         versions.append(dict(command=command, exit=rc, output=text.replace(str(workspace), '<probe>')))
-        if rc or release_version(text) != release_version(row['release_tag']):
+        if rc:
+            return dict(result, outcome='VERSION_COMMAND_FAILED', versions=versions)
+        observed_version = release_version(text)
+        if observed_version is None:
+            return dict(result, outcome='VERSION_NOT_REPORTED', versions=versions)
+        if observed_version != release_version(row['release_tag']):
             return dict(result, outcome='VERSION_MISMATCH', versions=versions)
     markers = []
     for marker in sorted(home.rglob('.release.json')):
