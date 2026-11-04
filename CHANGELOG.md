@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.9.0](https://github.com/intigraph/tambo/compare/v0.8.0...v0.9.0) (2026-11-04)
+
+
+### Features
+
+* **packs:** name stack-map entities under w3id.org/intigraph/tambo ([#221](https://github.com/intigraph/tambo/issues/221)) ([76f63a2](https://github.com/intigraph/tambo/commit/76f63a2e00b01d92c30c99c86a59f02dc5160572))
+
+
+### Bug Fixes
+
+* bootstrap Seeds instead of the legacy tracker ([#225](https://github.com/intigraph/tambo/issues/225)) ([3c6688f](https://github.com/intigraph/tambo/commit/3c6688ff6b3b117185a5bafc8dd2776f80be663f))
+* **compat:** drop the vision line [#224](https://github.com/intigraph/tambo/issues/224) removed from the legacy-name ledger ([#226](https://github.com/intigraph/tambo/issues/226)) ([a3b6765](https://github.com/intigraph/tambo/commit/a3b676560c0ba54e3b390ca0ede995c6d1c6c79a))
+* **macos:** accept native dscl properties and honor packet directory modes ([#222](https://github.com/intigraph/tambo/issues/222)) ([517f6c7](https://github.com/intigraph/tambo/commit/517f6c7c6b0522be33792e3818da90a2dd7c7b34))
+
 ## [0.8.0](https://github.com/intigraph/tambo/compare/v0.7.1...v0.8.0) (2026-11-02)
 
 
