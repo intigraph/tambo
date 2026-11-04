@@ -103,7 +103,9 @@ def probe(row, workspace):
     versions = []
     for command in row['commands']:
         found = shutil.which(command, path=environment['PATH'])
-        if not found or not Path(found).resolve().is_relative_to(home):
+        # macOS temporary roots may be aliases (/tmp -> /private/tmp).
+        # Compare physical paths on both sides while retaining outside-HOME refusal.
+        if not found or not Path(found).resolve().is_relative_to(home.resolve()):
             return dict(result, outcome='INSTALLED_COMMAND_MISSING_OR_SHADOWED', command=command)
         args = ['version'] if command == 'dp' else ['--version']
         rc, text = run([found, *args], environment, workspace, timeout=30)
