@@ -21,13 +21,19 @@ chmod +x "$HOME/.local/bin/fixture-tool"
 '''
 row['installer_sha256'] = hashlib.sha256(script).hexdigest()
 
-def case(name, changes, payload, expected):
+def case(name, changes, payload, expected, alias=False):
     with tempfile.TemporaryDirectory(prefix='probe-control-') as directory:
+        workspace = Path(directory)
+        if alias:
+            real = workspace / 'real'
+            real.mkdir()
+            workspace = workspace / 'alias'
+            workspace.symlink_to(real, target_is_directory=True)
         def download(url, destination, environment, workspace):
             destination.write_bytes(payload)
             return 0, ''
         with patch.object(probe, 'fetch_installer', side_effect=download), patch.object(probe, 'latest_release', return_value=changes.get('release_tag', row['release_tag'])):
-            result = probe.probe(dict(row, **changes), Path(directory))
+            result = probe.probe(dict(row, **changes), workspace)
         assert result['outcome'] == expected, (name, result)
         print('PASS', name, expected)
 
@@ -41,3 +47,6 @@ with patch.dict(probe.os.environ, {'GITHUB_TOKEN':'fixture-never-forward','QUIPU
     case('caller credentials and identity not forwarded', {}, script, 'VERSION_VERIFIED')
 assert probe.release_version('seeds-ai-v0.12.0') == '0.12.0'
 print('PASS tagged release version parser')
+case('private install through aliased temporary root', {}, script, 'VERSION_VERIFIED', alias=True)
+case('aliased home still excludes system shadow', {'commands':['sh']}, script,
+     'INSTALLED_COMMAND_MISSING_OR_SHADOWED', alias=True)
