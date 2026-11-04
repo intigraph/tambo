@@ -57,6 +57,7 @@ expected = "fixture-result"
         .env_remove("CODEX_HOME")
         .env_remove("XDG_STATE_HOME")
         .env_remove("SHANTY_AGENT")
+        .env_remove("SHANTY_ROOT")
         .env_remove("QUIPU_AUTH_TOKEN")
         .env_remove("QUIPU_AUTH_TOKEN_FILE")
         .env("PATH", path_with(bin))
@@ -4672,5 +4673,32 @@ fn quickstart_wires_the_query_first_hooks_and_uninstall_restores_the_settings() 
             "claude: restored the exact settings",
         ));
     assert_eq!(fs::read_to_string(&claude).unwrap(), before);
+    assert!(!root.path().join(".codex/config.toml").exists());
+}
+
+#[test]
+fn crew_hosts_get_no_user_level_query_first_hooks() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    command_named(root.path(), &bin, "tambo")
+        .env("SHANTY_ROOT", root.path().join("shanty"))
+        .args(["hooks", "install"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "shantytown crew host (SHANTY_ROOT is set)",
+        ));
+    command_named(root.path(), &bin, "tambo")
+        .env_remove("QUIPU_SERVER")
+        .env("SHANTY_ROOT", root.path().join("shanty"))
+        .args(["quickstart", "--skip-install"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(
+            "agent hooks: skipped on this shantytown crew host",
+        ));
+    assert!(!root.path().join(".claude/settings.json").exists());
     assert!(!root.path().join(".codex/config.toml").exists());
 }

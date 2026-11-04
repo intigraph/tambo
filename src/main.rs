@@ -824,7 +824,7 @@ fn main() -> Result<()> {
             engine::verify(&selected, &state, &CrewEvidence::default())?;
             #[cfg(unix)]
             if !no_agent_hooks {
-                install_agent_hooks(Some(&selected))?;
+                install_agent_hooks(Some(&selected), false)?;
             }
         }
 
@@ -839,7 +839,7 @@ fn main() -> Result<()> {
                 } else {
                     None
                 };
-                install_agent_hooks(read.as_ref())?;
+                install_agent_hooks(read.as_ref(), true)?;
             }
             HooksCommand::Verify => {
                 let paths = harness_hooks::Paths::from_env()?;
@@ -1023,7 +1023,7 @@ fn main() -> Result<()> {
             )?;
             #[cfg(unix)]
             if !no_agent_hooks {
-                install_agent_hooks(Some(&plan))?;
+                install_agent_hooks(Some(&plan), false)?;
             }
         }
         Commands::CheckUpdates { plan, host_profile } => {
@@ -1333,8 +1333,23 @@ mod memory_cli_tests {
 
 /// Add the query-first hooks, naming the plan's local store when it has one.
 #[cfg(unix)]
-fn install_agent_hooks(plan: Option<&Plan>) -> Result<()> {
+fn install_agent_hooks(plan: Option<&Plan>, explicit: bool) -> Result<()> {
     use harness_hooks::{install, Paths, Target};
+    let plan_crew = plan
+        .and_then(|p| p.crew.as_ref())
+        .is_some_and(|c| matches!(c.mode, CrewMode::Shantytown | CrewMode::Both));
+    if let Some(reason) =
+        harness_hooks::crew_host_reason(std::env::var_os("SHANTY_ROOT").as_deref(), plan_crew)
+    {
+        if explicit {
+            anyhow::bail!(
+                "this is a shantytown crew host ({reason}): st already gives crew sessions the \
+                 query-first directive, and user-level hooks would add a second copy; nothing was written"
+            );
+        }
+        println!("agent hooks: skipped on this shantytown crew host ({reason}); st provides the query-first directive");
+        return Ok(());
+    }
     let db = match plan.and_then(|p| p.quipu_db.as_deref()) {
         Some(db) if db.is_absolute() => Some(db.to_path_buf()),
         Some(db) => Some(std::env::current_dir()?.join(db)),

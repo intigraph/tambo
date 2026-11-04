@@ -182,15 +182,69 @@ fn private_write(path: &Path, bytes: &[u8]) -> Result<()> {
 
 // --- Claude Code: settings.json -----------------------------------------------
 
-fn claude_parse(bytes: Option<&[u8]>) -> Result<Value> {
+/// JSON that keeps the user's key order. serde_json's `Value` sorts object keys
+/// (this crate does not enable `preserve_order`, and must not: other modules
+/// hash serialized JSON), so editing through it would reorder the whole file.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(untagged)]
+enum J {
+    Null,
+    Bool(bool),
+    Number(serde_json::Number),
+    String(String),
+    Array(Vec<J>),
+    Object(indexmap::IndexMap<String, J>),
+}
+
+impl J {
+    fn get(&self, key: &str) -> Option<&J> {
+        match self {
+            J::Object(map) => map.get(key),
+            _ => None,
+        }
+    }
+    fn get_mut(&mut self, key: &str) -> Option<&mut J> {
+        match self {
+            J::Object(map) => map.get_mut(key),
+            _ => None,
+        }
+    }
+    fn array(&self) -> Option<&Vec<J>> {
+        match self {
+            J::Array(items) => Some(items),
+            _ => None,
+        }
+    }
+    fn array_mut(&mut self) -> Option<&mut Vec<J>> {
+        match self {
+            J::Array(items) => Some(items),
+            _ => None,
+        }
+    }
+    fn object_mut(&mut self) -> Option<&mut indexmap::IndexMap<String, J>> {
+        match self {
+            J::Object(map) => Some(map),
+            _ => None,
+        }
+    }
+    fn str(&self) -> Option<&str> {
+        match self {
+            J::String(s) => Some(s),
+            _ => None,
+        }
+    }
+}
+
+fn claude_parse(bytes: Option<&[u8]>) -> Result<J> {
+    let empty = || J::Object(indexmap::IndexMap::new());
     match bytes {
-        None => Ok(json!({})),
-        Some(b) if b.iter().all(u8::is_ascii_whitespace) => Ok(json!({})),
+        None => Ok(empty()),
+        Some(b) if b.iter().all(u8::is_ascii_whitespace) => Ok(empty()),
         Some(b) => {
-            let v: Value = serde_json::from_slice(b).context(
+            let v: J = serde_json::from_slice(b).context(
                 "Claude settings.json is not valid JSON; fix it first, nothing was written",
             )?;
-            if !v.is_object() {
+            if !matches!(v, J::Object(_)) {
                 bail!("Claude settings.json is not a JSON object; nothing was written");
             }
             Ok(v)
@@ -198,78 +252,129 @@ fn claude_parse(bytes: Option<&[u8]>) -> Result<Value> {
     }
 }
 
-fn claude_commands(settings: &Value, event: &str) -> Vec<String> {
-    settings["hooks"][event]
-        .as_array()
+fn claude_serialize(settings: &J) -> Result<Vec<u8>> {
+    let mut out = serde_json::to_vec_pretty(settings)?;
+    out.push(b'\n');
+    Ok(out)
+}
+
+/// `(group, hook, command)` for every hook under one event.
+fn claude_hooks(settings: &J, event: &str) -> Vec<(usize, usize, String)> {
+    let mut found = Vec::new();
+    let groups = settings
+        .get("hooks")
+        .and_then(|h| h.get(event))
+        .and_then(J::array);
+    for (g, group) in groups.into_iter().flatten().enumerate() {
+        for (h, hook) in group
+            .get("hooks")
+            .and_then(J::array)
+            .into_iter()
+            .flatten()
+            .enumerate()
+        {
+            if let Some(cmd) = hook.get("command").and_then(J::str) {
+                found.push((g, h, cmd.to_string()));
+            }
+        }
+    }
+    found
+}
+
+fn claude_commands(settings: &J, event: &str) -> Vec<String> {
+    claude_hooks(settings, event)
         .into_iter()
-        .flatten()
-        .flat_map(|group| group["hooks"].as_array().into_iter().flatten())
-        .filter_map(|h| h["command"].as_str().map(str::to_string))
+        .map(|(_, _, c)| c)
         .collect()
 }
 
-fn claude_remove(settings: &mut Value) {
-    let Some(hooks) = settings.get_mut("hooks").and_then(Value::as_object_mut) else {
+/// Drop tambo hooks (all of them, or all but the first per event when
+/// `keep_first`), then any group or event left empty by that.
+fn claude_remove(settings: &mut J, keep_first: bool) {
+    let Some(hooks) = settings.get_mut("hooks").and_then(J::object_mut) else {
         return;
     };
     for event in EVENTS {
-        let Some(groups) = hooks.get_mut(event).and_then(Value::as_array_mut) else {
+        let Some(groups) = hooks.get_mut(event).and_then(J::array_mut) else {
             continue;
         };
+        let mut kept = !keep_first;
         for group in groups.iter_mut() {
-            if let Some(list) = group.get_mut("hooks").and_then(Value::as_array_mut) {
-                list.retain(|h| !h["command"].as_str().is_some_and(is_ours));
+            if let Some(list) = group.get_mut("hooks").and_then(J::array_mut) {
+                list.retain(|h| {
+                    if !h.get("command").and_then(J::str).is_some_and(is_ours) {
+                        return true;
+                    }
+                    if kept {
+                        return false;
+                    }
+                    kept = true;
+                    true
+                });
             }
         }
-        groups.retain(|g| !g["hooks"].as_array().is_some_and(Vec::is_empty));
+        groups.retain(|g| !g.get("hooks").and_then(J::array).is_some_and(Vec::is_empty));
         if groups.is_empty() {
-            hooks.remove(event);
+            hooks.shift_remove(event);
         }
     }
     if hooks.is_empty() {
-        settings.as_object_mut().unwrap().remove("hooks");
+        settings.object_mut().unwrap().shift_remove("hooks");
     }
 }
 
 fn claude_render(current: Option<&[u8]>, wanted: &[(String, String)]) -> Result<Option<Vec<u8>>> {
     let mut settings = claude_parse(current)?;
-    if wanted
-        .iter()
-        .all(|(event, cmd)| claude_commands(&settings, event).iter().any(|c| c == cmd))
-        && EVENTS.iter().all(|e| {
-            claude_commands(&settings, e)
-                .iter()
-                .filter(|c| is_ours(c))
-                .count()
-                == 1
-        })
-    {
+    let original = settings.clone();
+    claude_remove(&mut settings, true);
+    for (event, cmd) in wanted {
+        let ours = claude_hooks(&settings, event)
+            .into_iter()
+            .find(|(_, _, c)| is_ours(c));
+        if let Some((g, h, existing)) = ours {
+            // Replace in place: the hook keeps its position among the user's.
+            if existing != *cmd {
+                let hook = &mut settings
+                    .get_mut("hooks")
+                    .unwrap()
+                    .get_mut(event)
+                    .unwrap()
+                    .array_mut()
+                    .unwrap()[g]
+                    .get_mut("hooks")
+                    .unwrap()
+                    .array_mut()
+                    .unwrap()[h];
+                *hook.get_mut("command").unwrap() = J::String(cmd.clone());
+            }
+            continue;
+        }
+        let object = settings.object_mut().unwrap();
+        let hooks = object
+            .entry("hooks".to_string())
+            .or_insert_with(|| J::Object(indexmap::IndexMap::new()))
+            .object_mut()
+            .context("Claude settings.json `hooks` is not an object; nothing was written")?;
+        let group: J = serde_json::from_value(
+            json!({"hooks":[{"type":"command","command":cmd,"timeout":TIMEOUT_SECONDS}]}),
+        )?;
+        hooks
+            .entry(event.clone())
+            .or_insert_with(|| J::Array(Vec::new()))
+            .array_mut()
+            .with_context(|| format!("Claude settings.json hooks.{event} is not a list"))?
+            .push(group);
+    }
+    if settings == original {
         return Ok(None);
     }
-    claude_remove(&mut settings);
-    let object = settings.as_object_mut().unwrap();
-    let hooks = object.entry("hooks").or_insert_with(|| json!({}));
-    let hooks = hooks
-        .as_object_mut()
-        .context("Claude settings.json `hooks` is not an object; nothing was written")?;
-    for (event, cmd) in wanted {
-        let groups = hooks.entry(event.clone()).or_insert_with(|| json!([]));
-        groups
-            .as_array_mut()
-            .with_context(|| format!("Claude settings.json hooks.{event} is not a list"))?
-            .push(json!({"hooks":[{"type":"command","command":cmd,"timeout":TIMEOUT_SECONDS}]}));
-    }
-    let mut out = serde_json::to_vec_pretty(&settings)?;
-    out.push(b'\n');
-    Ok(Some(out))
+    Ok(Some(claude_serialize(&settings)?))
 }
 
 fn claude_strip(current: &[u8]) -> Result<Vec<u8>> {
     let mut settings = claude_parse(Some(current))?;
-    claude_remove(&mut settings);
-    let mut out = serde_json::to_vec_pretty(&settings)?;
-    out.push(b'\n');
-    Ok(out)
+    claude_remove(&mut settings, false);
+    claude_serialize(&settings)
 }
 
 // --- Codex: config.toml -------------------------------------------------------
@@ -310,42 +415,58 @@ fn snake(event: &str) -> &'static str {
     }
 }
 
-/// Codex keys its hook-trust ledger (`[hooks.state]`) by
-/// `<config path>:<event>:<group>:<hook>`. These are the keys of our hooks.
-fn codex_trust_keys(doc: &toml_edit::DocumentMut, config: &Path) -> Vec<String> {
+/// The names Codex may have recorded this config under: the path as given and,
+/// when different, resolved (macOS /var -> /private/var).
+fn trust_names(config: &Path) -> Vec<String> {
     let mut names = vec![config.display().to_string()];
-    // Codex may record the path as given or resolved (macOS /var -> /private/var).
     if let Ok(real) = fs::canonicalize(config) {
         let real = real.display().to_string();
         if !names.contains(&real) {
             names.push(real);
         }
     }
-    let mut keys = Vec::new();
-    for event in EVENTS {
-        let Some(groups) = doc
+    names
+}
+
+/// `(group, hook, is_ours)` for every hook under one event, in file order.
+/// Codex counts every hook entry, so positions here include the user's.
+fn codex_positions(doc: &toml_edit::DocumentMut, event: &str) -> Vec<(usize, usize, bool)> {
+    let mut found = Vec::new();
+    let Some(groups) = doc
+        .get("hooks")
+        .and_then(|h| h.get(event))
+        .and_then(toml_edit::Item::as_array_of_tables)
+    else {
+        return found;
+    };
+    for (g, group) in groups.iter().enumerate() {
+        let Some(list) = group
             .get("hooks")
-            .and_then(|h| h.get(event))
             .and_then(toml_edit::Item::as_array_of_tables)
         else {
             continue;
         };
-        for (g, group) in groups.iter().enumerate() {
-            let Some(list) = group
-                .get("hooks")
-                .and_then(toml_edit::Item::as_array_of_tables)
-            else {
-                continue;
-            };
-            for (h, hook) in list.iter().enumerate() {
-                if hook
-                    .get("command")
-                    .and_then(|c| c.as_str())
-                    .is_some_and(is_ours)
-                {
-                    for name in &names {
-                        keys.push(format!("{name}:{}:{g}:{h}", snake(event)));
-                    }
+        for (h, hook) in list.iter().enumerate() {
+            let ours = hook
+                .get("command")
+                .and_then(|c| c.as_str())
+                .is_some_and(is_ours);
+            found.push((g, h, ours));
+        }
+    }
+    found
+}
+
+/// Codex keys its hook-trust ledger (`[hooks.state]`) by
+/// `<config path>:<event>:<group>:<hook>`. These are the keys of our hooks.
+fn codex_trust_keys(doc: &toml_edit::DocumentMut, config: &Path) -> Vec<String> {
+    let names = trust_names(config);
+    let mut keys = Vec::new();
+    for event in EVENTS {
+        for (g, h, ours) in codex_positions(doc, event) {
+            if ours {
+                for name in &names {
+                    keys.push(format!("{name}:{}:{g}:{h}", snake(event)));
                 }
             }
         }
@@ -364,8 +485,74 @@ fn codex_trusted(doc: &toml_edit::DocumentMut, config: &Path) -> bool {
     })
 }
 
-fn codex_remove(doc: &mut toml_edit::DocumentMut, config: &Path) {
-    let trust = codex_trust_keys(doc, config);
+/// Drop tambo hooks (all, or all but the first per event when `keep_first`).
+///
+/// Codex's trust keys are positional, so removing a hook shifts every later
+/// hook of that event. Each shifted hook's trust entry moves to its new key, so
+/// the user's own hooks stay trusted; only the removed hooks' entries go.
+fn codex_remove(doc: &mut toml_edit::DocumentMut, config: &Path, keep_first: bool) {
+    let names = trust_names(config);
+    let mut moves: Vec<(String, Option<String>)> = Vec::new(); // old key -> new key (None = drop)
+    for event in EVENTS {
+        let positions = codex_positions(doc, event);
+        let mut kept_first = !keep_first;
+        let keep: Vec<bool> = positions
+            .iter()
+            .map(|&(_, _, ours)| {
+                if !ours {
+                    return true;
+                }
+                if kept_first {
+                    return false;
+                }
+                kept_first = true;
+                true
+            })
+            .collect();
+        // A group is dropped only when it had hooks and all of them go (the same
+        // rule as the retain below); its new index counts the groups kept before it.
+        let groups = doc
+            .get("hooks")
+            .and_then(|h| h.get(event))
+            .and_then(toml_edit::Item::as_array_of_tables)
+            .map_or(0, toml_edit::ArrayOfTables::len);
+        let mut new_group = Vec::with_capacity(groups);
+        let mut next = 0;
+        for g in 0..groups {
+            let mine: Vec<bool> = positions
+                .iter()
+                .zip(&keep)
+                .filter(|(p, _)| p.0 == g)
+                .map(|(_, k)| *k)
+                .collect();
+            if !mine.is_empty() && mine.iter().all(|k| !k) {
+                new_group.push(None);
+            } else {
+                new_group.push(Some(next));
+                next += 1;
+            }
+        }
+        let mut next_hook: std::collections::HashMap<usize, usize> = Default::default();
+        for (&(g, h, _), &k) in positions.iter().zip(&keep) {
+            let new = if k {
+                let ng = new_group[g].expect("a group with a kept hook is kept");
+                let slot = next_hook.entry(ng).or_insert(0);
+                let nh = *slot;
+                *slot += 1;
+                Some((ng, nh))
+            } else {
+                None
+            };
+            if new == Some((g, h)) {
+                continue;
+            }
+            for name in &names {
+                let old = format!("{name}:{}:{g}:{h}", snake(event));
+                let target = new.map(|(ng, nh)| format!("{name}:{}:{ng}:{nh}", snake(event)));
+                moves.push((old, target));
+            }
+        }
+    }
     let Some(hooks) = doc
         .get_mut("hooks")
         .and_then(toml_edit::Item::as_table_like_mut)
@@ -376,8 +563,18 @@ fn codex_remove(doc: &mut toml_edit::DocumentMut, config: &Path) {
         .get_mut("state")
         .and_then(toml_edit::Item::as_table_like_mut)
     {
-        for key in &trust {
-            state.remove(key);
+        // Take every affected entry out first, so a move never lands on a key
+        // that another move is about to vacate.
+        let mut taken = Vec::new();
+        for (old, target) in &moves {
+            if let Some(item) = state.remove(old) {
+                if let Some(target) = target {
+                    taken.push((target.clone(), item));
+                }
+            }
+        }
+        for (target, item) in taken {
+            state.insert(&target, item);
         }
         if state.is_empty() {
             hooks.remove("state");
@@ -390,15 +587,25 @@ fn codex_remove(doc: &mut toml_edit::DocumentMut, config: &Path) {
         else {
             continue;
         };
+        let mut kept_first = !keep_first;
         for group in groups.iter_mut() {
             if let Some(list) = group
                 .get_mut("hooks")
                 .and_then(toml_edit::Item::as_array_of_tables_mut)
             {
                 list.retain(|h| {
-                    !h.get("command")
+                    if !h
+                        .get("command")
                         .and_then(|c| c.as_str())
                         .is_some_and(is_ours)
+                    {
+                        return true;
+                    }
+                    if kept_first {
+                        return false;
+                    }
+                    kept_first = true;
+                    true
                 });
             }
         }
@@ -422,29 +629,34 @@ fn codex_render(
     config: &Path,
 ) -> Result<Option<Vec<u8>>> {
     let mut doc = codex_parse(current)?;
-    if wanted
-        .iter()
-        .all(|(event, cmd)| codex_commands(&doc, event).iter().any(|c| c == cmd))
-        && EVENTS.iter().all(|e| {
-            codex_commands(&doc, e)
-                .iter()
-                .filter(|c| is_ours(c))
-                .count()
-                == 1
-        })
-    {
-        return Ok(None);
-    }
-    codex_remove(&mut doc, config);
-    if doc.get("hooks").is_none() {
-        let mut table = toml_edit::Table::new();
-        table.set_implicit(true);
-        doc.insert("hooks", toml_edit::Item::Table(table));
-    }
-    let hooks = doc["hooks"]
-        .as_table_mut()
-        .context("Codex config.toml `hooks` is not a table; nothing was written")?;
+    let original = doc.to_string();
+    codex_remove(&mut doc, config, true);
     for (event, cmd) in wanted {
+        let ours = codex_positions(&doc, event).into_iter().find(|p| p.2);
+        if let Some((g, h, _)) = ours {
+            // Replace in place, so no other hook's position (or trust key) moves.
+            let hook = &mut doc["hooks"][event.as_str()]
+                .as_array_of_tables_mut()
+                .unwrap()
+                .get_mut(g)
+                .unwrap()["hooks"]
+                .as_array_of_tables_mut()
+                .unwrap()
+                .get_mut(h)
+                .unwrap();
+            if hook.get("command").and_then(|c| c.as_str()) != Some(cmd.as_str()) {
+                hook.insert("command", toml_edit::value(cmd.as_str()));
+            }
+            continue;
+        }
+        if doc.get("hooks").is_none() {
+            let mut table = toml_edit::Table::new();
+            table.set_implicit(true);
+            doc.insert("hooks", toml_edit::Item::Table(table));
+        }
+        let hooks = doc["hooks"]
+            .as_table_mut()
+            .context("Codex config.toml `hooks` is not a table; nothing was written")?;
         let mut hook = toml_edit::Table::new();
         hook.insert("type", toml_edit::value("command"));
         hook.insert("command", toml_edit::value(cmd.as_str()));
@@ -453,20 +665,26 @@ fn codex_render(
         list.push(hook);
         let mut group = toml_edit::Table::new();
         group.insert("hooks", toml_edit::Item::ArrayOfTables(list));
-        let entry = hooks.entry(event).or_insert(toml_edit::Item::ArrayOfTables(
-            toml_edit::ArrayOfTables::new(),
-        ));
-        entry
+        // Appended last, so no existing hook's position changes.
+        hooks
+            .entry(event)
+            .or_insert(toml_edit::Item::ArrayOfTables(
+                toml_edit::ArrayOfTables::new(),
+            ))
             .as_array_of_tables_mut()
             .with_context(|| format!("Codex config.toml hooks.{event} is not an array of tables"))?
             .push(group);
     }
-    Ok(Some(doc.to_string().into_bytes()))
+    let rendered = doc.to_string();
+    if rendered == original {
+        return Ok(None);
+    }
+    Ok(Some(rendered.into_bytes()))
 }
 
 fn codex_strip(current: &[u8], config: &Path) -> Result<Vec<u8>> {
     let mut doc = codex_parse(Some(current))?;
-    codex_remove(&mut doc, config);
+    codex_remove(&mut doc, config, false);
     Ok(doc.to_string().into_bytes())
 }
 
@@ -515,6 +733,31 @@ fn configured(harness: Harness, current: Option<&[u8]>) -> Result<Vec<(String, S
     Ok(found)
 }
 
+/// Why this host must not get user-level hooks, if it is a shantytown crew host.
+///
+/// Crew sessions are launched with st's role settings, which already carry the
+/// query-first directive. Claude Code merges those with `~/.claude/settings.json`,
+/// so user-level hooks would put a second copy in every crew session.
+pub fn crew_host_reason(shanty_root: Option<&std::ffi::OsStr>, plan_crew: bool) -> Option<String> {
+    if shanty_root.is_some_and(|r| !r.is_empty()) {
+        return Some("SHANTY_ROOT is set".into());
+    }
+    plan_crew.then(|| "the plan selects a shantytown crew".into())
+}
+
+/// A settings file that is a symlink (a dotfile manager, say) would silently
+/// become a regular file when replaced, so refuse instead.
+fn refuse_symlink(path: &Path) -> Result<()> {
+    if fs::symlink_metadata(path).is_ok_and(|m| m.file_type().is_symlink()) {
+        bail!(
+            "{} is a symlink; tambo will not replace it with a regular file, and nothing was written. \
+             Add the hooks to the file it points to, or replace the link with a regular file and rerun",
+            path.display()
+        );
+    }
+    Ok(())
+}
+
 // --- install / uninstall / verify ---------------------------------------------
 
 /// What happened to one harness's settings file.
@@ -553,6 +796,7 @@ pub fn install(paths: &Paths, tambo: &Path, target: &Target) -> Result<Vec<(Harn
     let mut staged = Vec::new();
     for harness in Harness::ALL {
         let path = paths.settings(harness);
+        refuse_symlink(path)?;
         let current = read_optional(path)?;
         let wanted: Vec<(String, String)> = EVENTS
             .iter()
@@ -588,6 +832,9 @@ pub fn install(paths: &Paths, tambo: &Path, target: &Target) -> Result<Vec<(Harn
 
 /// Remove the hooks; restore the saved bytes when nothing else changed since.
 pub fn uninstall(paths: &Paths) -> Result<Vec<(Harness, Outcome)>> {
+    for harness in Harness::ALL {
+        refuse_symlink(paths.settings(harness))?;
+    }
     let mut outcomes = Vec::new();
     for harness in Harness::ALL {
         let path = paths.settings(harness);
@@ -640,9 +887,7 @@ pub fn uninstall(paths: &Paths) -> Result<Vec<(Harness, Outcome)>> {
 
 fn is_empty_settings(harness: Harness, bytes: &[u8]) -> Result<bool> {
     Ok(match harness {
-        Harness::Claude => claude_parse(Some(bytes))?
-            .as_object()
-            .is_some_and(|o| o.is_empty()),
+        Harness::Claude => matches!(claude_parse(Some(bytes))?, J::Object(m) if m.is_empty()),
         Harness::Codex => codex_parse(Some(bytes))?.as_table().is_empty(),
     })
 }

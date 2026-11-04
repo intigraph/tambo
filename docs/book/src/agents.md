@@ -42,7 +42,9 @@ tambo hooks verify
 tambo hooks uninstall
 ```
 
-- Every hook already in those files is kept. A second install writes nothing.
+- Every hook already in those files is kept, in place, and so is the order of
+  every key in `settings.json`. A second install writes nothing. If tambo moves,
+  install updates its own hooks where they are rather than re-adding them.
 - Codex asks you to review new hooks the next time it starts, and runs them only
   after you trust them. Until then, `tambo hooks verify` and `tambo doctor`
   report them as installed but not trusted.
@@ -54,9 +56,16 @@ tambo hooks uninstall
   the store exists) to `~/.local/state/tambo/agent-hooks/usage.jsonl`. That
   counts how often agents are prompted to query first; Quipu's own request
   counts show how often they then do.
-- Sessions that a shantytown crew launched (`SHANTY_AGENT` and `SHANTY_ROOT`
-  set) already carry st's own directive, so the hook prints nothing there and
-  records the firing as `crew-managed`.
+- Codex records trust by each hook's position. When uninstall removes a tambo
+  hook, later hooks move up, and their trust entries move with them, so your own
+  hooks stay trusted.
+- A settings file that is a symlink (from a dotfile manager, for example) is
+  refused rather than replaced by a regular file. Add the hooks to the file it
+  points to.
+- On a shantytown crew host (`SHANTY_ROOT` set, or a plan with a shantytown
+  crew), st already gives crew sessions the directive, so `quickstart` and
+  `install` skip the hooks and `tambo hooks install` refuses. If a crew session
+  does run one, it prints nothing and records the firing as `crew-managed`.
 - `CLAUDE_CONFIG_DIR`, `CODEX_HOME` and `XDG_STATE_HOME` move these files the
   same way they do for the harnesses.
 

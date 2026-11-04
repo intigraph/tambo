@@ -19,6 +19,10 @@ fn tambo(root: &Path) -> PathBuf {
     bin
 }
 
+fn j(v: &Value) -> J {
+    serde_json::from_value(v.clone()).unwrap()
+}
+
 fn levels(p: &Paths) -> Vec<Level> {
     verify(p).into_iter().map(|f| f.level).collect()
 }
@@ -77,12 +81,12 @@ fn install_keeps_existing_hooks_and_adds_both_events_for_both_harnesses() {
 
     let claude: Value = serde_json::from_slice(&fs::read(&p.claude_settings).unwrap()).unwrap();
     assert_eq!(claude["model"], "opus");
-    assert_eq!(claude_commands(&claude, "Stop"), vec!["cv-speak"]);
-    let start = claude_commands(&claude, "SessionStart");
+    assert_eq!(claude_commands(&j(&claude), "Stop"), vec!["cv-speak"]);
+    let start = claude_commands(&j(&claude), "SessionStart");
     assert_eq!(start[0], "mine --start", "the user's own hook stays first");
     assert_eq!(start[1], command(&bin, Harness::Claude, "SessionStart"));
     assert_eq!(
-        claude_commands(&claude, "UserPromptSubmit"),
+        claude_commands(&j(&claude), "UserPromptSubmit"),
         vec![command(&bin, Harness::Claude, "UserPromptSubmit")]
     );
 
@@ -176,7 +180,7 @@ fn an_edit_after_install_is_kept_and_only_tambo_entries_are_removed() {
     let after: Value = serde_json::from_slice(&fs::read(&p.claude_settings).unwrap()).unwrap();
     assert_eq!(after["theme"], "dark");
     assert_eq!(
-        claude_commands(&after, "SessionStart"),
+        claude_commands(&j(&after), "SessionStart"),
         vec!["mine --start"]
     );
     assert!(after["hooks"].get("UserPromptSubmit").is_none());
@@ -220,7 +224,7 @@ fn a_moved_tambo_is_reported_broken_and_reinstall_repoints_it() {
     assert_eq!(levels(&p), [Level::Ok, Level::Warn]);
     let claude: Value = serde_json::from_slice(&fs::read(&p.claude_settings).unwrap()).unwrap();
     assert_eq!(
-        claude_commands(&claude, "SessionStart"),
+        claude_commands(&j(&claude), "SessionStart"),
         vec![command(&new, Harness::Claude, "SessionStart")]
     );
 }
@@ -312,4 +316,151 @@ fn codex_state_written_after_trust_is_kept_on_uninstall() {
         !after.contains("hooks.state") && !after.contains("query-first"),
         "{after}"
     );
+}
+
+#[test]
+fn install_keeps_the_users_key_order_everywhere() {
+    let d = tempfile::tempdir().unwrap();
+    let p = paths(d.path());
+    fs::create_dir_all(p.claude_settings.parent().unwrap()).unwrap();
+    let before = r#"{"zeta": 1, "alpha": {"y": true, "b": null}, "hooks": {"Stop": [{"hooks": [{"command": "cv-speak", "type": "command"}]}], "PreToolUse": []}, "mid": 2.5}"#;
+    fs::write(&p.claude_settings, before).unwrap();
+    install(&p, &tambo(d.path()), &Target::default()).unwrap();
+    let after = fs::read_to_string(&p.claude_settings).unwrap();
+    let at = |needle: &str| {
+        after
+            .find(needle)
+            .unwrap_or_else(|| panic!("{needle} missing: {after}"))
+    };
+    assert!(
+        at("\"zeta\"") < at("\"alpha\"")
+            && at("\"alpha\"") < at("\"hooks\"")
+            && at("\"hooks\"") < at("\"mid\""),
+        "{after}"
+    );
+    assert!(at("\"y\"") < at("\"b\""), "{after}");
+    assert!(
+        at("\"Stop\"") < at("\"PreToolUse\"") && at("\"PreToolUse\"") < at("\"SessionStart\""),
+        "{after}"
+    );
+    assert!(
+        at("\"command\": \"cv-speak\"") < at("\"type\": \"command\""),
+        "the user's hook keeps its own key order: {after}"
+    );
+    assert!(after.contains("2.5") && after.contains("null"), "{after}");
+}
+
+/// A user hook after ours, trusted, the way Codex records it.
+fn codex_with_user_hook_after_ours(p: &Paths, bin: &Path) -> String {
+    install(p, bin, &Target::default()).unwrap();
+    let mut text = fs::read_to_string(&p.codex_config).unwrap();
+    text.push_str("\n[[hooks.SessionStart]]\n[[hooks.SessionStart.hooks]]\ntype = \"command\"\ncommand = \"mine --late\"\n");
+    let name = p.codex_config.display().to_string();
+    text.push_str(&format!(
+        "\n[hooks.state.\"{name}:session_start:0:0\"]\ntrusted_hash = \"sha256:ours\"\n\n[hooks.state.\"{name}:session_start:1:0\"]\ntrusted_hash = \"sha256:mine\"\n"
+    ));
+    fs::write(&p.codex_config, &text).unwrap();
+    name
+}
+
+fn trust(p: &Paths) -> Vec<(String, String)> {
+    let doc = codex_parse(Some(&fs::read(&p.codex_config).unwrap())).unwrap();
+    let Some(state) = doc
+        .get("hooks")
+        .and_then(|h| h.get("state"))
+        .and_then(|s| s.as_table_like())
+    else {
+        return Vec::new();
+    };
+    state
+        .iter()
+        .map(|(k, v)| {
+            (
+                k.to_string(),
+                v.get("trusted_hash")
+                    .and_then(|h| h.as_str())
+                    .unwrap()
+                    .to_string(),
+            )
+        })
+        .collect()
+}
+
+#[test]
+fn repointing_replaces_our_codex_hook_in_place_so_other_trust_keys_hold() {
+    let d = tempfile::tempdir().unwrap();
+    let p = paths(d.path());
+    let name = codex_with_user_hook_after_ours(&p, &tambo(d.path()));
+    let moved = d.path().join("other/tambo");
+    fs::create_dir_all(moved.parent().unwrap()).unwrap();
+    fs::write(&moved, "#!/bin/sh\n").unwrap();
+    fs::set_permissions(&moved, fs::Permissions::from_mode(0o755)).unwrap();
+    install(&p, &moved, &Target::default()).unwrap();
+    let doc = codex_parse(Some(&fs::read(&p.codex_config).unwrap())).unwrap();
+    assert_eq!(
+        codex_commands(&doc, "SessionStart"),
+        vec![
+            command(&moved, Harness::Codex, "SessionStart"),
+            "mine --late".to_string()
+        ],
+        "ours stays at group 0, the user's stays at group 1"
+    );
+    assert!(trust(&p).contains(&(format!("{name}:session_start:1:0"), "sha256:mine".into())));
+}
+
+#[test]
+fn uninstall_moves_the_trust_of_hooks_that_shift_up() {
+    let d = tempfile::tempdir().unwrap();
+    let p = paths(d.path());
+    let name = codex_with_user_hook_after_ours(&p, &tambo(d.path()));
+    uninstall(&p).unwrap();
+    let doc = codex_parse(Some(&fs::read(&p.codex_config).unwrap())).unwrap();
+    assert_eq!(codex_commands(&doc, "SessionStart"), vec!["mine --late"]);
+    assert_eq!(
+        trust(&p),
+        vec![(
+            format!("{name}:session_start:0:0"),
+            "sha256:mine".to_string()
+        )],
+        "the user's trust moves with its hook from group 1 to group 0; ours is gone"
+    );
+}
+
+#[test]
+fn a_symlinked_settings_file_is_refused_and_left_a_symlink() {
+    let d = tempfile::tempdir().unwrap();
+    let p = paths(d.path());
+    seed(&p);
+    let real = d.path().join("dotfiles/settings.json");
+    fs::create_dir_all(real.parent().unwrap()).unwrap();
+    fs::rename(&p.claude_settings, &real).unwrap();
+    std::os::unix::fs::symlink(&real, &p.claude_settings).unwrap();
+    let err = install(&p, &tambo(d.path()), &Target::default()).unwrap_err();
+    assert!(format!("{err:#}").contains("is a symlink"), "{err:#}");
+    assert!(fs::symlink_metadata(&p.claude_settings)
+        .unwrap()
+        .file_type()
+        .is_symlink());
+    assert_eq!(fs::read_to_string(&real).unwrap(), CLAUDE_BEFORE);
+    assert_eq!(
+        fs::read_to_string(&p.codex_config).unwrap(),
+        CODEX_BEFORE,
+        "no harness is written"
+    );
+    assert!(uninstall(&p).is_err());
+}
+
+#[test]
+fn crew_hosts_are_recognised() {
+    use std::ffi::OsStr;
+    assert_eq!(
+        crew_host_reason(Some(OsStr::new("/r")), false).as_deref(),
+        Some("SHANTY_ROOT is set")
+    );
+    assert_eq!(
+        crew_host_reason(None, true).as_deref(),
+        Some("the plan selects a shantytown crew")
+    );
+    assert_eq!(crew_host_reason(Some(OsStr::new("")), false), None);
+    assert_eq!(crew_host_reason(None, false), None);
 }
