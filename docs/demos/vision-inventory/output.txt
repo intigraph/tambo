@@ -1,0 +1,13 @@
+Script started on 2026-11-04 03:45:05-05:00 [COMMAND="just --command python3 docs/demos/vision-inventory/demo.py" <not executed on terminal>]
+BASE 3c6688ff6b3b117185a5bafc8dd2776f80be663f -> CANDIDATE exact obsolete-entry removal
+Before: exit=1
+Unreviewed legacy-name inventory changes:
+docs/design/vision.md
+After: exit=0
+Reviewed compatibility inventory: 18 references; no unclassified changes
+Unreviewed-line negative control: exit=1
+Unreviewed legacy-name inventory changes:
+docs/design/vision.md
+PASS: one obsolete allowance removed; new references still refused
+
+Script done on 2026-11-04 03:45:05-05:00 [COMMAND_EXIT_CODE="0"]

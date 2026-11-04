@@ -6,3 +6,6 @@
 *.nt diff=quipu
 # Preserve terminal recording bytes; CRLF is part of scriptreplay's byte counts.
 docs/demos/monorepo-sync/output.log -text whitespace=cr-at-eol
+
+# Keep this timing-paired recording byte-exact.
+docs/demos/vision-inventory/output.txt -text whitespace=cr-at-eol
