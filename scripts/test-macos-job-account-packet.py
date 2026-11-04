@@ -14,6 +14,32 @@ spec.loader.exec_module(p)
 
 
 class PacketTests(unittest.TestCase):
+    def test_macos15_native_property_prefix(self):
+        answer = type('Answer', (), {'stdout': 'UniqueID: 51001\ndsAttrTypeNative:IsHidden: 1\n'})()
+        with patch.object(p, 'run', return_value=answer):
+            self.assertEqual(p.properties('/Users/_stjobs', []),
+                             {'UniqueID': '51001', 'IsHidden': '1'})
+        for text in ('IsHidden: 1\ndsAttrTypeNative:IsHidden: 1\n',
+                     'dsAttrTypeNative:IsHidden: 1\ndsAttrTypeNative:IsHidden: 0\n'):
+            answer.stdout = text
+            with patch.object(p, 'run', return_value=answer):
+                with self.assertRaisesRegex(ValueError, 'duplicate'):
+                    p.properties('/Users/_stjobs', [])
+        answer.stdout = 'other:IsHidden: 1\n'
+        with patch.object(p, 'run', return_value=answer):
+            self.assertNotIn('IsHidden', p.properties('/Users/_stjobs', []))
+
+    def test_directory_mode_under_private_umask(self):
+        with tempfile.TemporaryDirectory() as raw, patch.object(p, 'protected'):
+            old = os.umask(0o077)
+            try:
+                for name in ('base', 'base/bin', 'base/jobs'):
+                    path = Path(raw) / name
+                    p.directory(path)
+                    self.assertEqual(path.stat().st_mode & 0o777, 0o755)
+            finally:
+                os.umask(old)
+
     def test_pinned_input_and_tamper(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)

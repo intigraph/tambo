@@ -1,0 +1,11 @@
+Script started on 2026-11-03 23:37:39-05:00 [COMMAND="python3 docs/demos/e579-macos-properties.py" <not executed on terminal>]
+BASE 8755317372950f071508d31c92ae3107a1d9e9d2
+input: dsAttrTypeNative:IsHidden: 1 -> {'dsAttrTypeNative': 'IsHidden: 1'}
+duplicate aliases: ACCEPTED
+umask077 new directory mode: 0o700
+CANDIDATE source
+input: dsAttrTypeNative:IsHidden: 1 -> {'IsHidden': '1'}
+duplicate aliases: REFUSED
+umask077 new directory mode: 0o755
+
+Script done on 2026-11-03 23:37:39-05:00 [COMMAND_EXIT_CODE="0"]
