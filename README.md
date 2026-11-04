@@ -109,6 +109,11 @@ Flags and plan fields: [command reference](https://intigraph.github.io/tambo/ref
 
 ## Wire it into your agent
 
+`tambo quickstart` also adds query-first hooks to Claude Code and Codex, so
+each session starts by checking the knowledge graph. `tambo hooks verify` checks
+them; `tambo hooks uninstall` restores your settings. Codex asks you to trust
+the hooks on its next start. See [query-first hooks](https://intigraph.github.io/tambo/agents.html#query-first-hooks).
+
 For issued credentials, remote stores and registering Bobbin with your agent,
 use the [agent and installation reference](https://intigraph.github.io/tambo/installation-reference.html).
 The default quickstart is local and needs no account or remote server.

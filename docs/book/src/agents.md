@@ -26,6 +26,40 @@ Index a repository before searching it: run `bobbin init` and `bobbin index`
 in that repository. Other MCP clients use the same executable and arguments
 in their client-specific server configuration.
 
+## Query-first hooks
+
+`tambo quickstart` and `tambo install` add two hooks to Claude Code
+(`~/.claude/settings.json`) and Codex (`~/.codex/config.toml`). At the start of
+a session, and with each prompt, they tell the agent to look up what the
+knowledge graph already knows before it acts, and how: `quipu search` against
+the plan's local store, or `QUIPU_SERVER` when one is set. If the store is
+missing, the hook says so, rather than letting the agent conclude that nothing
+is known. Pass `--no-agent-hooks` to skip them.
+
+```bash
+tambo hooks install      # from your tambo work directory, beside the plan
+tambo hooks verify
+tambo hooks uninstall
+```
+
+- Every hook already in those files is kept. A second install writes nothing.
+- Codex asks you to review new hooks the next time it starts, and runs them only
+  after you trust them. Until then, `tambo hooks verify` and `tambo doctor`
+  report them as installed but not trusted.
+- Before its first change, install saves each file's exact bytes under
+  `~/.local/state/tambo/agent-hooks/`. Uninstall puts them back. If something
+  else edited the file since (Codex records hook trust and its own state there),
+  uninstall removes only the tambo hooks and their trust entries, and says so.
+- Each firing appends one line (harness, event, session, store mode, whether
+  the store exists) to `~/.local/state/tambo/agent-hooks/usage.jsonl`. That
+  counts how often agents are prompted to query first; Quipu's own request
+  counts show how often they then do.
+- Sessions that a shantytown crew launched (`SHANTY_AGENT` and `SHANTY_ROOT`
+  set) already carry st's own directive, so the hook prints nothing there and
+  records the firing as `crew-managed`.
+- `CLAUDE_CONFIG_DIR`, `CODEX_HOME` and `XDG_STATE_HOME` move these files the
+  same way they do for the harnesses.
+
 ## Managed crew
 
 For a configured Shantytown rig, `tambo project-settings` delegates

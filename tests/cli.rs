@@ -52,6 +52,11 @@ expected = "fixture-result"
     command
         .current_dir(root)
         .env("HOME", root)
+        // The query-first hooks resolve their files from these; never a real one.
+        .env_remove("CLAUDE_CONFIG_DIR")
+        .env_remove("CODEX_HOME")
+        .env_remove("XDG_STATE_HOME")
+        .env_remove("SHANTY_AGENT")
         .env_remove("QUIPU_AUTH_TOKEN")
         .env_remove("QUIPU_AUTH_TOKEN_FILE")
         .env("PATH", path_with(bin))
@@ -4588,4 +4593,84 @@ fn remote_mcp_plan_requires_credential_even_without_server_environment() {
         .failure()
         .stderr(predicate::str::contains("missing canonical"))
         .stdout(predicate::str::contains("quipu: verified").not());
+}
+
+#[test]
+fn quickstart_wires_the_query_first_hooks_and_uninstall_restores_the_settings() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    let claude = root.path().join(".claude/settings.json");
+    fs::create_dir_all(claude.parent().unwrap()).unwrap();
+    let before = "{\n  \"model\": \"opus\"\n}\n";
+    fs::write(&claude, before).unwrap();
+    command_named(root.path(), &bin, "tambo")
+        .env_remove("QUIPU_SERVER")
+        .args(["quickstart", "--skip-install"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(
+            "claude hooks: query-first hooks installed",
+        ))
+        .stdout(predicate::str::contains(
+            "codex hooks: query-first hooks installed",
+        ))
+        .stdout(predicate::str::contains("asks you to review them"));
+    let settings: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(&claude).unwrap()).unwrap();
+    assert_eq!(settings["model"], "opus");
+    let start = settings["hooks"]["SessionStart"][0]["hooks"][0]["command"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    assert!(
+        start.ends_with(" hook query-first --harness claude --event SessionStart"),
+        "{start}"
+    );
+
+    // The hook itself: names the plan's local store, counts the firing.
+    command_named(root.path(), &bin, "tambo")
+        .env_remove("QUIPU_SERVER")
+        .args([
+            "hook",
+            "query-first",
+            "--harness",
+            "claude",
+            "--event",
+            "SessionStart",
+        ])
+        .write_stdin(r#"{"session_id":"s-1"}"#)
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("QUERY-FIRST"))
+        .stdout(predicate::str::contains(".caboodle/quipu.db"));
+    let usage = fs::read_to_string(
+        root.path()
+            .join(".local/state/tambo/agent-hooks/usage.jsonl"),
+    )
+    .unwrap();
+    assert!(
+        usage.contains("\"session\":\"s-1\"") && usage.contains("\"mode\":\"local\""),
+        "{usage}"
+    );
+
+    // Codex has not trusted them yet, so verify says so and exits 1.
+    command_named(root.path(), &bin, "tambo")
+        .args(["hooks", "verify"])
+        .assert()
+        .code(1)
+        .stdout(predicate::str::contains("ok   claude query-first hooks"))
+        .stdout(predicate::str::contains(
+            "warn codex query-first hooks: installed but not trusted",
+        ));
+    command_named(root.path(), &bin, "tambo")
+        .args(["hooks", "uninstall"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(
+            "claude: restored the exact settings",
+        ));
+    assert_eq!(fs::read_to_string(&claude).unwrap(), before);
+    assert!(!root.path().join(".codex/config.toml").exists());
 }

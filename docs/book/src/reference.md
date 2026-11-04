@@ -123,7 +123,8 @@ The table covers the current source tree; published binaries may lag new command
 | `plan` | Write selection; `--profile`, `--crew`, `--intent`, `--output`, `--share`, `--quipu-db`, `--quipu-flavor`, `--embedding-model`, `--quipu-mcp-url`, `--quipu-mcp-token-file`. |
 | `apply` | Install; `--plan`, `--state`, `--skip-install`. |
 | `verify` | Functional proof; `--plan`, `--state`, `--creel-doctor`, `--creel-admission`. |
-| `install` | Apply then verify; all apply and verify options. |
+| `install` | Apply then verify, then add the query-first hooks; all apply and verify options, `--no-agent-hooks`. |
+| `hooks` | Query-first hooks for Claude Code and Codex: `install` (`--plan`), `verify` (exit 1 unless every harness is ok), `uninstall`. See [query-first hooks](agents.md#query-first-hooks). |
 | `check-updates` | Compare reviewed pins; `--plan`. |
 | `update` | Converge reviewed pins; `--plan`, `--state`, `--creel-doctor`, `--creel-admission`. |
 | `update-release` | Unix release update; `--tool`, `--check`, `--plan`, `--state`. Quipu tracks a reviewed paired archive pin; Camayoc/Shantytown refuse without checksummed publications. |
