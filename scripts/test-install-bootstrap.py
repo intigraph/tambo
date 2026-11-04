@@ -9,6 +9,7 @@ import io
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -188,6 +189,98 @@ class Bootstrap(unittest.TestCase):
                 self.assertNotEqual(self.run_installer('v0.3.0').returncode, 0)
                 self.assertEqual(list((self.root / 'installed').iterdir()), [])
         self.assertNotIn('/caboodle-', self.requests.read_text())
+
+
+class CloudEnvironment(unittest.TestCase):
+    """Run the whole cloud setup with private tools and no network access."""
+
+    def setUp(self):
+        Bootstrap.setUp(self)
+        self.url = 'https://raw.githubusercontent.com/intigraph/seeds/main/install.sh'
+        self.calls = self.root / 'tool-calls'
+        # An ambient sd must not satisfy the "missing" fixture. Copies, not
+        # symlinks, keep later stubbing isolated from the real executables.
+        for tool in ('bash', 'mkdir', 'sh', 'head', 'cat', 'chmod', 'python3', 'timeout'):
+            target = self.root / 'bin' / tool
+            shutil.copyfile(shutil.which(tool), target)
+            target.chmod(0o755)
+        for tool in ('just', 'pre-commit', 'mdbook', 'mdbook-mermaid',
+                     'quipu', 'quipu-server', 'caboodle'):
+            self.executable(tool, f'#!/bin/sh\necho "{tool} fixture"\n')
+        for tool in ('npm', 'pip', 'cargo'):
+            self.executable(tool, '#!/bin/sh\nprintf "%s\\n" "$0 $*" >> "$FIXTURE_CALLS"\nexit 1\n')
+
+    def executable(self, name, body):
+        path = self.root / 'bin' / name
+        path.write_text(body)
+        path.chmod(0o755)
+
+    def seeds(self, identity, help_status=0):
+        return ('#!/bin/sh\ncase "$1" in\n'
+                f'--help) echo "{identity}"; exit {help_status};;\n'
+                '--version) echo "sd 0.0.0 (fixture seeds)";;\n'
+                '*) echo "unexpected board command" >&2; exit 64;;\nesac\n')
+
+    def run_setup(self, download=True, install=True):
+        body = ('#!/bin/sh\ncat > "$HOME/.local/bin/sd" <<\'SD\'\n'
+                + self.seeds('seeds is the work-item tracker for the quipu stack')
+                + 'SD\nchmod +x "$HOME/.local/bin/sd"\n') if install else 'exit 1\n'
+        routes = self.root / 'routes.json'
+        routes.write_text(json.dumps({self.url: {'status': 200 if download else 503,
+                                                'body': body}}))
+        env = {k: v for k, v in os.environ.items()
+               if not k.startswith(('TAMBO_', 'CABOODLE_'))}
+        env.update(HOME=str(self.root / 'home'), TMPDIR=str(self.root / 'tmp'),
+                   PATH=str(self.root / 'bin'),
+                   FIXTURE_ROUTES=str(routes), FIXTURE_REQUESTS=str(self.requests),
+                   FIXTURE_CALLS=str(self.calls))
+        result = subprocess.run(['bash', str(ROOT / 'scripts/setup-environment.sh')],
+                                env=env, capture_output=True, text=True, timeout=20)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        calls = self.calls.read_text() if self.calls.exists() else ''
+        self.assertNotIn('npm', calls)
+        self.assertNotIn('cargo', calls)
+        return result
+
+    def test_missing_seeds_installs_release_instead_of_beads(self):
+        result = self.run_setup()
+        self.assertIn('sd 0.0.0 (fixture seeds)', result.stdout)
+        self.assertEqual(self.requests.read_text().splitlines(), [self.url])
+        self.assertFalse((self.root / 'home/.seeds').exists())
+
+    def test_both_known_seeds_identities_skip_installation(self):
+        for identity in ('seeds is the beads-compatible tracker',
+                         'seeds is the work-item tracker for the quipu stack'):
+            with self.subTest(identity=identity):
+                self.executable('sd', self.seeds(identity))
+                self.assertIn('sd 0.0.0 (fixture seeds)', self.run_setup().stdout)
+                self.assertFalse(self.requests.exists())
+
+    def test_unrelated_sd_does_not_satisfy_dependency(self):
+        self.executable('sd', self.seeds('sd is a find and replace tool'))
+        result = self.run_setup()
+        self.assertIn('sd 0.0.0 (fixture seeds)', result.stdout)
+        self.assertEqual(self.requests.read_text().splitlines(), [self.url])
+
+    def test_failed_help_is_not_an_identity_proof(self):
+        self.executable('sd', self.seeds('seeds is the beads-compatible tracker', 1))
+        self.run_setup()
+        self.assertEqual(self.requests.read_text().splitlines(), [self.url])
+
+    def test_failed_optional_install_reports_missing(self):
+        for download, install in ((False, True), (True, False)):
+            with self.subTest(download=download, install=install):
+                result = self.run_setup(download=download, install=install)
+                self.assertRegex(result.stdout, r'sd\s+MISSING')
+
+    def test_failed_install_cannot_report_unrelated_sd_as_seeds(self):
+        self.executable('sd', self.seeds('sd is a find and replace tool'))
+        result = self.run_setup(download=False)
+        self.assertRegex(result.stdout, r'sd\s+UNRECOGNIZED \(not Seeds\)')
+
+    def test_timed_out_install_keeps_the_session_available(self):
+        self.executable('timeout', '#!/bin/sh\nexit 124\n')
+        self.assertRegex(self.run_setup().stdout, r'sd\s+MISSING')
 
 
 if __name__ == '__main__':

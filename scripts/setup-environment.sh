@@ -37,6 +37,15 @@ set -u
 
 log() { printf '\n\033[1m== %s\033[0m\n' "$1"; }
 have() { command -v "$1" >/dev/null 2>&1; }
+have_seeds() {
+  local identity
+  have sd || return 1
+  identity=$(sd --help 2>&1) || return 1
+  case "$identity" in
+    *"seeds is the beads-compatible tracker"*|*"seeds is the work-item tracker for the quipu stack"*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
 
 export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
 export DEBIAN_FRONTEND=noninteractive
@@ -95,10 +104,11 @@ CABOODLE_PID=$!
   # repos. From npm rather than `cargo install just`: seconds, not minutes.
   have just || npm install -g rust-just >/dev/null 2>&1 || true
 
-  # Task tracking. npm, NOT `go install`: the Go route builds with
-  # CGO_ENABLED=0 and embedded Dolt needs CGO, so `bd init` then fails with
-  # "embedded Dolt requires a CGO build".
-  have bd || npm install -g @beads/bd >/dev/null 2>&1 || true
+  # Seeds task tracking: checksummed release bytes, without a source build.
+  # `sd` also names a find/replace tool, so a command name alone is not proof.
+  have_seeds || curl -fsSL --connect-timeout 10 --max-time 30 \
+      https://raw.githubusercontent.com/intigraph/seeds/main/install.sh \
+      | timeout 120 sh >/dev/null 2>&1 || true
 
   have pre-commit || pip install --quiet --break-system-packages pre-commit >/dev/null 2>&1 || true
 
@@ -166,8 +176,10 @@ fi
 # A setup script that half-worked and exited 0 is worse than one that failed,
 # so print the truth rather than assuming the installs above landed.
 log "Installed"
-for tool in just bd pre-commit mdbook mdbook-mermaid quipu quipu-server caboodle; do
-    if have "$tool"; then
+for tool in just sd pre-commit mdbook mdbook-mermaid quipu quipu-server caboodle; do
+    if [ "$tool" = sd ] && have sd && ! have_seeds; then
+        printf '  %-24s UNRECOGNIZED (not Seeds)\n' "$tool"
+    elif have "$tool"; then
         printf '  %-24s %s\n' "$tool" "$("$tool" --version 2>&1 | head -1)"
     else
         printf '  %-24s MISSING\n' "$tool"

@@ -188,7 +188,7 @@ rather than executed.
 
 It bootstraps quipu (checksummed prebuilt `quipu` and `quipu-server` release
 binaries), Tambo itself (prebuilt release binary via `scripts/install.sh`),
-the shared tooling the stack's quality gates need (`just`, `bd`,
+Seeds (`sd`) for work tracking and the shared tooling the stack's quality gates need (`just`,
 `pre-commit`, `mdbook`, `mdbook-mermaid`, `cffi`), and stages the stack
 knowledge packs into `~/.caboodle/packs/`, verified with
 `quipu pack --verify` — a pack that fails verification is deleted rather
@@ -200,6 +200,13 @@ than assumed.
 Set `CABOODLE_ALLOW_SOURCE_FALLBACK=1` only when the Quipu release artifact is
 unavailable and the environment has enough time and memory for a Rust build.
 The normal setup path never compiles Quipu from source.
+
+The Seeds bootstrap uses its checksummed release installer. It checks `sd --help`
+for Seeds' identity before skipping installation: an unrelated `sd` find/replace
+binary does not satisfy the tracker dependency. The final report distinguishes
+an unrecognized `sd` from Seeds and reports a missing install without failing the
+cloud session. The installer download is limited to 30 seconds and its execution
+to 120 seconds so an optional Seeds failure cannot keep the setup lane waiting.
 
 Owned Quipu installs provide `qp` as a relative link to `quipu`. Both command
 names execute the same CLI; `quipu` remains supported. Apply repairs a missing
