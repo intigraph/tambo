@@ -1,6 +1,9 @@
 use super::*;
 
 fn paths(root: &Path) -> Paths {
+    // Resolved, so the given and canonical config paths are the same string,
+    // as they are on Linux (macOS temp dirs resolve /var to /private/var).
+    let root = fs::canonicalize(root).unwrap();
     Paths {
         claude_settings: root.join("claude/settings.json"),
         codex_config: root.join("codex/config.toml"),

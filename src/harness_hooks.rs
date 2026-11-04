@@ -314,8 +314,12 @@ fn snake(event: &str) -> &'static str {
 /// `<config path>:<event>:<group>:<hook>`. These are the keys of our hooks.
 fn codex_trust_keys(doc: &toml_edit::DocumentMut, config: &Path) -> Vec<String> {
     let mut names = vec![config.display().to_string()];
+    // Codex may record the path as given or resolved (macOS /var -> /private/var).
     if let Ok(real) = fs::canonicalize(config) {
-        names.push(real.display().to_string());
+        let real = real.display().to_string();
+        if !names.contains(&real) {
+            names.push(real);
+        }
     }
     let mut keys = Vec::new();
     for event in EVENTS {
