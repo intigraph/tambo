@@ -6,7 +6,8 @@ import its JSONL exports, and an agent's `bd` habit is aliased to `sd`. Those
 facts may be documented, but new guidance must not tell anyone to track work
 with `br` or `bd`.
 
-Two kinds of line are refused in docs/book/src, README.md and skills/**/*.md:
+Two kinds of line are refused in docs/book/src, docs/design/vision.md,
+README.md and skills/**/*.md:
   1. a br/bd command form such as `br ready` or `bd create`, inline or in a
      code block;
   2. `br` or `bd` named as a tool on the same line as tracking language
@@ -37,6 +38,8 @@ def targets(root: Path):
     yield from sorted(book.rglob("*.md"))
     if (root / "README.md").is_file():
         yield root / "README.md"
+    if (root / "docs/design/vision.md").is_file():
+        yield root / "docs/design/vision.md"
     yield from sorted((root / "skills").rglob("*.md"))
 
 
