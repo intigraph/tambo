@@ -40,6 +40,12 @@ def run(command, environment, directory, timeout=240):
         return code, output.read().decode(errors='replace')[-24000:]
 
 
+def fetch_installer(url, destination, environment, workspace):
+    return run(['curl', '--disable', '-fsSL', '--connect-timeout', '10',
+                '--max-time', '45', '--max-filesize', str(2*1024*1024),
+                url, '--output', str(destination)], environment, workspace, timeout=50)
+
+
 def latest_release(repository):
     with urllib.request.urlopen('https://api.github.com/repos/' + repository + '/releases/latest', timeout=30) as response:
         return json.load(response)['tag_name']
@@ -54,22 +60,6 @@ def probe(row, workspace):
     match = re.fullmatch(r'curl -fsSL (https://raw\.githubusercontent\.com/[^ ]+/install\.sh) \| (sh|bash)', row['command'])
     if not match:
         return dict(result, outcome='UNKNOWN_COMMAND_FORMAT')
-    # Bind inspection to fetched script bytes before allowing execution.
-    try:
-        with urllib.request.urlopen(match[1], timeout=45) as response:
-            script = response.read(2 * 1024 * 1024 + 1)
-        digest = hashlib.sha256(script).hexdigest()
-    except Exception as error:
-        return dict(result, outcome='SCRIPT_FETCH_FAILED', error=str(error))
-    result['fetched_installer_sha256'] = digest
-    if len(script) > 2 * 1024 * 1024 or digest != row['installer_sha256']:
-        return dict(result, outcome='UNKNOWN_SCRIPT_CHANGED')
-    try:
-        result['observed_latest_tag'] = latest_release(row['repository'])
-    except Exception as error:
-        return dict(result, outcome='LATEST_RELEASE_UNKNOWN', error=str(error))
-    if result['observed_latest_tag'] != row['release_tag']:
-        return dict(result, outcome='RELEASE_CHANGED_REBIND_REQUIRED')
     home = workspace / 'home'
     home.mkdir()
     temporary = workspace / 'tmp'
@@ -83,10 +73,25 @@ def probe(row, workspace):
     environment = dict(HOME=str(home), PATH=os.pathsep.join(paths), TMPDIR=str(temporary),
                        LANG='C.UTF-8', LC_ALL='C.UTF-8', PIP_NO_INPUT='1',
                        GIT_TERMINAL_PROMPT='0', PYTHONNOUSERSITE='1')
+    # Bind inspection to fetched script bytes before allowing execution.
+    downloaded = workspace/'install.sh'
+    code, error = fetch_installer(match[1], downloaded, environment, workspace)
+    if code:
+        return dict(result, outcome='SCRIPT_FETCH_FAILED', fetch_exit=code,
+                    error=error.replace(str(workspace), '<probe>'))
+    script = downloaded.read_bytes()
+    digest = hashlib.sha256(script).hexdigest()
+    result['fetched_installer_sha256'] = digest
+    if len(script) > 2 * 1024 * 1024 or digest != row['installer_sha256']:
+        return dict(result, outcome='UNKNOWN_SCRIPT_CHANGED')
+    try:
+        result['observed_latest_tag'] = latest_release(row['repository'])
+    except Exception as error:
+        return dict(result, outcome='LATEST_RELEASE_UNKNOWN', error=str(error))
+    if result['observed_latest_tag'] != row['release_tag']:
+        return dict(result, outcome='RELEASE_CHANGED_REBIND_REQUIRED')
     # Pipe the inspected bytes unchanged to the documented interpreter. This is
     # deliberately reported as inspected-byte replay, not a second URL fetch.
-    downloaded = workspace/'install.sh'
-    downloaded.write_bytes(script)
     code, output = run(['/bin/bash', '-o', 'pipefail', '-c',
                         'cat "$1" | "$2"', 'install-probe', str(downloaded), match[2]],
                        environment, workspace)
