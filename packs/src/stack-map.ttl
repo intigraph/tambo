@@ -1,7 +1,8 @@
 @prefix rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix caboodle: <https://caboodle.dev/ns#> .
-@prefix stack:    <https://caboodle.dev/stack/> .
+@prefix stack:    <https://w3id.org/intigraph/tambo/id/stack/> .
+@prefix owl:      <http://www.w3.org/2002/07/owl#> .
 
 # ── The stack map ───────────────────────────────────────────────────────────
 # What each tool IS and how the pieces relate. Facts true at write time:
@@ -65,3 +66,16 @@ stack:prometheus a caboodle:StackComponent ;
     rdfs:label "prometheus" ;
     rdfs:comment "Every tool's metrics, consolidated. Tambo's third proof: observable means Prometheus actually scrapes each tool's declared exporter." ;
     caboodle:roleInStack "observability" .
+
+# ── Former names (aegis-ro425e.18) ──────────────────────────────────────────
+# Public entity names live under w3id.org/intigraph/tambo/id/stack/. Each
+# links to its former caboodle.dev name so stores holding an older pack still
+# resolve it. The caboodle: vocabulary and the pack graph IRIs are unchanged.
+stack:bobbin owl:sameAs <https://caboodle.dev/stack/bobbin> .
+stack:caboodle owl:sameAs <https://caboodle.dev/stack/caboodle> .
+stack:camayoc owl:sameAs <https://caboodle.dev/stack/camayoc> .
+stack:creel owl:sameAs <https://caboodle.dev/stack/creel> .
+stack:prometheus owl:sameAs <https://caboodle.dev/stack/prometheus> .
+stack:quipu owl:sameAs <https://caboodle.dev/stack/quipu> .
+stack:shantytown owl:sameAs <https://caboodle.dev/stack/shantytown> .
+stack:yupana owl:sameAs <https://caboodle.dev/stack/yupana> .
