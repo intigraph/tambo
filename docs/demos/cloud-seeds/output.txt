@@ -1,0 +1,7 @@
+Script started on 2026-11-04 01:04:22-05:00 [COMMAND="stty -onlcr && python3 docs/demos/cloud-seeds/demo.py" <not executed on terminal>]
+Target: source checkout, synthetic empty-tool fixture; no network or board writes.
+BEFORE 76f63a2e: legacy npm install attempted=True; Seeds release requested=False
+AFTER candidate bootstrap: legacy npm install attempted=False; Seeds release requested=True
+Positive control: both installed Seeds identities skip the download (verified).
+
+Script done on 2026-11-04 01:04:22-05:00 [COMMAND_EXIT_CODE="0"]
