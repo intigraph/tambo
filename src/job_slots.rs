@@ -429,15 +429,7 @@ mod native {
         if !ok {
             bail!("job account readback unknown");
         }
-        let mut fields = BTreeMap::new();
-        for line in text.lines() {
-            let (key, value) = line
-                .split_once(':')
-                .context("job account readback malformed")?;
-            if fields.insert(key.trim(), value.trim()).is_some() {
-                bail!("job account has multiple property values");
-            }
-        }
+        let fields = native_properties(&text)?;
         for (key, expected) in [
             ("UniqueID", account.uid.to_string()),
             ("PrimaryGroupID", account.uid.to_string()),
@@ -668,9 +660,41 @@ pub fn prepare_metadata(directory: &Path) -> Result<bool> {
     native::metadata(directory)
 }
 
+#[cfg(any(unix, test))]
+fn native_properties(text: &str) -> Result<BTreeMap<&str, &str>> {
+    let mut fields = BTreeMap::new();
+    for line in text.lines() {
+        let (key, value) = line
+            .strip_prefix("dsAttrTypeNative:")
+            .unwrap_or(line)
+            .split_once(':')
+            .context("job account readback malformed")?;
+        if fields.insert(key.trim(), value.trim()).is_some() {
+            bail!("job account has multiple property values");
+        }
+    }
+    Ok(fields)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn native_property_prefix_and_duplicate_controls() {
+        let fields = native_properties("UniqueID: 51001\ndsAttrTypeNative:IsHidden: 1\nAuthenticationAuthority: ;DisabledUser;\n").unwrap();
+        assert_eq!(fields.get("IsHidden"), Some(&"1"));
+        assert_eq!(fields.get("UniqueID"), Some(&"51001"));
+        for duplicate in [
+            "IsHidden: 1\ndsAttrTypeNative:IsHidden: 1",
+            "dsAttrTypeNative:IsHidden: 1\ndsAttrTypeNative:IsHidden: 0",
+        ] {
+            assert!(native_properties(duplicate).is_err());
+        }
+        let fields = native_properties("other:IsHidden: 1").unwrap();
+        assert!(!fields.contains_key("IsHidden"));
+        assert!(native_properties("malformed").is_err());
+    }
+
     fn fixture() -> tempfile::TempDir {
         let root = tempfile::tempdir().unwrap();
         let name = "eph-task-123abc";

@@ -46,6 +46,7 @@ def directory(path):
     if not path.exists() and not path.is_symlink():
         protected(path.parent)
         path.mkdir(mode=0o755)
+        path.chmod(0o755)
     protected(path)
     if not path.is_dir():
         raise ValueError('directory required')
@@ -118,7 +119,7 @@ def properties(record, keys):
     result = run(['/usr/bin/dscl', '.', '-read', record, *keys])
     values = {}
     for line in result.stdout.splitlines():
-        key, value = line.split(':', 1)
+        key, value = line.removeprefix('dsAttrTypeNative:').split(':', 1)
         if key in values:
             raise ValueError('duplicate native property')
         values[key] = value.strip()
