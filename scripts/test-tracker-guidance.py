@@ -67,6 +67,12 @@ class Command(unittest.TestCase):
         empty = self.run_on({"README.md": "nothing\n"})
         self.assertEqual(empty.returncode, 2, empty.stdout)
 
+    def test_vision_uses_the_same_tracker_contract(self):
+        dirty = self.run_on({"docs/book/src/a.md": "Use `sd show <id>`.\n",
+                             "docs/design/vision.md": "The tracker (`br`) installs.\n"})
+        self.assertEqual(dirty.returncode, 1, dirty.stdout)
+        self.assertIn("docs/design/vision.md:1:", dirty.stdout)
+
     def test_this_repository_is_clean(self):
         result = subprocess.run([sys.executable, str(SCRIPT), str(ROOT)],
                                 capture_output=True, text=True, timeout=30)

@@ -59,9 +59,9 @@ equally: either can drive the install (the skill and the interview are
 harness-agnostic — shell + HTTP only), and when a crew is chosen the wizard asks
 which harness each role runs on, emitting the right per-harness configuration.
 
-**Beads is in the corpus.** The tracker (`br` — beads, SQLite + JSONL) installs
-like any other tool: agent memory is part of the kit, and the crew profiles
-depend on it.
+**Seeds is in the corpus.** The work tracker (`sd`) stores work items in Quipu
+and installs like any other tool. Crew profiles use Seeds for work tracking;
+Camayoc's purpose-built memory records provide agent memory.
 
 **Caboodle emits triples/episodes to quipu.** The engine's state transitions —
 installed, verified, upgraded, failed — are emitted as episodes through
@@ -69,11 +69,10 @@ camayoc's ingress discipline, so the graph the box just installed immediately
 knows what the box contains. Bootstrap order handles the chicken-and-egg:
 emissions queue locally until quipu passes its own verify, then flush once.
 
-**And beads emits too.** Bead lifecycle — created, closed, commented — flows to
-quipu as episodes through the same ingress discipline, so the tracker's history
-becomes graph knowledge as it happens instead of by after-the-fact extraction.
-Because `br` is upstream, the emitter ships in the integration layer (a
-post-write hook or JSONL-watcher installed by caboodle), not as a fork patch.
+**Work items are already graph data.** Seeds writes work-item lifecycle changes
+to Quipu. Camayoc projects the metadata needed by stack readers through its
+ingress discipline. Lifecycle storage and knowledge extraction remain separate:
+a work-item update alone does not extract its findings into the ontology.
 
 **Metrics are ontology, not just scrape targets.** Each tool's metrics contract is
 also a camayoc catalogue entry, so "what does this series mean and who owns it"
