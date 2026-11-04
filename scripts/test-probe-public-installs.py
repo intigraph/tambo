@@ -42,6 +42,14 @@ case('missing advertised command', {'command':None}, script, 'MISSING_DOCUMENTED
 case('changed script refused before execution', {}, script+b'# changed\n', 'UNKNOWN_SCRIPT_CHANGED')
 case('nonzero installer retained', {'installer_sha256':hashlib.sha256(b'exit 7\n').hexdigest()}, b'exit 7\n', 'INSTALL_FAILED')
 case('wrong release version refused', {'release_tag':'v1.2.4'}, script, 'VERSION_MISMATCH')
+for name, body, expected in [
+    ('version command failure is not a mismatched release', 'exit 2', 'VERSION_COMMAND_FAILED'),
+    ('missing version output remains unproven', 'echo tool-help', 'VERSION_NOT_REPORTED'),
+]:
+    payload = ('mkdir -p "$HOME/.local/bin"\n'
+               'printf \'#!/bin/sh\\n' + body + '\\n\' > "$HOME/.local/bin/fixture-tool"\n'
+               'chmod +x "$HOME/.local/bin/fixture-tool"\n').encode()
+    case(name, {'installer_sha256':hashlib.sha256(payload).hexdigest()}, payload, expected)
 case('system command cannot impersonate install', {'commands':['sh']}, script, 'INSTALLED_COMMAND_MISSING_OR_SHADOWED')
 with patch.dict(probe.os.environ, {'GITHUB_TOKEN':'fixture-never-forward','QUIPU_AUTH_TOKEN':'fixture-never-forward','SEEDS_ACTOR':'fixture-never-forward'}):
     case('caller credentials and identity not forwarded', {}, script, 'VERSION_VERIFIED')
