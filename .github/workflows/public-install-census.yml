@@ -1,0 +1,98 @@
+name: Public installer clean-room census
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/public-install-census.yml'
+      - 'scripts/probe-public-installs.py'
+      - 'scripts/test-probe-public-installs.py'
+      - 'scripts/public-install-census.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: public-install-census-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  controls:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - run: python3 scripts/test-probe-public-installs.py
+  linux:
+    needs: controls
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
+        image:
+          - debian:trixie@sha256:2dc419c6d7fe3dad0a2f9fd469c34cc90b0f9ba642d8fde837fe3d7d34a0e7f1
+          - ubuntu:24.04@sha256:fe81560990fae86dc4743202b2cb4d3df98d0bcf949173cecef15ce1127ef852
+    runs-on: ${{ matrix.runner }}
+    container:
+      image: ${{ matrix.image }}
+      options: --cpus 2 --memory 4g --pids-limit 512
+    timeout-minutes: 40
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Supply declared installer prerequisites in disposable distro only
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates curl python3 python3-venv python3-pip git tar gzip xz-utils
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Observe documented installers with fresh per-repo HOME and no caller credentials
+        run: |
+          mkdir -p probe-results
+          cat /etc/os-release > probe-results/os-release.txt
+          uname -a > probe-results/uname.txt
+          python3 --version > probe-results/python.txt
+          node --version > probe-results/node.txt
+          python3 scripts/probe-public-installs.py --output probe-results
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: installer-${{ matrix.runner }}-${{ strategy.job-index }}
+          path: probe-results
+          retention-days: 14
+          if-no-files-found: error
+  macos:
+    needs: controls
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        runner: [macos-15, macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Observe in fresh per-repo HOME on disposable Mac runner
+        run: |
+          mkdir -p probe-results
+          sw_vers > probe-results/os-release.txt
+          uname -a > probe-results/uname.txt
+          python3 --version > probe-results/python.txt
+          node --version > probe-results/node.txt
+          python3 scripts/probe-public-installs.py --output probe-results
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: installer-${{ matrix.runner }}
+          path: probe-results
+          retention-days: 14
+          if-no-files-found: error
