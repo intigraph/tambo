@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.1](https://github.com/intigraph/tambo/compare/v0.10.0...v0.10.1) (2026-11-05)
+
+
+### Bug Fixes
+
+* preserve repository pendant carriers and pack aliases ([#235](https://github.com/intigraph/tambo/issues/235)) ([46bf1e8](https://github.com/intigraph/tambo/commit/46bf1e8975d206bd13a6f5e8df70f405590d7191))
+
 ## [0.10.0](https://github.com/intigraph/tambo/compare/v0.9.0...v0.10.0) (2026-11-05)
 
 
