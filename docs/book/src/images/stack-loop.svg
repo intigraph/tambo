@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" role="img" aria-labelledby="title description">
   <title id="title">The quipu stack: knowledge returns to the next agent turn</title>
-  <desc id="description">Agents send activity to Camayoc. Camayoc sends tagged, quarantined episodes to Quipu. Quipu sends knowledge to Bobbin; Bobbin feeds the next agent turn. Yupana supplies committed structure to Quipu and code context to Bobbin. Caboodle installs, proves and observes the four tools.</desc>
+  <desc id="description">Agents send activity to Camayoc. Camayoc sends tagged, quarantined episodes to Quipu. Quipu sends knowledge to Bobbin; Bobbin feeds the next agent turn. Yupana supplies committed structure to Quipu and code context to Bobbin. Tambo installs, proves and observes the four tools.</desc>
   <defs>
     <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="#a5c9c1"/></marker>
   </defs>
@@ -30,7 +30,7 @@
       <text x="510" y="233">quipu</text>
       <text x="510" y="389">bobbin</text>
       <text x="820" y="389">yupana</text>
-      <text x="820" y="72">caboodle</text>
+      <text x="820" y="72">tambo</text>
     </g>
     <g fill="#d7dde0" font-size="15">
       <text x="165" y="95">Claude Code · Codex</text>

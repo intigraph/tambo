@@ -5,7 +5,7 @@
 name = "seeds"
 kind = "rust-release"
 repo = "scbrown/seeds"
-version = "0.3.0"
+version = "0.11.0"
 tag = "seeds-ai-v{version}"
 asset = "sd-{tag}-{target}.tar.gz"
 version_argv = ["--version"]
@@ -13,19 +13,20 @@ sums_asset = "SHA256SUMS.txt"
 profiles = ["crew", "everything"]
 
 [sha256]
-aarch64-apple-darwin = "3db04ed0550189ed0126b0b15ad7067007a6871fb7d7911ca14022e01044e546"
-aarch64-unknown-linux-gnu = "80376b0e3b0ed36645b48d55b5b79765fe9689bcff52c43d2bbce5cf58b443f0"
-x86_64-apple-darwin = "27d7af31e6ddfbf897a83820ac38d441a444285b5cc6c4eae7dbe659e5025377"
-x86_64-unknown-linux-gnu = "4814871f6f0b39079a07b3b77a345dd20d90a9a56e40420d99410be38bd12639"
+aarch64-apple-darwin = "e8318a0c6e27859ba1dc2baa4c017e339416506414a825470e0489595003f628"
+aarch64-unknown-linux-gnu = "d7d97bd8d88a04bfbd26a6a90d0c6bb90a791d13c250b55c9f2803528f89f19f"
+x86_64-apple-darwin = "4de5026a8d05461547ce8061821615fa12d7041b35c36b2231f087056d4a612a"
+x86_64-unknown-linux-gnu = "cf944a8f500f5276fbfa3f93f753bfd1d5a5d8b772dd1a9812d71cc0f5aa1063"
 
 # `sd` also names chmln/sd (find and replace). Identity is the --help text, which
-# every released seeds carries ("seeds is the beads-compatible tracker ..."),
+# released Seeds editions carry one of the explicit identities below,
 # not the "(seeds)" version suffix, which only releases after 0.0.2 print: the
 # identity must match the OLDEST installed seeds or its first upgrade is refused.
 [[programs]]
 name = "sd"
 identity_argv = ["--help"]
 identity_contains = "seeds is the beads-compatible tracker"
+identity_alternatives = ["seeds is the work-item tracker for the quipu stack"]
 
 # In the hermetic root, sd uses a local store at ./.seeds/seeds.db (created on
 # the first write), so nothing touches the user's ledger or config.

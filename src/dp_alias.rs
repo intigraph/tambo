@@ -155,7 +155,7 @@ pub fn verify(dp: Option<&Path>, db: Option<&Path>) -> Result<Outcome> {
         Existing::Ours => Ok(Outcome::AlreadySet),
         Existing::Other(target) => Ok(Outcome::KeptLocal(target)),
         Existing::Absent => bail!(
-            "Desire Path has no {FROM} command alias; `caboodle apply` sets {FROM} -> {TO} for plans with seeds and desire-path"
+            "Desire Path has no {FROM} command alias; `tambo apply` sets {FROM} -> {TO} for plans with seeds and desire-path"
         ),
     }
 }
@@ -207,9 +207,8 @@ mod tests {
     /// first: delete that read and `keeps_a_different_local_target` fails.
     #[cfg(unix)]
     fn fake_dp(dir: &Path) -> PathBuf {
-        use std::os::unix::fs::PermissionsExt;
         let script = dir.join("dp");
-        std::fs::write(
+        crate::test_exec::write_executable(
             &script,
             r#"#!/bin/sh
 store="$(dirname "$0")/bd.rule"
@@ -229,9 +228,7 @@ case "$1" in
   *) exit 2 ;;
 esac
 "#,
-        )
-        .unwrap();
-        std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
+        );
         script
     }
 

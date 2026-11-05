@@ -44,12 +44,12 @@ done
 policy_dir="$root/packs/policy"
 load_identifier_policy() {
     "$quipu" shapes load identifier-policy "$policy_dir/identifier-policy.shapes.ttl" --db "$1" >/dev/null
-    "$quipu" knot "$policy_dir/identifier-policy.ttl" --graph urn:caboodle:identifier-policy --db "$1" >/dev/null
+    "$quipu" knot "$policy_dir/identifier-policy.ttl" --graph urn:tambo:identifier-policy --db "$1" >/dev/null
 }
 
 build_pack() {
     name=$1
-    graph="https://caboodle.dev/graph/$name"
+    graph="https://w3id.org/intigraph/tambo/graph/$name"
     src="$src_dir/$name.ttl"
     out="$work/$name-pendant"
     test -f "$src" || { printf '%s\n' "missing source: $src" >&2; exit 1; }

@@ -2,10 +2,10 @@
 //!
 //! The stack tools now ship their hook definitions themselves:
 //! `<tool> hooks bundle` prints the tool's `st.hook-bundle/1`, versioned with
-//! the tool. CABOODLE registers that bundle, so the hooks a host runs are the
+//! the tool. Tambo registers that bundle, so the hooks a host runs are the
 //! ones its installed tool version declares. An older tool without the command
 //! (or one that prints something that is not its own bundle) falls back to the
-//! copy CABOODLE ships in `hook-bundles/`. The source is reported either way.
+//! copy Tambo ships in `hook-bundles/`. The source is reported either way.
 
 use serde_json::Value;
 
@@ -14,7 +14,7 @@ use serde_json::Value;
 pub enum Source {
     /// `<tool> hooks bundle` on this host.
     Tool,
-    /// The copy shipped in CABOODLE's `hook-bundles/`.
+    /// The copy shipped in Tambo's `hook-bundles/`.
     Shipped,
 }
 

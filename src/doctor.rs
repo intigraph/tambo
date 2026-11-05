@@ -1,4 +1,6 @@
-//! Read-only preflight: what will stop `caboodle install` on this host, before
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
+//! Read-only preflight: what will stop `tambo install` on this host, before
 //! anything is downloaded, built, or started.
 //!
 //! Every check here inspects the platform, PATH, the MCP registrations the agent
@@ -54,8 +56,9 @@ pub struct Scope {
     pub tools: Vec<ToolName>,
     pub quipu_flavor: QuipuFlavor,
     pub external_quipu: bool,
+    pub remote_quipu: Option<String>,
     pub crew: Option<CrewMode>,
-    /// Doctor runs in the caboodle work directory, which holds the plan. MCP
+    /// Doctor runs in the Tambo work directory, which holds the plan. MCP
     /// servers are registered per indexed repository, so none is expected
     /// here (aegis-65xet3).
     pub work_dir: bool,
@@ -67,6 +70,10 @@ impl Scope {
             tools: plan.tools.clone(),
             quipu_flavor: plan.quipu_flavor,
             external_quipu: plan.external_quipu,
+            remote_quipu: env::var("QUIPU_SERVER")
+                .ok()
+                .filter(|url| !url.trim().is_empty())
+                .or_else(|| plan.quipu_mcp.as_ref().map(|mcp| mcp.url.clone())),
             crew: plan.crew.as_ref().map(|crew| crew.mode),
             work_dir: false,
         }
@@ -77,6 +84,9 @@ impl Scope {
             tools: Profile::Everything.tools(),
             quipu_flavor: QuipuFlavor::Release,
             external_quipu: false,
+            remote_quipu: env::var("QUIPU_SERVER")
+                .ok()
+                .filter(|url| !url.trim().is_empty()),
             crew: None,
             work_dir: false,
         }
@@ -95,7 +105,7 @@ pub fn installed(plan: &Plan, state: &State) -> bool {
 }
 
 /// A plan given by a bare file name lives in the current directory, which is
-/// then the caboodle work directory.
+/// then the Tambo work directory.
 pub fn is_work_dir(plan: &Path) -> bool {
     plan.parent().map_or(true, |dir| {
         dir.as_os_str().is_empty() || dir == Path::new(".")
@@ -125,11 +135,11 @@ fn prerequisite_hint(command: &str) -> &'static str {
         "cargo" => "install Rust from https://rustup.rs",
         "python3" => "install Python 3.9+ from your package manager",
         "git" | "curl" | "tar" | "bash" => "install it from your package manager",
-        _ => "install it and rerun `caboodle doctor`",
+        _ => "install it and rerun `tambo doctor`",
     }
 }
 
-/// This build, as `caboodle --version` prints it.
+/// This build, as `tambo --version` prints it.
 pub const SELF_VERSION: &str = concat!(
     "caboodle ",
     env!("CARGO_PKG_VERSION"),
@@ -230,8 +240,10 @@ pub fn diagnose(scope: &Scope) -> Vec<Finding> {
             findings.extend(check_tool(tool, scope.quipu_flavor, path.as_deref()));
         }
     }
-    if scope.tools.contains(&ToolName::Camayoc) || scope.tools.contains(&ToolName::Quipu) {
-        findings.extend(check_graph());
+    if let Some(server) = &scope.remote_quipu {
+        if scope.tools.contains(&ToolName::Camayoc) || scope.tools.contains(&ToolName::Quipu) {
+            findings.extend(check_graph(server));
+        }
     }
     findings.extend(check_mcp(scope));
     findings
@@ -296,7 +308,7 @@ pub(crate) fn mcp_findings(
             None if work_dir => Finding::new(
                 Level::Ok,
                 format!("mcp {want}"),
-                format!("not registered here, as expected: registration is per repository, and this is the caboodle work directory. In each repository you want searchable, run: `{}`", mcp_add_command(want)),
+                format!("not registered here, as expected: registration is per repository, and this is the Tambo work directory. In each repository you want searchable, run: `{}`", mcp_add_command(want)),
             ),
             None => Finding::new(
                 Level::Warn,
@@ -378,17 +390,13 @@ pub(crate) fn classify_write_probe(code: u16, body: &str, token_set: bool) -> Fi
     }
 }
 
-fn check_graph() -> Vec<Finding> {
-    let explicit = env::var("QUIPU_SERVER").ok();
-    let server = explicit
-        .clone()
-        .unwrap_or_else(|| "http://localhost:3030".to_owned());
-    let mut findings = vec![check_quipu_server()];
+fn check_graph(server: &str) -> Vec<Finding> {
+    let mut findings = vec![check_quipu_server(server)];
     let reachable = findings[0].detail.contains("is live");
     // A rejected credential must not hide the checks that do not need it
     // (aegis-vgu): the namespace read below is public, so it still runs. Only
     // the write probe depends on the credential, and it is skipped.
-    let credential_ok = match crate::quipu_credential::verify(&server) {
+    let credential_ok = match crate::quipu_credential::verify(server) {
         Ok(source) => {
             findings.push(Finding::new(
                 Level::Ok,
@@ -479,7 +487,7 @@ fn check_bin_dir_on_path(bin: Option<&Path>, path: Option<&std::ffi::OsStr>) -> 
         return vec![Finding::new(
             Level::Fail,
             "install directory",
-            "neither CARGO_HOME nor HOME is set; caboodle has nowhere to install binaries",
+            "neither CARGO_HOME nor HOME is set; Tambo has nowhere to install binaries",
         )];
     };
     let on_path = path.is_some_and(|path| env::split_paths(path).any(|entry| entry == bin));
@@ -557,7 +565,7 @@ fn check_tool(tool: ToolName, flavor: QuipuFlavor, path: Option<&std::ffi::OsStr
             Level::Warn,
             tool.as_str(),
             format!(
-                "installed ({}) differs from the reviewed {desired}; `caboodle check-updates` explains the drift",
+                "installed ({}) differs from the reviewed {desired}; `tambo check-updates` explains the drift",
                 one_line(&installed)
             ),
         )),
@@ -598,15 +606,11 @@ fn check_tool(tool: ToolName, flavor: QuipuFlavor, path: Option<&std::ffi::OsStr
 fn source_hint(tool: ToolName) -> String {
     match adapter::source_install_command(tool) {
         Some(command) => format!("Build it from source first, then rerun: `{command}`"),
-        None => "Install it by hand first, then rerun; caboodle adopts an installed tool that passes verification".to_owned(),
+        None => "Install it by hand first, then rerun; Tambo adopts an installed tool that passes verification".to_owned(),
     }
 }
 
-fn check_quipu_server() -> Finding {
-    let explicit = env::var("QUIPU_SERVER").ok();
-    let server = explicit
-        .clone()
-        .unwrap_or_else(|| "http://localhost:3030".to_owned());
+fn check_quipu_server(server: &str) -> Finding {
     let reachable = Command::new("curl")
         .args([
             "-sf",
@@ -618,20 +622,19 @@ fn check_quipu_server() -> Finding {
         .stderr(Stdio::null())
         .status()
         .is_ok_and(|status| status.success());
-    match (reachable, explicit.is_some()) {
-        (false, _) => Finding::new(
+    match reachable {
+        false => Finding::new(
             Level::Ok,
             "quipu server",
             format!(
                 "nothing answers at {server}; camayoc verification uses its own scratch server and never touches this address"
             ),
         ),
-        (true, source) => Finding::new(
+        true => Finding::new(
             Level::Ok,
             "quipu server",
             format!(
-                "{server} ({}) is live. camayoc verification does not write to it (it uses its own scratch server); run camayoc's scripts/bootstrap.sh yourself to set this server up",
-                if source { "from QUIPU_SERVER" } else { "the default" }
+                "{server} (explicit remote configuration) is live. camayoc verification does not write to it (it uses its own scratch server); run camayoc's scripts/bootstrap.sh yourself to set this server up"
             ),
         ),
     }
@@ -661,7 +664,7 @@ pub fn report<W: Write>(findings: &[Finding], installed: bool, output: &mut W) -
     if failures == 0 && installed {
         writeln!(
             output,
-            "doctor: installed and verified ({warnings} warning{plural}); recheck with `caboodle verify`"
+            "doctor: installed and verified ({warnings} warning{plural}); recheck with `tambo verify`"
         )?;
     } else if failures == 0 {
         writeln!(
@@ -678,7 +681,7 @@ pub fn report<W: Write>(findings: &[Finding], installed: bool, output: &mut W) -
         };
         writeln!(
             output,
-            "doctor: {earlier}{failures} blocker{} — fix the FAIL lines, then rerun `caboodle doctor`",
+            "doctor: {earlier}{failures} blocker{} — fix the FAIL lines, then rerun `tambo doctor`",
             if failures == 1 { "" } else { "s" }
         )?;
     }
@@ -780,7 +783,7 @@ yupana: yupana serve - ✗ Failed to connect\n";
 
     #[test]
     fn missing_install_directory_on_path_is_a_blocker() {
-        let bin = PathBuf::from("/opt/caboodle-test/bin");
+        let bin = PathBuf::from("/opt/tambo-test/bin");
         let without = OsString::from("/usr/bin:/bin");
         let with = env::join_paths([Path::new("/usr/bin"), &bin]).unwrap();
         let missing = check_bin_dir_on_path(Some(&bin), Some(&without));
@@ -896,7 +899,7 @@ yupana: yupana serve - ✗ Failed to connect\n";
         );
     }
 
-    // aegis-65xet3 item 3: in the caboodle work dir a missing per-repository
+    // aegis-65xet3 item 3: in the Tambo work dir a missing per-repository
     // registration is expected, not a warning; elsewhere it still warns.
     #[test]
     fn missing_registration_does_not_warn_in_the_work_dir() {

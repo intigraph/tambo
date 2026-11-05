@@ -2,14 +2,14 @@
 //!
 //! A member is one reviewed `members/<name>.toml`, embedded at build time by
 //! `build.rs`, so the version and per-target digests a user installs are the
-//! ones this caboodle build was reviewed with. Adding a member is a data file,
+//! ones this Tambo build was reviewed with. Adding a member is a data file,
 //! never a Rust match arm: every site that dispatches on `ToolName` has one
 //! explicit `Member` arm that reads from here.
 //!
 //! Every manifest is parsed and validated by a unit test, so a malformed or
-//! unsafe manifest fails caboodle's CI and never reaches a user.
+//! unsafe manifest fails Tambo's CI and never reaches a user.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::OnceLock;
 
 use anyhow::{bail, Context, Result};
@@ -24,7 +24,7 @@ pub enum Kind {
     /// A `.tar.gz` GitHub release asset per target, holding the programs.
     RustRelease,
     /// One pure-Python `py3-none-any` wheel for every host, recorded under the
-    /// target key [`ANY_TARGET`]. Install puts it in a caboodle-owned venv and
+    /// target key [`ANY_TARGET`]. Install puts it in a Tambo-owned venv and
     /// links its console scripts. The wheel is digest-pinned; its declared
     /// dependencies are resolved by pip from the package index, so the pin
     /// covers the member's own code and NOT its dependencies.
@@ -48,6 +48,10 @@ pub struct Program {
     pub identity_argv: Vec<String>,
     /// The identity output (stdout, then stderr) must CONTAIN this literal text.
     pub identity_contains: String,
+    /// Explicit compatibility identities for earlier/later editions of this member.
+    /// Each literal must independently pass the same strong-identity validation.
+    #[serde(default)]
+    pub identity_alternatives: Vec<String>,
 }
 
 /// One verify step. It must exit 0; `absent` / `present` then test its stdout
@@ -190,26 +194,35 @@ impl Manifest {
             bail!("{}: programs must be non-empty safe names", self.name);
         }
         for p in &self.programs {
-            // After the program's own name, the identity must still say
-            // something a same-named program would not: a word, not a version.
-            let rest = p.identity_contains.replace(&p.name, "");
-            let is_version = |w: &str| {
-                w.trim_start_matches('v')
-                    .starts_with(|c: char| c.is_ascii_digit())
-            };
-            if !rest
-                .split_whitespace()
-                .filter(|w| !is_version(w))
-                .any(|w| w.chars().any(char::is_alphabetic))
-            {
-                bail!(
+            if p.identity_alternatives.len() > 8 {
+                bail!("{}: too many identity alternatives", self.name);
+            }
+            let mut seen = BTreeSet::new();
+            for identity in std::iter::once(&p.identity_contains).chain(&p.identity_alternatives) {
+                if !seen.insert(identity) {
+                    bail!("{}: duplicate identity alternative", self.name);
+                }
+                // After the program's own name, the identity must still say
+                // something a same-named program would not: a word, not a version.
+                let rest = identity.replace(&p.name, "");
+                let is_version = |w: &str| {
+                    w.trim_start_matches('v')
+                        .starts_with(|c: char| c.is_ascii_digit())
+                };
+                if !rest
+                    .split_whitespace()
+                    .filter(|w| !is_version(w))
+                    .any(|w| w.chars().any(char::is_alphabetic))
+                {
+                    bail!(
                     "{}: identity_contains {:?} for `{}` is only its name and a version, which a \
                      different `{}` also prints (F1); use text only this member prints",
                     self.name,
-                    p.identity_contains,
+                    identity,
                     p.name,
                     p.name
                 );
+                }
             }
         }
         // A4: a verify that only ever sees the marker PRESENT would pass for a
@@ -407,6 +420,23 @@ present = "{marker}"
         }
         m.programs[0].identity_contains = "demo is the demo member".into();
         m.validate().unwrap();
+    }
+
+    #[test]
+    fn identity_alternatives_are_explicit_strong_unique_and_bounded() {
+        let mut m = manifest(GOOD).unwrap();
+        m.programs[0].identity_alternatives = vec!["demo is the updated fixture member".into()];
+        m.validate().unwrap();
+        for weak in ["", "demo", "demo 1.2.3", "v1.2.3"] {
+            m.programs[0].identity_alternatives = vec![weak.into()];
+            assert!(m.validate().is_err(), "{weak:?}");
+        }
+        m.programs[0].identity_alternatives = vec![m.programs[0].identity_contains.clone()];
+        assert!(m.validate().is_err());
+        m.programs[0].identity_alternatives = (0..9)
+            .map(|n| format!("demo fixture edition {n}"))
+            .collect();
+        assert!(m.validate().is_err());
     }
 
     #[test]

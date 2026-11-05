@@ -3,7 +3,7 @@
 # built from tests/fixtures/wheel-src and pinned here.
 name = "fixture-wheel"
 kind = "python-wheel"
-repo = "caboodle-fixtures/fixture-wheel"
+repo = "tambo-fixtures/fixture-wheel"
 version = "0.1.0"
 tag = "v{version}"
 asset = "fixture_wheel-{version}-py3-none-any.whl"
@@ -14,12 +14,12 @@ sums_asset = "checksums.txt"
 profiles = []
 
 [sha256]
-any = "915eea0f2bf8bef1c32eca0a7b7b396ba1648daea8fe7eadf482a08439ed581b"
+any = "1daaf234bfcdae17605d9b1c63c8eda9ff8b5e06661eeb5cb0eef2ac00af368e"
 
 [[programs]]
 name = "fixture-wheel"
 identity_argv = ["--help"]
-identity_contains = "fixture-wheel is the caboodle python-wheel fixture stack member"
+identity_contains = "fixture-wheel is the tambo python-wheel fixture stack member"
 
 [[verify]]
 argv = ["fixture-wheel", "list"]

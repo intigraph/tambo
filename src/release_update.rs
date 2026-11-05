@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 //! Opt-in published-release delivery for binary tools selected by a reviewed plan.
 //! Source-managed services and source bundles retain their own update contracts.
 mod durable;
@@ -99,7 +101,7 @@ fn names_for_platform(
             ("linux", "x86_64") => "x86_64-unknown-linux-gnu",
             ("macos", "x86_64") => "x86_64-apple-darwin",
             ("macos", "aarch64") => "aarch64-apple-darwin",
-            _ => bail!("Caboodle self-update has no published target for {os}/{arch}"),
+            _ => bail!("Tambo self-update has no published target for {os}/{arch}"),
         };
         let archive = format!("caboodle-{tag}-{target}.tar.gz");
         return Ok((
@@ -268,7 +270,7 @@ pub fn guard_reviewed_update(tool: ToolName, desired: &str) -> Result<()> {
 pub fn update(plan: &Plan, tool: ToolName, state_path: &Path, check_only: bool) -> Result<()> {
     plan.validate()?;
     if tool == ToolName::Quipu && plan.external_quipu {
-        bail!("external Quipu is not owned by Caboodle; release update refused");
+        bail!("external Quipu is not owned by Tambo; release update refused");
     }
     if !plan.tools.contains(&tool) {
         bail!("tool is not selected by the reviewed plan");
@@ -312,7 +314,7 @@ fn lock_state_unrecovered(state_path: &Path) -> Result<fs::File> {
 ///
 /// A member tracks its REVIEWED PIN, never the newest published release: the
 /// pin's digest is the member's trust anchor (members/README), and pins move by
-/// `bump-member` PR -> caboodle release -> `update-self`. So this installs the
+/// `bump-member` PR -> Tambo release -> `update-self`. So this installs the
 /// pinned asset, accepted on the digest embedded in this build, over the copy
 /// PATH runs (the same copy the built-in tools update), with the same backup,
 /// transaction and rollback-on-failed-verify. Every run ends in a functional
@@ -449,7 +451,7 @@ fn update_member(
     Ok(())
 }
 
-/// Update Caboodle itself from a published checksummed release.
+/// Update Tambo itself from a published checksummed release.
 pub fn update_self(state_path: &Path, check_only: bool) -> Result<()> {
     update_binary(None, None, state_path, check_only, None, None)
 }
@@ -475,6 +477,50 @@ pub fn update_self_pinned(
         Some(tag),
         Some((archive_sha256, binary_sha256)),
     )
+}
+
+/// GitHub owner of each published release. Tambo publishes under
+/// intigraph/tambo; the other tools still publish under scbrown.
+fn release_owner(tool: Option<ToolName>) -> &'static str {
+    if tool.is_none() {
+        "intigraph"
+    } else {
+        "scbrown"
+    }
+}
+
+/// curl arguments for a GitHub release-metadata GET. GitHub answers a renamed or
+/// transferred repository with `301 Moved Permanently` and a JSON body, which
+/// `--fail` does not reject; without `--location` that body was parsed as the
+/// release and failed with "missing field `tag_name`". Follow a bounded number of
+/// HTTPS-only redirects so a rename never strands an installed updater again.
+pub(crate) fn release_metadata_args(url: &str) -> Vec<String> {
+    [
+        "--fail",
+        "--silent",
+        "--show-error",
+        "--location",
+        "--max-redirs",
+        "3",
+        "--proto",
+        "=https",
+        "--proto-redir",
+        "=https",
+        "--max-time",
+        "30",
+        "-H",
+        "Accept: application/vnd.github+json",
+        url,
+    ]
+    .iter()
+    .map(|arg| (*arg).to_owned())
+    .collect()
+}
+
+pub(crate) fn release_metadata(url: &str) -> Result<String> {
+    let args = release_metadata_args(url);
+    let args: Vec<&str> = args.iter().map(String::as_str).collect();
+    text("curl", &args)
 }
 
 fn release_path(tag: Option<&str>) -> Result<String> {
@@ -532,21 +578,10 @@ fn update_binary(
         &[version_arg],
     )?;
     let installed = installed_version(&before)?;
-    let raw = text(
-        "curl",
-        &[
-            "--fail",
-            "--silent",
-            "--show-error",
-            "--max-time",
-            "30",
-            "--proto",
-            "=https",
-            "-H",
-            "Accept: application/vnd.github+json",
-            &format!("https://api.github.com/repos/scbrown/{repo}/{endpoint}"),
-        ],
-    )?;
+    let owner = release_owner(tool);
+    let raw = release_metadata(&format!(
+        "https://api.github.com/repos/{owner}/{repo}/{endpoint}"
+    ))?;
     let release: Release = serde_json::from_str(&raw).context("parse published release")?;
     if requested_tag.is_some_and(|tag| tag != release.tag_name) {
         bail!("published metadata tag differs from requested installer release");
@@ -579,7 +614,7 @@ fn update_binary(
     let archive = temporary.path().join(&archive_name);
     let sums = temporary.path().join(&sums_name);
     let base = format!(
-        "https://github.com/scbrown/{repo}/releases/download/{}",
+        "https://github.com/{owner}/{repo}/releases/download/{}",
         release.tag_name
     );
     download_https(&format!("{base}/{archive_name}"), &archive)?;
@@ -740,7 +775,7 @@ fn update_binary(
             }
             let help = text(destination.to_str().unwrap(), &["update-release", "--help"])?;
             if !help.contains("--tool") {
-                bail!("updated Caboodle omitted release-update command contract");
+                bail!("updated Tambo omitted release-update command contract");
             }
         }
         Ok(())
@@ -794,7 +829,7 @@ fn update_binary(
             let canonical = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
             if canonical(&current) != canonical(&destination) {
                 println!(
-                    "caboodle: note: updated {} (the copy PATH runs); this binary {} was NOT changed",
+                    "tambo: note: updated {} (the copy PATH runs); this binary {} was NOT changed",
                     destination.display(),
                     current.display()
                 );
@@ -815,16 +850,16 @@ fn post_install_repair(installed: &Path) {
     {
         Ok(out) if out.status.success() => {
             for line in String::from_utf8_lossy(&out.stdout).lines() {
-                println!("caboodle: {line}");
+                println!("tambo: {line}");
             }
         }
         Ok(out) => println!(
-            "caboodle: note: post-install repair failed ({}): {}; the update itself is complete",
+            "tambo: note: post-install repair failed ({}): {}; the update itself is complete",
             out.status,
             String::from_utf8_lossy(&out.stderr).trim()
         ),
         Err(error) => println!(
-            "caboodle: note: post-install repair could not run: {error}; the update itself is complete"
+            "tambo: note: post-install repair could not run: {error}; the update itself is complete"
         ),
     }
 }
@@ -869,6 +904,25 @@ mod tests {
         assert_eq!(behind_reviewed("bobbin", "bobbin 0.16.2"), None);
     }
     #[test]
+    fn self_update_reads_intigraph_tambo_and_follows_renames() {
+        assert_eq!(release_owner(None), "intigraph");
+        assert_eq!(release_owner(Some(ToolName::Bobbin)), "scbrown");
+        let (repo, ..) = names_for_platform(None, "v0.6.3", "macos", "aarch64").unwrap();
+        assert_eq!(format!("{}/{repo}", release_owner(None)), "intigraph/tambo");
+        let args =
+            release_metadata_args("https://api.github.com/repos/scbrown/tambo/releases/latest");
+        for flag in ["--location", "--fail", "--max-redirs"] {
+            assert!(args.iter().any(|a| a == flag), "{flag}");
+        }
+        let redir = args.iter().position(|a| a == "--proto-redir").unwrap();
+        assert_eq!(args[redir + 1], "=https");
+        assert_eq!(
+            args.last().unwrap(),
+            "https://api.github.com/repos/scbrown/tambo/releases/latest"
+        );
+    }
+
+    #[test]
     fn self_update_uses_only_published_platform_archives() {
         for (os, arch, triple) in [
             ("linux", "x86_64", "x86_64-unknown-linux-gnu"),
@@ -888,7 +942,7 @@ mod tests {
         ] {
             assert!(names_for_platform(None, "v0.2.13", os, arch).is_err());
         }
-        // Do not infer the other tools' asset layouts from Caboodle's layout.
+        // Do not infer the other tools' asset layouts from Tambo's layout.
         assert!(names_for_platform(Some(ToolName::Bobbin), "v0.2.13", "macos", "aarch64").is_err());
     }
     #[test]

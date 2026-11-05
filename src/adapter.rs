@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 use std::{
     env,
     ffi::{OsStr, OsString},
@@ -20,14 +22,15 @@ pub(crate) use manifest::{
 
 pub trait Adapter {
     fn name(&self) -> ToolName;
-    /// Release identity reviewed and pinned by this Caboodle build.
+    /// Release identity reviewed and pinned by this Tambo build.
     fn desired_version(&self) -> String;
     fn install(&self) -> Result<()>;
     fn version(&self) -> Result<String>;
     fn verify(&self) -> Result<()>;
 
     /// Bind package verification to the executables PATH actually runs. Most
-    /// adapters already use PATH; Quipu normally prefers its Cargo install.
+    /// adapters already use PATH; Quipu and manifest members normally prefer
+    /// their managed Cargo install.
     fn package_adapter(&self) -> Result<Option<Box<dyn Adapter>>> {
         Ok(None)
     }
@@ -332,7 +335,7 @@ fn require_minimum_version(output: &str, minimum: (u64, u64, u64), program: &str
     };
     if found < minimum {
         bail!(
-            "{program} {}.{}.{} is too old; CABOODLE requires at least {}.{}.{}",
+            "{program} {}.{}.{} is too old; Tambo requires at least {}.{}.{}",
             found.0,
             found.1,
             found.2,
@@ -401,7 +404,7 @@ impl Adapter for Quipu {
 
     fn install(&self) -> Result<()> {
         if self.external.is_some() {
-            bail!("external Quipu is not owned by Caboodle; installation refused");
+            bail!("external Quipu is not owned by Tambo; installation refused");
         }
         preflight_owned_quipu_alias()?;
         match self.flavor {
@@ -487,11 +490,11 @@ impl Quipu {
         let root = tempfile::tempdir().context("create quipu verification directory")?;
         let db = root.path().join("verify.db");
         let episode = root.path().join("episode.json");
-        let marker = "caboodle-verify-roundtrip";
+        let marker = "tambo-verify-roundtrip";
         fs::write(
             &episode,
             format!(
-                r#"{{"name":"caboodle verification","episode_body":"functional round trip","source":"caboodle","group_id":"caboodle-verification","nodes":[{{"name":"{marker}","type":"Verification","description":"caboodle isolated verification"}}],"edges":[]}}"#
+                r#"{{"name":"Tambo verification","episode_body":"functional round trip","source":"caboodle","group_id":"caboodle-verification","nodes":[{{"name":"{marker}","type":"Verification","description":"Tambo isolated verification"}}],"edges":[]}}"#
             ),
         )
         .context("write quipu verification episode")?;
@@ -568,7 +571,7 @@ fn quipu_release_target_for(arch: &str, os: &str) -> Result<&'static str> {
         ("aarch64", "linux") => Ok("aarch64-unknown-linux-gnu"),
         ("x86_64", "macos") => Ok("x86_64-apple-darwin"),
         ("aarch64", "macos") => Ok("aarch64-apple-darwin"),
-        (arch, os) => bail!("Quipu has no checksummed CABOODLE release for {arch}-{os}"),
+        (arch, os) => bail!("Quipu has no checksummed Tambo release for {arch}-{os}"),
     }
 }
 
@@ -777,7 +780,7 @@ struct Yupana;
 struct DesirePath;
 
 struct Camayoc;
-const BOBBIN_VERSION: &str = "0.27.3";
+const BOBBIN_VERSION: &str = "0.30.0";
 
 impl Adapter for Camayoc {
     fn name(&self) -> ToolName {
@@ -830,7 +833,7 @@ impl Adapter for Camayoc {
             );
         }
         if !scratch.path().join(".quipu/server.pid").exists() {
-            bail!("Camayoc bootstrap did not start a scratch Quipu at {server}; refusing to verify against a server caboodle does not own");
+            bail!("Camayoc bootstrap did not start a scratch Quipu at {server}; refusing to verify against a server Tambo does not own");
         }
         verify_camayoc_first_ingest(&root, &server)
     }
@@ -885,13 +888,13 @@ impl Adapter for Bobbin {
             .duration_since(UNIX_EPOCH)
             .context("system clock predates Unix epoch")?
             .as_nanos();
-        let repo = format!("caboodle-verify-{}-{nonce}", std::process::id());
-        let marker = format!("caboodle_verify_marker_{}_{nonce}", std::process::id());
+        let repo = format!("tambo-verify-{}-{nonce}", std::process::id());
+        let marker = format!("tambo_verify_marker_{}_{nonce}", std::process::id());
         checked("git", ["init", "--quiet"], Some(root.path()))?;
         checked("bobbin", ["init"], Some(root.path()))?;
         fs::write(
             root.path().join("control.rs"),
-            "/// Proves the negative-control index is live.\npub fn caboodle_control() -> usize {\n    1\n}\n",
+            "/// Proves the negative-control index is live.\npub fn tambo_control() -> usize {\n    1\n}\n",
         )
         .context("write bobbin negative-control fixture")?;
         checked(
@@ -920,7 +923,7 @@ impl Adapter for Bobbin {
         fs::write(
             root.path().join("fixture.rs"),
             format!(
-                "/// A unique CABOODLE verification routine.\npub fn {marker}() -> &'static str {{\n    \"indexed\"\n}}\n"
+                "/// A unique Tambo verification routine.\npub fn {marker}() -> &'static str {{\n    \"indexed\"\n}}\n"
             ),
         )
         .context("write bobbin verification fixture")?;
@@ -949,7 +952,7 @@ impl Adapter for Bobbin {
     }
 }
 
-const YUPANA_VERSION: &str = "0.12.7";
+const YUPANA_VERSION: &str = "0.16.2";
 
 impl Adapter for Yupana {
     fn name(&self) -> ToolName {
@@ -986,28 +989,20 @@ impl Adapter for Yupana {
         let state = root.path().join("state");
         fs::write(
             root.path().join("control.rs"),
-            "pub fn caboodle_yupana_control() -> usize { 1 }\n",
+            "pub fn tambo_yupana_control() -> usize { 1 }\n",
         )?;
         yupana_checked(root.path(), &state, ["analyze", "."])?;
-        let before = yupana_checked(
-            root.path(),
-            &state,
-            ["callers", "caboodle_yupana_target", "."],
-        )?;
-        if String::from_utf8_lossy(&before.stdout).contains("caboodle_yupana_caller") {
+        let before = yupana_checked(root.path(), &state, ["callers", "tambo_yupana_target", "."])?;
+        if String::from_utf8_lossy(&before.stdout).contains("tambo_yupana_caller") {
             bail!("Yupana negative control unexpectedly found the fixture caller");
         }
         fs::write(
             root.path().join("fixture.rs"),
-            "pub fn caboodle_yupana_target() -> usize { 1 }\npub fn caboodle_yupana_caller() -> usize { caboodle_yupana_target() }\n",
+            "pub fn tambo_yupana_target() -> usize { 1 }\npub fn tambo_yupana_caller() -> usize { tambo_yupana_target() }\n",
         )?;
         yupana_checked(root.path(), &state, ["analyze", "."])?;
-        let after = yupana_checked(
-            root.path(),
-            &state,
-            ["callers", "caboodle_yupana_target", "."],
-        )?;
-        if !String::from_utf8_lossy(&after.stdout).contains("caboodle_yupana_caller") {
+        let after = yupana_checked(root.path(), &state, ["callers", "tambo_yupana_target", "."])?;
+        if !String::from_utf8_lossy(&after.stdout).contains("tambo_yupana_caller") {
             bail!("Yupana analyzed the fixture but callers did not return its caller");
         }
         Ok(())
@@ -1023,17 +1018,17 @@ fn yupana_release_for(arch: &str, os: &str) -> Result<(&'static str, &'static st
     match (arch, os) {
         ("x86_64", "linux") => Ok((
             "x86_64-linux-gnu",
-            "44bfefb529a5977cd6ced67e662ca1cab87ec53e62a4cdf173ebbb367b5f8667",
+            "565507459d3d67b2cc73b6ebd91f784f0522689c5b62257a8fde82793580dc5d",
         )),
         ("aarch64", "macos") => Ok((
             "aarch64-apple-darwin",
-            "7f02e1c96b97a21abbc5478341d5ee44d10ea860b803e45d721b1c5a66647770",
+            "9f3682c6f4dffd7365248ae2d686e9fcdca26ba08ebd915f8ce692e8111179a2",
         )),
         ("x86_64", "macos") => Ok((
             "x86_64-apple-darwin",
-            "94b872a6cd3ea9de4bf4271b1d16fa569f1979b4d216e0fd307d88e1b66364a2",
+            "7763d171c7f6e2df395bdf9961a79991b66b4876c3394ce970d1f3e2cddcb4ed",
         )),
-        _ => bail!("Yupana v{YUPANA_VERSION} has no checksummed CABOODLE release for {arch}-{os}"),
+        _ => bail!("Yupana v{YUPANA_VERSION} has no checksummed Tambo release for {arch}-{os}"),
     }
 }
 
@@ -1115,8 +1110,8 @@ fn desire_path_program() -> Result<PathBuf> {
     Ok(PathBuf::from(home).join(".local/bin/dp"))
 }
 
-const DESIRE_PATH_REVISION: &str = "1f457ec2f30c4a0d47b6f4d1b4cc0f3078f39662";
-const DESIRE_PATH_VERSION: &str = "v0.3.2";
+const DESIRE_PATH_REVISION: &str = "06812336fda6a6fd3fe4cbcae2d50a303e95a024";
+const DESIRE_PATH_VERSION: &str = "v0.10.0";
 
 impl Adapter for DesirePath {
     fn name(&self) -> ToolName {
@@ -1180,7 +1175,7 @@ impl Adapter for DesirePath {
         let dp = desire_path_program()?;
         let root = tempfile::tempdir().context("create Desire Path verification directory")?;
         let db = root.path().join("desires.db");
-        let marker = "caboodle_desire_path_marker";
+        let marker = "tambo_desire_path_marker";
         let before = checked(
             &dp,
             [
@@ -1250,7 +1245,7 @@ fn bobbin_release_target() -> Result<&'static str> {
         ("aarch64", "linux") => Ok("aarch64-unknown-linux-gnu"),
         ("x86_64", "macos") => Ok("x86_64-apple-darwin"),
         ("aarch64", "macos") => Ok("aarch64-apple-darwin"),
-        (arch, os) => bail!("bobbin has no CABOODLE release target for {arch}-{os}"),
+        (arch, os) => bail!("bobbin has no Tambo release target for {arch}-{os}"),
     }
 }
 
@@ -1306,10 +1301,10 @@ fn ensure_bobbin_link(link: &Path, target: &Path) -> Result<()> {
         {
             return Ok(());
         }
-        // A DANGLING symlink is caboodle's own debris, not a user's install, and
+        // A DANGLING symlink is Tambo's own debris, not a user's install, and
         // refusing to repair it deadlocks the tool against itself.
         //
-        // Measured on caboodle CI, red on main 2026-08-31 -> 2026-09-02, one job,
+        // Measured on Tambo CI, red on main 2026-08-31 -> 2026-09-02, one job,
         // every run:
         //
         //     bobbin: not installed (run bobbin --version:
@@ -1372,7 +1367,7 @@ fn install_camayoc_bundle() -> Result<()> {
     let download = tempfile::tempdir().context("create Camayoc download directory")?;
     let archive = download.path().join("camayoc.tar.gz");
     download_https(
-        &format!("https://github.com/scbrown/camayoc/archive/{CAMAYOC_REVISION}.tar.gz"),
+        &format!("https://github.com/intigraph/camayoc/archive/{CAMAYOC_REVISION}.tar.gz"),
         &archive,
     )?;
     let digest = checked("sha256sum", [archive.as_os_str()], None)?;
@@ -1400,8 +1395,8 @@ fn install_camayoc_bundle() -> Result<()> {
 
 fn verify_camayoc_first_ingest(root: &Path, server: &str) -> Result<()> {
     let namespace = camayoc_aegis_namespace(&root.join("ontology/core.ttl"))?;
-    let control = "caboodle-camayoc-control-must-stay-absent";
-    let marker = "caboodle-camayoc-first-ingest-v1";
+    let control = "tambo-camayoc-control-must-stay-absent";
+    let marker = "tambo-camayoc-first-ingest-v1";
 
     if label_count(server, &namespace, control)? != 0 {
         bail!("Camayoc negative control unexpectedly exists");
@@ -1415,7 +1410,7 @@ fn verify_camayoc_first_ingest(root: &Path, server: &str) -> Result<()> {
     let payload = json!({
         "turtle": turtle,
         "actor": "caboodle",
-        "source": "caboodle Camayoc first-ingest verification"
+        "source": "Tambo Camayoc first-ingest verification"
     });
     if label_count(server, &namespace, marker)? == 0 {
         let first = curl_json(&format!("{server}/knot"), &payload)?;
@@ -1910,12 +1905,11 @@ pub fn verify_member(name: &str) -> Result<()> {
 #[cfg(all(test, unix))]
 mod quipu_alias_layout_tests {
     use super::verify_quipu_alias;
-    use std::os::unix::fs::{symlink, PermissionsExt};
+    use std::os::unix::fs::symlink;
     use std::{fs, path::Path};
 
     fn script(path: &Path, version: &str) {
-        fs::write(path, format!("#!/bin/sh\necho '{version}'\n")).unwrap();
-        fs::set_permissions(path, fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_exec::write_executable(path, &format!("#!/bin/sh\necho '{version}'\n"));
     }
 
     #[test]

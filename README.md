@@ -1,203 +1,168 @@
-> Caboodle is becoming **Tambo**. The transition release includes both `tambo`
-> and `caboodle`, backed by the same CLI. Existing plan and state paths remain
-> compatible. New release archives use `tambo-vVERSION-TARGET.tar.gz` with a
-> sibling SHA-256 checksum; supported archives contain both commands.
->
-> Repository and registry publication, package-manager migration, and installed
-> host verification are separate release steps. The compatibility command stays
-> available for at least one release.
+<p align="center"><img src="docs/stack/thread-workshop/renders/tambo.png" width="704" alt="Tambo: a toolkit connects the components, in the shared Thread Workshop illustration style"/></p>
 
-<p align="center">
-  <img src="assets/header.svg" width="100%" alt="Animated banner — a teal kit box with a tipping lid and three flowing, knotted cords"/>
-</p>
+# Tambo
 
-<p align="center">
-  <img src="assets/logo.svg" width="200" alt="Tambo logo — a light-teal tackle box open with pink fold-out trays, each compartment holding a tool of the stack"/>
-</p>
-
-<h1 align="center">tambo</h1>
-
-<p align="center">
-  <em>🧰 Agent Platform Toolkit - installs and configures the quipu stack</em>
-</p>
-
-<p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"/></a>
-  <a href="https://github.com/scbrown/caboodle/actions/workflows/ci.yml"><img src="https://github.com/scbrown/caboodle/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
-  <a href="https://github.com/scbrown/caboodle"><img src="https://img.shields.io/badge/stack-quipu-8B5E3C.svg" alt="Part of the quipu stack"/></a>
-</p>
-
-**Caboodle installs and configures a stack built around Quipu, a governed,
-bitemporal knowledge store for people and AI coding agents.** Shared facts,
-decisions and work history stay available for your agents to query. Its CLI
-installs the tools from a reviewable plan and proves each one works; an agent
-skill guides you through the same workflow.
+Install the Quipu stack from a plan you can review, then prove the selected tools
+work. Give an agent durable memory and code context, without assembling every tool
+by hand. Tambo is a CLI and [agent skill](skills/tambo/SKILL.md).
+The compatibility command `caboodle` remains available.
 
 ## Why you would want it
 
-- Give your agent memory and code context that survive a session.
-- Review one plan, then resume installation if it is interrupted.
-- Know each tool passed a functional check before you rely on it.
+Choose the parts that solve your problem; you do not need every tool.
 
-[What the quipu stack is, and three ways to start](https://scbrown.github.io/caboodle/introduction.html).
+- **Keep knowledge you can explain:** Quipu stores facts, provenance and history;
+  Camayoc checks incoming knowledge, using shared vocabulary and shapes from Quechua.
+  Write enforcement depends on your configured rules.
+- **Give a coding assistant useful context:** Bobbin searches your code and supplies
+  context; Yupana follows code structure and can check actions against policy.
+- **Track work across people and agents:** Seeds keeps work items in Quipu;
+  Shantytown runs agent crews against that work.
+- **Connect events to action:** Chaski delivers reactions and notifications, Shuttle
+  records signed workflow transitions, and Rikuy presents a live brief.
+- **Learn from failed tool calls:** Desire Path collects failures into signposts and
+  feature requests, and can also run on its own.
+
+Tambo composes a reviewable installation plan and verifies the selected tools.
+Installing them does not automatically connect every workflow or enable every
+policy. [Choose tools for your use case](https://intigraph.github.io/tambo/personas.html),
+then [choose an installation profile](https://intigraph.github.io/tambo/profiles.html).
 
 ## Install
 
-Checksummed releases: Linux x86_64, macOS arm64 and macOS x86_64.
-The installer verifies SHA256 before placing the binary in `~/.cargo/bin`.
-
 ```bash
-curl -fsSL https://raw.githubusercontent.com/scbrown/caboodle/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/intigraph/tambo/main/install.sh | sh
 ```
 
-To pin a release, pass the version to the receiving shell:
+Downloads the latest release, verifies its SHA-256 and version, and installs
+`tambo` and `caboodle` in `${CARGO_HOME:-$HOME/.cargo}/bin`. Requires `curl`,
+`tar`, Python 3 and `sha256sum` or `shasum`. Add that directory to `PATH`.
+Published archives support Linux x86_64 and macOS arm64/x86_64; **Linux arm64
+has no published archive**. Source builds, pinned versions, removal and the
+Homebrew alternative are in the [installation reference](https://intigraph.github.io/tambo/installation-reference.html).
+
+**Debian and Ubuntu (amd64):** install from the signed apt repository, which
+republishes each checksum-verified release. The package puts `tambo` and the
+compatibility `caboodle` command in `/usr/bin`. Check the signing key's
+fingerprint before trusting it; the commands stop if it does not match:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/scbrown/caboodle/main/scripts/install.sh | CABOODLE_VERSION=vX.Y.Z bash
+curl -fsSL https://scbrown.github.io/apt/key.gpg -o scbrown-stack.gpg \
+  && gpg --show-keys --with-colons scbrown-stack.gpg \
+  | grep -qx 'fpr:::::::::AB5625C5612F643BF76464DF0DC99924994EC959:' \
+  && sudo install -D -m 0644 scbrown-stack.gpg /etc/apt/keyrings/scbrown-stack.gpg \
+  && echo "deb [signed-by=/etc/apt/keyrings/scbrown-stack.gpg] https://scbrown.github.io/apt stable main" \
+     | sudo tee /etc/apt/sources.list.d/scbrown-stack.list \
+  && sudo apt update && sudo apt install tambo
 ```
 
-Add the install directory to this shell's PATH:
-
-```bash
-export PATH="${CARGO_HOME:-$HOME/.cargo}/bin:$PATH"
-```
-
-The `export` lasts for this shell only. To keep it, add the same line once to
-your shell's startup file: `~/.bashrc` for bash, `~/.zshrc` for zsh (the macOS
-default). For bash:
-
-```bash
-echo 'export PATH="${CARGO_HOME:-$HOME/.cargo}/bin:$PATH"' >> ~/.bashrc
-```
-
-Apps started outside a terminal, such as the Claude desktop app or an IDE, may
-not read that file, which is why the agent step below registers servers by
-absolute path.
-
-Or build the latest release from source with Rust (`cargo install --git
-https://github.com/scbrown/caboodle --tag vX.Y.Z --locked`). Either way,
-`caboodle --version` prints `caboodle X.Y.Z` for the release you installed.
+`apt upgrade` then picks up new releases. unattended-upgrades only installs
+from origins it allows, so to have it upgrade tambo too, add
+`"origin=scbrown,codename=stable";` to `Unattended-Upgrade::Origins-Pattern`.
+A host with the older `caboodle 0.3.4` package moves over with
+`sudo apt install tambo` (or `apt full-upgrade`): `caboodle 0.3.4-1` is a
+transitional package that depends on `tambo`.
+Channels, pinning and rollback:
+[scbrown/apt](https://github.com/scbrown/apt#channels-and-pinning).
 
 ## First success in three commands
 
-Run these in a new, empty directory that will stay put. It is caboodle's own
-working directory, NOT the repository you want indexed (that comes in
-[Wire it into your agent](#wire-it-into-your-agent)). `retrieval` installs
-Quipu, Camayoc and Bobbin, which the agent step needs. To check prerequisites,
-Set `QUIPU_SERVER` to the intended authenticated server and obtain an issued
-token from its administrator before verification. Install it with
-`caboodle provision-quipu-token --from /secure/issued-token --server <server-url>`.
-This proves acceptance and creates the canonical credential with `0400/0700`
-permissions; it refuses rotation of a differing existing credential. Then
-run `caboodle doctor` after `plan` in the same directory (with no plan it checks
-`everything`, which needs Go); it exits 0 when ready, and warnings do not block.
+![Animated terminal: review a local Tambo plan and verify the selected tools](docs/demos/terminal/demo.svg)
+
+The 21-second recording shows a real interview, plan review and verification
+in a private fixture. Setup finishes before recording; agent-hook registration
+is not verified. [Read the transcript](docs/demos/terminal/transcript.txt) or
+[reproduce the demo](docs/demos/terminal.md).
+
+Run in an empty directory you intend to keep:
 
 ```bash
-mkdir -p ~/caboodle && cd ~/caboodle
-curl -fsSLO https://raw.githubusercontent.com/scbrown/caboodle/main/examples/caboodle-intent.toml
-caboodle plan --profile retrieval --intent caboodle-intent.toml
-caboodle install
+tambo quickstart
 ```
 
-Expected stdout on a fresh machine (downloads and progress go to stderr):
+This saves a reviewed retrieval plan, installs Quipu, Camayoc and Bobbin, and
+checks each tool. Success is exit 0 and `quipu: verified`, `camayoc: verified`,
+`bobbin: verified`. Keep `caboodle-plan.toml` and `.caboodle/` to resume.
+See the [compatibility contracts](docs/book/src/compatibility.md) for retained aliases and state paths.
 
-```text
-plan: caboodle-plan.toml
-quipu: applied
-camayoc: applied
-bobbin: applied
-stack configuration: applied
-hook bundle bobbin: source tool
-hook bundle quipu: source shipped copy
-hook bundle NOT registered: `st` (shantytown) is not installed on this host. Install it and rerun `caboodle apply`; verify reports the bundles until then
-vocabulary: quechua v0.1.0 cached at ~/.local/share/caboodle/vocabulary/quechua-ns-v0.1.0.ttl (no plan quipu_db to load into)
-hook bundle NOT verified: `st` (shantytown) is not installed on this host, so no hook bundle is registered here
-quipu credential: canonical file 0400/0700 and authenticated read verified; source: default ~/.config/quipu/token
-quipu: verified
-camayoc: verified
-bobbin: verified
+Recheck the same install:
+
+```bash
+tambo verify
 ```
 
-`hook bundle` lines are expected without Shantytown. Each `verified` is a passed
-functional round trip; [the walkthrough](https://scbrown.github.io/caboodle/getting-started.html) covers recovery.
+### Advanced: use your own projects and agents
 
-**Success check:** `caboodle install` exits 0 and prints `<tool>: verified` for
-every tool in the plan (`quipu`, `camayoc`, `bobbin` for `retrieval`). Recheck at
-any time with `caboodle verify` from `~/caboodle`: same lines, exit 0. A failing
-tool prints `<tool>: FAILED: …` and the command exits nonzero.
-
-The install leaves these in `~/caboodle`: `caboodle-intent.toml` (downloaded
-above), `caboodle-plan.toml` (the reviewed plan) and `.caboodle/` (install
-state). Keep the directory; `verify`, `update` and a resumed `install` read it.
+The following sections cover existing projects and shared-service setup.
 
 ## On your own code
 
-| I want to… | Command |
-|---|---|
-| Choose tools and describe my own use | `caboodle init --guided` |
-| Find install blockers before changing anything | `caboodle doctor` |
-| Install and prove the reviewed selection | `caboodle install` |
-| Recheck the selected tools | `caboodle verify` |
-| Compare against this build's reviewed versions | `caboodle check-updates` |
+Run Tambo in a directory where you can keep its plan and installation state.
 
-[Full command and configuration reference](https://scbrown.github.io/caboodle/reference.html).
+| You want to | Run |
+|---|---|
+| Choose tools and review an installation plan | `tambo init --guided` |
+| Check prerequisites before installing | `tambo doctor --plan caboodle-plan.toml` |
+| Recheck the selected tools | `tambo verify --plan caboodle-plan.toml` |
+
+Flags and plan fields: [command reference](https://intigraph.github.io/tambo/reference.html).
 
 ## Wire it into your agent
 
-Tambo is a CLI, with an [agent skill](skills/tambo/SKILL.md), not an MCP
-server. Bobbin, which the `retrieval` profile installed above, is one. It
-searches one repository: the code you want your agent to work on, such as your
-own project's git checkout. Do not use `~/caboodle`, which holds only the plan.
-Index that repository, then register bobbin from inside it:
+`tambo quickstart` also adds query-first hooks to Claude Code and Codex, so
+each session starts by checking the knowledge graph. `tambo hooks verify` checks
+them; `tambo hooks uninstall` restores your settings. Codex asks you to trust
+the hooks on its next start. See [query-first hooks](https://intigraph.github.io/tambo/agents.html#query-first-hooks).
+
+For issued credentials, remote stores and registering Bobbin with your agent,
+use the [agent and installation reference](https://intigraph.github.io/tambo/installation-reference.html).
+The default quickstart is local and needs no account or remote server.
+
+From the code repository you want searchable, initialize and index it before
+registering the server by absolute path:
 
 ```bash
-cd ~/path/to/your/repo
 bobbin init
 bobbin index
 claude mcp add bobbin -- "$(command -v bobbin)" serve "$PWD"
 ```
 
-`$(command -v bobbin)` and `$PWD` are expanded once, now, so Claude Code
-starts the server by absolute path and serves this repository whatever its own
-`PATH` or working directory. Registering a bare `bobbin` fails with `ENOENT` when
-Claude Code was not started from a shell that has `~/.cargo/bin` on `PATH`.
-
-`claude mcp add` uses the default `local` scope: the server is registered for
-this project only, so start Claude Code in this repository to see it (`claude
-mcp list` there shows `bobbin: ... ✓ Connected`). Repeat the four lines in each
-repository you want searchable. `bobbin init` creates `.bobbin/`
-in the repository and, if the repository has a `.gitignore`, appends `.bobbin/`
-to it; review that change before you commit. Without `bobbin init`, `bobbin
-serve` exits with `Bobbin not initialized` and Claude Code reports the server as
-failed to connect.
-
-MCP (Model Context Protocol) lets your agent call the installed server.
-[Agent setup](https://scbrown.github.io/caboodle/agents.html) covers indexing, Yupana, other clients
-and managed crew registration through `caboodle project-settings`.
-
 ## Before you start
 
-| Platform | Caboodle | Quipu | Yupana |
-|---|---|---|---|
-| Linux x86_64 | Release | Release | Release |
-| macOS arm64 / x86_64 | Release | Release | Release |
-| Linux arm64 | Build with Rust | Release | Build with Rust |
-
-Have `curl`, `tar`, `git`, `bash`, `python3` and `sha256sum` on PATH
-(`brew install coreutils` supplies `sha256sum` on macOS).
-The `everything` profile also needs Go. No account or remote server is needed.
-[Installation details](https://scbrown.github.io/caboodle/installing.html) cover source builds,
-installed files and removal; `caboodle doctor` names missing prerequisites.
+The local quickstart needs no account or remote server. Keep its plan and state
+in a writable directory. The release installer needs `curl`, `tar`, Python 3
+and a SHA-256 utility; source builds need Rust. Linux x86_64 and macOS
+arm64/x86_64 have release archives; Linux arm64 requires a source build.
+Remote stores need their own endpoint and issued credentials.
 
 ## What's next
 
-- [Read the book](https://scbrown.github.io/caboodle/introduction.html)
-- [Find a topic in the docs map](https://scbrown.github.io/caboodle/docs-map.html)
-- [Choose your profile](https://scbrown.github.io/caboodle/profiles.html)
+- [The Tambo book](https://intigraph.github.io/tambo/): installation, verification and profiles.
+- [Docs map](https://intigraph.github.io/tambo/docs-map.html): find the detailed guides.
+- [Getting started](https://intigraph.github.io/tambo/getting-started.html): review your first plan.
+
+### Profiles and repository knowledge
+
+- [Choose a profile](https://intigraph.github.io/tambo/profiles.html) or use `tambo init --guided`.
+- [Camayoc](https://github.com/intigraph/camayoc): vocabulary, shapes and governed agent memory.
+- [Getting started](https://intigraph.github.io/tambo/getting-started.html) and [command reference](https://intigraph.github.io/tambo/reference.html).
+- **Load this repository's graph:** repository-pendant publication is pending.
+  When a release provides the archive, checksum and provenance, follow Quipu's
+  [verified import workflow](https://intigraph.github.io/quipu/sharing/index.html).
+  Import stages knowledge; it does not promote it into ROOT automatically.
+
+### Delivery events and DORA
+
+After installing Quipu and Camayoc, bring deployment outcomes and change history
+into the same governed memory. Camayoc supports CDEvents on CloudEvents from
+Actions, Ansible, Terraform and native producers; see the
+[delivery emitter catalog](https://github.com/intigraph/camayoc/blob/main/catalog/README.md).
+Adapter setup and event coverage are separate from installing the stack.
+Tambo does not enable deployment emitters or prove DORA coverage.
+The four metrics need recorded deployment and change history for the selected
+service and time window; missing history is not a measured zero.
 
 ## 🧺 The stack
-
-Caboodle installs these together and proves each one works; every tool also stands alone.
 
 <!-- stack-table:start -->
 
@@ -208,30 +173,32 @@ when.
 
 | tool | what it gives your agents |
 |---|---|
-| [caboodle](https://github.com/scbrown/caboodle) | 🧰 Agent Platform Toolkit - installs and configures the quipu stack |
+| [tambo](https://github.com/intigraph/tambo) | 🧰 Agent Platform Toolkit - installs and configures the quipu stack |
 | [quipu](https://github.com/scbrown/quipu) | stores shared facts with provenance and history; can check writes against your rules |
 | [camayoc](https://github.com/scbrown/camayoc) | prepares knowledge and vocabulary for Quipu, with checks before it is admitted |
-| [bobbin](https://github.com/scbrown/bobbin) | searches your code and can include related knowledge from Quipu |
-| [yupana](https://github.com/scbrown/yupana) | shows code impact and can read policies from Quipu to check changes |
+| [quechua](https://github.com/scbrown/quechua) | shared vocabulary and shapes for interoperable knowledge |
+| [chaski](https://github.com/scbrown/chaski) | reacts to graph changes and delivers governed notifications |
+| [bobbin](https://github.com/scbrown/bobbin) | indexes your codebase and injects context from that index and Quipu knowledge |
+| [yupana](https://github.com/scbrown/yupana) | shows code impact and can read policies from Quipu to govern agent actions |
 | [desire-path](https://github.com/scbrown/desire-path) | turns agent mistakes into feature requests; works on its own without Quipu |
 | [seeds](https://github.com/scbrown/seeds) | a work item tracker backed by the Quipu knowledge base |
 | [shantytown](https://github.com/scbrown/shantytown) | runs crews of AI agents on work items, triggered by hand, on a schedule or by events; can share work and memory through Quipu |
+| [rikuy](https://github.com/scbrown/rikuy) | live brief: status, graphs, watches and signed decisions over Quipu |
 | [shuttle](https://github.com/scbrown/shuttle) | runs signed agent workflows and keeps their records in Quipu |
 
 <!-- stack-table:end -->
 
 ## Contributing
 
-```bash
-just book
-just check
-just docs-check
-```
+Run `just check`, `just book` and `just docs-check`.
 
 ## 📜 License
 
-[MIT](LICENSE)
+[Apache-2.0 license](LICENSE).
 
-<p align="center">
-  <img src="assets/footer.svg" width="100%" alt="Animated footer — a woven band of teal, pink, and ochre cords with sliding beads"/>
-</p>
+### Repository pendant provider
+
+Repository pendant builders require explicitly pinned model and tokenizer bytes
+and an embedding dimension. The input contract is in
+[`repository_share_embedding.py`](scripts/repository_share_embedding.py). This
+source plumbing does not enable publication or qualify a provider.

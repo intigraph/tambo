@@ -1,10 +1,10 @@
-//! Tools installed by a system package manager are not CABOODLE's to replace.
+//! Tools installed by a system package manager are not Tambo's to replace.
 //!
 //! A host can install a stack tool from the signed apt repository and keep its
 //! user path (for example `~/.local/bin/sd`) as a symlink to the packaged
 //! `/usr/bin/sd`. Replacing that path would turn the symlink into a regular
 //! file and silently shadow the package: apt would keep upgrading a binary
-//! nobody runs. So before replacing or re-aliasing a binary, CABOODLE resolves
+//! nobody runs. So before replacing or re-aliasing a binary, Tambo resolves
 //! the path and asks dpkg who owns the result. An owned binary is refused with
 //! the package name, and the package manager stays the only updater.
 //!
@@ -66,12 +66,11 @@ fn refuse_if_owned(tool: &str, path: &Path, owner: Option<String>) -> anyhow::Re
 #[cfg(all(test, unix))]
 mod tests {
     use super::*;
-    use std::os::unix::fs::{symlink, PermissionsExt};
+    use std::os::unix::fs::symlink;
 
     fn fake_dpkg_query(dir: &Path, body: &str) -> std::path::PathBuf {
         let path = dir.join("dpkg-query");
-        fs::write(&path, format!("#!/bin/sh\n{body}\n")).unwrap();
-        fs::set_permissions(&path, fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_exec::write_executable(&path, &format!("#!/bin/sh\n{body}\n"));
         path
     }
 

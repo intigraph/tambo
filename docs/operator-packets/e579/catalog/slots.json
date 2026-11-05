@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "uid_min": 51001,
+  "uid_max": 51001,
+  "slots": {
+    "eph-task-000001": {
+      "uid": 51001,
+      "sha256": "e985f7f8850b3c3cc6aaaba71865d426e9472a1737ac8c1a8be945e99e990890"
+    }
+  }
+}

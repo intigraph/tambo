@@ -1,27 +1,27 @@
-# Using caboodle
+# Using Tambo
 
-Caboodle ships a resumable interview and the plan/apply/verify engine with
+Tambo ships a resumable interview and the plan/apply/verify engine with
 adapters for Quipu, Camayoc, Bobbin, Yupana, and Desire Path.
 
 ```bash
-cargo install --git https://github.com/scbrown/caboodle --locked
+cargo install --git https://github.com/intigraph/tambo --locked
 
 # Guided: use, crew themes, and anticipated graph questions are checkpointed.
-caboodle init --guided
+tambo init --guided
 
 # Read-only preflight: every blocker on this host, before anything installs.
-caboodle doctor
+tambo doctor
 
 # Non-interactive: read the same schema from caboodle-intent.toml.
-caboodle plan --profile retrieval --intent caboodle-intent.toml
+tambo plan --profile retrieval --intent caboodle-intent.toml
 
 # Converge the reviewed plan, then prove both tools with isolated round trips.
-caboodle apply
-caboodle verify
-caboodle verify-questions
+tambo apply
+tambo verify
+tambo verify-questions
 
 # Or run both phases together after review.
-caboodle install
+tambo install
 ```
 
 `apply` installs a missing released tool and reads its version back — a
@@ -30,8 +30,8 @@ isolated stores: it proves a marker absent, writes it, and requires the reader
 path to return it. Progress is written atomically to `.caboodle/state.json`, so
 rerunning converges.
 
-If input ends partway through an interview, Caboodle stops without a plan and
-keeps accepted answers in `.caboodle/interview.toml`. Run `caboodle init
+If input ends partway through an interview, Tambo stops without a plan and
+keeps accepted answers in `.caboodle/interview.toml`. Run `tambo init
 --guided` again to resume at the next unanswered question. Invalid answers are
 rejected and never produce a plan.
 
@@ -40,7 +40,7 @@ version and functional checks still run.
 
 `code-intel` adds checksum-pinned Yupana and proves a caller edge in a temporary
 repository with isolated HOME/state. `everything` additionally installs Desire
-Path by building the revision its `v0.3.2` tag names, reads it back from `dp version`, and
+Path by building the revision its `v0.10.0` tag names, reads it back from `dp version`, and
 proves ingest/list against a temporary database. These checks never use the user's normal evidence stores.
 
 `caboodle-intent.toml` names the intended use, zero or more themed crew members,
@@ -52,7 +52,7 @@ This makes “what should the graph answer?” an install acceptance test.
 
 A first install usually has no ontology to ask about yet. Pressing enter at the
 question-count prompt selects the built-in self-test question instead. It seeds one
-`caboodle-verify-roundtrip` node into a scratch store and queries for it, so it
+`tambo-verify-roundtrip` node into a scratch store and queries for it, so it
 passes on a fresh machine. `verify-questions` always runs it against that scratch
 store, even when `--db` points at your own. Replace it with real questions later
 by editing `[intent]` in the plan.
@@ -80,7 +80,7 @@ will actually use. Never put credentials in this file or the generated plan.
 
 ## Review observability before deployment
 
-For every selected tool, CABOODLE emits a versioned contract. Quipu and Bobbin
+For every selected tool, Tambo emits a versioned contract. Quipu and Bobbin
 currently declare `/metrics` and required metric families; tools without an
 exporter remain explicit contracts with an unavailable reason rather than being
 silently omitted. Supply generic Prometheus targets without URL schemes:
@@ -95,8 +95,8 @@ Then render and inspect the artifacts. Rendering never claims the targets were
 scraped or deploys anything:
 
 ```bash
-caboodle render-observability --targets caboodle-observability.toml
-caboodle validate-observability
+tambo render-observability --targets caboodle-observability.toml
+tambo validate-observability
 less caboodle-observability/prometheus.yml
 less caboodle-observability/alerts.yml
 less caboodle-observability/dashboard.json

@@ -1,11 +1,11 @@
-# Roadmap
+# Capabilities and boundaries
 
-- **Phase 0** *(shipped)* — plan/apply/verify engine; Quipu + Bobbin adapters;
-  checksummed release installs; atomic state; clean-machine CI test.
-- **Phase 1** *(shipped)* — LLM-guided interview; `skills/caboodle`; Camayoc
-  bootstrap and first-ingest proof; Shantytown/Creel crew adapters with
-  browser-owned capability contracts; public clean-machine retrieval proof.
-- **Phase 2** *(shipped)* — metrics contracts, generated Prometheus config, starter alerts,
-  one dashboard; yupana + desire-path adapters; the quipu/beads emitters.
-- **Phase 3** — `caboodle upgrade`; per-repo CI keeping conventional verbs
-  tested with releases; expanded crew routing after explicit handoff lands.
+Tambo interviews the operator, writes a reviewable plan, applies selected
+adapters, and verifies installed tools. It preserves resumable state and emits
+redacted evidence through explicit graph operations. See [Using Tambo](using.md)
+and [Reference](reference.md) for the supported commands.
+
+Pack imports stage data; they do not authorize promotion into ROOT. The
+[pendant autoload proposal](pendant-autoload.md) describes a proposal rather than
+an installed default. Runtime changes still require the applicable authority
+and successful verification.

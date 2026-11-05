@@ -25,7 +25,7 @@ fn a_foreign_repository_with_no_allow_entry_is_refused_naming_the_pack() {
         "{message}"
     );
     assert!(message.contains("github.com/someone/else"), "{message}");
-    assert!(message.contains("caboodle packs trust allow"), "{message}");
+    assert!(message.contains("tambo packs trust allow"), "{message}");
 }
 
 #[test]

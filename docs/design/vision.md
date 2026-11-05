@@ -1,12 +1,12 @@
-# Caboodle — vision and initial plan
+# Tambo — vision and initial plan
 
-> The whole kit and caboodle: one LLM-guided wizard that installs the tool corpus,
+> One guided wizard that installs the tool corpus,
 > proves each piece actually works, and wires the lot into Prometheus.
 
 ## Vision
 
-Caboodle is the layer above every tool in the stack. Camayoc ends at knowledge-graph
-bootstrapping; caboodle begins at "I have a fresh machine and I want this stack."
+Tambo is the layer above every tool in the stack. Camayoc ends at knowledge-graph
+bootstrapping; tambo begins at "I have a fresh machine and I want this stack."
 
 It is **AI-installable**: an LLM agent (Claude Code, codex, anything that can run
 shell) can drive the entire install end to end — and a human gets the same path as a
@@ -24,25 +24,25 @@ Three claims separate this from an install script, and each is a proof, not a ba
    negative control (the selftest that corrupts a byte and goes red) so a pass is
    capable of failing.
 3. **Observable** is proven by Prometheus actually scraping each tool's declared
-   exporter — caboodle generates the scrape config, a starter alert pack, and a
+   exporter — tambo generates the scrape config, a starter alert pack, and a
    consolidated dashboard.
 
 This encodes the operating culture the stack was built under: verify by mechanism,
-read back what you wrote, control every zero. Caboodle productizes that discipline.
+read back what you wrote, control every zero. Tambo productizes that discipline.
 
 ## Architecture
 
-**Convention over manifest.** Each tool is caboodle-ready by exposing the house
+**Convention over manifest.** Each tool is tambo-ready by exposing the house
 pattern the repos already follow: conventional CLI verbs (`<tool> selftest`,
 `<tool> health`, `<tool> init`) and/or `just` recipes (`just install`,
-`just verify`) — caboodle discovers and drives these directly instead of parsing a
+`just verify`) — tambo discovers and drives these directly instead of parsing a
 manifest file. Metrics contracts live as camayoc catalogue entries, not per-repo
 config. The engine is a plan → apply → verify loop with a state file recording what
 is installed *and last proven working*; idempotent and resumable — re-running
-converges, a failed step names itself. The caboodle repo itself follows the
+converges, a failed step names itself. The tambo repo itself follows the
 sibling-repo patterns: Rust, justfile, the same CI and release conventions.
 
-**The wizard is an interview, not a UI.** `caboodle init --guided` runs the question
+**The wizard is an interview, not a UI.** `tambo init --guided` runs the question
 flow; in agent hands the same flow is a skill. Output is always the plan file —
 two-phase (plan, then apply) so nothing installs on the strength of a conversation
 alone.
@@ -54,26 +54,25 @@ for parallel agent bursts entirely in the browser, both together, or standalone 
 no crew layer at all, the tools serving a single agent or a human directly. The
 shantytown/creel choice rests on their feature parity, tracked as its own workstream.
 
-**Both harnesses are first-class.** Caboodle supports **Claude Code and codex**
+**Both harnesses are first-class.** Tambo supports **Claude Code and codex**
 equally: either can drive the install (the skill and the interview are
 harness-agnostic — shell + HTTP only), and when a crew is chosen the wizard asks
 which harness each role runs on, emitting the right per-harness configuration.
 
-**Beads is in the corpus.** The tracker (`br` — beads, SQLite + JSONL) installs
-like any other tool: agent memory is part of the kit, and the crew profiles
-depend on it.
+**Seeds is in the corpus.** The work tracker (`sd`) stores work items in Quipu
+and installs like any other tool. Crew profiles use Seeds for work tracking;
+Camayoc's purpose-built memory records provide agent memory.
 
-**Caboodle emits triples/episodes to quipu.** The engine's state transitions —
+**Tambo emits triples/episodes to quipu.** The engine's state transitions —
 installed, verified, upgraded, failed — are emitted as episodes through
 camayoc's ingress discipline, so the graph the box just installed immediately
 knows what the box contains. Bootstrap order handles the chicken-and-egg:
 emissions queue locally until quipu passes its own verify, then flush once.
 
-**And beads emits too.** Bead lifecycle — created, closed, commented — flows to
-quipu as episodes through the same ingress discipline, so the tracker's history
-becomes graph knowledge as it happens instead of by after-the-fact extraction.
-Because `br` is upstream, the emitter ships in the integration layer (a
-post-write hook or JSONL-watcher installed by caboodle), not as a fork patch.
+**Work items are already graph data.** Seeds writes work-item lifecycle changes
+to Quipu. Camayoc projects the metadata needed by stack readers through its
+ingress discipline. Lifecycle storage and knowledge extraction remain separate:
+a work-item update alone does not extract its findings into the ontology.
 
 **Metrics are ontology, not just scrape targets.** Each tool's metrics contract is
 also a camayoc catalogue entry, so "what does this series mean and who owns it"
@@ -81,9 +80,9 @@ lives in the graph the box just installed.
 
 **Two first-class skills** (portable, shell + HTTP only):
 
-- `skills/caboodle` — install, verify, diagnose, upgrade the stack; an agent's
+- `skills/tambo` — install, verify, diagnose, upgrade the stack; an agent's
   entry point to the whole box.
-- `skills/camayoc` (ships with camayoc; caboodle installs it) — bootstrap the
+- `skills/camayoc` (ships with camayoc; tambo installs it) — bootstrap the
   ontology: interview the user about their domain, derive competency questions,
   load the bootstrap ontology plus the right `.pendant`, run a verified first ingest.
 
@@ -91,12 +90,12 @@ lives in the graph the box just installed.
 
 **Phase 0 — skeleton that proves the idea.**
 Repo scaffold; convention adapters for quipu + bobbin (the two with registry
-packages); the plan/apply/verify engine; `caboodle verify` as a standalone command.
+packages); the plan/apply/verify engine; `tambo verify` as a standalone command.
 North-star acceptance from day one: **a clean-machine install test in CI** — nothing
 that only works on one particular network.
 
 **Phase 1 — the wizard and the ontology skill.**
-LLM-guided interview → plan file; `skills/caboodle`; camayoc bootstrap-pack
+LLM-guided interview → plan file; `skills/tambo`; camayoc bootstrap-pack
 integration. First end-to-end demo: fresh VM → interview → working KG + retrieval
 with a verified ingest.
 
@@ -106,7 +105,7 @@ Prometheus scrape config + starter alerts + one consolidated dashboard. Add yupa
 and desire-path adapters.
 
 **Phase 3 — the crew profile and upgrades.**
-The shantytown/creel/both choice; `caboodle upgrade` re-verifies after; each repo's
+The shantytown/creel/both choice; `tambo upgrade` re-verifies after; each repo's
 CI keeps its conventional verbs tested with releases so the box tracks the tools.
 
 ## Per-repo readiness
@@ -123,4 +122,4 @@ The cross-cutting contract every corpus repo adopts:
 7. No environment-specific names in defaults or docs.
 
 Each repo's gaps against this contract are tracked as issues in that repo's own
-lane; caboodle's adapter for a tool doubles as that tool's readiness checklist.
+lane; tambo's adapter for a tool doubles as that tool's readiness checklist.

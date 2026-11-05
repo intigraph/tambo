@@ -1,6 +1,6 @@
 # Configuration reference
 
-Caboodle writes a reviewable TOML plan and a JSON progress file. Use the CLI to
+Tambo writes a reviewable TOML plan and a JSON progress file. Use the CLI to
 create the plan; keep credentials in the environment, never in intent text.
 The plan's schema rejects unknown keys.
 
@@ -79,7 +79,13 @@ The shell release installer also accepts `CABOODLE_VERSION`,
 `CABOODLE_RELEASE_BASE_URL`. The last two select the download authority; keep
 them unset for official releases. These are installer inputs, not plan keys.
 
-## Quipu credentials
+## Quipu credentials (advanced remote mode)
+
+The default `tambo quickstart` uses a local embedded store and needs no token
+or running server. Only explicit `QUIPU_SERVER` or `quipu_mcp` configuration
+selects authenticated remote verification. To return to local mode, unset the
+environment variable and deliberately remove any remote MCP plan configuration.
+
 
 Obtain an accepted credential from the target server administrator through your
 approved secret distribution channel. The administrator activates the shared
@@ -88,8 +94,8 @@ installing a random token does not grant access.
 
 ```sh
 install -d -m 700 "$HOME/.config/quipu" && install -m 400 /secure/issued-token "$HOME/.config/quipu/token"
-caboodle provision-quipu-token --from /secure/issued-token --server https://your-quipu-server.example
-caboodle doctor
+tambo provision-quipu-token --from /secure/issued-token --server https://your-quipu-server.example
+tambo doctor
 ```
 
 `provision-quipu-token` proves the issued file against the authenticated server
@@ -112,7 +118,7 @@ accepted authorization, missing token, rejected token, read-only server, or an
 unknown write path (including no HTTP response). This is authorization evidence,
 not a successful storage commit. Doctor also requires a nonempty canonical file
 with mode `0400` and parent mode `0700`, and an authenticated `/shapes` read
-returning 2xx. `caboodle verify` runs that live credential proof before recording
+returning 2xx. `tambo verify` runs that live credential proof before recording
 Quipu as verified, then exercises installed tools in isolated scratch stores.
 Set `QUIPU_SERVER` to the intended server; without it, verify uses the plan's
 Quipu MCP URL or `http://localhost:3030`. Missing, rejected, or unproven
@@ -122,7 +128,7 @@ credentials leave verification incomplete. Public health is not an auth check.
 
 A Claude Code MCP entry for Quipu that holds only a URL sends no bearer. Reads
 work and every MCP write is refused with `missing_or_invalid_bearer_token`.
-`caboodle plan --quipu-mcp-url <server>` adds a reviewable `[quipu_mcp]` step.
+`tambo plan --quipu-mcp-url <server>` adds a reviewable `[quipu_mcp]` step.
 That step changes your Claude Code configuration, so it is opt-in.
 
 `apply` installs `~/.local/bin/quipu-mcp-headers` (mode 0755). Claude Code runs
@@ -179,16 +185,75 @@ Verify a real edit's session-attributed `guard` metric and advisory output;
 rendered configuration alone does not prove edit coverage. Existing running
 agents pick up changed hooks on their next launch.
 
+## Camayoc memory-file redirect (off by default)
+
+Camayoc's `cy hook memory-redirect` moves writes to Claude memory files
+(`*/.claude/projects/*/memory/*`, every file including `MEMORY.md`) into typed
+camayoc entities. `tambo install` never enables it. Wire it in with
+`scripts/memory-redirect-hook.py`. It needs a camayoc `cy` on PATH that has
+`cy hook memory-redirect`, and it refuses an older one:
+
+```bash
+python3 scripts/memory-redirect-hook.py install --harness claude --mode copy --person person-you
+python3 scripts/memory-redirect-hook.py status  --harness both
+CLAUDE_CODE_OAUTH_TOKEN=... python3 scripts/memory-redirect-hook.py verify --harness claude --live
+python3 scripts/memory-redirect-hook.py uninstall --harness both
+```
+
+| Mode | Effect |
+|---|---|
+| `copy` (default) | The write goes ahead. A background worker records the file as a camayoc entity, queueing it when Quipu is unreachable. The agent never waits on it. |
+| `block` | The write is refused, and the message names the exact `cy record <entity> ...` call to run. |
+
+To change the mode, run `install` again with the other `--mode`. Setting
+`CAMAYOC_MEMORY_REDIRECT=off` in the harness environment switches the hook off
+without editing settings.
+
+- **Claude Code:** a `PreToolUse` group on `Write|Edit|MultiEdit` in
+  `~/.claude/settings.json` (`--claude-settings` picks another file).
+- **Codex:** a `PreToolUse` group on `apply_patch`, Codex's native file edits,
+  appended to `$CODEX_HOME/config.toml` (`--codex-config`) between marker
+  comments. Your comments and key order survive. Codex runs a new hook only
+  after you trust it, so approve it at the next launch. It also needs a Codex
+  build that emits native `apply_patch` PreToolUse events, as the Yupana edit
+  hook does.
+
+Install needs a person to record rulings and preferences under. It takes
+`--person`, then `$CAMAYOC_PERSON`, then `person` under `[memory]` in
+`~/.config/camayoc/config.toml`. Without a person, every directive, decision
+and preference would be refused, so install refuses unless you pass
+`--no-person`.
+
+Install replaces only its own entry. It keeps the file's indent and non-ASCII
+text, and it saves a one-time copy at `<file>.before-memory-redirect`. The
+hook finds `cy` when it runs: first at the path found on PATH at install time
+(the shim or symlink, never its target, so an upgrade keeps working), then on
+the hook's PATH. With no `cy` at all, the hook exits 0, so an uninstalled
+camayoc never breaks the agent.
+
+`verify` reads the entry back. It then runs the configured command on a
+synthetic memory write in a scratch directory, with
+`CAMAYOC_REDIRECT_VERIFY` set, so the hook maps and prechecks the probe but
+never contacts a store. Block mode must exit 2 naming a `cy record` call. Copy
+mode must return silently, and its background worker must log the probe.
+`--live` (Claude only) also runs one `claude -p` session in a scratch `HOME`
+and `CLAUDE_CONFIG_DIR`. Its only settings are this hook in block mode, and it
+gets a minimal environment. It passes when Claude Code itself invokes the hook,
+the memory file is not written, and nothing lands in the real `~/.claude`. A
+scratch `HOME` has no login, so set `CLAUDE_CODE_OAUTH_TOKEN` (from
+`claude setup-token`) or `ANTHROPIC_API_KEY` first. The Codex check does not
+launch Codex itself.
+
 ## Externally owned Quipu
 
 Set `external_quipu = true` in a reviewed plan when another mechanism owns
-Quipu installation. The default is false. Caboodle resolves `quipu` and
+Quipu installation. The default is false. Tambo resolves `quipu` and
 `quipu-server` from PATH, reads both versions, and records their canonical paths
 with the identity. It never installs, converges, or release-updates these files.
 Missing executables and incompatible versions fail; external ownership does not
 waive the isolated write/read round trip or hook registration checks. Other tools
 retain their managed-install and shadow checks. Build flavors are incompatible
-with external ownership because Caboodle does not build that installation.
+with external ownership because Tambo does not build that installation.
 
 Verify uses the resolved client for both the entity and vocabulary round trips.
 An external source build has to support those contracts; a version banner alone

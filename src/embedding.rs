@@ -170,7 +170,7 @@ where
 ///
 /// This proves the bytes on disk are still the reviewed bytes. It does NOT
 /// prove an embed-and-search round-trip: the installed Quipu exposes no
-/// reviewed embeddings contract for caboodle to drive yet, and a proof that
+/// reviewed embeddings contract for Tambo to drive yet, and a proof that
 /// cannot fail would be banner inflation. The book states exactly this split.
 pub fn verify(model: &EmbeddingModel) -> Result<()> {
     model.validate()?;

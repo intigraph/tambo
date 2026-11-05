@@ -1,12 +1,14 @@
 <!--
-  caboodle stack README template: see README-STANDARD.md for the rules.
+  Shared hero art: thread-workshop/THEME.md; use the tool-specific card.
+  Embed the reproducible terminal demo near first success, with transcript and recipe.
+  Tambo stack README template: see README-STANDARD.md for the rules.
   Replace every ALL-CAPS placeholder. Delete a section only if the tool truly
   lacks it; never rename or reorder a heading.
   Budget: first install command within 60 lines, whole file under 250.
 -->
 
 <p align="center">
-  <img src="assets/header.svg" width="100%" alt="ALT TEXT FOR THE BANNER"/>
+  <img src="assets/header.png" width="704" alt="TOOLNAME: DESCRIBE ITS THREAD WORKSHOP MOTIF"/>
 </p>
 
 <p align="center">
@@ -20,9 +22,9 @@
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"/></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache-2.0"/></a>
   <a href="https://github.com/scbrown/TOOLNAME/actions/workflows/ci.yml"><img src="https://github.com/scbrown/TOOLNAME/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
-  <a href="https://github.com/scbrown/caboodle"><img src="https://img.shields.io/badge/stack-quipu-8B5E3C.svg" alt="Part of the caboodle stack"/></a>
+  <a href="https://github.com/intigraph/tambo"><img src="https://img.shields.io/badge/stack-quipu-8B5E3C.svg" alt="Part of the Tambo stack"/></a>
 </p>
 
 **TOOLNAME IS A WHAT-IT-IS FOR WHO-IT-IS-FOR. It comes as a CLI, an MCP server
@@ -115,7 +117,7 @@ PREREQUISITES, ONE LINE EACH.
 
 ## 🧺 The stack
 
-Caboodle installs these together and proves each one works; every tool also stands alone.
+Tambo installs these together and proves each one works; every tool also stands alone.
 
 <!-- stack-table:start -->
 
@@ -126,14 +128,17 @@ when.
 
 | tool | what it gives your agents |
 |---|---|
-| [caboodle](https://github.com/scbrown/caboodle) | 🧰 Agent Platform Toolkit - installs and configures the quipu stack |
+| [tambo](https://github.com/intigraph/tambo) | 🧰 Agent Platform Toolkit - installs and configures the quipu stack |
 | [quipu](https://github.com/scbrown/quipu) | stores shared facts with provenance and history; can check writes against your rules |
 | [camayoc](https://github.com/scbrown/camayoc) | prepares knowledge and vocabulary for Quipu, with checks before it is admitted |
-| [bobbin](https://github.com/scbrown/bobbin) | searches your code and can include related knowledge from Quipu |
-| [yupana](https://github.com/scbrown/yupana) | shows code impact and can read policies from Quipu to check changes |
+| [quechua](https://github.com/scbrown/quechua) | shared vocabulary and shapes for interoperable knowledge |
+| [chaski](https://github.com/scbrown/chaski) | reacts to graph changes and delivers governed notifications |
+| [bobbin](https://github.com/scbrown/bobbin) | indexes your codebase and injects context from that index and Quipu knowledge |
+| [yupana](https://github.com/scbrown/yupana) | shows code impact and can read policies from Quipu to govern agent actions |
 | [desire-path](https://github.com/scbrown/desire-path) | turns agent mistakes into feature requests; works on its own without Quipu |
 | [seeds](https://github.com/scbrown/seeds) | a work item tracker backed by the Quipu knowledge base |
 | [shantytown](https://github.com/scbrown/shantytown) | runs crews of AI agents on work items, triggered by hand, on a schedule or by events; can share work and memory through Quipu |
+| [rikuy](https://github.com/scbrown/rikuy) | live brief: status, graphs, watches and signed decisions over Quipu |
 | [shuttle](https://github.com/scbrown/shuttle) | runs signed agent workflows and keeps their records in Quipu |
 
 <!-- stack-table:end -->
@@ -148,7 +153,7 @@ just ci      # what CI runs
 
 ## 📜 License
 
-[MIT](LICENSE)
+[Apache-2.0](LICENSE)
 
 <p align="center">
   <img src="assets/footer.svg" width="100%" alt="ALT TEXT FOR THE FOOTER"/>

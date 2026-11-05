@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 //! The one adapter for every data-declared stack member (aegis-1i5h1j C1).
 //!
 //! Install fetches the member's release asset for this host and accepts it only
@@ -91,7 +93,10 @@ fn identify_via(path: &Path, program: &Program, wrapper: Option<&Path>) -> Resul
         String::from_utf8_lossy(&out.stdout),
         String::from_utf8_lossy(&out.stderr)
     );
-    if !text.contains(&program.identity_contains) {
+    if !std::iter::once(&program.identity_contains)
+        .chain(&program.identity_alternatives)
+        .any(|identity| text.contains(identity))
+    {
         bail!(
             "a different `{}` is at {} (its identity does not contain {:?})",
             program.name,
@@ -143,9 +148,9 @@ fn refuse_foreign_program(manifest: &Manifest) -> Result<()> {
 /// A python-wheel member's console script whose venv is gone, so it cannot run
 /// to prove its identity (aegis-z1u9s0). Seen on CI: a cache restored
 /// `$CARGO_HOME/bin` but not the venvs under `~/.local/share`, and the A2 guard
-/// then refused to overwrite caboodle's own launcher. Ownership is proved, not
+/// then refused to overwrite Tambo's own launcher. Ownership is proved, not
 /// assumed: the script's interpreter (a `#!` line, or pip's `/bin/sh`
-/// trampoline for a long path) must lie inside this member's caboodle-owned
+/// trampoline for a long path) must lie inside this member's Tambo-owned
 /// venv directory and must not exist. Anything else unrunnable stays refused.
 /// Returns the missing interpreter.
 fn orphaned_own_launcher(manifest: &Manifest, script: &Path) -> Option<PathBuf> {
@@ -298,6 +303,25 @@ impl Adapter for ManifestAdapter {
         format!("{} {}", self.0.name, self.0.version)
     }
 
+    fn package_adapter(&self) -> Result<Option<Box<dyn Adapter>>> {
+        let resolved = self
+            .0
+            .programs
+            .iter()
+            .map(|program| {
+                let path = on_path(&program.name).with_context(|| {
+                    format!("package {} requires {} on PATH", self.0.name, program.name)
+                })?;
+                identify(&path, program)?;
+                Ok((program.name.clone(), path))
+            })
+            .collect::<Result<Vec<_>>>()?;
+        Ok(Some(Box::new(PackageManifestAdapter {
+            manifest: self.0,
+            resolved,
+        })))
+    }
+
     fn install(&self) -> Result<()> {
         let m = self.0;
         refuse_foreign_program(m)?;
@@ -345,6 +369,49 @@ impl Adapter for ManifestAdapter {
             .map(|p| Ok((p.name.as_str(), resolve(p)?)))
             .collect::<Result<Vec<_>>>()?;
         verify_resolved(m, &resolved)
+    }
+}
+
+/// Package read-back uses the exact PATH launchers selected after delivery.
+/// Keep the launcher path (rather than its canonical target) for wrappers that
+/// depend on argv[0] or their installation directory.
+struct PackageManifestAdapter {
+    manifest: &'static Manifest,
+    resolved: Vec<(String, PathBuf)>,
+}
+
+impl Adapter for PackageManifestAdapter {
+    fn name(&self) -> ToolName {
+        ToolName::Member(self.manifest.name.as_str())
+    }
+    fn desired_version(&self) -> String {
+        format!("{} {}", self.manifest.name, self.manifest.version)
+    }
+    fn install(&self) -> Result<()> {
+        bail!("package installation belongs to the package manager")
+    }
+    fn version(&self) -> Result<String> {
+        let out = checked(
+            self.resolved[0].1.as_os_str(),
+            self.manifest.version_argv.iter().map(String::as_str),
+            None,
+        )?;
+        let version = String::from_utf8_lossy(&out.stdout).trim().to_owned();
+        if version.is_empty() {
+            bail!("{} returned no package version", self.manifest.name);
+        }
+        Ok(version)
+    }
+    fn is_current(&self, installed: &str) -> bool {
+        reports_version(installed, &self.manifest.version)
+    }
+    fn verify(&self) -> Result<()> {
+        let resolved = self
+            .resolved
+            .iter()
+            .map(|(name, path)| (name.as_str(), path.clone()))
+            .collect::<Vec<_>>();
+        verify_resolved(self.manifest, &resolved)
     }
 }
 
@@ -437,7 +504,7 @@ fn reports_version(line: &str, version: &str) -> bool {
 /// This EXECUTES an unreviewed release. `wrapper`, when given, is run as
 /// `<wrapper> <program> <args...>` for every such execution, so the caller can
 /// confine it (the unattended bump cron uses a no-network, no-home sandbox,
-/// aegis-uy26l7). caboodle itself stays platform-neutral.
+/// aegis-uy26l7). Tambo itself stays platform-neutral.
 pub(crate) fn prove_release(
     manifest: &Manifest,
     archive: &Path,
@@ -477,12 +544,12 @@ pub(crate) fn prove_release(
     Ok(())
 }
 
-/// Where a python-wheel member's venv goes: caboodle-owned and UNIQUE per
+/// Where a python-wheel member's venv goes: Tambo-owned and UNIQUE per
 /// install (`<version>-<nanos>`), never reused. A venv cannot be moved (its
 /// scripts and pyvenv.cfg hold absolute paths), so a reinstall builds beside the
 /// live one and the swap is the atomic replacement of the console script. A
 /// failed pip leaves the live venv, and the script pointing into it, untouched
-/// (dearing, caboodle#59). Superseded venvs are left for rollback.
+/// (dearing, Tambo#59). Superseded venvs are left for rollback.
 fn venv_root(manifest: &Manifest) -> Result<PathBuf> {
     let home = env::var_os("HOME").context("HOME is required for a python-wheel member")?;
     let nanos = std::time::SystemTime::now()
@@ -782,14 +849,41 @@ mod release_verification_tests {
             .join("tests/fixtures/releases/fixture-demo-v0.1.0-x86_64-unknown-linux-gnu.tar.gz");
         let unpack = materialize(&manifest, &archive, &root.path().join("unpack")).unwrap();
         verify_staged_member(&manifest, &unpack).unwrap();
+        let expected_identity = manifest.programs[0].identity_contains.clone();
         manifest.programs[0].identity_contains = "foreign identity".to_owned();
         assert!(verify_staged_member(&manifest, &unpack).is_err());
-        manifest.programs[0].identity_contains =
-            "fixture-demo is the caboodle fixture stack member".to_owned();
+        manifest.programs[0].identity_contains = expected_identity;
+        verify_staged_member(&manifest, &unpack).unwrap();
         manifest.version = "0.1.1".to_owned();
         assert!(verify_staged_member(&manifest, &unpack).is_err());
         manifest.version = "0.1.0".to_owned();
         manifest.verify[2].present = Some("missing-positive-control".to_owned());
         assert!(verify_staged_member(&manifest, &unpack).is_err());
+    }
+}
+
+#[cfg(all(test, unix))]
+mod seeds_identity_tests {
+    use super::*;
+
+    #[test]
+    fn seeds_identity_accepts_both_editions_and_refuses_foreign_sd() {
+        let manifest = Manifest::parse(include_str!("../../members/seeds.toml")).unwrap();
+        let program = &manifest.programs[0];
+        let root = tempfile::tempdir().unwrap();
+        let executable = root.path().join("sd");
+        for (text, accepted) in [
+            ("seeds is the beads-compatible tracker", true),
+            ("seeds is the work-item tracker for the quipu stack", true),
+            ("sd 1.0.0", false),
+            ("sd is an intuitive find and replace CLI", false),
+            ("seeds is a different program", false),
+        ] {
+            crate::test_exec::write_executable(
+                &executable,
+                &format!("#!/bin/sh\nprintf '%s\\n' '{text}'\n"),
+            );
+            assert_eq!(identify(&executable, program).is_ok(), accepted, "{text}");
+        }
     }
 }

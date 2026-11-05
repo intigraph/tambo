@@ -1,0 +1,11 @@
+Script started on 2026-11-05 01:59:04-05:00 [COMMAND="stty -onlcr && python3 -B docs/demos/controller-runtime/demo.py" <not executed on terminal>]
+Target: retained provisioning-only fixture -> candidate source, no native execution
+BASE manifest SHA256: e985f7f8850b3c3cc6aaaba71865d426e9472a1737ac8c1a8be945e99e990890
+BASE missing launch fields: 8
+CANDIDATE missing launch fields: 0
+Original eight identity values retained: True
+Original eight identity serialized bytes retained: True
+NEGATIVE identity edit: REFUSED: add exactly the eight launch fields; no identity edits
+Native accounts, CA, keys, runtime apply and lifecycle: UNPROVED; readiness=false
+
+Script done on 2026-11-05 01:59:04-05:00 [COMMAND_EXIT_CODE="0"]

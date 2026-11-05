@@ -1,0 +1,62 @@
+[
+  {
+    "tool": "quipu",
+    "caption": "KNOWLEDGE / HISTORY",
+    "motif": "Knotted cords hold connected facts."
+  },
+  {
+    "tool": "seeds",
+    "caption": "WORK / MOMENTUM",
+    "motif": "A sprout grows from an ordered work card."
+  },
+  {
+    "tool": "shantytown",
+    "caption": "CREWS / COORDINATION",
+    "motif": "Four workshop houses share a courtyard."
+  },
+  {
+    "tool": "bobbin",
+    "caption": "CODE / CONTEXT",
+    "motif": "A thread spool gathers lines into context."
+  },
+  {
+    "tool": "yupana",
+    "caption": "IMPACT / POLICY",
+    "motif": "A counting board makes relationships visible."
+  },
+  {
+    "tool": "camayoc",
+    "caption": "INGRESS / CHECKS",
+    "motif": "Loose strands pass through a checked gate."
+  },
+  {
+    "tool": "quechua",
+    "caption": "WORDS / SHAPES",
+    "motif": "An open vocabulary book shares matching marks."
+  },
+  {
+    "tool": "chaski",
+    "caption": "EVENTS / DELIVERY",
+    "motif": "A winged envelope carries an event onward."
+  },
+  {
+    "tool": "shuttle",
+    "caption": "SIGNED / WORKFLOWS",
+    "motif": "A wooden shuttle crosses ordered warp threads."
+  },
+  {
+    "tool": "rikuy",
+    "caption": "STATUS / DECISIONS",
+    "motif": "An eye-shaped instrument looks across status panes."
+  },
+  {
+    "tool": "desire-path",
+    "caption": "FRICTION / DISCOVERY",
+    "motif": "A wandering stone path finds a useful route."
+  },
+  {
+    "tool": "tambo",
+    "caption": "INSTALL / CONFIGURE",
+    "motif": "A toolkit brings stack components together."
+  }
+]

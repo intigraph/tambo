@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 //! Register Quipu's MCP endpoint with Claude Code without putting the secret in
 //! any configuration file.
 //!
@@ -29,8 +31,8 @@ const HELPER_NAME: &str = "quipu-mcp-headers";
 /// replaced by `helper_script` with the plan's token file (a path, not the
 /// secret) or ~/.config/quipu/token.
 const HELPER_TEMPLATE: &str = r#"#!/bin/sh
-# Installed by caboodle. Prints Quipu's MCP Authorization header at connect time.
-# Token precedence matches caboodle: QUIPU_AUTH_TOKEN, then QUIPU_AUTH_TOKEN_FILE,
+# Installed by Tambo. Prints Quipu's MCP Authorization header at connect time.
+# Token precedence matches Tambo: QUIPU_AUTH_TOKEN, then QUIPU_AUTH_TOKEN_FILE,
 # then the default file below. The secret is never stored in this file.
 set -u
 token=${QUIPU_AUTH_TOKEN:-}
@@ -350,7 +352,7 @@ pub fn classify(body: &str) -> ProbeAnswer {
 
 /// Invalid Turtle: Quipu checks the bearer first, then fails to parse, so an
 /// accepted credential writes nothing.
-const PROBE: &str = r#"{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"quipu_knot","arguments":{"turtle":"caboodle auth probe: not turtle <<<"}}}"#;
+const PROBE: &str = r#"{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"quipu_knot","arguments":{"turtle":"tambo auth probe: not turtle <<<"}}}"#;
 
 fn post(endpoint: &str, token: Option<&str>) -> Result<String> {
     let body_file = tempfile::NamedTempFile::new().context("create MCP probe output file")?;
@@ -439,12 +441,12 @@ pub fn verify(url: &str) -> Result<Vec<String>> {
     let config = read_claude_config()?;
     let entries = quipu_entries(&config);
     match entries.iter().find(|(scope, _)| scope == "user scope") {
-        None => bail!("FAIL: no user-scope quipu MCP entry is registered; run `caboodle apply`"),
+        None => bail!("FAIL: no user-scope quipu MCP entry is registered; run `tambo apply`"),
         Some((_, entry)) if entry.get("headersHelper").is_none() => bail!(
-            "FAIL: the user-scope quipu MCP entry has no headersHelper, so MCP writes carry no bearer; run `caboodle apply`"
+            "FAIL: the user-scope quipu MCP entry has no headersHelper, so MCP writes carry no bearer; run `tambo apply`"
         ),
         Some((_, entry)) if entry != &desired => bail!(
-            "FAIL: the user-scope quipu MCP entry differs from the plan (expected {desired}, found {}); run `caboodle apply`",
+            "FAIL: the user-scope quipu MCP entry differs from the plan (expected {desired}, found {}); run `tambo apply`",
             redact(entry)
         ),
         Some(_) => {}

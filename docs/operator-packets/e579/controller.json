@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "platform": "macos",
+  "uid": 51000,
+  "gid": 51000,
+  "username": "_stctl",
+  "home": "/var/lib/shantytown/controllers/_stctl"
+}

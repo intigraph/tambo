@@ -1,6 +1,10 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 use std::path::PathBuf;
 
 use anyhow::Result;
+#[cfg(unix)]
+use caboodle::harness_hooks;
 use caboodle::{
     crew::CrewEvidence,
     doctor,
@@ -28,12 +32,100 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Render or separately install the exact per-slot helper permission fragment
+    #[cfg(unix)]
+    JobPolicy {
+        #[arg(long)]
+        directory: PathBuf,
+        #[arg(long)]
+        apply: bool,
+    },
+    /// Prepare public own-job metadata only, from the protected host inventory
+    #[cfg(unix)]
+    JobMetadata {
+        #[arg(long)]
+        directory: PathBuf,
+        #[arg(long)]
+        apply: bool,
+    },
+    /// Inspect or separately apply one pinned immutable job runtime artifact
+    #[cfg(unix)]
+    JobRuntime {
+        #[arg(long)]
+        directory: PathBuf,
+        #[arg(long)]
+        manifest_sha256: String,
+        #[arg(long)]
+        apply: bool,
+    },
+    /// Review protected per-job accounts; apply only a separately admitted macOS host inventory
+    #[cfg(unix)]
+    JobSlots {
+        #[arg(long)]
+        directory: PathBuf,
+        /// Create only the exact reviewed accounts; requires native macOS and root-owned input
+        #[arg(long)]
+        apply: bool,
+    },
+    /// Review memory setup or inspect actual firing evidence (never disables auto-memory)
+    #[cfg(unix)]
+    Memory {
+        #[command(subcommand)]
+        command: MemoryCommand,
+    },
+    /// Print the agent primer and each installed stack tool's `prime --brief`
+    Prime {
+        /// At most 10 lines: version, stack tools found, which have prime
+        #[arg(long)]
+        brief: bool,
+        /// One object in the stack prime contract's common shape
+        #[arg(long)]
+        json: bool,
+        /// Skip the live part; print only the static primer
+        #[arg(long = "static")]
+        offline: bool,
+        /// Print one primer section, by case-insensitive heading prefix
+        #[arg(long)]
+        section: Option<String>,
+        /// Per-tool timeout for `<tool> prime --brief`, in milliseconds
+        #[arg(long, default_value_t = 1000, hide = true)]
+        timeout_ms: u64,
+        /// Rikuy static-site URL; otherwise RIKUY_URL. Reads only source.json.
+        #[arg(long)]
+        rikuy_url: Option<String>,
+    },
+    /// Install the local single-user stack with no interview, server, or token
+    Quickstart {
+        #[arg(long, default_value = "caboodle-plan.toml")]
+        plan: PathBuf,
+        #[arg(long, default_value = ".caboodle/state.json")]
+        state: PathBuf,
+        /// Use tools already installed by an external package manager
+        #[arg(long)]
+        skip_install: bool,
+        /// Do not add the query-first hooks to Claude Code and Codex
+        #[arg(long)]
+        no_agent_hooks: bool,
+    },
     /// Install an administrator-issued Quipu token after proving acceptance; never rotate
     ProvisionQuipuToken {
         #[arg(long = "from")]
         source: PathBuf,
         #[arg(long)]
         server: String,
+    },
+    /// Install, verify or remove the query-first hooks for Claude Code and Codex
+    #[cfg(unix)]
+    Hooks {
+        #[command(subcommand)]
+        command: HooksCommand,
+    },
+    /// Internal harness hook entry points
+    #[cfg(unix)]
+    #[command(hide = true)]
+    Hook {
+        #[command(subcommand)]
+        command: HookCommand,
     },
     /// Report, without changing anything, what would stop an install on this host
     Doctor {
@@ -53,6 +145,21 @@ enum Commands {
         output: PathBuf,
         #[arg(long, default_value = ".caboodle/interview.toml")]
         session: PathBuf,
+        /// Opt in to repository pendant sync hooks; retains existing hooks
+        #[arg(long, conflicts_with = "guided")]
+        pack_hooks: bool,
+        /// Select project shares by their native path scope in installed hooks
+        #[arg(long, requires = "pack_hooks")]
+        monorepo: bool,
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        /// Operator-controlled shape-authority pendant for local composition
+        #[arg(long, requires = "pack_hooks")]
+        shapes_from: Option<PathBuf>,
+        #[arg(long, requires = "pack_hooks")]
+        db: Option<PathBuf>,
+        #[arg(long, requires = "pack_hooks")]
+        trust_file: Option<PathBuf>,
     },
     /// Write a reviewable install plan without changing the machine
     Plan {
@@ -134,8 +241,11 @@ enum Commands {
         /// Apply this plan host profile (e.g. exclude crew a different lane owns)
         #[arg(long)]
         host_profile: Option<String>,
+        /// Do not add the query-first hooks to Claude Code and Codex
+        #[arg(long)]
+        no_agent_hooks: bool,
     },
-    /// Report drift from the releases reviewed by this Caboodle build
+    /// Report drift from the releases reviewed by this Tambo build
     CheckUpdates {
         #[arg(short, long, default_value = "caboodle-plan.toml")]
         plan: PathBuf,
@@ -294,6 +404,39 @@ enum Commands {
 
 #[derive(Subcommand)]
 enum PacksCommand {
+    /// Print the native CONSTRUCT path scope used for one derived project share
+    ProjectScope {
+        /// Read CODEOWNERS from this checkout and attach ownership in the scope
+        #[arg(long, requires_all = ["ownership_predicate", "db"])]
+        repo: Option<PathBuf>,
+        /// Existing producer store; owner resources must already be registered
+        #[arg(long, requires = "repo")]
+        db: Option<PathBuf>,
+        /// Existing RDF ownership predicate, supplied by the producer's schema
+        #[arg(long, requires = "repo")]
+        ownership_predicate: Option<String>,
+        #[arg(long)]
+        graph: String,
+        #[arg(long)]
+        path_predicate: String,
+        #[arg(long)]
+        prefix: String,
+    },
+    /// Discover trusted .quipu/packs/*.pendant.tar.gz and update local CURRENT
+    Sync {
+        /// Exclude the parent and load only derived projects present in the checkout
+        #[arg(long)]
+        monorepo: bool,
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        #[arg(long)]
+        db: Option<PathBuf>,
+        /// Trusted local authority pendant, never chosen from repository data
+        #[arg(long)]
+        shapes_from: Option<PathBuf>,
+        #[arg(long)]
+        trust_file: Option<PathBuf>,
+    },
     /// Which packs and pointer endpoints may load (~/.config/caboodle/pack-trust.toml)
     Trust {
         /// Trust file to read and write instead of the default
@@ -321,6 +464,13 @@ enum TrustCommand {
         endpoint: String,
         #[arg(long)]
         note: Option<String>,
+    },
+    /// Decide one pointer endpoint: exit 0 to federate, 3 refused
+    CheckEndpoint {
+        /// The declaring repository's git remote URL
+        remote: String,
+        /// The exact endpoint URL
+        endpoint: String,
     },
     /// Print the trust file
     List,
@@ -417,10 +567,311 @@ fn update_release_tool(value: &str) -> Result<String, String> {
     }
 }
 
+#[cfg(unix)]
+#[derive(Subcommand)]
+enum HooksCommand {
+    /// Add the query-first hooks to ~/.claude/settings.json and ~/.codex/config.toml
+    Install {
+        /// Plan whose local Quipu store the directive names
+        #[arg(short, long, default_value = "caboodle-plan.toml")]
+        plan: PathBuf,
+    },
+    /// Report whether each harness has working query-first hooks
+    Verify,
+    /// Remove the hooks; restore the exact prior file when nothing else changed
+    Uninstall,
+}
+
+#[cfg(unix)]
+#[derive(Subcommand)]
+enum HookCommand {
+    /// Print the query-first directive and count the firing (always exits 0)
+    QueryFirst {
+        #[arg(long, value_parser = ["claude", "codex"])]
+        harness: String,
+        #[arg(long, value_parser = ["SessionStart", "UserPromptSubmit"])]
+        event: String,
+    },
+}
+
+#[cfg(unix)]
+#[derive(Subcommand)]
+enum MemoryCommand {
+    /// Prepare private reviewed edits and producer-generated skills; no live writes
+    Plan {
+        #[arg(long)]
+        root: PathBuf,
+        #[arg(long)]
+        bobbin_config: PathBuf,
+        #[arg(long)]
+        person: String,
+        #[arg(long)]
+        issuer_name: Option<String>,
+        /// Preserve file writes by default; blocking requires an explicit choice
+        #[arg(long, value_enum, default_value_t = caboodle::agent_memory::RedirectMode::Copy)]
+        redirect_mode: caboodle::agent_memory::RedirectMode,
+        #[arg(long)]
+        camayoc_source: PathBuf,
+        #[arg(long)]
+        claude_home: Option<PathBuf>,
+        #[arg(long)]
+        codex_home: Option<PathBuf>,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Install a reviewed memory setup through the existing settings owner
+    Apply {
+        #[arg(long)]
+        plan: PathBuf,
+    },
+    /// Restore only unchanged files and bundles owned by this plan
+    Restore {
+        #[arg(long)]
+        plan: PathBuf,
+    },
+    /// Check current configuration, generated tools and actual hook firing
+    Verify {
+        #[arg(long)]
+        plan: PathBuf,
+    },
+    /// Refuse disabling auto-memory until all rollout acceptance gates are proven
+    DisableAutoMemory {
+        #[arg(long)]
+        plan: PathBuf,
+    },
+    /// Internal harness hook: delegate to Camayoc and record metadata-only evidence
+    #[command(hide = true)]
+    Hook {
+        #[arg(long)]
+        plan: PathBuf,
+        #[arg(long, value_parser=["claude","codex"])]
+        harness: String,
+        #[arg(long)]
+        event: String,
+    },
+    /// Read a matching successful firing receipt (one Unix timestamp)
+    #[command(hide = true)]
+    Evidence {
+        #[arg(long)]
+        plan: PathBuf,
+        #[arg(long, value_parser=["claude","codex"])]
+        harness: String,
+        #[arg(long)]
+        event: String,
+    },
+}
+
 fn main() -> Result<()> {
     match Cli::parse().command {
+        #[cfg(unix)]
+        Commands::JobPolicy { directory, apply } => {
+            if apply {
+                println!(
+                    "{}",
+                    serde_json::json!({"changed":caboodle::job_slots::apply_policy(&directory)?})
+                );
+            } else {
+                print!("{}", caboodle::job_slots::sudoers(&directory)?);
+            }
+        }
+        #[cfg(unix)]
+        Commands::JobMetadata { directory, apply } => {
+            if apply {
+                println!(
+                    "{}",
+                    serde_json::json!({"changed":caboodle::job_slots::prepare_metadata(&directory)?})
+                );
+            } else {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&caboodle::job_slots::load(&directory)?)?
+                );
+            }
+        }
+        #[cfg(unix)]
+        Commands::JobRuntime {
+            directory,
+            manifest_sha256,
+            apply,
+        } => {
+            let plan = if apply {
+                caboodle::job_runtime::apply(&directory, &manifest_sha256)?
+            } else {
+                caboodle::job_runtime::preview(&directory, &manifest_sha256)?
+            };
+            println!("{}", serde_json::to_string_pretty(&plan)?);
+        }
+        #[cfg(unix)]
+        Commands::JobSlots { directory, apply } => {
+            let plan = if apply {
+                caboodle::job_slots::apply(&directory)?
+            } else {
+                caboodle::job_slots::load(&directory)?
+            };
+            println!("{}", serde_json::to_string_pretty(&plan)?);
+        }
+        #[cfg(unix)]
+        Commands::Memory { command } => {
+            use caboodle::agent_memory::{self, hooks, lifecycle};
+            let mut runner = lifecycle::System;
+            match command {
+                MemoryCommand::Plan {
+                    root,
+                    bobbin_config,
+                    person,
+                    issuer_name,
+                    redirect_mode,
+                    camayoc_source,
+                    claude_home,
+                    codex_home,
+                    output,
+                } => {
+                    let home = std::env::var_os("HOME").map(PathBuf::from);
+                    let claude = claude_home
+                        .or_else(|| home.as_ref().map(|p| p.join(".claude")))
+                        .ok_or_else(|| anyhow::anyhow!("HOME or --claude-home required"))?;
+                    let codex = codex_home
+                        .or_else(|| std::env::var_os("CODEX_HOME").map(PathBuf::from))
+                        .or_else(|| home.as_ref().map(|p| p.join(".codex")))
+                        .ok_or_else(|| anyhow::anyhow!("HOME or --codex-home required"))?;
+                    lifecycle::create(
+                        lifecycle::Create {
+                            root: &root,
+                            bobbin: &bobbin_config,
+                            person: &person,
+                            output: &output,
+                            source: &camayoc_source,
+                            claude_home: &claude,
+                            codex_home: &codex,
+                            issuer_name: issuer_name.as_deref(),
+                            redirect_mode,
+                        },
+                        &mut runner,
+                    )?;
+                    println!(
+                        "memory plan: {} (private; review plan.json before applying)",
+                        output.display()
+                    );
+                }
+                MemoryCommand::Apply { plan } => {
+                    lifecycle::apply(&plan, &mut runner)?;
+                    println!("memory setup applied; restart sessions and run memory verify; auto-memory unchanged");
+                }
+                MemoryCommand::Restore { plan } => {
+                    lifecycle::restore(&plan, &mut runner)?;
+                    println!("memory setup restored; restart sessions to load restored settings");
+                }
+                MemoryCommand::Verify { plan } => {
+                    let report = agent_memory::verify(&plan, &mut runner)?;
+                    println!("{}", serde_json::to_string_pretty(&report)?);
+                    if report["hook_setup_status"] != "verified" {
+                        anyhow::bail!("memory setup firing/configuration is not verified");
+                    }
+                }
+                MemoryCommand::DisableAutoMemory { plan } => {
+                    agent_memory::disable_auto_memory(&plan, &mut runner)?
+                }
+                MemoryCommand::Hook {
+                    plan,
+                    harness,
+                    event,
+                } => std::process::exit(hooks::run(&plan, &harness, &event)),
+                MemoryCommand::Evidence {
+                    plan,
+                    harness,
+                    event,
+                } => println!("{}", hooks::evidence(&plan, &harness, &event)?),
+            }
+        }
+        Commands::Prime {
+            brief,
+            json,
+            offline,
+            section,
+            timeout_ms,
+            rikuy_url,
+        } => {
+            let opts = caboodle::prime::Options {
+                brief,
+                json,
+                offline,
+                section: section.as_deref(),
+                timeout: std::time::Duration::from_millis(timeout_ms),
+                rikuy_url: rikuy_url.as_deref(),
+            };
+            match caboodle::prime::run(&opts) {
+                Ok(text) => print!("{text}"),
+                Err(e) => {
+                    eprintln!("{e}");
+                    std::process::exit(2);
+                }
+            }
+        }
+        Commands::Quickstart {
+            plan,
+            state,
+            skip_install,
+            no_agent_hooks,
+        } => {
+            let selected = if plan.exists() {
+                Plan::read(&plan)?
+            } else {
+                let mut selected = Plan::for_profile(Profile::Retrieval);
+                selected.quipu_db = Some(PathBuf::from(".caboodle/quipu.db"));
+                selected.write(&plan)?;
+                selected
+            };
+            println!("plan: {}", plan.display());
+            engine::apply(&selected, &state, skip_install)?;
+            engine::verify(&selected, &state, &CrewEvidence::default())?;
+            #[cfg(unix)]
+            if !no_agent_hooks {
+                install_agent_hooks(Some(&selected), false)?;
+            }
+        }
+
         Commands::ProvisionQuipuToken { source, server } => {
             engine::provision_quipu_credential(&source, &server)?;
+        }
+        #[cfg(unix)]
+        Commands::Hooks { command } => match command {
+            HooksCommand::Install { plan } => {
+                let read = if plan.exists() {
+                    Some(Plan::read(&plan)?)
+                } else {
+                    None
+                };
+                install_agent_hooks(read.as_ref(), true)?;
+            }
+            HooksCommand::Verify => {
+                let paths = harness_hooks::Paths::from_env()?;
+                let findings = harness_hooks::verify(&paths);
+                for f in &findings {
+                    let label = match f.level {
+                        doctor::Level::Ok => "ok  ",
+                        doctor::Level::Warn => "warn",
+                        doctor::Level::Fail => "FAIL",
+                    };
+                    println!("{label} {}: {}", f.subject, f.detail);
+                }
+                if findings.iter().any(|f| f.level != doctor::Level::Ok) {
+                    std::process::exit(1);
+                }
+            }
+            HooksCommand::Uninstall => {
+                let paths = harness_hooks::Paths::from_env()?;
+                for (harness, outcome) in harness_hooks::uninstall(&paths)? {
+                    println!("{}: {}", harness.name(), outcome.describe());
+                }
+            }
+        },
+        #[cfg(unix)]
+        Commands::Hook {
+            command: HookCommand::QueryFirst { harness, event },
+        } => {
+            let harness = harness_hooks::Harness::parse(&harness)?;
+            // A hook must never block or fail a session.
+            let _ = harness_hooks::run_hook(harness, &event);
         }
         Commands::Doctor { plan, state } => {
             let mut installed = false;
@@ -438,7 +889,10 @@ fn main() -> Result<()> {
                 );
                 doctor::Scope::everything()
             };
-            let findings = doctor::diagnose(&scope);
+            #[allow(unused_mut)]
+            let mut findings = doctor::diagnose(&scope);
+            #[cfg(unix)]
+            findings.extend(harness_hooks::verify(&harness_hooks::Paths::from_env()?));
             let stdout = std::io::stdout();
             if !doctor::report(&findings, installed, &mut stdout.lock())? {
                 std::process::exit(1);
@@ -448,9 +902,28 @@ fn main() -> Result<()> {
             guided,
             output,
             session,
+            pack_hooks,
+            monorepo,
+            repo,
+            shapes_from,
+            db,
+            trust_file,
         } => {
+            if pack_hooks {
+                let options = caboodle::pendant_sync::Options {
+                    repo: &repo,
+                    db: db.as_deref(),
+                    shapes_from: shapes_from.as_deref(),
+                    trust_file: trust_file.as_deref(),
+                    monorepo,
+                };
+                for path in caboodle::pendant_hooks::install(&options)? {
+                    println!("pendant hook: {}", path.display());
+                }
+                return Ok(());
+            }
             if !guided {
-                anyhow::bail!("caboodle init currently requires --guided");
+                anyhow::bail!("tambo init currently requires --guided");
             }
             let stdin = std::io::stdin();
             let mut input = stdin.lock();
@@ -538,6 +1011,7 @@ fn main() -> Result<()> {
             creel_doctor,
             creel_admission,
             host_profile,
+            no_agent_hooks,
         } => {
             let plan = read_plan(&plan, host_profile.as_deref())?;
             engine::apply(&plan, &state, skip_install)?;
@@ -549,6 +1023,10 @@ fn main() -> Result<()> {
                     creel_admission,
                 },
             )?;
+            #[cfg(unix)]
+            if !no_agent_hooks {
+                install_agent_hooks(Some(&plan), false)?;
+            }
         }
         Commands::CheckUpdates { plan, host_profile } => {
             let plan = read_plan(&plan, host_profile.as_deref())?;
@@ -617,9 +1095,7 @@ fn main() -> Result<()> {
                     for (target, digest) in digests {
                         println!("  {target} {digest}");
                     }
-                    println!(
-                        "review the diff and open a PR; it ships in the next caboodle release"
-                    );
+                    println!("review the diff and open a PR; it ships in the next Tambo release");
                 }
             }
         }
@@ -695,6 +1171,52 @@ fn main() -> Result<()> {
             println!("delivered queued episodes: {count}");
         }
         Commands::Packs {
+            command:
+                PacksCommand::Sync {
+                    monorepo,
+                    repo,
+                    db,
+                    shapes_from,
+                    trust_file,
+                },
+        } => {
+            let result = caboodle::pendant_sync::sync(&caboodle::pendant_sync::Options {
+                repo: &repo,
+                db: db.as_deref(),
+                shapes_from: shapes_from.as_deref(),
+                trust_file: trust_file.as_deref(),
+                monorepo,
+            })?;
+            println!("{}", serde_json::to_string_pretty(&result)?);
+        }
+        Commands::Packs {
+            command:
+                PacksCommand::ProjectScope {
+                    graph,
+                    path_predicate,
+                    prefix,
+                    repo,
+                    ownership_predicate,
+                    db,
+                },
+        } => {
+            let owners = if let (Some(repo), Some(predicate)) = (repo, ownership_predicate) {
+                caboodle::pendant_ownership::resolve(&repo, &prefix, &predicate)?
+            } else {
+                Vec::new()
+            };
+            let query = caboodle::pendant_projects::enriched_query(
+                &graph,
+                &path_predicate,
+                &prefix,
+                &owners,
+            )?;
+            if let Some(db) = db {
+                caboodle::pendant_ownership::verify_owners(&graph, &db, &owners)?;
+            }
+            println!("{query}");
+        }
+        Commands::Packs {
             command: PacksCommand::Trust { file, command },
         } => run_pack_trust(file, command)?,
     }
@@ -718,6 +1240,18 @@ fn run_pack_trust(file: Option<PathBuf>, command: TrustCommand) -> Result<()> {
             endpoint,
             note,
         } => trust.add_endpoint(&repo, &endpoint, note.as_deref())?,
+        TrustCommand::CheckEndpoint { remote, endpoint } => {
+            match trust.decide_endpoint(&remote, &endpoint) {
+                Decision::Allow { basis } => println!("federate: {basis}"),
+                Decision::Refuse { .. } => {
+                    // Policy errors can embed the raw URL, including userinfo.
+                    // Keep this read-only command's diagnostics free of input.
+                    eprintln!("refused: endpoint trust policy did not admit this request; check the repository and endpoint, then review packs trust --help");
+                    std::process::exit(3);
+                }
+            }
+            return Ok(());
+        }
         TrustCommand::List => {
             print!("{}", toml::to_string_pretty(&trust)?);
             return Ok(());
@@ -754,4 +1288,79 @@ fn read_plan(path: &std::path::Path, host_profile: Option<&str>) -> anyhow::Resu
         println!("{line}");
     }
     Ok(plan)
+}
+
+#[cfg(all(test, unix))]
+mod memory_cli_tests {
+    use super::*;
+
+    #[test]
+    fn redirect_mode_defaults_to_copy_and_requires_a_known_choice() {
+        let required = [
+            "tambo",
+            "memory",
+            "plan",
+            "--root",
+            "/tmp/crew",
+            "--bobbin-config",
+            "/tmp/bobbin.toml",
+            "--person",
+            "person-fixture",
+            "--camayoc-source",
+            "/tmp/source",
+            "--output",
+            "/tmp/private-plan",
+        ];
+        for choice in [None, Some("copy"), Some("block"), Some("off")] {
+            let mut args = required.to_vec();
+            if let Some(mode) = choice {
+                args.extend(["--redirect-mode", mode]);
+            }
+            let cli = Cli::try_parse_from(args).unwrap();
+            let Commands::Memory {
+                command: MemoryCommand::Plan { redirect_mode, .. },
+            } = cli.command
+            else {
+                panic!("expected memory plan");
+            };
+            assert_eq!(redirect_mode.as_str(), choice.unwrap_or("copy"));
+        }
+        let mut bad = required.to_vec();
+        bad.extend(["--redirect-mode", "surprise"]);
+        assert!(Cli::try_parse_from(bad).is_err());
+    }
+}
+
+/// Add the query-first hooks, naming the plan's local store when it has one.
+#[cfg(unix)]
+fn install_agent_hooks(plan: Option<&Plan>, explicit: bool) -> Result<()> {
+    use harness_hooks::{install, Paths, Target};
+    let plan_crew = plan
+        .and_then(|p| p.crew.as_ref())
+        .is_some_and(|c| matches!(c.mode, CrewMode::Shantytown | CrewMode::Both));
+    if let Some(reason) =
+        harness_hooks::crew_host_reason(std::env::var_os("SHANTY_ROOT").as_deref(), plan_crew)
+    {
+        if explicit {
+            anyhow::bail!(
+                "this is a shantytown crew host ({reason}): st already gives crew sessions the \
+                 query-first directive, and user-level hooks would add a second copy; nothing was written"
+            );
+        }
+        println!("agent hooks: skipped on this shantytown crew host ({reason}); st provides the query-first directive");
+        return Ok(());
+    }
+    let db = match plan.and_then(|p| p.quipu_db.as_deref()) {
+        Some(db) if db.is_absolute() => Some(db.to_path_buf()),
+        Some(db) => Some(std::env::current_dir()?.join(db)),
+        None => None,
+    };
+    let tambo = std::env::current_exe()?;
+    for (harness, outcome) in install(&Paths::from_env()?, &tambo, &Target { db })? {
+        println!("{} hooks: {}", harness.name(), outcome.describe());
+        if harness == harness_hooks::Harness::Codex && outcome == harness_hooks::Outcome::Written {
+            println!("codex hooks: the next `codex` start asks you to review them; Codex runs them only after you trust them");
+        }
+    }
+    Ok(())
 }

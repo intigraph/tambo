@@ -30,7 +30,7 @@ knowledge/graph substrate — and diverge everywhere else on purpose.
 
 | Axis | txtai 9.14 | quipu stack today |
 |---|---|---|
-| Language / license | Python 3.10+, Apache 2.0 | Rust (quipu/bobbin/yupana), Python scripts (camayoc), MIT |
+| Language / license | Python 3.10+, Apache 2.0 | Rust (quipu/bobbin/yupana), Python scripts (camayoc), Apache-2.0 |
 | Core data model | Embeddings DB: dense+sparse ANN ∪ SQL content store ∪ similarity graph | Bitemporal EAVT fact log → RDF quads, SPARQL 1.1, SHACL/OWL gates (quipu); LanceDB chunk store (bobbin) |
 | Dense ANN backends | Faiss, HNSW, Annoy, NumPy, Torch, pgvector, sqlite-vec, Milvus, ggml, more | Bobbin: LanceDB **flat scan, no ANN index**; quipu: SQLite brute-force cosine (LanceDB ANN exists but is excluded from release binaries) |
 | Sparse / keyword | BM25/TF-IDF/SIF + learned sparse ANN (ivfsparse, pgsparse) | Tantivy BM25 FTS (bobbin); `FILTER(CONTAINS)` fallback (quipu release) |
@@ -46,7 +46,7 @@ knowledge/graph substrate — and diverge everywhere else on purpose.
 | API / bindings | FastAPI, MCP, OpenAI-compatible endpoints, cluster sharding; JS/Java/Rust/Go bindings | REST + MCP (44 quipu tools, 31 bobbin, 15 yupana), CLIs; **no Python bindings** (quipu 🔜) |
 | Temporal | None (index-time snapshot) | Bitemporal everywhere — even embeddings carry `valid_from`/`valid_to`; time-travel queries |
 | Governance / provenance | None (auth token on API) | SHACL/OWL write gates, trust-label lattice, quarantine planes, authority-gated promotion, signed ed25519 verdicts, `write.refused` event stream, certified packs |
-| Observability | MLflow tracing integration | Prometheus `/metrics` with bounded cardinality (quipu, bobbin), JSONL spools (yupana), caboodle scrape/alert/dashboard generation |
+| Observability | MLflow tracing integration | Prometheus `/metrics` with bounded cardinality (quipu, bobbin), JSONL spools (yupana), tambo scrape/alert/dashboard generation |
 | Scale-out | Index sharding via API cluster; cloud/object-storage index sync | Read-side federation with label composition (quipu); multi-repo + RBAC (bobbin); no replication (🔜) |
 
 ## Where the stack is ahead (no txtai counterpart)
@@ -101,7 +101,7 @@ independent halves:
 
 1. bobbin: create a LanceDB vector index (IVF_PQ or HNSW) once a table
    crosses a size threshold, benchmarked by `bobbin benchmark`;
-2. caboodle: offer a `lancedb`-enabled quipu build in the install plan (or a
+2. tambo: offer a `lancedb`-enabled quipu build in the install plan (or a
    pinned alternate release asset), so the choice is a reviewed plan line
    rather than a from-source adventure.
 
@@ -143,17 +143,17 @@ similarity is a model judgment and must not masquerade as observation. That
 gives context assembly a semantic-neighbor leg alongside the structural and
 coupling legs, which is GraphRAG in our vocabulary.
 
-### G6. Embedding model provisioning — caboodle
+### G6. Embedding model provisioning — tambo
 
 txtai's killer onboarding property is `pip install` + auto-download defaults.
 Quipu deliberately bundles no model (`--features onnx` supplies the runtime
 only; `NO_PROVIDER_HELP` explains a three-part manual setup), and camayoc's
 own competency scorer sits with tokenizer-but-no-weights after a CDN 403.
-The stack's answer shouldn't be silent auto-download — it should be caboodle:
+The stack's answer shouldn't be silent auto-download — it should be tambo:
 a plan line that provisions checksum-pinned embedding model artifacts for
 quipu (and bobbin's custom-model slot), proven by an embed→search round-trip
 with a negative control, recorded in state like every other install step.
-First-hour experience is caboodle's charter; this is squarely its job.
+First-hour experience is tambo's charter; this is squarely its job.
 
 ### G7. Python client bindings — quipu
 
@@ -211,10 +211,10 @@ Python producers (which currently hand-roll HTTP).
 ## Suggested next steps
 
 1. File each of G1–G7 as a bead in its home repo (bobbin ×3, camayoc ×1,
-   caboodle ×2, quipu ×1), pitch-labelled where the repo uses the pitch flow,
+   tambo ×2, quipu ×1), pitch-labelled where the repo uses the pitch flow,
    with this document as the rationale link.
 2. G1 and G5 should land with eval evidence from bobbin's harness before they
    default on — a ranking change without a measured win is noise.
-3. G6 belongs on caboodle's roadmap next to the existing model-less quipu
+3. G6 belongs on tambo's roadmap next to the existing model-less quipu
    verify path, which currently proves retrieval without ever proving
    embedding.

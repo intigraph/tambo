@@ -50,7 +50,7 @@ jobs:
             target: x86_64-unknown-linux-gnu
           - os: macos-15-intel
             target: x86_64-apple-darwin
-          - os: macos-14
+          - os: macos-15
             target: aarch64-apple-darwin
     runs-on: ${{ matrix.os }}
     steps:
@@ -87,6 +87,21 @@ jobs:
           else
             (cd dist && shasum -a 256 "$legacy" > "$legacy.sha256")
           fi
+      - name: Build pinned macOS arm64 job runtime
+        if: matrix.target == 'aarch64-apple-darwin'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/fetch-macos-job-runtime-inputs.py --directory "$RUNNER_TEMP/job-inputs"
+          python3 scripts/build-macos-job-runtime.py \
+            --python-archive "$RUNNER_TEMP/job-inputs/python.tar.gz" \
+            --shantytown-archive "$RUNNER_TEMP/job-inputs/shantytown.tar.gz" \
+            --seeds-archive "$RUNNER_TEMP/job-inputs/seeds.tar.gz" \
+            --output "$RUNNER_TEMP/macos-arm64-job-runtime"
+          python3 scripts/verify-macos-job-runtime.py --directory "$RUNNER_TEMP/macos-arm64-job-runtime" --native
+          pin=$(python3 -c 'import json; print(json.load(open("docs/operator-packets/e579/runtime/artifact.json"))["manifest_sha256"])')
+          'target/${{ matrix.target }}/release/tambo' job-runtime --directory "$RUNNER_TEMP/macos-arm64-job-runtime" --manifest-sha256 "$pin"
+          cp "$RUNNER_TEMP/macos-arm64-job-runtime.tar.gz" "$RUNNER_TEMP/macos-arm64-job-runtime.tar.gz.sha256" dist/
       - uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.target }}
@@ -114,6 +129,7 @@ jobs:
       - name: Verify complete release metadata
         env:
           TAMBO_EXPECT_TARGETS: x86_64-unknown-linux-gnu x86_64-apple-darwin aarch64-apple-darwin
+          TAMBO_EXPECT_JOB_RUNTIME: "1"
         run: scripts/check-release-assets.sh "$VERSION" dist
       - name: Publish immutable GitHub release
         env:
@@ -150,7 +166,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$GITHUB_REPOSITORY" = scbrown/tambo
+          test "$GITHUB_REPOSITORY" = intigraph/tambo
           version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "tambo") | .version')
           test "$VERSION" = "v$version"
           echo "TAMBO_PUBLISH_VERSION=$version" >> "$GITHUB_ENV"
@@ -194,3 +210,47 @@ jobs:
           done
           echo 'Registry visibility is UNKNOWN; publication is not accepted.' >&2
           exit 1
+
+  # The pendant is produced by a trusted host publisher that must be ADMITTED for
+  # tambo before this verification can pass (aegis-dics; wu ruling 2026-10-23,
+  # option A, the seeds/desire-path shape). Admission is the reviewed repository
+  # variable TAMBO_PENDANT_PUBLICATION=enabled; unset is "not admitted". The state
+  # is recorded on every release, never reported as a passed verification.
+  repository-pendant-admission:
+    name: Record repository pendant admission
+    needs: [release-please, publish]
+    if: always() && needs.publish.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions: {}
+    env:
+      ADMISSION: ${{ vars.TAMBO_PENDANT_PUBLICATION }}
+    steps:
+      - name: Record admission state
+        run: |
+          if [ "$ADMISSION" = enabled ]; then
+            state="admitted: the trusted host publisher must deliver and Verify repository pendant runs"
+          else
+            state="NOT ADMITTED: pendant publication not admitted for tambo (no trusted producer), so no pendant is expected and Verify repository pendant is skipped by its condition (not a pass; aegis-dics)"
+          fi
+          echo "repository pendant publication: $state"
+          echo "Repository pendant publication: $state" >> "$GITHUB_STEP_SUMMARY"
+
+  repository-pendant:
+    name: Verify repository pendant
+    needs: [release-please, publish]
+    if: always() && needs.publish.result == 'success' && vars.TAMBO_PENDANT_PUBLICATION == 'enabled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || needs.release-please.outputs.tag_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          fetch-depth: 0
+      - name: Verify the bounded public pointer corpus
+        run: python3 scripts/verify-repository-share.py "$RELEASE_TAG" "$(git rev-parse HEAD)"

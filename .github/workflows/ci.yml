@@ -8,6 +8,16 @@ permissions:
   contents: read
 
 jobs:
+  product-name:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check reviewed compatibility names
+        run: python3 -B scripts/check-product-name.py
+      - name: Prove new branding leaks and changed contracts are rejected
+        run: python3 -B scripts/test-product-name.py
+
   text-pendants:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -36,7 +46,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-15-intel, macos-14]
+        os: [macos-15-intel, macos-15]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -61,8 +71,12 @@ jobs:
         run: scripts/test-release-install.sh
       - name: Bootstrap legacy and renamed release controls
         run: python3 scripts/test-install-bootstrap.py
+      - name: Canonical release repository refusal controls
+        run: python3 scripts/test-release-repository.py
       - name: Registry visibility refusal controls
         run: python3 scripts/test-crate-version.py
+      - name: Camayoc memory-redirect hook install and verify controls
+        run: python3 scripts/test-memory-redirect-hook.py
 
   evaluation-tests:
     # The Text2KGBench harness is Python and its guards (provider drift, gold
@@ -89,17 +103,17 @@ jobs:
           go-version: '1.24.2'
       - uses: Swatinem/rust-cache@v2
       - name: Install from a clean checkout
-        run: cargo install --path . --locked --root "$RUNNER_TEMP/caboodle"
+        run: cargo install --path . --locked --root "$RUNNER_TEMP/tambo"
       - name: Prove the installed binary starts
         run: |
-          export PATH="$RUNNER_TEMP/caboodle/bin:$PATH"
-          caboodle --version
+          export PATH="$RUNNER_TEMP/tambo/bin:$PATH"
+          tambo --version
       - name: Run guided interview and retain the reviewed plan
         run: |
           set -euo pipefail
-          export PATH="$RUNNER_TEMP/caboodle/bin:$PATH"
-          mkdir -p "$RUNNER_TEMP/caboodle-phase2"
-          cd "$RUNNER_TEMP/caboodle-phase2"
+          export PATH="$RUNNER_TEMP/tambo/bin:$PATH"
+          mkdir -p "$RUNNER_TEMP/tambo-phase2"
+          cd "$RUNNER_TEMP/tambo-phase2"
           printf '%s\n' \
             everything \
             'index repositories and answer code ownership questions' \
@@ -109,8 +123,9 @@ jobs:
             'one code symbol' \
             'the clean-machine fixture repository and its marker symbol' \
             'SELECT ?s WHERE { ?s ?p ?o }' \
-            caboodle-verify-roundtrip \
-            | caboodle init --guided | tee guided-interview.log
+            tambo-verify-roundtrip \
+            | tambo init --guided | tee guided-interview.log
+          # Compatibility: the persisted default plan/state/output names remain stable.
           test -s caboodle-plan.toml
           python3 - <<'PY'
           import tomllib
@@ -119,28 +134,29 @@ jobs:
           assert plan["profile"] == "everything"
           # Built-ins, then the members that join this profile (members/*.toml).
           assert plan["tools"] == ["quipu", "camayoc", "bobbin", "yupana", "desire-path", "chaski", "seeds", "shuttle"]
-          assert plan["intent"]["anticipated_questions"][0]["expected"] == "caboodle-verify-roundtrip"
+          assert plan["intent"]["anticipated_questions"][0]["expected"] == "tambo-verify-roundtrip"
           PY
       - name: Install and functionally verify the expanded corpus
         run: |
           set -euo pipefail
-          export PATH="$RUNNER_TEMP/caboodle/bin:$HOME/.cargo/bin:$PATH"
-          cd "$RUNNER_TEMP/caboodle-phase2"
-          # A clean host has no issued credential; doctor must name that blocker.
-          if caboodle doctor > doctor.log 2>&1; then
-            echo 'clean host unexpectedly passed credential diagnostics' >&2
+          export PATH="$RUNNER_TEMP/tambo/bin:$HOME/.cargo/bin:$PATH"
+          cd "$RUNNER_TEMP/tambo-phase2"
+          # An explicitly selected remote still requires an issued credential.
+          # The zero-credential local default is proved by readme-first-success.
+          if QUIPU_SERVER=http://127.0.0.1:3030 tambo doctor > doctor.log 2>&1; then
+            echo 'remote mode unexpectedly passed credential diagnostics' >&2
             exit 1
           fi
           grep -q 'missing canonical Quipu credential' doctor.log
-          caboodle apply 2>&1 | tee first-apply.log
+          tambo apply 2>&1 | tee first-apply.log
           # A local CLI database roundtrip cannot prove a live client's auth.
           # Issue a fresh fixture credential to an isolated authenticated server.
           python3 "$GITHUB_WORKSPACE/scripts/start-credential-fixture.py" \
-            --home "$HOME" --root "$RUNNER_TEMP/caboodle-phase2/credential-fixture"
+            --home "$HOME" --root "$RUNNER_TEMP/tambo-phase2/credential-fixture"
           export QUIPU_SERVER=http://127.0.0.1:3030
           echo "QUIPU_SERVER=$QUIPU_SERVER" >> "$GITHUB_ENV"
-          caboodle provision-quipu-token --from "$RUNNER_TEMP/caboodle-phase2/credential-fixture/issued-token" --server "$QUIPU_SERVER"
-          caboodle verify 2>&1 | tee first-install.log
+          tambo provision-quipu-token --from "$RUNNER_TEMP/tambo-phase2/credential-fixture/issued-token" --server "$QUIPU_SERVER"
+          tambo verify 2>&1 | tee first-install.log
           jq -e '
             .tools.quipu.verified == true and
             .tools.camayoc.verified == true and
@@ -154,33 +170,33 @@ jobs:
       - name: Execute the interview's anticipated ontology question
         run: |
           set -euo pipefail
-          export PATH="$RUNNER_TEMP/caboodle/bin:$HOME/.cargo/bin:$PATH"
-          cd "$RUNNER_TEMP/caboodle-phase2"
-          if caboodle verify-questions --db empty-question.db > empty-question.log 2>&1; then
+          export PATH="$RUNNER_TEMP/tambo/bin:$HOME/.cargo/bin:$PATH"
+          cd "$RUNNER_TEMP/tambo-phase2"
+          if tambo verify-questions --db empty-question.db > empty-question.log 2>&1; then
             echo 'anticipated question unexpectedly passed without its seed fact' >&2
             exit 1
           fi
           jq -n '{
-            name: "caboodle clean-machine question fixture",
+            name: "tambo clean-machine question fixture",
             episode_body: "seed fact for the reviewed anticipated question",
-            source: "caboodle clean-machine proof",
-            group_id: "caboodle-verification",
+            source: "tambo clean-machine proof",
+            group_id: "tambo-verification",
             nodes: [{
-              name: "caboodle-verify-roundtrip",
+              name: "tambo-verify-roundtrip",
               type: "Verification",
               description: "isolated anticipated-question fixture"
             }],
             edges: []
           }' > question-episode.json
           quipu episode question-episode.json --db question.db
-          caboodle verify-questions --db question.db | tee anticipated-question.log
+          tambo verify-questions --db question.db | tee anticipated-question.log
           grep -q 'question 1: verified' anticipated-question.log
       - name: Prove an interrupted apply can resume idempotently
         run: |
           set -euo pipefail
-          export PATH="$RUNNER_TEMP/caboodle/bin:$HOME/.cargo/bin:$PATH"
-          cd "$RUNNER_TEMP/caboodle-phase2"
-          caboodle install 2>&1 | tee resumed-install.log
+          export PATH="$RUNNER_TEMP/tambo/bin:$HOME/.cargo/bin:$PATH"
+          cd "$RUNNER_TEMP/tambo-phase2"
+          tambo install 2>&1 | tee resumed-install.log
           jq -e '[.tools[] | .applied and .verified] | all' .caboodle/state.json
           jq '{
             schema_version,
@@ -194,15 +210,15 @@ jobs:
       - name: Render and validate reviewable observability artifacts
         run: |
           set -euo pipefail
-          export PATH="$RUNNER_TEMP/caboodle/bin:$HOME/.cargo/bin:$PATH"
-          cd "$RUNNER_TEMP/caboodle-phase2"
+          export PATH="$RUNNER_TEMP/tambo/bin:$HOME/.cargo/bin:$PATH"
+          cd "$RUNNER_TEMP/tambo-phase2"
           printf '%s\n' \
             '[targets]' \
             "quipu='127.0.0.1:8080'" \
             "bobbin='127.0.0.1:3030'" \
             > caboodle-observability.toml
-          caboodle render-observability
-          caboodle validate-observability
+          tambo render-observability
+          tambo validate-observability
           # One contract per selected tool; a member's says it declares no metrics.
           jq -e '.contracts | length == 8' caboodle-observability/contracts.json
           grep -q 'quipu_graph_facts' caboodle-observability/alerts.yml
@@ -210,33 +226,33 @@ jobs:
       - name: Prove lifecycle emission queue is redacted and idempotent
         run: |
           set -euo pipefail
-          export PATH="$RUNNER_TEMP/caboodle/bin:$HOME/.cargo/bin:$PATH"
-          cd "$RUNNER_TEMP/caboodle-phase2"
+          export PATH="$RUNNER_TEMP/tambo/bin:$HOME/.cargo/bin:$PATH"
+          cd "$RUNNER_TEMP/tambo-phase2"
           test "$(find .caboodle/episodes -maxdepth 1 -name '*.json' | wc -l)" -eq 16
           printf '%s\n' '{"id":"demo-1","title":"token=fixture-secret","status":"closed","comments":[{"id":"c1","text":"done"}]}' > br-export.jsonl
-          caboodle queue-br br-export.jsonl
-          caboodle queue-br br-export.jsonl
+          tambo queue-br br-export.jsonl
+          tambo queue-br br-export.jsonl
           test "$(find .caboodle/episodes -maxdepth 1 -name '*.json' | wc -l)" -eq 19
           ! grep -R -q 'fixture-secret' .caboodle/episodes
       - name: Prove adversarial negative controls turn verification red
         run: |
           set -euo pipefail
           cargo test camayoc_verification_refuses_broken_control_retrieval_and_replay \
-            -- --exact --nocapture 2>&1 | tee "$RUNNER_TEMP/caboodle-phase2/adversarial-controls.log"
+            -- --exact --nocapture 2>&1 | tee "$RUNNER_TEMP/tambo-phase2/adversarial-controls.log"
           cargo test expanded_adapter_negative_controls_turn_verification_red \
-            -- --exact --nocapture 2>&1 | tee -a "$RUNNER_TEMP/caboodle-phase2/adversarial-controls.log"
+            -- --exact --nocapture 2>&1 | tee -a "$RUNNER_TEMP/tambo-phase2/adversarial-controls.log"
           cargo test anticipated_questions_are_executable_and_answer_checked \
-            -- --exact --nocapture 2>&1 | tee -a "$RUNNER_TEMP/caboodle-phase2/adversarial-controls.log"
+            -- --exact --nocapture 2>&1 | tee -a "$RUNNER_TEMP/tambo-phase2/adversarial-controls.log"
           cargo test observability::tests::missing_or_malformed_contract_targets_fail \
-            -- --exact --nocapture 2>&1 | tee -a "$RUNNER_TEMP/caboodle-phase2/adversarial-controls.log"
+            -- --exact --nocapture 2>&1 | tee -a "$RUNNER_TEMP/tambo-phase2/adversarial-controls.log"
           cargo test observability::tests::uncovered_dashboard_metric_fails_validation \
-            -- --exact --nocapture 2>&1 | tee -a "$RUNNER_TEMP/caboodle-phase2/adversarial-controls.log"
+            -- --exact --nocapture 2>&1 | tee -a "$RUNNER_TEMP/tambo-phase2/adversarial-controls.log"
           cargo test emission::tests::offline_and_retry_keep_identical_queue_until_success \
-            -- --exact --nocapture 2>&1 | tee -a "$RUNNER_TEMP/caboodle-phase2/adversarial-controls.log"
+            -- --exact --nocapture 2>&1 | tee -a "$RUNNER_TEMP/tambo-phase2/adversarial-controls.log"
       - name: Assemble the reader-visible Phase 2 proof record
         run: |
           set -euo pipefail
-          cd "$RUNNER_TEMP/caboodle-phase2"
+          cd "$RUNNER_TEMP/tambo-phase2"
           jq '.proof += {
             anticipated_question_executed: true,
             all_phase2_adapters_verified: true,
@@ -259,15 +275,80 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: caboodle-phase2-proof
+          name: tambo-phase2-proof
           if-no-files-found: error
           include-hidden-files: true
           path: |
-            ${{ runner.temp }}/caboodle-phase2/caboodle-plan.toml
-            ${{ runner.temp }}/caboodle-phase2/.caboodle/state.json
-            ${{ runner.temp }}/caboodle-phase2/proof.json
-            ${{ runner.temp }}/caboodle-phase2/caboodle-observability/*
-            ${{ runner.temp }}/caboodle-phase2/.caboodle/episodes/*.json
-            ${{ runner.temp }}/caboodle-phase2/anticipated-question.log
-            ${{ runner.temp }}/caboodle-phase2/empty-question.log
-            ${{ runner.temp }}/caboodle-phase2/*.log
+            ${{ runner.temp }}/tambo-phase2/caboodle-plan.toml
+            ${{ runner.temp }}/tambo-phase2/.caboodle/state.json
+            ${{ runner.temp }}/tambo-phase2/proof.json
+            ${{ runner.temp }}/tambo-phase2/caboodle-observability/*
+            ${{ runner.temp }}/tambo-phase2/.caboodle/episodes/*.json
+            ${{ runner.temp }}/tambo-phase2/anticipated-question.log
+            ${{ runner.temp }}/tambo-phase2/empty-question.log
+            ${{ runner.temp }}/tambo-phase2/*.log
+
+  repository-pendant-source:
+    name: Repository pendant source controls
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned RDF test parser
+        run: python3 -m pip install rdflib==7.6.0
+      - name: Test copied pointer and publication boundaries
+        run: |
+          python3 scripts/test-repository-share-query.py
+          python3 scripts/test-repository-knowledge.py
+          python3 scripts/test-repository-share-publication.py
+          python3 scripts/test-pendant-admission.py
+
+  macos-controller-packet:
+    name: Controller packet offline Python ${{ matrix.python }}
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        python: ['3.9', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python3 scripts/test-macos-controller-account-packet.py
+      - run: python3 scripts/test-macos-job-manifest-migration.py
+      - run: python3 scripts/test-macos-job-runtime-build.py
+      - run: sh -n scripts/macos-controller-account-rollback.sh
+
+  macos-job-runtime:
+    name: Pinned macOS arm64 job runtime
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Fetch reviewed public inputs unprivileged
+        run: python3 scripts/fetch-macos-job-runtime-inputs.py --directory "$RUNNER_TEMP/job-inputs"
+      - name: Build and inspect immutable runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/build-macos-job-runtime.py \
+            --python-archive "$RUNNER_TEMP/job-inputs/python.tar.gz" \
+            --shantytown-archive "$RUNNER_TEMP/job-inputs/shantytown.tar.gz" \
+            --seeds-archive "$RUNNER_TEMP/job-inputs/seeds.tar.gz" \
+            --output "$RUNNER_TEMP/macos-arm64-job-runtime"
+          python3 scripts/verify-macos-job-runtime.py --directory "$RUNNER_TEMP/macos-arm64-job-runtime" --native
+          pin=$(python3 -c 'import json; print(json.load(open("docs/operator-packets/e579/runtime/artifact.json"))["manifest_sha256"])')
+          cargo run --locked -- job-runtime --directory "$RUNNER_TEMP/macos-arm64-job-runtime" --manifest-sha256 "$pin"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64-job-runtime
+          path: |
+            ${{ runner.temp }}/macos-arm64-job-runtime.tar.gz
+            ${{ runner.temp }}/macos-arm64-job-runtime.tar.gz.sha256
+            ${{ runner.temp }}/macos-arm64-job-runtime/manifest.json
+          if-no-files-found: error

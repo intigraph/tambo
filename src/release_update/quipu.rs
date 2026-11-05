@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 //! Paired Quipu artifacts, pinned at review time, with one durable transaction.
 use super::*;
 use crate::model::QuipuFlavor;
@@ -36,7 +38,7 @@ fn owned_pair() -> Result<[PathBuf; 2]> {
     let home = env::var_os("CARGO_HOME")
         .map(PathBuf::from)
         .or_else(|| env::var_os("HOME").map(|p| PathBuf::from(p).join(".cargo")))
-        .context("Quipu requires its Caboodle-owned cargo bin directory")?;
+        .context("Quipu requires its Tambo-owned cargo bin directory")?;
     let directory = home.join("bin").canonicalize()?;
     let mut paths = Vec::new();
     for binary in ["quipu", "quipu-server"] {
@@ -156,21 +158,9 @@ fn update_at(plan: &Plan, state_path: &Path, check: bool, pin: &Pin) -> Result<(
     let tag = format!("quipu-ai-v{}", pin.version);
     let archive_name = format!("quipu-{tag}-{target}.tar.gz");
     let sums_name = format!("{archive_name}.sha256");
-    let raw = text(
-        "curl",
-        &[
-            "--fail",
-            "--silent",
-            "--show-error",
-            "--max-time",
-            "30",
-            "--proto",
-            "=https",
-            "-H",
-            "Accept: application/vnd.github+json",
-            &format!("https://api.github.com/repos/scbrown/quipu/releases/tags/{tag}"),
-        ],
-    )?;
+    let raw = super::release_metadata(&format!(
+        "https://api.github.com/repos/scbrown/quipu/releases/tags/{tag}"
+    ))?;
     let release: Release = serde_json::from_str(&raw)?;
     if release.tag_name != tag || release.draft || release.prerelease {
         bail!("Quipu publication is not the reviewed stable release");
@@ -484,8 +474,8 @@ if [ "$1" = read ]; then
   case "$query" in
     ASK*)
       if [ ! -f "$db.knot" ]; then echo false
-      else case "$query" in *CaboodleVerifyAbsentTerm*) echo false;; *) echo true;; esac; fi;;
-    *) [ ! -f "$db" ] || echo caboodle-verify-roundtrip;;
+      else case "$query" in *TamboVerifyAbsentTerm*) echo false;; *) echo true;; esac; fi;;
+    *) [ ! -f "$db" ] || echo tambo-verify-roundtrip;;
   esac
 elif [ "$1" = episode ]; then touch "$4"
 elif [ "$1" = knot ]; then cp "$2" "$4.knot"

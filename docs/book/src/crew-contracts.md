@@ -1,19 +1,19 @@
 # Crew capability contracts
 
-CABOODLE installs the selected crew runtime, but it does not take ownership of
+Tambo installs the selected crew runtime, but it does not take ownership of
 the runtime's security or admission policy. Shantytown is a host executable, so
 its adapter reads back the installed `st` version. Creel's decisive facts exist
 inside the browser; verification therefore consumes two browser-produced JSON
 documents:
 
 ```console
-caboodle verify \
+tambo verify \
   --creel-doctor creel-doctor.json \
   --creel-admission creel-admission.json
 ```
 
 Both schemas are version 1 and reject unknown fields. A new producer field
-cannot silently become evidence an older CABOODLE claims to understand.
+cannot silently become evidence an older Tambo claims to understand.
 
 ## Doctor
 
@@ -40,7 +40,7 @@ be `pass`.
 The Creel doctor workstream owns which checks it emits, including secure
 context, persistence, popup/bridge permissions, provider credential presence,
 Quipu WASM, state-repository health, service-worker freshness, and leases.
-CABOODLE validates the contract; it does not reproduce those probes.
+Tambo validates the contract; it does not reproduce those probes.
 
 ## Admission
 
@@ -56,11 +56,11 @@ CABOODLE validates the contract; it does not reproduce those probes.
 }
 ```
 
-The verdict is `admit`, `refuse`, or `unknown`. CABOODLE proceeds only when all
+The verdict is `admit`, `refuse`, or `unknown`. Tambo proceeds only when all
 three signals are measured passes and the verdict is `admit`. It never prints
 credentials, accepts an unredacted reason, rounds unknown to zero, or converts
 a policy refusal into an installer warning.
 
 Until Creel publishes both producer interfaces, its bundle can be applied but
 cannot be marked verified. That refusal is the intended boundary, not a
-CABOODLE installation failure to bypass.
+Tambo installation failure to bypass.

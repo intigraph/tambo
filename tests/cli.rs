@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 #![cfg(unix)]
 
 use std::{fs, os::unix::fs::PermissionsExt, path::Path};
@@ -52,6 +54,12 @@ expected = "fixture-result"
     command
         .current_dir(root)
         .env("HOME", root)
+        // The query-first hooks resolve their files from these; never a real one.
+        .env_remove("CLAUDE_CONFIG_DIR")
+        .env_remove("CODEX_HOME")
+        .env_remove("XDG_STATE_HOME")
+        .env_remove("SHANTY_AGENT")
+        .env_remove("SHANTY_ROOT")
         .env_remove("QUIPU_AUTH_TOKEN")
         .env_remove("QUIPU_AUTH_TOKEN_FILE")
         .env("PATH", path_with(bin))
@@ -143,7 +151,7 @@ if [ "${1:-}" = "read" ]; then
       esac
       exit 0 ;;
   esac
-  [ ! -f "$db" ] || echo 'caboodle-verify-roundtrip'
+  [ ! -f "$db" ] || echo 'tambo-verify-roundtrip'
   exit 0
 fi
 exit 2
@@ -164,14 +172,14 @@ exit 2
         bin,
         "bobbin",
         r#"
-if [ "${1:-}" = "--version" ]; then echo 'bobbin 0.27.3'; exit 0; fi
+if [ "${1:-}" = "--version" ]; then echo 'bobbin 0.30.0'; exit 0; fi
 if [ "${1:-}" = "init" ]; then mkdir -p .bobbin; exit 0; fi
 if [ "${1:-}" = "index" ]; then
   if [ -f fixture.rs ]; then cp fixture.rs .bobbin/indexed; else : > .bobbin/indexed; fi
   exit 0
 fi
 if [ "${1:-}" = "grep" ]; then
-  if grep -q caboodle_verify_marker_ .bobbin/indexed 2>/dev/null; then echo '{"count":1,"results":[{"file_path":"fixture.rs"}]}';
+  if grep -q tambo_verify_marker_ .bobbin/indexed 2>/dev/null; then echo '{"count":1,"results":[{"file_path":"fixture.rs"}]}';
   else echo '{"count":0,"results":[]}'; fi
   exit 0
 fi
@@ -207,9 +215,10 @@ exit 2
     // applied: verify asserts the bundles, and tests about other steps must
     // not trip on them. A test about registration clears this first.
     let mut seeded = String::new();
-    for entry in fs::read_dir(Path::new(env!("CARGO_MANIFEST_DIR")).join("hook-bundles")).unwrap() {
-        let bundle: serde_json::Value =
-            serde_json::from_str(&fs::read_to_string(entry.unwrap().path()).unwrap()).unwrap();
+    // Use the runtime's bundle inventory: provenance sidecars in the same
+    // directory are not hook bundles and must not enter the fake registry.
+    for (_, raw) in caboodle::hook_bundles::BUNDLES {
+        let bundle: serde_json::Value = serde_json::from_str(raw).unwrap();
         seeded.push_str(&format!(
             "{} {}\n",
             bundle["name"].as_str().unwrap(),
@@ -221,10 +230,10 @@ exit 2
         bin,
         "yupana",
         r#"
-if [ "${1:-}" = "--version" ]; then echo 'yupana 0.12.7'; exit 0; fi
+if [ "${1:-}" = "--version" ]; then echo 'yupana 0.16.2'; exit 0; fi
 if [ "${1:-}" = "analyze" ]; then exit 0; fi
 if [ "${1:-}" = "callers" ]; then
-  if [ -f fixture.rs ]; then echo 'fixture.rs:2 caboodle_yupana_caller';
+  if [ -f fixture.rs ]; then echo 'fixture.rs:2 tambo_yupana_caller';
   else echo 'no definition found'; fi
   exit 0
 fi
@@ -235,13 +244,13 @@ exit 2
         bin,
         "dp",
         r#"
-if [ "${1:-}" = "version" ]; then echo 'dp v0.3.2 (1f457ec)'; exit 0; fi
+if [ "${1:-}" = "version" ]; then echo 'dp v0.10.0 (0681233)'; exit 0; fi
 db=''
 while [ "$#" -gt 0 ]; do
   if [ "$1" = "--db" ]; then shift; db=$1; fi
   if [ "$1" = "ingest" ]; then cat >/dev/null; touch "$db.recorded"; exit 0; fi
   if [ "$1" = "list" ]; then
-    if [ -f "$db.recorded" ]; then echo '[{"tool_name":"caboodle_desire_path_marker"}]'; else echo '[]'; fi
+    if [ -f "$db.recorded" ]; then echo '[{"tool_name":"tambo_desire_path_marker"}]'; else echo '[]'; fi
     exit 0
   fi
   # One bd command rule in $HOME/bd.alias. Like the real dp (aegis-fbaso4,
@@ -269,7 +278,7 @@ exit 2
     // --help and the version from --version, exactly as the manifest reads them;
     // list/create keep the verify marker in a file in the hermetic root. The
     // version is the PINNED one, read from the embedded manifest: a hardcoded
-    // version would turn every bump-member PR red (caboodle#50).
+    // version would turn every bump-member PR red (Tambo#50).
     let seeds = caboodle::members::get("seeds").expect("seeds is an embedded member");
     fake_tool(
         bin,
@@ -373,7 +382,7 @@ case "$args" in
     ;;
   *"/query"*)
     case "$args" in
-      *caboodle-camayoc-control-must-stay-absent*)
+      *tambo-camayoc-control-must-stay-absent*)
         if [ "${FAKE_CAMAYOC_MODE:-}" = control-present ]; then echo '{"count":1,"rows":[{"s":"bad-control"}]}'
         else echo '{"count":0,"rows":[]}'; fi
         ;;
@@ -478,7 +487,7 @@ fn guided_interview_offers_a_self_test_question_that_verifies_on_a_fresh_box() {
             "using the built-in self-test question",
         ));
     let plan = fs::read_to_string(root.path().join("caboodle-plan.toml")).unwrap();
-    assert!(plan.contains("caboodle-verify-roundtrip"), "{plan}");
+    assert!(plan.contains("tambo-verify-roundtrip"), "{plan}");
 
     // It must pass without any store of the user's, even when pointed at one
     // that does not exist: the self-test seeds and reads its own scratch store.
@@ -709,7 +718,7 @@ fn check_updates_is_green_when_reviewed_versions_run_and_red_on_drift() {
         .arg("check-updates")
         .assert()
         .success()
-        .stdout(predicate::str::contains("bobbin: current (bobbin 0.27.3)"));
+        .stdout(predicate::str::contains("bobbin: current (bobbin 0.30.0)"));
 
     fake_tool(
         &bin,
@@ -750,11 +759,11 @@ fn check_updates_reports_ahead_without_proposing_an_update_or_touching_the_tool(
 
 #[test]
 fn package_owned_tools_are_judged_by_receipt_and_never_installed_by_caboodle() {
-    // aegis-6f1 option A: dpkg owns bobbin, so caboodle reads the package
+    // aegis-6f1 option A: dpkg owns bobbin, so Tambo reads the package
     // receipt (Debian revision stripped) and leaves delivery to the package lane.
     for (deb_version, verdict) in [
-        ("0.28.0", "bobbin: ahead of reviewed pin; downgrade refused (package-owned: apt bobbin 0.28.0;"),
-        ("0.1.0-2", "bobbin: behind reviewed pin; delivered by the package lane, not installed by caboodle (package-owned: apt bobbin 0.1.0;"),
+        ("0.31.0", "bobbin: ahead of reviewed pin; downgrade refused (package-owned: apt bobbin 0.31.0;"),
+        ("0.1.0-2", "bobbin: behind reviewed pin; delivered by the package lane, not installed by Tambo (package-owned: apt bobbin 0.1.0;"),
     ] {
         let root = tempfile::tempdir().unwrap();
         let bin = root.path().join("bin");
@@ -802,7 +811,7 @@ fn brew_owned_desire_path_ahead_of_the_pin_is_read_not_refused() {
     // aegis-fv4 2026-10-16: the Mac's brew desire-path 0.7.1 (090ec88) is ahead
     // of the dp pin. `version()` refused any non-pinned identity, so the
     // package-owned "ahead" verdict could not read it back and the member failed
-    // with "dp version is not the CABOODLE-pinned revision".
+    // with "dp version is not the Tambo-pinned revision".
     let brew_body = r#"echo "$*" >> "$HOME/brew.log"
 case "$*" in
   "update --quiet") exit 0;;
@@ -841,7 +850,7 @@ exit 1"#;
         "{stdout}\n{stderr}"
     );
     assert!(
-        !format!("{stdout}{stderr}").contains("CABOODLE-pinned"),
+        !format!("{stdout}{stderr}").contains("Tambo-pinned"),
         "{stdout}\n{stderr}"
     );
     let log = fs::read_to_string(root.path().join("brew.log")).unwrap_or_default();
@@ -873,12 +882,12 @@ esac
 exit 1"#;
     // (installed by brew, tap stable, bobbin on PATH, expected stdout, brew verb expected)
     for (installed, stable, path_bobbin, expect, verb) in [
-        (None, "0.27.3", None, "bobbin: delivered by brew (scbrown/tap 0.27.3) and verified", Some("install")),
-        (Some("0.28.0"), "0.28.0", None, "bobbin: current stable channel (package-owned: brew scbrown/tap 0.28.0;", None),
-        (Some("0.28.0"), "0.29.0", None, "bobbin: delivered by brew (scbrown/tap 0.29.0) and verified", Some("upgrade")),
-        (Some("0.20.0"), "0.27.3", None, "bobbin: delivered by brew (scbrown/tap 0.27.3) and verified", Some("upgrade")),
+        (None, "0.30.0", None, "bobbin: delivered by brew (scbrown/tap 0.30.0) and verified", Some("install")),
+        (Some("0.31.0"), "0.31.0", None, "bobbin: current stable channel (package-owned: brew scbrown/tap 0.31.0;", None),
+        (Some("0.31.0"), "0.32.0", None, "bobbin: delivered by brew (scbrown/tap 0.32.0) and verified", Some("upgrade")),
+        (Some("0.20.0"), "0.30.0", None, "bobbin: delivered by brew (scbrown/tap 0.30.0) and verified", Some("upgrade")),
         (None, "0.20.0", None, "bobbin: current", None),
-        (None, "0.27.3", Some("0.99.0"), "bobbin: installed bobbin 0.99.0 is newer than scbrown/tap 0.27.3; not installed by brew", None),
+        (None, "0.30.0", Some("0.99.0"), "bobbin: installed bobbin 0.99.0 is newer than scbrown/tap 0.30.0; not installed by brew", None),
     ] {
         let root = tempfile::tempdir().unwrap();
         let bin = root.path().join("bin");
@@ -889,10 +898,10 @@ exit 1"#;
             .assert()
             .success();
         let fake = fs::read_to_string(bin.join("bobbin")).unwrap();
-        fs::write(bin.join("bobbin"), fake.replace("echo 'bobbin 0.27.3';", "if [ -f \"$HOME/brew-installed\" ]; then printf 'bobbin %s\\n' \"$(cat \"$HOME/brew-installed\")\"; else echo 'bobbin 0.27.3'; fi;")).unwrap();
+        fs::write(bin.join("bobbin"), fake.replace("echo 'bobbin 0.30.0';", "if [ -f \"$HOME/brew-installed\" ]; then printf 'bobbin %s\\n' \"$(cat \"$HOME/brew-installed\")\"; else echo 'bobbin 0.30.0'; fi;")).unwrap();
         if let Some(version) = path_bobbin {
             let fake = fs::read_to_string(bin.join("bobbin")).unwrap();
-            fs::write(bin.join("bobbin"), fake.replace("bobbin 0.27.3", &format!("bobbin {version}"))).unwrap();
+            fs::write(bin.join("bobbin"), fake.replace("bobbin 0.30.0", &format!("bobbin {version}"))).unwrap();
         }
         fs::write(root.path().join("brew-stable"), stable).unwrap();
         if let Some(version) = installed {
@@ -977,7 +986,7 @@ fn check_updates_rejects_stale_path_despite_current_cargo_copy() {
     fake_tool(
         &cargo_bin,
         "dp",
-        "if [ \"${1:-}\" = version ]; then echo 'dp v0.3.2 (1f457ec)'; exit 0; fi\nexit 2",
+        "if [ \"${1:-}\" = version ]; then echo 'dp v0.10.0 (0681233)'; exit 0; fi\nexit 2",
     );
 
     command(root.path(), &bin)
@@ -991,7 +1000,7 @@ fn check_updates_rejects_stale_path_despite_current_cargo_copy() {
         .assert()
         .failure()
         .stdout(predicate::str::contains(
-            "desire-path: version drift; review required (installed: dp c964ea2 (c964ea2); reviewed: dp v0.3.2 (1f457ec))",
+            "desire-path: version drift; review required (installed: dp c964ea2 (c964ea2); reviewed: dp v0.10.0 (0681233))",
         ));
 }
 
@@ -1006,7 +1015,7 @@ fn check_updates_accepts_current_path_despite_stale_cargo_copy() {
     fake_tool(
         &bin,
         "dp",
-        "if [ \"${1:-}\" = version ]; then echo 'dp 0.3.2 (1f457ec)'; exit 0; fi\nexit 2",
+        "if [ \"${1:-}\" = version ]; then echo 'dp 0.10.0 (0681233)'; exit 0; fi\nexit 2",
     );
     fake_tool(
         &cargo_bin,
@@ -1025,7 +1034,7 @@ fn check_updates_accepts_current_path_despite_stale_cargo_copy() {
         .assert()
         .success()
         .stdout(predicate::str::contains(
-            "desire-path: current (dp 0.3.2 (1f457ec))",
+            "desire-path: current (dp 0.10.0 (0681233))",
         ));
 }
 
@@ -1058,7 +1067,7 @@ fn expanded_adapter_negative_controls_turn_verification_red() {
     fake_tool(
         &yupana_bin,
         "yupana",
-        "if [ \"${1:-}\" = --version ]; then echo 'yupana 0.12.7'; exit 0; fi\nif [ \"${1:-}\" = analyze ]; then exit 0; fi\nif [ \"${1:-}\" = callers ]; then echo 'fixture.rs:2 caboodle_yupana_caller'; exit 0; fi\nexit 2",
+        "if [ \"${1:-}\" = --version ]; then echo 'yupana 0.16.2'; exit 0; fi\nif [ \"${1:-}\" = analyze ]; then exit 0; fi\nif [ \"${1:-}\" = callers ]; then echo 'fixture.rs:2 tambo_yupana_caller'; exit 0; fi\nexit 2",
     );
     command(yupana_root.path(), &yupana_bin)
         .args(["plan", "--profile", "code-intel"])
@@ -1079,7 +1088,7 @@ fn expanded_adapter_negative_controls_turn_verification_red() {
     fake_tool(
         &dp_bin,
         "dp",
-        "if [ \"${1:-}\" = version ]; then echo 'dp v0.3.2 (1f457ec)'; exit 0; fi\necho '[{\"tool_name\":\"caboodle_desire_path_marker\"}]'",
+        "if [ \"${1:-}\" = version ]; then echo 'dp v0.10.0 (0681233)'; exit 0; fi\necho '[{\"tool_name\":\"tambo_desire_path_marker\"}]'",
     );
     command(dp_root.path(), &dp_bin)
         .args(["plan", "--profile", "everything"])
@@ -1142,7 +1151,7 @@ fn retrieval_plan_with_bobbin(
     let bin = root.path().join("bin");
     fs::create_dir(&bin).unwrap();
     install_fakes(root.path(), &bin);
-    if !functional || version != "0.27.3" {
+    if !functional || version != "0.30.0" {
         // Any subcommand but --version fails like a clap argument error, which is
         // what an old bobbin says to the reviewed release's verification contract.
         fake_tool(
@@ -1169,14 +1178,14 @@ fn apply_skip_install_refuses_a_stale_tool_naming_both_versions() {
         .assert()
         .failure()
         .stderr(predicate::str::contains("0.1.0"))
-        .stderr(predicate::str::contains("0.27.3"));
+        .stderr(predicate::str::contains("0.30.0"));
 }
 
 #[test]
 fn apply_skip_install_accepts_the_reviewed_release() {
     // Control for the test above: without it, "fails on a skew" is
     // indistinguishable from "apply --skip-install always fails".
-    let (root, bin) = retrieval_plan_with_bobbin("0.27.3", true);
+    let (root, bin) = retrieval_plan_with_bobbin("0.30.0", true);
     command(root.path(), &bin)
         .args(["apply", "--skip-install"])
         .assert()
@@ -1212,7 +1221,7 @@ fn verify_names_a_version_skew_before_the_tools_own_error() {
 #[test]
 fn verify_does_not_claim_a_skew_when_the_reviewed_release_fails() {
     // Control: the skew message must not fire on every verification failure.
-    let (root, bin) = retrieval_plan_with_bobbin("0.27.3", false);
+    let (root, bin) = retrieval_plan_with_bobbin("0.30.0", false);
     command(root.path(), &bin)
         .arg("verify")
         .assert()
@@ -1520,7 +1529,7 @@ tools = ["quipu", "camayoc", "bobbin"]
 
 #[test]
 fn a_plan_naming_an_unknown_member_is_refused_by_name() {
-    // wu M1: a member a later caboodle removed must refuse with a named message.
+    // wu M1: a member a later Tambo removed must refuse with a named message.
     let root = tempfile::tempdir().unwrap();
     fs::write(
         root.path().join("removed.toml"),
@@ -1532,9 +1541,7 @@ fn a_plan_naming_an_unknown_member_is_refused_by_name() {
         .assert()
         .failure()
         .stderr(predicate::str::contains("unknown tool 'retired-member'"))
-        .stderr(predicate::str::contains(
-            "stack member of this caboodle build",
-        ));
+        .stderr(predicate::str::contains("stack member of this Tambo build"));
 }
 
 #[test]
@@ -1792,7 +1799,7 @@ fn host_profile_excludes_crew_explicitly_and_refuses_unknown_names() {
         .unwrap();
     let stdout = String::from_utf8_lossy(&out.stdout);
     assert!(stdout.contains(
-        "crew: EXCLUDED on host profile mac; owned by st-peer-autopull; not installed or verified by caboodle"
+        "crew: EXCLUDED on host profile mac; owned by st-peer-autopull; not installed or verified by Tambo"
     ), "{stdout}");
     assert!(
         !stdout.contains("shantytown:") && !stdout.contains("creel:"),
@@ -2094,16 +2101,16 @@ fn release_fixture(root: &Path, bin: &Path, broken: bool, bad_checksum: bool) {
     let stage = root.join("release-stage");
     fs::create_dir(&stage).unwrap();
     let body = if broken {
-        "#!/bin/sh\nif [ \"$1\" = --version ]; then echo 'bobbin 0.27.4'; exit 0; fi\nexit 9\n"
+        "#!/bin/sh\nif [ \"$1\" = --version ]; then echo 'bobbin 0.30.1'; exit 0; fi\nexit 9\n"
             .to_owned()
     } else {
         fs::read_to_string(bin.join("bobbin"))
             .unwrap()
-            .replace("0.27.3", "0.27.4")
+            .replace("0.30.0", "0.30.1")
     };
     fs::write(stage.join("bobbin"), body).unwrap();
     fs::set_permissions(stage.join("bobbin"), fs::Permissions::from_mode(0o755)).unwrap();
-    let archive = root.join("bobbin-v0.27.4-x86_64-unknown-linux-gnu.tar.gz");
+    let archive = root.join("bobbin-v0.30.1-x86_64-unknown-linux-gnu.tar.gz");
     assert!(std::process::Command::new("tar")
         .args(["-czf"])
         .arg(&archive)
@@ -2121,10 +2128,10 @@ fn release_fixture(root: &Path, bin: &Path, broken: bool, bad_checksum: bool) {
     };
     fs::write(
         root.join("SHA256SUMS.txt"),
-        format!("{digest}  bobbin-v0.27.4-x86_64-unknown-linux-gnu.tar.gz\n"),
+        format!("{digest}  bobbin-v0.30.1-x86_64-unknown-linux-gnu.tar.gz\n"),
     )
     .unwrap();
-    fs::write(root.join("latest.json"), r#"{"tag_name":"v0.27.4","draft":false,"prerelease":false,"assets":[{"name":"bobbin-v0.27.4-x86_64-unknown-linux-gnu.tar.gz"},{"name":"SHA256SUMS.txt"}]}"#).unwrap();
+    fs::write(root.join("latest.json"), r#"{"tag_name":"v0.30.1","draft":false,"prerelease":false,"assets":[{"name":"bobbin-v0.30.1-x86_64-unknown-linux-gnu.tar.gz"},{"name":"SHA256SUMS.txt"}]}"#).unwrap();
     fake_tool(
         bin,
         "curl",
@@ -2140,7 +2147,7 @@ done
 case "$url" in
   */releases/latest) cat "$HOME/latest.json" ;;
   */SHA256SUMS.txt) cp "$HOME/SHA256SUMS.txt" "$output" ;;
-  */bobbin-v0.27.4-x86_64-unknown-linux-gnu.tar.gz) cp "$HOME/bobbin-v0.27.4-x86_64-unknown-linux-gnu.tar.gz" "$output" ;;
+  */bobbin-v0.30.1-x86_64-unknown-linux-gnu.tar.gz) cp "$HOME/bobbin-v0.30.1-x86_64-unknown-linux-gnu.tar.gz" "$output" ;;
   *) echo "unexpected URL" >&2; exit 99 ;;
 esac
 "#,
@@ -2163,9 +2170,9 @@ fn published_release_update_ignores_stale_pin_and_keeps_backup() {
         .args(["update-release", "--tool", "bobbin"])
         .assert()
         .success()
-        .stdout(predicate::str::contains("installed and verified v0.27.4"));
+        .stdout(predicate::str::contains("installed and verified v0.30.1"));
     let state = fs::read_to_string(root.path().join(".caboodle/state.json")).unwrap();
-    assert!(state.contains("0.27.4"));
+    assert!(state.contains("0.30.1"));
     let backups: Vec<_> = fs::read_dir(root.path().join(".caboodle/release-backups/bobbin"))
         .unwrap()
         .collect();
@@ -2264,7 +2271,7 @@ fn reviewed_pin_update_cannot_undo_newer_published_binary() {
     let bin = root.path().join("bin");
     fs::create_dir(&bin).unwrap();
     release_fixture(root.path(), &bin, false, false);
-    fake_tool(&bin, "bobbin", "echo 'bobbin 0.27.4'");
+    fake_tool(&bin, "bobbin", "echo 'bobbin 0.30.1'");
     let before = fs::read(bin.join("bobbin")).unwrap();
     command(root.path(), &bin)
         .arg("update")
@@ -2285,11 +2292,11 @@ fn published_release_missing_assets_and_ambiguous_identity_never_install() {
         if mode == "missing" {
             fs::write(
                 root.path().join("latest.json"),
-                r#"{"tag_name":"v0.27.4","draft":false,"prerelease":false,"assets":[]}"#,
+                r#"{"tag_name":"v0.30.1","draft":false,"prerelease":false,"assets":[]}"#,
             )
             .unwrap();
         } else if mode == "equal" {
-            fake_tool(&bin, "bobbin", "echo 'bobbin 0.27.4'");
+            fake_tool(&bin, "bobbin", "echo 'bobbin 0.30.1'");
         } else if mode == "unreadable" {
             fake_tool(&bin, "bobbin", "echo 'bobbin unknown'");
         }
@@ -2310,10 +2317,10 @@ fn published_release_missing_assets_and_ambiguous_identity_never_install() {
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 fn local_source_builds_refuse_equal_releases_but_accept_newer_ones() {
     for (base, suffix, check) in [
-        ("0.27.4", "abcdef012345", false),
-        ("0.27.4", "abcdef012345.dirty", true),
-        ("0.27.3", "abcdef012345", false),
-        ("0.27.3", "abcdef012345.dirty", false),
+        ("0.30.1", "abcdef012345", false),
+        ("0.30.1", "abcdef012345.dirty", true),
+        ("0.30.0", "abcdef012345", false),
+        ("0.30.0", "abcdef012345.dirty", false),
     ] {
         let root = tempfile::tempdir().unwrap();
         let bin = root.path().join("bin");
@@ -2322,7 +2329,7 @@ fn local_source_builds_refuse_equal_releases_but_accept_newer_ones() {
         let script = fs::read_to_string(bin.join("bobbin")).unwrap();
         fs::write(
             bin.join("bobbin"),
-            script.replace("0.27.3", &format!("{base}+local.{suffix}")),
+            script.replace("0.30.0", &format!("{base}+local.{suffix}")),
         )
         .unwrap();
         let before = fs::read(bin.join("bobbin")).unwrap();
@@ -2331,7 +2338,7 @@ fn local_source_builds_refuse_equal_releases_but_accept_newer_ones() {
         if check {
             cmd.arg("--check");
         }
-        if base == "0.27.4" {
+        if base == "0.30.1" {
             cmd.assert()
                 .failure()
                 .stderr(predicate::str::contains("local source build installed"));
@@ -2566,9 +2573,9 @@ case "$url" in */releases/latest|*/releases/tags/*) cat "$HOME/latest.json" ;; *
         return;
     }
     let repair_line = if repair_fails {
-        "caboodle: note: post-install repair failed"
+        "tambo: note: post-install repair failed"
     } else {
-        "caboodle: post-install repair: qp ok"
+        "tambo: post-install repair: qp ok"
     };
     updater
         .assert()
@@ -2714,7 +2721,7 @@ fn missing_plan_points_at_the_interview() {
         .arg("install")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("caboodle init --guided"));
+        .stderr(predicate::str::contains("tambo init --guided"));
 }
 
 /// aegis-70qlhs: a stale copy earlier on PATH must turn verify RED even when
@@ -2834,7 +2841,7 @@ fn project_settings_rejects_empty_or_invalid_success_receipts() {
 
 #[test]
 fn install_continues_after_failure_invalidates_old_proof_and_resumes() {
-    let (root, bin) = retrieval_plan_with_bobbin("0.27.3", true);
+    let (root, bin) = retrieval_plan_with_bobbin("0.30.0", true);
     command(root.path(), &bin)
         .args(["install", "--skip-install"])
         .assert()
@@ -2872,7 +2879,7 @@ fn install_continues_after_failure_invalidates_old_proof_and_resumes() {
 
 #[test]
 fn apply_reports_all_version_failures_and_still_applies_later_tools() {
-    let (root, bin) = retrieval_plan_with_bobbin("0.27.3", true);
+    let (root, bin) = retrieval_plan_with_bobbin("0.30.0", true);
     fake_tool(&bin, "quipu", "echo 'broken quipu' >&2; exit 1");
     fs::write(root.path().join("camayoc/REVISION"), "").unwrap();
     command(root.path(), &bin)
@@ -2950,7 +2957,7 @@ fn release_download_recovers_visibly_from_server_and_transport_errors() {
                     .and(predicate::str::contains("retrying in 1s"))
                     .and(predicate::str::contains("succeeded on attempt 2/3")),
             )
-            .stdout(predicate::str::contains("installed and verified v0.27.4"));
+            .stdout(predicate::str::contains("installed and verified v0.30.1"));
         assert_eq!(
             fs::read_to_string(root.path().join("attempts")).unwrap(),
             "2"
@@ -3556,7 +3563,7 @@ fn apply_registers_exactly_the_hook_bundles_of_the_plans_tools() {
     // script, where quipu must NOT be registered, and a Gas Town host that has it.
     use std::os::unix::fs::PermissionsExt;
     for gas_town in [false, true] {
-        let (root, bin) = retrieval_plan_with_bobbin("0.27.3", true);
+        let (root, bin) = retrieval_plan_with_bobbin("0.30.0", true);
         if gas_town {
             let hooks = root.path().join(".gt/hooks");
             fs::create_dir_all(&hooks).unwrap();
@@ -3621,7 +3628,7 @@ fn verify_asserts_the_hook_bundles_without_a_crew_plan_and_before_the_tools() {
     // assert them only inside crew verification, which a plan without a crew
     // section never reaches, and only after every tool had verified, so on the
     // measured Mac a bobbin skew failed first and the bundles went unasserted.
-    let (root, bin) = retrieval_plan_with_bobbin("0.27.3", true);
+    let (root, bin) = retrieval_plan_with_bobbin("0.30.0", true);
     let plan = fs::read_to_string(root.path().join("caboodle-plan.toml")).unwrap();
     assert!(!plan.contains("[crew]"), "control: no crew section\n{plan}");
     fs::remove_file(bin.join("st-versions.log")).unwrap();
@@ -4120,11 +4127,11 @@ case "$*" in
 esac
 exit 2"#;
     for (scenario, installed, pinned, success, upgrade, message) in [
-        ("stable", "0.28.0", false, true, true, "delivered by brew"),
-        ("stable", "0.27.3", false, true, true, "delivered by brew"),
+        ("stable", "0.31.0", false, true, true, "delivered by brew"),
+        ("stable", "0.30.0", false, true, true, "delivered by brew"),
         (
             "stable",
-            "0.30.0",
+            "0.33.0",
             false,
             true,
             false,
@@ -4132,7 +4139,7 @@ exit 2"#;
         ),
         (
             "stable",
-            "0.29.0",
+            "0.32.0",
             false,
             true,
             false,
@@ -4140,7 +4147,7 @@ exit 2"#;
         ),
         (
             "stable",
-            "0.28.0",
+            "0.31.0",
             true,
             true,
             false,
@@ -4148,7 +4155,7 @@ exit 2"#;
         ),
         (
             "refresh-fails",
-            "0.28.0",
+            "0.31.0",
             false,
             false,
             false,
@@ -4156,7 +4163,7 @@ exit 2"#;
         ),
         (
             "metadata-fails",
-            "0.28.0",
+            "0.31.0",
             false,
             false,
             false,
@@ -4164,7 +4171,7 @@ exit 2"#;
         ),
         (
             "upgrade-fails",
-            "0.28.0",
+            "0.31.0",
             false,
             false,
             true,
@@ -4172,7 +4179,7 @@ exit 2"#;
         ),
         (
             "unchanged-upgrade",
-            "0.28.0",
+            "0.31.0",
             false,
             false,
             true,
@@ -4191,7 +4198,7 @@ exit 2"#;
         fs::write(
             bin.join("bobbin"),
             fake.replace(
-                "echo 'bobbin 0.27.3';",
+                "echo 'bobbin 0.30.0';",
                 "printf 'bobbin %s\\n' \"$(cat \"$HOME/brew-installed\")\";",
             ),
         )
@@ -4200,8 +4207,8 @@ exit 2"#;
             ("scenario", scenario),
             ("brew-installed", installed),
             ("pinned", if pinned { "true" } else { "false" }),
-            ("local-stable", "0.28.0"),
-            ("remote-stable", "0.29.0"),
+            ("local-stable", "0.31.0"),
+            ("remote-stable", "0.32.0"),
         ] {
             fs::write(root.path().join(name), value).unwrap();
         }
@@ -4247,7 +4254,7 @@ exit 2"#;
         assert_eq!(
             actual,
             if success && upgrade {
-                "0.29.0"
+                "0.32.0"
             } else {
                 installed
             }
@@ -4325,6 +4332,19 @@ fn brew_quipu_installs_a_missing_path_pair_before_binding_it() {
     let bin = root.path().join("bin");
     fs::create_dir(&bin).unwrap();
     install_fakes(root.path(), &bin);
+    // The missing-pair case must not discover a newer host installation on
+    // the inherited PATH. Copy utilities rather than linking anything a fake
+    // command could overwrite back into the real host.
+    for tool in [
+        "cp", "chmod", "ln", "touch", "cat", "mkdir", "rm", "sed", "grep", "head", "dirname",
+    ] {
+        let source = ["/bin", "/usr/bin"]
+            .iter()
+            .map(|directory| Path::new(directory).join(tool))
+            .find(|path| path.is_file())
+            .unwrap();
+        fs::copy(source, bin.join(tool)).unwrap();
+    }
     for (program, template) in [
         ("quipu", "client-template"),
         ("quipu-server", "server-template"),
@@ -4361,6 +4381,7 @@ exit 2
 "#,
     );
     command(root.path(), &bin)
+        .env("PATH", &bin)
         .args(["plan", "--profile", "retrieval"])
         .assert()
         .success();
@@ -4372,7 +4393,24 @@ exit 2
     .unwrap();
     assert!(!bin.join("quipu").exists());
     assert!(!bin.join("quipu-server").exists());
+    // This fixture deliberately removes Quipu. Do not discover an installed
+    // host copy through the inherited PATH instead of exercising the missing pair.
+    for utility in [
+        "cp", "chmod", "ln", "touch", "cat", "rm", "mkdir", "dirname", "basename", "sed", "grep",
+        "head", "sleep",
+    ] {
+        let source = std::env::split_paths(&std::env::var_os("PATH").unwrap())
+            .map(|directory| directory.join(utility))
+            .find(|candidate| candidate.is_file())
+            .unwrap_or_else(|| panic!("fixture utility is missing: {utility}"));
+        fs::copy(source, bin.join(utility)).unwrap();
+    }
+    assert!(std::process::Command::new("quipu")
+        .env("PATH", &bin)
+        .output()
+        .is_err());
     command(root.path(), &bin)
+        .env("PATH", &bin)
         .env("CABOODLE_BREW", bin.join("brew"))
         .arg("update")
         .assert()
@@ -4391,4 +4429,276 @@ exit 2
             .count(),
         1
     );
+}
+
+#[test]
+fn brew_manifest_reads_path_member_instead_of_stale_managed_copy() {
+    // Keep the fake tap at the reviewed member pin: this test exercises PATH
+    // selection, not the older-tap fallback. A fixed tap version makes a member
+    // bump accidentally turn the fresh-install case into that other lane.
+    let member: toml::Value = toml::from_str(include_str!("../members/seeds.toml")).unwrap();
+    let stable = member["version"].as_str().unwrap();
+    for (path_version, identity, succeeds, fresh) in [
+        (stable, true, true, false),
+        (stable, true, true, true),
+        ("0.0.0", true, false, false),
+        (stable, false, false, false),
+    ] {
+        let root = tempfile::tempdir().unwrap();
+        let bin = root.path().join("bin");
+        fs::create_dir(&bin).unwrap();
+        install_fakes(root.path(), &bin);
+        let cargo = root.path().join("cargo-home/bin");
+        fs::create_dir_all(&cargo).unwrap();
+        fake_tool(
+            &cargo,
+            "sd",
+            "echo used-stale-cargo >> \"$HOME/stale.log\"; echo 'sd 0.2.0 (seeds)'",
+        );
+        fake_tool(
+            &bin,
+            "sd",
+            &format!(
+                "if [ \"$1\" = --help ]; then echo '{}'; else echo 'sd {path_version} (seeds)'; fi",
+                if identity {
+                    "seeds is the beads-compatible tracker"
+                } else {
+                    "foreign replacement"
+                }
+            ),
+        );
+        let seed = fs::read_to_string(bin.join("sd")).unwrap();
+        let seed = seed.replace("else echo", "elif [ \"$1\" = create ]; then echo \"$2\" >> .sd-fake-seeds; elif [ \"$1\" = list ]; then cat .sd-fake-seeds 2>/dev/null || true; else echo");
+        fs::write(bin.join("sd"), &seed).unwrap();
+        fs::copy(bin.join("sd"), root.path().join("seed-template")).unwrap();
+        if fresh {
+            fs::remove_file(bin.join("sd")).unwrap();
+        } else {
+            fs::write(root.path().join("seed-installed"), "yes").unwrap();
+        }
+        fake_tool(
+            &bin,
+            "brew",
+            r#"
+case "$*" in
+ "update --quiet") exit 0;;
+ "info --json=v2 scbrown/tap/seeds")
+ rec=''; if [ -f "$HOME/seed-installed" ]; then rec=$(printf '{"version":"%s"}' "$FAKE_SEEDS_STABLE"); fi
+ printf '{"formulae":[{"full_name":"scbrown/tap/seeds","tap":"scbrown/tap","pinned":false,"versions":{"stable":"%s"},"installed":[%s]}]}' "$FAKE_SEEDS_STABLE" "$rec"; exit 0;;
+ "install scbrown/tap/seeds") cp "$HOME/seed-template" "$HOME/bin/sd"; chmod +x "$HOME/bin/sd"; touch "$HOME/seed-installed"; exit 0;;
+ info*) echo '{"formulae":[]}'; exit 0;;
+esac
+exit 2
+"#,
+        );
+        command(root.path(), &bin)
+            .args(["plan", "--profile", "everything"])
+            .assert()
+            .success();
+        let path = root.path().join("caboodle-plan.toml");
+        let mut plan: toml::Value = toml::from_str(&fs::read_to_string(&path).unwrap()).unwrap();
+        plan["tools"] = toml::Value::Array(
+            [
+                "quipu",
+                "camayoc",
+                "bobbin",
+                "yupana",
+                "desire-path",
+                "seeds",
+            ]
+            .iter()
+            .map(|n| toml::Value::String(n.to_string()))
+            .collect(),
+        );
+        fs::write(path, toml::to_string(&plan).unwrap()).unwrap();
+        fs::create_dir_all(root.path().join("camayoc")).unwrap();
+        fs::write(
+            root.path().join("camayoc/REVISION"),
+            "f443bf19974d06ab662c8ae3deeccfbb1e082f48",
+        )
+        .unwrap();
+        let mut cmd = command(root.path(), &bin);
+        cmd.env("CABOODLE_BREW", bin.join("brew"))
+            .env("FAKE_SEEDS_STABLE", stable)
+            .arg("update");
+        if succeeds {
+            cmd.assert()
+                .success()
+                .stdout(predicate::str::contains(if fresh {
+                    "seeds: delivered by brew"
+                } else {
+                    "seeds: current stable channel"
+                }));
+        } else {
+            cmd.assert().failure();
+        }
+        assert!(!root.path().join("stale.log").exists());
+    }
+}
+
+#[test]
+fn quickstart_local_needs_no_server_or_issued_token_and_resumes() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    fs::remove_file(root.path().join(".config/quipu/token")).unwrap();
+    for args in [vec!["quickstart", "--skip-install"], vec!["verify"]] {
+        command_named(root.path(), &bin, "tambo")
+            .env_remove("QUIPU_SERVER")
+            .args(args)
+            .assert()
+            .success()
+            .stdout(predicate::str::contains("quipu: verified"))
+            .stdout(predicate::str::contains("bobbin: verified"))
+            .stdout(predicate::str::contains("quipu credential:").not());
+    }
+    command_named(root.path(), &bin, "tambo")
+        .env_remove("QUIPU_SERVER")
+        .env("CARGO_HOME", root.path())
+        .arg("doctor")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("quipu credential").not())
+        .stdout(predicate::str::contains("quipu server").not());
+    assert!(!root.path().join(".config/quipu/token").exists());
+    let plan = fs::read_to_string(root.path().join("caboodle-plan.toml")).unwrap();
+    assert!(plan.contains(".caboodle/quipu.db"));
+    // No installed live server is needed by embedded verification.
+    assert!(!root.path().join(".quipu/server.pid").exists());
+}
+
+#[test]
+fn remote_mcp_plan_requires_credential_even_without_server_environment() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    command(root.path(), &bin)
+        .args(["plan", "--profile", "retrieval"])
+        .assert()
+        .success();
+    command(root.path(), &bin)
+        .args(["install", "--skip-install"])
+        .assert()
+        .success();
+    let file = root.path().join("caboodle-plan.toml");
+    let mut plan = fs::read_to_string(&file).unwrap();
+    plan.push_str("\n[quipu_mcp]\nurl = \"https://remote.example\"\n");
+    fs::write(file, plan).unwrap();
+    fs::remove_file(root.path().join(".config/quipu/token")).unwrap();
+    command(root.path(), &bin)
+        .env_remove("QUIPU_SERVER")
+        .arg("verify")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("missing canonical"))
+        .stdout(predicate::str::contains("quipu: verified").not());
+}
+
+#[test]
+fn quickstart_wires_the_query_first_hooks_and_uninstall_restores_the_settings() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    let claude = root.path().join(".claude/settings.json");
+    fs::create_dir_all(claude.parent().unwrap()).unwrap();
+    let before = "{\n  \"model\": \"opus\"\n}\n";
+    fs::write(&claude, before).unwrap();
+    command_named(root.path(), &bin, "tambo")
+        .env_remove("QUIPU_SERVER")
+        .args(["quickstart", "--skip-install"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(
+            "claude hooks: query-first hooks installed",
+        ))
+        .stdout(predicate::str::contains(
+            "codex hooks: query-first hooks installed",
+        ))
+        .stdout(predicate::str::contains("asks you to review them"));
+    let settings: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(&claude).unwrap()).unwrap();
+    assert_eq!(settings["model"], "opus");
+    let start = settings["hooks"]["SessionStart"][0]["hooks"][0]["command"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    assert!(
+        start.ends_with(" hook query-first --harness claude --event SessionStart"),
+        "{start}"
+    );
+
+    // The hook itself: names the plan's local store, counts the firing.
+    command_named(root.path(), &bin, "tambo")
+        .env_remove("QUIPU_SERVER")
+        .args([
+            "hook",
+            "query-first",
+            "--harness",
+            "claude",
+            "--event",
+            "SessionStart",
+        ])
+        .write_stdin(r#"{"session_id":"s-1"}"#)
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("QUERY-FIRST"))
+        .stdout(predicate::str::contains(".caboodle/quipu.db"));
+    let usage = fs::read_to_string(
+        root.path()
+            .join(".local/state/tambo/agent-hooks/usage.jsonl"),
+    )
+    .unwrap();
+    assert!(
+        usage.contains("\"session\":\"s-1\"") && usage.contains("\"mode\":\"local\""),
+        "{usage}"
+    );
+
+    // Codex has not trusted them yet, so verify says so and exits 1.
+    command_named(root.path(), &bin, "tambo")
+        .args(["hooks", "verify"])
+        .assert()
+        .code(1)
+        .stdout(predicate::str::contains("ok   claude query-first hooks"))
+        .stdout(predicate::str::contains(
+            "warn codex query-first hooks: installed but not trusted",
+        ));
+    command_named(root.path(), &bin, "tambo")
+        .args(["hooks", "uninstall"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(
+            "claude: restored the exact settings",
+        ));
+    assert_eq!(fs::read_to_string(&claude).unwrap(), before);
+    assert!(!root.path().join(".codex/config.toml").exists());
+}
+
+#[test]
+fn crew_hosts_get_no_user_level_query_first_hooks() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    command_named(root.path(), &bin, "tambo")
+        .env("SHANTY_ROOT", root.path().join("shanty"))
+        .args(["hooks", "install"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "shantytown crew host (SHANTY_ROOT is set)",
+        ));
+    command_named(root.path(), &bin, "tambo")
+        .env_remove("QUIPU_SERVER")
+        .env("SHANTY_ROOT", root.path().join("shanty"))
+        .args(["quickstart", "--skip-install"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(
+            "agent hooks: skipped on this shantytown crew host",
+        ));
+    assert!(!root.path().join(".claude/settings.json").exists());
+    assert!(!root.path().join(".codex/config.toml").exists());
 }

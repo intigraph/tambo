@@ -1,10 +1,10 @@
 # Architecture
 
-Caboodle's engine is a **plan → apply → verify** loop with a state file
+Tambo's engine is a **plan → apply → verify** loop with a state file
 recording what is installed *and last proven working*. Idempotent and
 resumable: re-running converges, and a failed step names itself.
 
-The wizard is an interview, not a form over install switches. `caboodle init
+The wizard is an interview, not a form over install switches. `tambo init
 --guided` first elicits intended use, themed crew-member identities/domains/roles,
 and the questions the installed graph must answer. Those answers become typed
 plan data and executable reader-path contracts. The engine therefore builds

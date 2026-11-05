@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 use std::{ffi::OsString, path::Path};
 
 use anyhow::{bail, Context, Result};
@@ -26,7 +28,7 @@ struct ImportResult {
 }
 
 /// What `apply` should do about an installed tool whose version is not the one
-/// this Caboodle build reviewed (aegis-5ctwu3).
+/// this Tambo build reviewed (aegis-5ctwu3).
 ///
 /// Split out as a pure function ON PURPOSE: the act it decides is a network
 /// download, so a test that drove `apply` end to end would be measuring GitHub
@@ -83,7 +85,7 @@ pub fn apply(plan: &Plan, state_path: &Path, skip_install: bool) -> Result<State
         // aegis-5ctwu3: PRESENCE IS NOT CONVERGENCE. Until this match looked at
         // `is_current`, a binary that merely EXISTED was reported "applied" and
         // left at whatever version it was — bobbin sat at 0.1.0 while this build
-        // reviewed 0.17.0, and `caboodle install` then failed its own verify with
+        // reviewed 0.17.0, and `tambo install` then failed its own verify with
         // `error: unexpected argument '--source' found`. The installer knew the
         // newer contract, verified against it, and had never installed it; the
         // operator got a clap error instead of "your bobbin is 16 minors old".
@@ -99,45 +101,45 @@ pub fn apply(plan: &Plan, state_path: &Path, skip_install: bool) -> Result<State
                 // here — a SKEWED one reporting success was the inconsistency.
                 Ok(installed) => {
                     match decide_convergence(&installed, &desired, false, skip_install) {
-                    Convergence::Current => installed,
-                    Convergence::RefuseSkipInstall => bail!(
-                        "{} is installed at {installed} but this Caboodle build reviewed {desired}; \
+                        Convergence::Current => installed,
+                        Convergence::RefuseSkipInstall => bail!(
+                        "{} is installed at {installed} but this Tambo build reviewed {desired}; \
                          --skip-install refuses to converge it. Install {desired}, or drop \
                          --skip-install to let apply converge it.",
                         name.as_str()
                     ),
-                    Convergence::Decline => {
-                        println!(
-                            "{}: NOT converged — installed {installed}, reviewed {desired}. \
+                        Convergence::Decline => {
+                            println!(
+                                "{}: NOT converged — installed {installed}, reviewed {desired}. \
                              Apply does not downgrade or replace an unrecognised version; \
-                             use `caboodle update-release` deliberately if that is what you want.",
-                            name.as_str()
-                        );
-                        installed
-                    }
-                    Convergence::Converge => {
-                        eprintln!(
-                            "{}: stale ({installed}); converging to reviewed {desired}",
-                            name.as_str()
-                        );
-                        adapter.install().with_context(|| {
-                            format!("{} convergence to reviewed {desired}", name.as_str())
-                        })?;
-                        let after = adapter.version().with_context(|| {
-                            format!("{} version read-back after convergence", name.as_str())
-                        })?;
-                        // The read-back is the proof, not the install's exit code.
-                        if !adapter.is_current(&after) {
-                            bail!(
-                                "{} did not reach reviewed release {desired} (got {after}); \
-                                 refusing to record it as applied",
+                             use `tambo update-release` deliberately if that is what you want.",
                                 name.as_str()
                             );
+                            installed
                         }
-                        println!("{}: converged {installed} -> {after}", name.as_str());
-                        after
+                        Convergence::Converge => {
+                            eprintln!(
+                                "{}: stale ({installed}); converging to reviewed {desired}",
+                                name.as_str()
+                            );
+                            adapter.install().with_context(|| {
+                                format!("{} convergence to reviewed {desired}", name.as_str())
+                            })?;
+                            let after = adapter.version().with_context(|| {
+                                format!("{} version read-back after convergence", name.as_str())
+                            })?;
+                            // The read-back is the proof, not the install's exit code.
+                            if !adapter.is_current(&after) {
+                                bail!(
+                                    "{} did not reach reviewed release {desired} (got {after}); \
+                                 refusing to record it as applied",
+                                    name.as_str()
+                                );
+                            }
+                            println!("{}: converged {installed} -> {after}", name.as_str());
+                            after
+                        }
                     }
-                }
                 }
 
                 Err(error)
@@ -149,7 +151,7 @@ pub fn apply(plan: &Plan, state_path: &Path, skip_install: bool) -> Result<State
                     .install()
                     .with_context(|| {
                         format!(
-                            "{} install step (run `caboodle doctor` to list every blocker on this host)",
+                            "{} install step (run `tambo doctor` to list every blocker on this host)",
                             name.as_str()
                         )
                     })?;
@@ -218,7 +220,7 @@ pub fn apply(plan: &Plan, state_path: &Path, skip_install: bool) -> Result<State
         bail!(
             "{} tool(s) failed to apply:\n{}\nSuccessful tools were saved. Fix the failures and rerun the same command. \
              Stack configuration, model provisioning, crew setup, share imports and verification \
-             have not run; run `caboodle doctor` for preflight guidance.",
+             have not run; run `tambo doctor` for preflight guidance.",
             failures.len(),
             failures.join("\n")
         );
@@ -422,17 +424,20 @@ pub fn verify(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
     for line in hook_bundles_verify(plan)? {
         println!("hook bundle {line}");
     }
-    if plan.tools.contains(&crate::model::ToolName::Quipu) {
+    if plan.tools.contains(&crate::model::ToolName::Quipu) && plan.requires_remote_quipu() {
         if let Some(record) = state.tools.get_mut("quipu") {
             record.verified = false;
             state.write(state_path)?;
         }
-        let server = std::env::var("QUIPU_SERVER").unwrap_or_else(|_| {
-            plan.quipu_mcp
-                .as_ref()
-                .map(|mcp| mcp.url.clone())
-                .unwrap_or_else(|| "http://localhost:3030".to_owned())
-        });
+        let server = std::env::var("QUIPU_SERVER")
+            .ok()
+            .filter(|url| !url.trim().is_empty())
+            .unwrap_or_else(|| {
+                plan.quipu_mcp
+                    .as_ref()
+                    .map(|mcp| mcp.url.clone())
+                    .unwrap_or_else(|| "http://localhost:3030".to_owned())
+            });
         let source = crate::quipu_credential::verify(&server)
             .context("live Quipu client credential verification")?;
         println!("quipu credential: canonical file 0400/0700 and authenticated read verified; source: {source}");
@@ -460,9 +465,9 @@ pub fn verify(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
             } else {
                 format!(
                     "{} functional verification — VERSION SKEW: {version} is installed, \
-                     this Caboodle build reviewed and verifies against {desired}. The error \
+                     this Tambo build reviewed and verifies against {desired}. The error \
                      below is most likely that skew, not a broken tool. Converge with \
-                     `caboodle apply` (or `caboodle update`), then re-verify.",
+                     `tambo apply` (or `tambo update`), then re-verify.",
                     name.as_str()
                 )
             }
@@ -536,7 +541,7 @@ pub fn verify(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
     Ok(state)
 }
 
-/// Compare the running toolchain to the releases reviewed by this Caboodle
+/// Compare the running toolchain to the releases reviewed by this Tambo
 /// build. Returns true only when every selected tool is current.
 pub(crate) fn reviewed_drift_status(installed: &str, desired: &str) -> &'static str {
     match crate::release_update::behind_reviewed(installed, desired) {
@@ -549,7 +554,7 @@ pub(crate) fn reviewed_drift_status(installed: &str, desired: &str) -> &'static 
 }
 
 /// A tool whose binary a package manager owns is judged by its package receipt
-/// and never installed by caboodle (aegis-6f1, option A): the package lane is
+/// and never installed by Tambo (aegis-6f1, option A): the package lane is
 /// its only writer. Returns the line to print and whether it is current.
 fn package_owned_status(name: crate::model::ToolName, desired: &str) -> Option<(String, bool)> {
     use crate::package::{apt_receipt, primary_program, standing, Standing};
@@ -561,7 +566,7 @@ fn package_owned_status(name: crate::model::ToolName, desired: &str) -> Option<(
         Standing::Current => "current",
         Standing::Ahead => "ahead of reviewed pin; downgrade refused",
         Standing::Behind => {
-            "behind reviewed pin; delivered by the package lane, not installed by caboodle"
+            "behind reviewed pin; delivered by the package lane, not installed by Tambo"
         }
         Standing::Unknown => "version drift; review required",
     };
@@ -578,7 +583,7 @@ fn package_owned_status(name: crate::model::ToolName, desired: &str) -> Option<(
 }
 
 /// Member delivery through the stack's Homebrew tap (aegis-6f1). Applies only
-/// where caboodle may drive brew and the tool has a stack formula. Returns the
+/// where Tambo may drive brew and the tool has a stack formula. Returns the
 /// verified version when brew delivered (or already holds) the tool, `None` to
 /// fall back to the other lanes (the release download when the tap is older
 /// than the pin). Never downgrades.
@@ -911,7 +916,7 @@ fn seed_self_test_store() -> Result<(tempfile::TempDir, std::path::PathBuf)> {
     std::fs::write(
         &episode,
         format!(
-            r#"{{"name":"caboodle self-test question","episode_body":"self-test seed","source":"caboodle","group_id":"caboodle-verification","nodes":[{{"name":"{SELF_TEST_MARKER}","type":"Verification","description":"caboodle self-test question seed"}}],"edges":[]}}"#
+            r#"{{"name":"Tambo self-test question","episode_body":"self-test seed","source":"caboodle","group_id":"caboodle-verification","nodes":[{{"name":"{SELF_TEST_MARKER}","type":"Verification","description":"Tambo self-test question seed"}}],"edges":[]}}"#
         ),
     )
     .context("write self-test episode")?;

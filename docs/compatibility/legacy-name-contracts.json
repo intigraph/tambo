@@ -1,0 +1,1334 @@
+{
+  "files": {
+    ".github/workflows/ci.yml": {
+      "reason": "Explicit compatibility: preserve existing required-check identity and persisted default plan, state and observability filenames; commands and temporary fixtures use Tambo.",
+      "lines": {
+        "0fd19f0516d977308f379dce9f031a64813f34653e10510c59f4756c0acb86ec": 1,
+        "1a19074bb73dd1dddce9794a0a444cf1a25d146f06cba5a7286da484bca7d79c": 1,
+        "1a637d6fbbbe5aa3d11724c2468068a7a3199551f427fabdcb592c745d652cf7": 1,
+        "3cb3f95298dfc4ca96121715d8c57d904feac18546658a4a5f5f8d9b685c4317": 1,
+        "3e37c6ff66e58be9ca1aad65b94399f475d6c8c272d3a569e7e2b3205eb2d067": 1,
+        "48bc6e2b0fa822cd0855822fd6b2315c518d6d096711d5c82f13008f9200bf22": 1,
+        "815b2734ca9b305f8de72bd4717823a4d83883bcdb679c9a38c7f482811ef643": 1,
+        "89b3cc66c2f306f077932afa8b06bf51c13aed82e392170e5d7e86ded6785872": 1,
+        "9b8abf7fd8c352368c0cf65e1a53a317eb232452a4321f14a1ea32a6b592a741": 1,
+        "9b9075f8179a0fb4558b197406fc674ab8774a1a5b54a5747b5380c8a71874f8": 1,
+        "a6c20b2e26879c39b7a56475d0e83ae49362bc6cf2477291000a46f169d1914d": 1,
+        "b01623a8530368e4e1aa8c2a1e336334baebba955698cfe3683ff2538e451e34": 1,
+        "d3ae7b8ea7ff8a2fa3ce1afeb90670af3a2c8a76109ed16046e5c11c1302e6f8": 1,
+        "d72fe5e847939f156cc1480ee8236d58038fdd550d21eb424d81cf770adff29e": 1,
+        "e959717c2b65b0e36e26ffde89ba883f23ab949a2d9cce029c55d7b5f0a7554c": 1,
+        "f15fd5d91696afb5de57157088489e5813b1c24b99631f664ccefef5b95986e1": 1
+      }
+    },
+    ".github/workflows/member-verify.yml": {
+      "reason": "Explicit compatibility: preserve existing required-check identity and persisted default plan, state and observability filenames; commands and temporary fixtures use Tambo.",
+      "lines": {
+        "dbf8216c24d7e33c8cf195dad9c1ef71355a90ce118d838cacb09c5990f6caee": 1
+      }
+    },
+    ".github/workflows/release.yml": {
+      "lines": {
+        "544e611ddaa879b028d3b4f5ae22de15ff9c9908e66be8edde46597235de7363": 1,
+        "c1294c87068897af27f29ec317091296f094fc8e7d0fbe8583f47d824e2e6b4c": 1,
+        "c918c45640e6940874105f93a59ba8a8d92c5f19be88af47033c58aabf002644": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "Cargo.toml": {
+      "lines": {
+        "3cc7c92e14e1b3db00d7e621d8efcd71d446cc99962408c379e73e203e7dc50f": 2,
+        "caaf318163961c02bb615c9144f075a2c27d308b0c0300ea42328b5a757b8515": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "README.md": {
+      "lines": {
+        "0a72892c82983c6bfa4534553f19ebdf33cc5cedd78b3312ee6ef4aa9a17e75e": 1,
+        "1066e7aa04d501ef86ab57b046b583b91b52b157364df0bbd46b67e8cf92b830": 1,
+        "35676aaad176b1ef84ebf6b7e2a4385680595bc28799f3e45f09e2259ddbbe7c": 1,
+        "54052e955bd9895469e35f276e2ee1389a8fa1a83a6dde7959c711588a7fae78": 1,
+        "a1baf0b159f81bcfabf31f51dd50be756dad895f07581a4b08ef63383a872745": 1,
+        "b2f9b0c55ee1ed7b69c84e2cc918fbba49d7202d821b111926fb58f138c5f8fc": 1,
+        "c88874bacd2c2691e49e7ff69ce26220321dd0d6268dd0a215ed66ca38e4cca5": 1,
+        "cc8b0161d55a2b70fc766b60b09aa5775a559e0add51e9346fc1fc7612b2ce7b": 1
+      },
+      "reason": "Existing state/cache filename, command alias, environment, package, immutable vocabulary IRI or live compatibility anchor."
+    },
+    "build.rs": {
+      "lines": {
+        "829a1255c670bfe608808967c0510f4775951bc0eb00cac9fdf0c7b8e90d9615": 1,
+        "b63336b572d2b3078092f78a8ed6d0ec21fc113b69125df8ad029a4a795f2be5": 1,
+        "cb0af3aea7d8652d82ad9e25afcf9d87f92093fdc14ef7de91dc4b3eb9e7d2f6": 1
+      },
+      "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
+    },
+    "docs/book/src/architecture.md": {
+      "lines": {
+        "a3733f94477011feb5eae6640a978f222c3fa7b70c93d7aa2937efe00566925d": 1
+      },
+      "reason": "Existing state/cache filename, command alias, environment, package, immutable vocabulary IRI or live compatibility anchor."
+    },
+    "docs/book/src/compatibility.md": {
+      "lines": {
+        "73d29c7744844a54fefa280f782e44decb05e13ce4771d05d6a68ea0bdc91cd5": 1,
+        "a2f210d54b7f77292d9ba9561d1eaf7d163b8af51f9ed290e1f2bfd6955f8fb5": 1,
+        "e32e037e704911f8bffa72a05cefd171e0bbbbf0868b1b3a27a15c66f44229b1": 1
+      },
+      "reason": "Existing state/cache filename, command alias, environment, package, immutable vocabulary IRI or live compatibility anchor."
+    },
+    "docs/book/src/configuration.md": {
+      "lines": {
+        "0089f2b547f38bf753e892da5e82f1be7f98c1a6058a62fa38bbf1c4972a0d59": 1,
+        "10f0a040df6e1008148a22f006f3255c3cc7679c8a4e6fdf2f9927ddf75b1c72": 1,
+        "44b269a2b5d2d82feaf4b97e240731139ea93cfbe6ba45ed2720f4b73c992b0d": 1,
+        "457b40eadcdb434825ebdabf915a7ddc9844403a1ba64373d8003b5a9cd2dc02": 1,
+        "5526850f0115f3ef7b815dd24e0c957d3e8c8f28acf20bf7c693cae92715d04d": 1,
+        "6be577112dd29543773f55c332fa66acf6c4fdd2cee4434f212d99e1881e30bf": 1,
+        "9394f9b1417cc5fe1d3faa2970a0054a86689554a715fd7af5932dd85f7037e5": 1,
+        "ad9a5dc8802c54cd89dac5a884b7976ff14594e7321cde7d3dc12c86a7753ee3": 1,
+        "b88a704445f902b6f7971a642a0a350c662a35dfc00ed26504af76d04a2a9541": 1,
+        "d831b80cb62d9ce982d2c0b99c45e2e66555776a26747398098e1193a2796c29": 1,
+        "dcaf172b5a052f5d4d7234bed2e29553db22f4bbf878341d9bfeb685569b0fe6": 1
+      },
+      "reason": "Existing state/cache filename, command alias, environment, package, immutable vocabulary IRI or live compatibility anchor."
+    },
+    "docs/book/src/corpus.md": {
+      "lines": {
+        "ca2c3a61f1d501084203938625db83ec8894a1b413c40a4c3e466a3d26940784": 1
+      },
+      "reason": "Existing state/cache filename, command alias, environment, package, immutable vocabulary IRI or live compatibility anchor."
+    },
+    "docs/book/src/emission.md": {
+      "lines": {
+        "f1f4db5cf5052c8dd1d3db63826a61b1e70efeee9a40e847867ceba5a53643a8": 1
+      },
+      "reason": "Existing state/cache filename, command alias, environment, package, immutable vocabulary IRI or live compatibility anchor."
+    },
+    "docs/book/src/getting-started.md": {
+      "lines": {
+        "271e4abc04a99774caee06d23c365cd900793333c78cb8f2192095ecdb88eae1": 1,
+        "3aa443b8f0bfef9e5ca3a6f97287d8cb341162a9eae35b2e2f0b04df3e170149": 1,
+        "52d8929c6644a6413901113fe7504df40ac3e87c6ffe22cbd3c1f84c1762531e": 1,
+        "a2b352021e9be2435d1cf614a627b81a7f47c58ba2ed8db40f40ede47ae5d9a7": 1
+      },
+      "reason": "Existing state/cache filename, command alias, environment, package, immutable vocabulary IRI or live compatibility anchor."
+    },
+    "docs/book/src/installation-reference.md": {
+      "lines": {
+        "0d714756291eb50ab1bc0cb785e04e36c3c92537ac33658751cfcef9c0bfcaf7": 1,
+        "1db9d94f6ad572c31b0064f036037f4619c22235a5cd686aa21f509012511103": 1,
+        "20a38aa80de5d1242f2b7320daa45d849c8a8adf2234f0791e12b7f0491b953b": 1,
+        "4582e4025781d8afd3016c1b923af37425eababce38faa494deabdd7dbaee2df": 1,
+        "7ef33cb5760d671a1e71b55939e90ccf768afbcdf6bf0c2465fde6a57be45982": 1,
+        "8558afef7784dffbb7b380d8a7c64913c488a305814c29e26c1075a398dac447": 1,
+        "a91a78bb7479979990e4e7abe116dab724315872279487cac4324b19eebd37a0": 1,
+        "c6ccd5fa09c072a8f2f4256c21a9f653378413852ccd9264154ac8bd72da92b5": 1,
+        "cb7847483b79e02ae3849b8460e3422daede2b4091f83563e9de9eac02d43589": 1,
+        "ebba26e4674089a2d484a0f39a679c40e4692be746efb23ed5e3fe427649f435": 1,
+        "ede13c63ae06f69a6b705f9ac9d3c0a423a2ccbf27ca1f68dbe505f0a374ce5a": 1,
+        "f577490d2d8e5fb075b2266ae6546027565d9dedbe2d22f59106c0f6ed495ebd": 1,
+        "fae4574c4b96521f6b03f4471693f0864155e34dfcbcc7562f0a277b35870dfe": 1
+      },
+      "reason": "Existing state/cache filename, command alias, environment, package, immutable vocabulary IRI or live compatibility anchor."
+    },
+    "docs/book/src/installing.md": {
+      "lines": {
+        "0716cd4879d929615441d2281f9a0dbf0a6238fb7b1cdf50b9bbc267eb06c32a": 1,
+        "0abecf0895c20ece45a9729f565f531fac93ebe58a97e1bd281154d84b5890db": 1,
+        "10482039b780d3237123798404b6e136d270fc59c5c7fbdde7507b1cd6df337a": 1,
+        "217f0900684ee432aabb1e3dccfe442670191a72fbd1c2da83f22024555a5039": 1,
+        "27ab2c87b85530871590c7b94bd674a9786f182c1db6ef64238a16cbba69a45c": 1,
+        "29aefe4929557fa19f9962ca97782cea2ed5993813eb25926e8a125cc0e7652b": 1,
+        "3e70a0ef9a7e5a828b1aa23dd02977fb9358c80e651ec5a5e7eddc2277331812": 1,
+        "3ff0d2e8fcdab1f6390cf9f643b475b247d24a5203a23c57ddffbe98953b2e21": 1,
+        "414987c14e419ec2eb855962fc8dc3821edf18363a605c6369bd00bcf89ee9bc": 1,
+        "46e187d7db3226b371880de99411d9ee82ba966f7f4c02e27a189cc8c7941ad4": 1,
+        "47c6a4bdd0bd870378fe108b444a31badb9b00fc819d3efd8060c7bd349a2586": 1,
+        "4e0139304cfb12cff0b6b18732f2264c7e6fa335f7a4223c2b1b7e712bae8d25": 1,
+        "5ee493c99b8729381640bb3279b4b4a772377a969db1fd13885c84b8002466a2": 1,
+        "725b753e5a7c7004faebd885f4f5499748a57f18c969444c07ab64026cc3fe9a": 1,
+        "9a63dd284dfbb92134f4386175255701fc6c66d8b73ac6d6ae3d81554e187040": 1,
+        "bff8408800e264e3044cfa40ef1d28260012980085b7dcb8582a3c266b6278d1": 1,
+        "ede13c63ae06f69a6b705f9ac9d3c0a423a2ccbf27ca1f68dbe505f0a374ce5a": 1,
+        "f9789f7a1f3832feefda4e59814134d84a386bf2bfe5839cfd25db44f08622ab": 1,
+        "fcd3a09b875efeafbf6f5a012c1edc45057537720b3231ef40f47cc9b2da959a": 1
+      },
+      "reason": "Existing state/cache filename, command alias, environment, package, immutable vocabulary IRI or live compatibility anchor."
+    },
+    "docs/book/src/pendant-autoload.md": {
+      "lines": {
+        "36cdfa6c7a164a842736631ca47d48225dc67505758e51575d1e12b43565a60c": 1,
+        "4061004344c6710b11b6a08e8b62d16937a42152ca62810f1a5d48ae80f44b8d": 1,
+        "818834b9054ca9d2bcf8ee9c7319596262975073abe1aa84311931a0e58e33c8": 1,
+        "b02a5f55f750ea89e8611a681319f55ed06566bb5770de176b96f859092a4d74": 1,
+        "bfb70c80d7c39b60af459a888b36313aab01f5969d1aff8b17020fb276a7b91f": 1
+      },
+      "reason": "Existing state/cache filename, command alias, environment, package, immutable vocabulary IRI or live compatibility anchor."
+    },
+    "docs/book/src/profiles.md": {
+      "lines": {
+        "c0df0d105abc608b14f69a3591686ead2689177f8e7c4e139e3da74583fdf3fa": 1
+      },
+      "reason": "Existing state/cache filename, command alias, environment, package, immutable vocabulary IRI or live compatibility anchor."
+    },
+    "docs/book/src/reference.md": {
+      "lines": {
+        "30143c176427de58ebf33910bc64e03a20409d8acddc612c22878e5162f25165": 1,
+        "3b5ba02cdf59aa4cd42c25c7b9bcf48f55126d7f820c4dac21b5e97a06c84673": 1,
+        "4817a2bfcddcc37956119e98a6cd0b0a39613bf0f9566ff0e4eff622da453087": 1,
+        "ad2fdee438a2feb36d30b825e2bcc794669869aee616ff0209d55b0119ae8f60": 1,
+        "b36239bbb627eb399364f2d0c2fb6c5c50b0a6b2b17987d739bc1719a9de482f": 1,
+        "b6586ea0cdf6ac241991587f9ecfa0665ee3de455411f999300d618cb2ada8d3": 1,
+        "fe9ac650df72ae45a78f4d9a35bfc14e8e65558da37c288340c10f36445b026c": 1
+      },
+      "reason": "Existing state/cache filename, command alias, environment, package, immutable vocabulary IRI or live compatibility anchor."
+    },
+    "docs/book/src/using.md": {
+      "lines": {
+        "0817cf1b81d816c9aa9fed79a1f8e95bddb3760a5d92fe37203b78a2b542c6ce": 1,
+        "0cd0bc56b2a1d6bf637c0d5a2b6395e83699932254d95807f2223e3e6a054815": 1,
+        "23768634934c6f43d3197f42fb3648f341be32ec867c2a9adaa4c9efa158cb78": 1,
+        "5588f9d69b267ea45cf33741e0881fb40dd77751696874a419cd7f382cf8bec2": 1,
+        "58f022da2d0e240c2624597212ce28d25fe8694e8230af5a8fbd9a87a8e3a4f6": 1,
+        "8e2b298f79af54652adb931e858ee851332ee8def33fd4aae9cf82fc512c9a36": 1,
+        "b6586ea0cdf6ac241991587f9ecfa0665ee3de455411f999300d618cb2ada8d3": 1,
+        "b724530d5b22b953c0e2bcf8ea40a88d417be3c16a9707709929b8a657b210b8": 1,
+        "d9a5c52932568ab1ea334748653aab543dfa09774decd77ec248a8444fe50189": 1,
+        "fb9d6ccebb9069108a8679319f58d9ba514c460bc07c6d99378da2330d47e6c0": 1
+      },
+      "reason": "Existing state/cache filename, command alias, environment, package, immutable vocabulary IRI or live compatibility anchor."
+    },
+    "docs/demos/bootstrap-compat/README.md": {
+      "lines": {
+        "2de1bd69bc9f45776dabb3eec6cb1394b19d5f19c01fd12dbf7a951e1413ba5e": 1,
+        "602d23c7dbf7c1772457c30dbd6953405475dd863e03cf99296b1f55b82d5980": 1,
+        "e06a961ae2434636cfc13f13847928d630cdc3e9ec5efe867dabec02ba95cf34": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/demos/bootstrap-compat/output.txt": {
+      "lines": {
+        "544d4126fd1fcca01804032678e93fb8ecb09822767dd750e76cb43e4a3c1a98": 1,
+        "e01589ac9f5dfb2d5dea049926d0bf47fdf8d430fc7e22fefdd72828bdc8d6dc": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/demos/bootstrap-compat/run.py": {
+      "lines": {
+        "2974500fb8db815f998d3e2aded600a35a80eb63f941a1185744f040d0155b64": 1,
+        "2c57a238c203d85e02a813269a606a45c658968446445c0d28e9e3b22c3a9d1c": 1,
+        "669b94ae9bf33e35f39fda9697607732201a23abc338822dad91e172ea78d356": 1,
+        "d1e6ef630c0605ee19f2c134182f06bbc98a79ad229b07642fc782819d700514": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/demos/endpoint-trust/README.md": {
+      "lines": {
+        "d9c65150f8c549ff6f8b4ec71213f6ce0ccccca1a805e1c931b2dd23773df598": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/demos/endpoint-trust/transcript.txt": {
+      "lines": {
+        "991f76dc143a00f250a5a3b779b2755ccdb7a270449434df8d341d52c09ca8dd": 1,
+        "fc8460f813f868fe54d662384f536d09d20d6d7d88bee73149816d197597eaf9": 2
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/demos/homebrew-stable/demo.py": {
+      "lines": {
+        "99b7bc46e3b62cf4e85fbf6a5ba225a45b2316e5a2df2e660603ab573ed6b7dd": 1,
+        "b3b486383f97d455a884e185d945ae718ab114a0c66242dd9bdadf7d0a328089": 1,
+        "b468065a8b1e5d6827c5f492a4331d3ef8c8d75d14f619e23e5393e4e39b9623": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/demos/local-doc-links/output.log": {
+      "lines": {
+        "5e7de488c5452d69c2aa4bbf00fed2f3c169955653b5ee60d21a7c76dfa81be8": 1,
+        "a60a864cd2117e6742724aa55d24b82b8e5d7ae7ab363e654b1350ec409f036a": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/demos/local-doc-links/run.sh": {
+      "lines": {
+        "64ba48ab83971ebd5233d6d06be75fe873072dae0169000cdb8e5411b0be4df0": 1,
+        "87a3b714997568a7db780816a1ddfe5034b02e526cb54a687c84a48ba26eb7c0": 1,
+        "ac2c9428153d17ace35bd3f00279f3d30c09e11845fad1d82b77b3a32ea34170": 1,
+        "c4c2b196128f17d1ccc9310c4d225cb2461bb96a6ef4e3793fa840cd2323f868": 1,
+        "d65616e419bffc7b49256bbbe5ea193e47d3bdac3e084ace2772535f7ac71e10": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/demos/member-package-path/demo.py": {
+      "lines": {
+        "872f2ad81417ca7afc0b147ecc5b593a9a76e9c8631e5d39a7c76cb47f46da9a": 1,
+        "d1344922166b187717164d7708bac9916680ea3bb5950e0f2c407abfc6f1ddad": 1,
+        "ecaf3995ce368094b938e4a35e82a8a01ed208acf006808b8b5dfedd2111f9ab": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/demos/member-release-verification/README.md": {
+      "lines": {
+        "6811ed718f833d863645fc752dde14e5528ee9b4739dfd5d6e263b37ee749fb2": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/demos/member-release-verification/demo.cast": {
+      "lines": {
+        "b6a524f73b7ee0c6f74442daf0946397d2d638df6af6fa31da719e62b1557983": 1,
+        "b8082b47a53a322bf1c65b3b96f2b7c3fc480716ddf29b95274e553c5f13cac4": 1,
+        "d9c75f1ef6c1d13d4f6d8fb935571cb0538ed392a0e9ff0a0948565d687f5bb8": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/demos/monorepo-sync/demo.py": {
+      "lines": {
+        "edce7ee845e1a75addd12bf28b69f309cffd20268f1ba04258b989b6552d87c3": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/demos/pendant-sync/demo.py": {
+      "lines": {
+        "5e1d5960b021b4e66a06860e06fc40edb8fe4486b40ea4999d3f068b4b212dbb": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/demos/quipu-package-pair/demo.py": {
+      "lines": {
+        "99b7bc46e3b62cf4e85fbf6a5ba225a45b2316e5a2df2e660603ab573ed6b7dd": 1,
+        "b3b486383f97d455a884e185d945ae718ab114a0c66242dd9bdadf7d0a328089": 1,
+        "b468065a8b1e5d6827c5f492a4331d3ef8c8d75d14f619e23e5393e4e39b9623": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/demos/quipu-pair/README.md": {
+      "lines": {
+        "38756f757378ecfedb3189b171d57326aae86303ba2cc9f27106220807c565a1": 1,
+        "a1da702e4ec632295c1db728711d0d059c26ae6ea6d584f9963b574b16c30afd": 1,
+        "eac4a5815f83288950cdf3f872b88899bebfbf75cad756ac0aea5ca261ddf452": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/demos/quipu-pair/output.log": {
+      "lines": {
+        "5e25eb5301461851b1f79db45818f903e9c0a365f05ed115632bdcde0af7eb9e": 1,
+        "6a78d9ca9a5236a4d5851b5197a3e4cb975a764cea1cb45daf06aa3c7d3f2460": 2,
+        "7f49a3fd6b2121ee1bf9d94ce2ed210be4da9de04755aa2607eff5cda1e0cbcc": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/demos/quipu-pair/run.sh": {
+      "lines": {
+        "03c18731ee72dda887268a2767122e677567f2d6a2e0f7ffdd8ca04f2c96f3f2": 1,
+        "5e8a5572cc8fad7920511a4f697b5848faedf912a0bdf164d299f5c3203b3bd2": 1,
+        "6c7d17d8f7ebb20cce7682960d809775e285d16a855b0cd00afec29061b1f2a9": 1,
+        "7b30a3268654a72b2fe9f5c5e97139ae66c215695caf44c018bf563bddb34026": 1,
+        "afef5ae2020b96ab06d7bd1e6aeed253554145fed88a826368c35d71f3f5a84e": 2,
+        "b00fac35b4c0444563005aac149e6ec11dd54bb8df211bf1b24650b870f74308": 1,
+        "b5ccfcdfc6fe3cccc560a406890c2a1fd664c488b95f69cac1e0e53434ee4ec3": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/demos/stack-overview-prose/README.md": {
+      "lines": {
+        "e940348d55ca5221e86905c8f5be6ae32168a1245ae1f2d5f0929c56185f5850": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/demos/tambo-rename/README.md": {
+      "lines": {
+        "1cc238d8b07aea39f9bf759f521946c87f2493630a23c176055d86d47915143c": 1,
+        "22e4b737e3833c83ac3e7b05c0b49f7a0ade143652834ea33489830e1a4f8d4b": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/demos/tambo-rename/before-targets.json": {
+      "lines": {
+        "18c859e25c4bb37946697285728fe4ed8cd669c237a71390a890a7ae9667cb76": 1,
+        "81eb239fd488ce5d106ae5e8bb8a40ff6c46c776354c6f27031cdf53414b53bf": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/demos/tambo-rename/output.log": {
+      "lines": {
+        "18c859e25c4bb37946697285728fe4ed8cd669c237a71390a890a7ae9667cb76": 1,
+        "28184dd2f109510aad9d99ab2cfef79808487170951de06b5d6c0743066bcdbb": 1,
+        "39c93719188195e1456cbe850f1a2cda22c0f980a65b62fad1788159eb2b47e6": 1,
+        "81eb239fd488ce5d106ae5e8bb8a40ff6c46c776354c6f27031cdf53414b53bf": 2
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/demos/tambo-rename/run.sh": {
+      "lines": {
+        "a2ef59dc24f056fb28097890d36f674d05fd40dd3d5a792ca031b20124a6f998": 1,
+        "ccf540ab010757024645a731d9d1aa3866c41f59dd30b4b76cb2a6126a96aeb5": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/demos/terminal/demo.cast": {
+      "lines": {
+        "49066669dfc1e7b97d590b4afecd1902724a5b1339e1605b0e0deca16fd6eab9": 1,
+        "592fb6a9d618ec783c5e58a6bcad2d5091aa1640fc0d46e39949954542e48916": 1
+      },
+      "reason": "Native sandbox demo output and helpers retain the actual compatibility plan/state filenames and command alias; no product rename is introduced."
+    },
+    "docs/demos/terminal/demo.svg": {
+      "lines": {
+        "1850f12502c17e379486d16a899d99e8caf0a40a453fcc8b7746dc4a9b2b6081": 1,
+        "a5a646ddc3598fcd0a7d1aa9b9160947944e9982b82171902db3ed251402f04e": 1
+      },
+      "reason": "Native sandbox demo output and helpers retain the actual compatibility plan/state filenames and command alias; no product rename is introduced."
+    },
+    "docs/demos/terminal/demo.tape.json": {
+      "lines": {
+        "6b411bd61edf2857de157a1d73825519b8127ed8725118237b93d591de58f28a": 1
+      },
+      "reason": "Native sandbox demo output and helpers retain the actual compatibility plan/state filenames and command alias; no product rename is introduced."
+    },
+    "docs/demos/terminal/fixture/review-plan.py": {
+      "lines": {
+        "3e7d54cf2d17cdb12b5e61c911c9c56c4a38d656eeec0db9e99ca261b0508969": 1,
+        "aa449a7496dabaa89bff8dd202fe57b9645ebbf86b5f996ac2be8a2462fa9a1b": 1
+      },
+      "reason": "Native sandbox demo output and helpers retain the actual compatibility plan/state filenames and command alias; no product rename is introduced."
+    },
+    "docs/demos/terminal/manifest.json": {
+      "lines": {
+        "1f410a10a388ce619c6c0a053445cfa8f488e0bf55cc9bbb0534ea7047e15f45": 1,
+        "cf5238d2aae8a278cd3b63c9fc7195edc7ddc2de2ae7aeb8aa1257a489ddda66": 1
+      },
+      "reason": "Native sandbox demo output and helpers retain the actual compatibility plan/state filenames and command alias; no product rename is introduced."
+    },
+    "docs/demos/terminal/prepare.py": {
+      "lines": {
+        "553269ab8ddca1d99ae5b2e7c035dddc7715c5a55bb8ed45b4bdad31e8588e79": 1,
+        "56f7620fb4bb582e2e1678fdce5cf73aea91ff6d24eb12e77ec0bad881314515": 1,
+        "d14cf24cb689c11506d77301d63c2a38ee1a15c6187e0505cc84bd08c76c4e31": 1
+      },
+      "reason": "Native sandbox demo output and helpers retain the actual compatibility plan/state filenames and command alias; no product rename is introduced."
+    },
+    "docs/demos/terminal/transcript.txt": {
+      "lines": {
+        "2cae20ff93bbcd39b6f53d05c182c060d11abe661329999571ec555313c333d7": 1,
+        "6f9b5cbc29b121acbf22090dcffef4fb69195dc09c95e860712de7fd6b5394b2": 1
+      },
+      "reason": "Native sandbox demo output and helpers retain the actual compatibility plan/state filenames and command alias; no product rename is introduced."
+    },
+    "docs/design/local-quickstart-demo.md": {
+      "lines": {
+        "2c433bca4b3fe0b33d91243d27827da11fa983d62659b70c305f44e28c45c6f9": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "docs/knowledge/repository-knowledge.json": {
+      "lines": {
+        "12434b0bae9d6239cf06eb190cf3554c679e23b783ebfde7c58c7da031b720de": 1,
+        "2377db69c04a8c024551d1e8fd4b0e63828e5528940f720264a7c1ed84bb83dc": 1,
+        "7af8bab8361fc03c730c0109aa7fa657575c57d936d49a1990b182e1976a9ded": 1,
+        "8d4726ac5d61fb94a8218d5d5a317f9b76529469ca6fa39a3d3cf1a4fe379789": 1,
+        "c0da7dc970ef6eec67dae9aba667decabf2c76abc3cbd77f183280a93996f49c": 1,
+        "df94495ee4d07147eb2faeecd3870179737ca0b486dde5cdf1386886c8728e98": 1
+      },
+      "reason": "Stable caboodle intent/configuration and Rust library ABI references in source-backed knowledge records."
+    },
+    "evaluations/text2kgbench/config.json": {
+      "lines": {
+        "70b0ec44ce0933c374bc467e9019225e67d2e0e306a52c9c7fe2709e13eca4e1": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "evaluations/text2kgbench/full-manifest.json": {
+      "lines": {
+        "4ecf5a5704fb9b583828cc218e3d07534cb8316875c66515d3e00726759566cd": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "evaluations/text2kgbench/reconcilers.json": {
+      "lines": {
+        "da47eebc16c39d724472cd065c10a8c6284fa72932bca7156ba98767f51a3cc0": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "evaluations/text2kgbench/results/2026-09-03/report.json": {
+      "lines": {
+        "db7ed03e94792882364424f2dbd8a033f6377994ec81c8a7af70c45f1945ac2d": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "evaluations/text2kgbench/results/2026-09-05-claude-code-l1-smoke/report.json": {
+      "lines": {
+        "4ecf5a5704fb9b583828cc218e3d07534cb8316875c66515d3e00726759566cd": 1,
+        "82d10a67ae0c2b17ac96ba24eb007958689803d2a6c7bfed2eb988b2d25bdc60": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "evaluations/text2kgbench/results/2026-09-05-claude-code-stratified-1000/REPORT.md": {
+      "lines": {
+        "2fc6e85c635a7700f504c4a2b92c840e4ffd468296b1bbd9a875e18dbed020ae": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "evaluations/text2kgbench/results/2026-09-09-parser-replay/REPORT.md": {
+      "lines": {
+        "37fcc9e5ad4060e56b5d4110679a7b327eb49542e965444e68552bc8d0fb5384": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "evaluations/text2kgbench/results/2026-09-09-parser-replay/comparison.json": {
+      "lines": {
+        "27454b9c164eecbc1b23300fa4bc79f42a6f148a92ac2506774eb73802d0ddba": 1,
+        "a5a82ab593529cdf8bfc0dfb5bb33f55e915eb1cd6604e14632495616df6bbe9": 1
+      },
+      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
+    },
+    "examples/caboodle-intent.toml": {
+      "lines": {
+        "03530b66be1d5fcb8a3a2cbef627ce294eb9a17e766a4c7b74b735fc707c5608": 1,
+        "54ceabb38cbe1e51219f107385ea4c7b6dc41d2d54a7bd3cdc978b8b1a628f07": 1,
+        "600db61c58aca4b7323a8b1b3572e2e84627dd09236287af51840f4f66f115d1": 1,
+        "c6defce38b0965fe59c32bf32038aed3ff609b80fb36a03e2e9361217937f453": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "examples/skill_catalogue_query.rs": {
+      "lines": {
+        "e7e573e4a4ee9f9b4374a54659450aaf540fe3fd29b881f75b524077531817f1": 1
+      },
+      "reason": "Existing caboodle Rust library ABI import in the catalogue query example."
+    },
+    "examples/skill_profile.rs": {
+      "lines": {
+        "de93692ddcdb66ebe93aa46adb46e12e1fc4ecf65c54d9db64c3e15a6ef045a3": 1
+      },
+      "reason": "Existing caboodle Rust library ABI import in the skill profile example."
+    },
+    "hook-bundles/bobbin.json": {
+      "lines": {
+        "8691bcba7add74aa6979e51467cb03aae623b2bd4ca3792ca7825cf27b77a220": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "hook-bundles/desire-path.json": {
+      "lines": {
+        "a54719af982dd8187444a828bcd907919013a22237f1340509f3dcd62cc49a0a": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "hook-bundles/quipu.json": {
+      "lines": {
+        "8691bcba7add74aa6979e51467cb03aae623b2bd4ca3792ca7825cf27b77a220": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "install.sh": {
+      "lines": {
+        "00f024e0d74fea357750ef49522ff4296430e3adb3331874dade76e67abc0fd0": 1,
+        "08ebef1b53218c06ddd00b9d4f2fa91f4608b55dfd3766dc49844dceaf403cbe": 1,
+        "0e63c63a198d94ef32c87e435da5f337c92e4cdfc6de8d6a587f75e92fdb3edd": 1,
+        "1c8b7c8f15ca06a2c7e602f6b5b00c25da95922125dc830941557d622f9f3b47": 1,
+        "49a1fa5d35d7153d9d7d86b60055de6f849693888f6c7cba4252ae9467783ba5": 1,
+        "4ac5bbde7c7ba9da35d63e69a5c549a5e7bbd32570bd0262600a2f948bab56cd": 1,
+        "5e984d0541aa19c66adb136ae9a6c21e19d58e8ce0c5b90e243dad5421c20e78": 1,
+        "8a18f2984a08e555400976850c7ab616e9acd6baf8a6de069079a95877523fe8": 1,
+        "c4a70033b2995a3e32d5689c335c873c6fc0e4e390d6110fa35a4621f3709489": 1,
+        "d85ef8e737668b4a67e8bc0ef9f5a54022810c1275ee4605babc6413c8cd5d47": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "justfile": {
+      "lines": {
+        "3da74dd16513be7c78eecf114032bfdb0229a0d318f9ea2b95624d0634557d9e": 1,
+        "6c890079e8c1176add647e68de754694877436c03a3b5b0bf26d77b411e97643": 1,
+        "cc50959b37b6d72e061107ad80517ee304c962c98204a43b1f16c1907969fd5e": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "members/README.md": {
+      "lines": {
+        "98a710e8363f38e67420be9b344e2b8afc92436bf97720ad3829f1036d1a058a": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "members/chaski.toml": {
+      "lines": {
+        "a436dcb5b1ff0daf3f68926cdab9f83b4d1bd46a98a8bb2112736775c2d5a789": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "members/seeds.toml": {
+      "lines": {
+        "bb70917b1c2755f4dce66907a09c81704896d19eed67078f9a3726d6a28dba02": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "members/shuttle.toml": {
+      "lines": {
+        "081df8f8a7e8ec2c71c095ba52a65fe787932a3ea99d0f2d3d37780fdc6d0cde": 1,
+        "5731ef8329766007b3ce8bb88e44ebdd963e548d8c869d8c0a2515c5434b28ff": 1,
+        "c4d7b50107f1f1baef9626e9e19c9a213149f617552fa767d61aaac257ecf824": 1,
+        "db6b50f9e747c353d9a9eef8e70ec2b0d0a57a6a3b119ebbab6c912f380cce17": 1,
+        "ff12ff01ec76b14461f819e071cfe53047ec131107bb47f9890159e9d504b683": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "packs/src/stack-map.ttl": {
+      "lines": {
+        "068890185969d6d7bf79a97ffffad7c7bcd3d55e1871a360733ca9cfb6b62481": 1,
+        "20074110a3f23da1a80852158288907855dedb535c354aa82e49b5dee64a2b1e": 1,
+        "2a2ca5418fa4d89e7d9aec62f0e91f5857f188e012d67434bbf0df84903cdc35": 1,
+        "2cfb9eef0d656aa3064d47b67ef6154291075441d65b8031ce0e19e2fb0b12f8": 1,
+        "2e902f772b3f3663e9982eeee817dfacd356daae5453ecc831edcafa767da495": 1,
+        "3105868d51c4155c54d6c24c20d7ad424392f94b3c1a2dcf5f11addacea27443": 1,
+        "36982d28401611496fb3d5afab798118daf37e57e1f0039fce9f7768db431e9c": 1,
+        "3aacda19c6ceaa9d4ed39262c9733c48e717a3be5b724267eb9595082907e372": 1,
+        "3d651935a92447b0ccdb6d68d7c6c86647d3bf0e075d2aa741885937ff161543": 1,
+        "49280d9e4c51802c4f963e44b47fd7f4bbf2bbcf5332850ad68667b2f0ba237c": 1,
+        "4a82fec883ebe391d19bf641fcc29a67dedfce0a1ce78e29703d205daed762b4": 1,
+        "6c48c6297ed06d89acfda3272e4b19e490de02da2fb14884657f9a9365c65bf7": 1,
+        "80cd4d4f22ec1f6c922effbb387c41097be51eb841aca2bdbce64417b3a017e6": 1,
+        "8392b159427c73d651a7287343cda3e6a147bd5f72ac51aca40d66d1aba03705": 1,
+        "aa205c4c16e8b35eac9a0eba7ce87991e7287e565cf3c3c0a2a70bc03d37ce47": 1,
+        "ac0939313e54bb31029e886cab23ca8a47527c33bff265b85bd1d1ffb660b513": 1,
+        "aea66dfd63e9773412d87f436f4e3bd5ab30e56a447e46605531e47b6cda1e78": 1,
+        "b4ebc3a9a0258d70f95fa49a29b3b2822fb84f07321af545ee53da7daac5ff3e": 1,
+        "c470d1eee2098729a2c1dd45716a9f90c9ca586630a14b5c28e234ee1d9f74b3": 1,
+        "ed35c595c12c5db9c9662416c957a1e1f7f539c15e3897a777460c72fe22d199": 1
+      },
+      "reason": "Explicit former-name sameAs/equivalentClass/equivalentProperty mapping objects; current graph subjects, predicates and names use the current product."
+    },
+    "packs/src/stack-operations.ttl": {
+      "lines": {
+        "068890185969d6d7bf79a97ffffad7c7bcd3d55e1871a360733ca9cfb6b62481": 1,
+        "0da4730e7e96b75728fc6e82e79b28cb7511a5dffacb96c1b951c9bb1fc67d9b": 1,
+        "13d67063ffeedba1f796dc6362b01b1ea338efff46fe0b6a477aad2da6961a57": 1,
+        "17ee03edea7622205d9f5f88ef583d80628764d4ca75816834cf27f69a438a84": 1,
+        "20074110a3f23da1a80852158288907855dedb535c354aa82e49b5dee64a2b1e": 1,
+        "2a2ca5418fa4d89e7d9aec62f0e91f5857f188e012d67434bbf0df84903cdc35": 1,
+        "2cfb9eef0d656aa3064d47b67ef6154291075441d65b8031ce0e19e2fb0b12f8": 1,
+        "2e902f772b3f3663e9982eeee817dfacd356daae5453ecc831edcafa767da495": 1,
+        "3105868d51c4155c54d6c24c20d7ad424392f94b3c1a2dcf5f11addacea27443": 1,
+        "3d651935a92447b0ccdb6d68d7c6c86647d3bf0e075d2aa741885937ff161543": 1,
+        "4b7d35d3eb5b6125889e0ddbb9f11057d5cf2a1d6596c0137f8029c2f7d27b5d": 1,
+        "4e41b4cae056e1638dcdb70096ecb35894c476748203b30bdab6e72192a6bd57": 1,
+        "5d70c910bf76f2150cb312f760b08f262dd0ed889ee5bd2a4f138af7d1feacb4": 1,
+        "80cd4d4f22ec1f6c922effbb387c41097be51eb841aca2bdbce64417b3a017e6": 1,
+        "996cb232ae6c468ab166ec717b842dce1c70d38d3e447e73493148c6eb3146eb": 1,
+        "e29cb157ceb4354543c85e7c94ea89b80096df38745e14e189cba70a1fcacf3e": 1,
+        "ed35c595c12c5db9c9662416c957a1e1f7f539c15e3897a777460c72fe22d199": 1,
+        "fc28873507b881376eb1402f45cf0c46f4ca83543e41e4ae8b82e5ee907984be": 1
+      },
+      "reason": "Explicit former-name sameAs/equivalentClass/equivalentProperty mapping objects; current graph subjects, predicates and names use the current product."
+    },
+    "packs/stack-map/pendant/export.nt": {
+      "lines": {
+        "0143b10eff41ae32ceb66c7dfb458c6c32f6a92dc2b887f677aa297ebab20d52": 1,
+        "11173717f3d20cca6b82464eccb02c1feba712ed07b6991abc9d9a9c84c9210d": 1,
+        "157194bdf89da575a14b7cc0f88ae90cc80feab9cfa30a3c9c0368326d41eeeb": 1,
+        "22ea65a5404ad1888926aa9e45e483edb593c6d91b44cf58e39339ab81a36767": 1,
+        "2b8e709542eb1bae7be955c28a498755d63aefff29c466f147450ec3d2fee84e": 1,
+        "34682dcdb349aaeb902e82a89a8996ebabf6e95b3f4c184f5367f5fb0ce4c8e3": 1,
+        "480ebb6561e129075100b3cca8d8bd5be0a3837700d7137d80cb3980ac660cc8": 1,
+        "4b062a6b598b97ecbba990118f4c2e36070ef9fbd59d1625443fe3b38709529c": 1,
+        "5c3c5f3a164105c8156200b67840ac0a098f23cc16f063cd72175c66db05c8f6": 1,
+        "5e28400b4678bc202490271dc21cb17d34c9a61804c6180ca822f8d7cacffcf9": 1,
+        "89d7430d00e2b4c35ffb2befc35b8e77c7b4fa112f84aa6519b2b9358a6ddee1": 1,
+        "913b64874e4ad2c3385bb13a1337df349512c055e563a32d1469bd2c10eb674e": 1,
+        "917bbf679956ba90acf172f8763bba4f309610ffd2b3244c43f68f0c26c03ef2": 1,
+        "c5952ef7e3e956f8c5eb9d878cdd23b5473250c4912d99e503c6b51f8ee175b7": 1,
+        "c925377f527ed7028c2cedc9181ddd41a9452d66c2042743e44ccd82bc2078f8": 1,
+        "c985aad343d876a00ea7baaa36ae0031b5b7f51f4a04cc2225630b8b70b5c7d8": 1,
+        "d63ddac3afcfea9ec45e27a9ff6d036cec78dbb828754a5de3d5c9a573997d49": 1,
+        "ecd3cdeb6ab5d4ea70616650f0de08a018a32ee6afd11ab1f79a9a4d86e4c0fe": 1,
+        "fd39d1274a6b1b81b5a44faa3125587a1756bb298969e9ef37c4860b4b5d2a4a": 1
+      },
+      "reason": "Explicit former-name sameAs/equivalentClass/equivalentProperty mapping objects; current graph subjects, predicates and names use the current product."
+    },
+    "packs/stack-operations/pendant/export.nt": {
+      "lines": {
+        "157194bdf89da575a14b7cc0f88ae90cc80feab9cfa30a3c9c0368326d41eeeb": 1,
+        "15cb55c987044055342e17d34fcbd3822523bd02f2831ff098c5643a6e030fc4": 1,
+        "25d1a26734e972e53b425ddb408ba3e8089ef04e4f37e9f1297822c00a0f4e54": 1,
+        "2b8e709542eb1bae7be955c28a498755d63aefff29c466f147450ec3d2fee84e": 1,
+        "2ee1d392626a30bcaca4b9d11f12a98a7b832e3cce753f09457caa3f5860ee7a": 1,
+        "34682dcdb349aaeb902e82a89a8996ebabf6e95b3f4c184f5367f5fb0ce4c8e3": 1,
+        "351cc65d0470669d4062c52bf68a1cba0bd9bf4d775a27e83941a868e9524439": 1,
+        "3a541dc19c3351a1d75e74632c8e46742aed3bf87553c63231a6ea99b7ad95c4": 1,
+        "4ef3f1320d6851e00187a640cf8eca4265f13428a4f0d7eb060448ce85292161": 1,
+        "5c3c5f3a164105c8156200b67840ac0a098f23cc16f063cd72175c66db05c8f6": 1,
+        "913b64874e4ad2c3385bb13a1337df349512c055e563a32d1469bd2c10eb674e": 1,
+        "917bbf679956ba90acf172f8763bba4f309610ffd2b3244c43f68f0c26c03ef2": 1,
+        "b9ada9db736aa66209d30304c4993297d278ffbdb08bf1256736324397c9af39": 1,
+        "c5952ef7e3e956f8c5eb9d878cdd23b5473250c4912d99e503c6b51f8ee175b7": 1,
+        "c985aad343d876a00ea7baaa36ae0031b5b7f51f4a04cc2225630b8b70b5c7d8": 1,
+        "ccff4ee3c424bf2a5c3b79f69fa83b1870c99f515263936b8ae35cf83d7f3c5d": 1,
+        "ffe5e23ad1507f69254ef4999eb680c3aeb6db70aa38558fe90542154e085795": 1
+      },
+      "reason": "Explicit former-name sameAs/equivalentClass/equivalentProperty mapping objects; current graph subjects, predicates and names use the current product."
+    },
+    "queries/repository-share-tambo.rq": {
+      "lines": {
+        "370316d9a197612759ece1ffa8330ce139ed842efbbb72128a1ec9b155a4417d": 1,
+        "a11a91a4d19cab9d64bf84f3b9ade47fc5d15389c8e4395a3608ece93a454a37": 1,
+        "cbc1d453f13246b4aa3de2c68b0abb46f8c51c7070674074b704bf2566b8f16d": 1
+      },
+      "reason": "Exact legacy repo_caboodle input identity retained solely to map the same repository to the canonical tambo public name and its former-name compatibility link."
+    },
+    "scripts/build-repository-share.py": {
+      "lines": {
+        "1c4deda2a7f13c65e15044da0004a95ecce77886497411a4a65e0613e4668f45": 1,
+        "6a692b93eb125909349fff460af33b7855ec883b3ae641df7b40f480929ce9c4": 1,
+        "781c5d54ffd8a352b16135f798f5b09415ab46acf51d482bb0d673d88b677d0e": 1
+      },
+      "reason": "Exact legacy repo_caboodle identity is retained as the canonical Tambo repository former name; negative controls forbid arbitrary, reversed, duplicate or mismatched identity links."
+    },
+    "scripts/check-doc-links.sh": {
+      "lines": {
+        "81d697511022975e874278a04fa587660a3eea907fc863eb942c1d412e758731": 1,
+        "d7e6850eb11bd166507626a50f38efe6054bb8ccf7a13e79747409df08cce125": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "scripts/check-product-name.py": {
+      "lines": {
+        "158c3f5ccb63078857e8763a7e1728de2649c5aa1a07e05742bd268900c2123e": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "scripts/check-release-assets.sh": {
+      "lines": {
+        "0ecfed6c40a8fa46f0894129e9bcb934e6aaab6ba3e5e5a54cae47c3892674be": 1,
+        "5855e594c33a028c83b35a197f02932bf36197791ccae70c6f84c0946a201c83": 1,
+        "65d2461da9458eab9c9869cd43cf7a3a11a82845b18c42d8a2ddf280b45338ed": 1,
+        "9f563d71cd1044d3f9b0c32bc26e6edfd20832c25ea2b239f856a326e72a31c8": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "scripts/check-stack-table.py": {
+      "lines": {
+        "4a5604db68e18f2b3282a40d88cbe90c3e997d2fd57aa3656ed6aacbc8aa5614": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "scripts/generate-text2kgbench-manifest.py": {
+      "lines": {
+        "4e27c0e05ac8c2903701a673710bc08161751e506acf9049b2488515c0516242": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "scripts/install.sh": {
+      "lines": {
+        "00f024e0d74fea357750ef49522ff4296430e3adb3331874dade76e67abc0fd0": 1,
+        "08ebef1b53218c06ddd00b9d4f2fa91f4608b55dfd3766dc49844dceaf403cbe": 1,
+        "0e63c63a198d94ef32c87e435da5f337c92e4cdfc6de8d6a587f75e92fdb3edd": 1,
+        "1c8b7c8f15ca06a2c7e602f6b5b00c25da95922125dc830941557d622f9f3b47": 1,
+        "49a1fa5d35d7153d9d7d86b60055de6f849693888f6c7cba4252ae9467783ba5": 1,
+        "4ac5bbde7c7ba9da35d63e69a5c549a5e7bbd32570bd0262600a2f948bab56cd": 1,
+        "5e984d0541aa19c66adb136ae9a6c21e19d58e8ce0c5b90e243dad5421c20e78": 1,
+        "8a18f2984a08e555400976850c7ab616e9acd6baf8a6de069079a95877523fe8": 1,
+        "c4a70033b2995a3e32d5689c335c873c6fc0e4e390d6110fa35a4621f3709489": 1,
+        "d85ef8e737668b4a67e8bc0ef9f5a54022810c1275ee4605babc6413c8cd5d47": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "scripts/setup-environment.sh": {
+      "lines": {
+        "055cc48a62f9671c391b120a2b1e9a0a88a4f62bab1031eaf6f59bd71159394a": 1,
+        "1865ed4789ffd14bcca3f552aef94c5309c9d8a8d0a666e829ca430c78cc4483": 1,
+        "2bdc64bf5826534a737eba60ff6126b15e4dd3f5d775da9fa3c62a40ff795673": 1,
+        "3b08c85d4ce7fb916ec403a2b9d9945672ff63993c8834a868f9e6cf6ab37f3e": 1,
+        "45eb370b12ffbdba1bd7161fbf638bb91846d66e55dda8c912d4c05a2e361ebf": 1,
+        "4658687bc5e2229a867a5f27ed2e5fed6a5a2843f00cba3b4e8e591194c7492c": 1,
+        "90c54ff5bb32253cc2bdea719c21e943a74266d0081346b0720d7dcc7c54b79f": 1,
+        "a61828fe19072624e36708dc6fc023af8432f7b48e45ea54a1ffbf0f9b9c6ba4": 1,
+        "e6f48254908d2a717ffae33f31302ab94f1362b83be1ebc48edff4288bcd1c9c": 1,
+        "eba17c1bd810d9a12aae32d292b8cd0c9290c1c01f2e9d8af0fd74d52c6102ac": 1,
+        "eff2e730ea5eb6ca34c30d7c7a9b992a96fa2a30cc69809118a72ac66171b712": 1,
+        "f4ac50140c317c85912411ac10e1976c1002bc7f811234ad8a7b4c24317db2f2": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "scripts/start-credential-fixture.py": {
+      "lines": {
+        "1fc8f78909eb1840c2937c85204b165800eded4b25f29523394e4ac1db5ef8ba": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "scripts/test-doc-links.py": {
+      "lines": {
+        "07b1de95060bc8b34ab2be90e9f8ae3aa194c35994506752830dc336cdd845ab": 1,
+        "153d86aa1d1f722a6ec0e5902d438a8fe08391e363a06a441d9aae797c31f37a": 1,
+        "5bebd54135755d627a629cb484dfa88f8d123293e7cd7a99b6d0920d40229c86": 1,
+        "7f9bc33eb621b97eb8d23da95c4f0992bd2ebc11f87c182bf0e2beff6e446a11": 1,
+        "9894174938f1e704c1de4444bd5f8cff87f896b561fafa0c0ad5262abb3ab0be": 1,
+        "be9c3626da878d455ab0ed4b5717c95b12b9e7a03ad82c47ae2e745d93464628": 1,
+        "c234e67bf28c3427f04fd42adf52b6464783270861e99ecfd0a0cc20ec4d2bfb": 1,
+        "d9d7f02135dd7388286f9e54e85d088476460869d0a09a471175b05b757a0e7d": 1
+      },
+      "reason": "Explicit compatibility and negative controls for former repository and documentation-site aliases; current canonical links are tested separately."
+    },
+    "scripts/test-install-bootstrap.py": {
+      "lines": {
+        "1f09c191d2781a00496ca8b5a4ff2cfd085c7e0b216eb3662b5adc057ee6e959": 1,
+        "25229e8d06b9f996789a4f1e17d1b29929a029954e3092d76e567e356fb710d9": 2,
+        "2b6ad3b88ecd8eea48f436b66274a8d0794c0f7b06fdc486036a966a10cd50e8": 4,
+        "38179de4886b68a780830ba7cf4f0e452c4bd849fbb03494d1c514f1219e7801": 1,
+        "3fe2a7dd96ec7ab9cf3aa773b999fef6e231842370af301b64e66305cb03e731": 1,
+        "437a5a1dc4c6f80363996022be72345366d6aed17b876bd2b5e51717bddae0c9": 2,
+        "46cbc96418479eb2cb5b2411138dcec07fd8ccf5cdbd4a99925c3d42b618ec9c": 1,
+        "4b9ca6457b90c7ed2819ba74f57c521baf5211e4e630e32366fdbc7bb3ebec52": 1,
+        "4ea92a5de17280169f406909d29032ad35d9c9b34774f2609606c64186633153": 1,
+        "72d0d8be702d83b4af3f7f108e8df633405b221c40d5ba93d8d7a1045f97aa1a": 1,
+        "802569373320fa8f80d1fd4d498882d1487b6124bd6ac18a167b10736e5be182": 1,
+        "813153b23ac9f119f0194be4f39960d3155abaa3cd7081ca913460f92c3f42e2": 1,
+        "90f9b37ffb88cae45899f58fbe95a56c66b3f3565f4352b18ad18ad15bc36a35": 1,
+        "954058b7d6aad64400752f3efe5d57fead6c77336c83e8c3b7416197fafce5ad": 1,
+        "cd52eb76cf459d42dc59cbe37dbd1c9eca83018dd56203f71275e2431775cd42": 1,
+        "cffd2afc0b6fe8b4807ae1cd7f549f3d86754449c289fe533c667a5a0d82d163": 4,
+        "d119018f618b7f4f565c2fe7253b1412aa938058bd9b0111eb6771c8cd22f853": 1,
+        "da3f85061f010b2bbd9fb59e3c259d73644f5552d07f1b72ee326d9c9c701812": 1,
+        "f9a1de1f3d2c595fe6cf7b5bd641a0cb6644f4000427fef6dcec7e59c4f8da54": 2
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "scripts/test-product-name.py": {
+      "lines": {
+        "3015d50d23a334a35fae896b9d561ff6d3a4a61e482eeab7740e26b53a901a75": 1,
+        "4fe5d291f5b1a172390ab93f5f801e7d30983e9b3c26ac1759c0a955a0a3aaf3": 1,
+        "9463d825caab84fd5dae5bd5e6652e9acc3505bd770cb3173e0a4aaef472038c": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "scripts/test-readme.sh": {
+      "lines": {
+        "12cb1e1454f4759ead69eecc5e96e4a707c86790a769b5d472f2acf0039d17ca": 1,
+        "39f86e9698afde648f29f495f4a519664b7a5cb8c21ccf5db345523f887602f9": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "scripts/test-release-install.sh": {
+      "lines": {
+        "009746cd70e4c714eb6389279764c5305a06341ab5493c8fdde88f0e262d4340": 1,
+        "0473db34f9747c282a6851ecede2e76f2fbac7d31e02c06b8a2e985a916952b9": 1,
+        "0687a2a239f77429b18a3927b2ff9a31cdfa33d2a1913fb297d00c0e1431b6ba": 2,
+        "0916946a26c5361a68f8a3f02c7965a1dd4d17c8aae8e078472f8efd41e2eb41": 1,
+        "10046bcecee19e111bef45a5c7a8abac24b2f6bcde9c2380b4a3c5bc70baf2cb": 1,
+        "1cad28f7a98e19b4c891d1ad80ecda33ed2809c99da7c2e737d66e6999948be4": 1,
+        "2340d1b62d332309115dd83509f0348d4771a00ddc43bb91e64251aaf548d000": 1,
+        "42fc6d0681af9d20610fd8753833b845548ca2f8b503948101f806758cccd0d4": 1,
+        "4eae57305aec6536a1c1f9947c24e97dcf963e583184844e9206a7b9c3c21a28": 1,
+        "6401a7e2b91983f198106449b2ae1460e5465c24a07081bf3acce1eb7bac1e78": 1,
+        "663eafd91454908ccf0aff032c881df918ab6b10411e15cec155df828c2f4189": 1,
+        "6dc9abdfe6d90349706e9124341246d37914334d48bba8a398ed8bd90a1bb46f": 1,
+        "72d34a74ae318055b490ea3324e6975f930c26a4402139b4188623984c086833": 1,
+        "8f42821f6044c6b983ef7e3091bb963208d21c7c25297a586326630f300f8464": 1,
+        "9904462c46598fd69bd9a5764b4eb7eb9bee6528e97dece446435d5c45644e4c": 2,
+        "9a68916f87e2d2c65586ffc106d75ecad36863052d46cd5e5b8adc38e160b8d5": 1,
+        "9e6b1c50093b9230d9d982c42a5707ba8b93d1f66a03be3bb591842916263fec": 1,
+        "a605812a2b3d840e0d7cc8bc62fb8482a84684cfedef4ac932f19505c574647e": 1,
+        "aa1ae10a72e3f73cc1b9f4cf82171c3b8c456c2b8a9e50a878233dff1d2a1c77": 1,
+        "b13b262cb09ac11cf7d3534f477f1bbcd3d53e55bdce7d1235a3c87eb24b8567": 2,
+        "bc2e304ed17564ce6c859f7a285b9ca04032157d796e08f76f8d9ae678d1a86f": 1,
+        "c6e1fb694682efd565ab9fa2706b2a4c8f86d02d837d53bb41269fd1d1590e0b": 1,
+        "c75173de50959a1d54de38a89b24f1c6f1f8a32ffc38e151fc2a58498a04ebad": 1,
+        "c98cdf45df539dbb5dabaa075604912a498fe29b871f77025c1211c174c8017b": 1,
+        "cd9f7f07e3333a6fc3c07f690314686ad901aeb8ce2dd85a9fa310f1ffaad2c9": 1,
+        "e03d89aeb429def0ad24754baa2d81a4e44712a60bce7c8857898099230b2bee": 1,
+        "f725d3d50519e5db0171d79a35242be112f32c1227b9256ad26236b5ec2efa4f": 1,
+        "f945d54eb800be9c5cd5a89af9c696bb8099df64c07ebca3adeb1dd4cd6eb4aa": 1,
+        "ff87096b70d1f6a3846670f94f99a9d802187783449ebb029989d4a358e29f7d": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "scripts/test-repository-share-query.py": {
+      "lines": {
+        "e5c7831717f25ad9d8b3beb34883434b278446478e461ec42b38bd5a880ffa89": 1
+      },
+      "reason": "Exact legacy repo_caboodle identity is retained as the canonical Tambo repository former name; negative controls forbid arbitrary, reversed, duplicate or mismatched identity links."
+    },
+    "scripts/test-stack-pendants.py": {
+      "lines": {
+        "6e34479c9f1e32e3ad5ae7fe9fa2bc4a127a5750d839a31d1528ae91a7eb1193": 1,
+        "a3d05894b3b03abcc1834a2601cb6848c0173c3cc22ac31d8f8ca1263162d312": 1,
+        "dc79f575abeff9e9dbf62fcf9ea6e57c45bfe32f5e3a900e57ee795af9ed1b4a": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "scripts/text2kg_general.py": {
+      "lines": {
+        "ad442e2a65d3b898eca9cbb2dda4e514a2cd481ffe1861e3fdd6c52e15e66f07": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "skills/tambo/SKILL.md": {
+      "lines": {
+        "058bb7e64339d52495545ee541e0fbc2a80c4520378d5e43d186203868a74650": 1,
+        "252056fffea9ae08ee9c2c8867f4536a3c3c5c1ef5e867eb9fae0dfcec68072c": 1,
+        "2780d99349f7e31cc0b4366c600146a86807a3b58d60dcd2e22b4f38a578c3b8": 1,
+        "54c5d968e333a8139112c424540fd397d24627e8dbdea3b1b645d070e8dfacb0": 1,
+        "58c5c2e42ffe74e17c6fa245792a6d823a52b62d045d7dabc3d5a11fb15cab72": 1,
+        "5d0b5dd17d4751acc288ad2aab88be3bb75bf7c89ef419cd01bd7aa9c22bfea8": 1,
+        "7e4cd417b773faeba3ecd50f6db13da07b3ccccf2590f2c7bbafbe2195057f7a": 1,
+        "8fbd19dac5f3fc2bc45a3eec20062023818a509a37badb936982f5659feda2d2": 1,
+        "99f48f10735c3fad35c81b9e2fe47d2fa5db226c6d6b4309587c44a74c93c15a": 1,
+        "e9e4ad49f6af34f1921f64f77efae80ae7b901d918c734cd3f46846b1fda2a67": 1
+      },
+      "reason": "Existing state/cache filename, command alias, environment, package, immutable vocabulary IRI or live compatibility anchor."
+    },
+    "src/adapter.rs": {
+      "lines": {
+        "1ee0a0e01c86e7b6ab757994aa3951cb4608d33fe359e9aed4db7ded9cea360e": 1,
+        "5c8a85c9d4a587ec2114062d0d915dc4db07a2826f515cd59fe548d46865ab0d": 1,
+        "acc1e1257dda07f6bd2932ba0232f387ee63d041d79993227352ae7a947084f9": 1,
+        "c33fe9b9c9927554d9355f9305e7bca894ae16a3d2c1ff759557e5013381b6a2": 1,
+        "ca8f6a43ec5e4b07c4f8f80a6050bda3d28581990d4d5e1501bf87576cf93974": 1
+      },
+      "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
+    },
+    "src/adapter/manifest.rs": {
+      "lines": {
+        "06903bc6d72085158f8f1c05050812127f9a3d176fafee114b1cb93659974af4": 1,
+        "66c7a22be95d496585d65765616d4feeb568303daebca140b04a09bd61862bab": 1
+      },
+      "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
+    },
+    "src/adapter/quipu_alias.rs": {
+      "lines": {
+        "2fba1f0bf862f98a1b481137c3aa4e8e0abe4be1bbcecf1984019fe7428ff40e": 1,
+        "93af6834b90828643eea1023a1adf1a82193c621bacc817f69f9f14dac247918": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "src/apt_owned.rs": {
+      "lines": {
+        "fa03e63ada8c15b736f40a9b36ada7a2608111696dbb52d0c95278ebe049a53a": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "src/crew.rs": {
+      "lines": {
+        "2c7087ff576cf987ae253da154cd14f3b07d9872b7eef9fe810b255afde63a7f": 1,
+        "6680f5c05e250a5ccb81853ed92c89b6bb62797e23988954bfbca39156ce2647": 1,
+        "d01ca1fd61a49b5a62f4b768296c52064833d0439ac3f32549feb8393e6d69d6": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "src/doctor.rs": {
+      "lines": {
+        "1b5d0fb8c5e770c657b59ff0bc88d4f668cfc0b7691077f95bf7bc9ee8e3fd3d": 1,
+        "2330a20785b809215424331126d53467773660ee30d07e6bdcca839df4d745f2": 1,
+        "78e38bfe2703e2592c1e9c37f777ef295d652dcef87cfd305b8a06ae09d7dd11": 1,
+        "968fa28a3248e45814be59971f5aa0f8b1627900b07b06d1bcc963fd7c111870": 1,
+        "9dff7e78ebe973b68f0db7c7950e6f2f161960a3d01c447bf76568473dd8fbde": 1,
+        "aed3205845d6fc9c8dd0c8d787d8e34e5518e85d5cca7f165b83c6cfd2d50749": 1,
+        "b2cff5ebdac9e5d20820c2dc06059489d799fb5363fd06a34bc0703b8c2c10a5": 1,
+        "e27033fbcaf03c4aab0bb0675461e0ac76a19c98a01a4dc26694cd23b5c0cadf": 1,
+        "ebf199a22611d3da76c65d588a78671ff2f07338ac619d351aee874e07056712": 1
+      },
+      "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
+    },
+    "src/dp_alias.rs": {
+      "lines": {
+        "a8da20225db6e8db383c5f2beef91cde55f0642d560872efbe99331e8106ddb2": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "src/emission.rs": {
+      "lines": {
+        "111fdd85904a2fae94d54dbeee3e0935651e60a506a903ef0feb831f5eae592c": 1,
+        "3ba15601ea4860aea451fd2459be66eb9209fff8981321bc5e62f8198f9c3d87": 1,
+        "4c05e7ed759f281c98d0fd7bf587552f99ac56f4764b98a4a516263a093b4934": 1,
+        "abeebccf0921fd0aa4c10f43bc93d4e591999321c0c65ab9a7b062a42937b54d": 1,
+        "b4a9b2b95e45f21b7f22a74c253aaf199812764a768ebf473d032a3cf9a81c24": 1,
+        "fe86733c762213dd896ec09f89085dc39a9833ccae44f95f1627d32a75635f4c": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "src/engine.rs": {
+      "lines": {
+        "0ecb381aecb0bbb8710eab90c8e4061ceab05cbc167e4514fe980f62b5fe62c1": 1
+      },
+      "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
+    },
+    "src/hook_bundles.rs": {
+      "lines": {
+        "4e608728037d745de5a31ac690e49b9520b23026bfbfeff0440f8eb526fa1862": 1,
+        "f02ac24d4d2e71f26acbdfdf0aeabbd96153b0a1584522658e794f82ce6a0c53": 1
+      },
+      "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
+    },
+    "src/main.rs": {
+      "lines": {
+        "050faa5e1ed0295f6b75dedc864fcd02a360769b4f0862db1dbc7d25b2bf6939": 1,
+        "0b0c04469bfe8662bdb4b941418c3a1539d32535a546488b740a833a3e3a0c1f": 1,
+        "0f626f582b5ac1f5ae4e3929aefa6979861b650c5c8d77c064abf944f33f0d6c": 1,
+        "120407ffc5df787f60ba9a60a0670a2a1969b76966efd03f90cd6bc8809fdb49": 1,
+        "194965730c613dc68a54de1163ee3f9cc8361d6ae057fddf3acf11144ffc9a87": 1,
+        "1c12704b94999d809bbaab1141bdad65eeeceba47db9e0483b312c95fa503632": 1,
+        "2330a20785b809215424331126d53467773660ee30d07e6bdcca839df4d745f2": 1,
+        "290ae03465cf4cac2db4192f9ce876783635d328b5a5c4178d8701a13eadae68": 1,
+        "29b6fd43cc03d8b5dad6a28461ec3acafc7416692b6c20ae471c1a70824508cc": 1,
+        "2bac90b1440b4aba1271775b7f010eaee1ea7213e4336b80936c75278c834e25": 1,
+        "36bf9fdface7bfcfe3e21faa92bb624f8e30ae3c4621d7ebef4b2fc439176cfb": 1,
+        "3c695b70c57f06b59e256403d63b5b85743399fcbf0b02b0b75965de435c9afb": 1,
+        "3cd39f1637b947fb342ae1db9b264a8f8ea83435ec58fe403c31021f8876db42": 1,
+        "4429197da43dcbb832ec165871049e2bbd682fc8539515802d684308091b2937": 1,
+        "4a90eda2a486c01ce368d83c05922108d13dea43f7365f2bcdb92dbcb8ca7d48": 1,
+        "52fb24f85fb0cdcb7b04a048b4123a4e4a5b3aebab1e4ba3397f93e9ce1855d8": 1,
+        "582c3d9e78262c992545a06fd392196f1ae7f4793f4d81db308d40ac90c01524": 1,
+        "63413b1a1d1cc2c27fffb3e95ffbbe8ccfcdd25f2fa4cc69e599d9e43f981513": 1,
+        "67212a08721766df995f75975aa52b3bfaef95c5df50ed2c0c893ad681280d4c": 1,
+        "6759bd0e97efd6dc5b986f1074584f521df52aebb8ce53122677891074359c42": 1,
+        "6bfab99ebaf909a12f81afde09da09074651069db44126007db3d02d8a70ce0c": 1,
+        "7349844672aef38af94d26514284e57a9f8c535ce1e6aca3ef78901a6744ac98": 1,
+        "7dc222a15899e07f70f7e577cb0ec2acaa229e0c58af6999793e30104c048084": 1,
+        "82f70c1270e175b1694a1cd1c7d181838afc4cd5a4c8dc783958c749b2a1fc44": 1,
+        "841f01a74b963b20866a212044db03f832b337102a3dcf2daae3cf143ca3b25a": 1,
+        "84c4e19221966b08321435fb0fd2ec0d8f46a4b02d1d8e4a8fdae688c9748b5a": 12,
+        "9b45543ca9a25ff3cf9dd073607ec47f755aa3f62f99db00e27bfa7bb5f599dc": 1,
+        "a0f5f9aded0f6b337ca8802591b4b1264d4c2e6305c231604aa1fd6ae75ee30a": 1,
+        "a454efce87dbba217edcc035ada40e2e02202a01ca159b5c81eed460d5702604": 1,
+        "b1f1a65a5411d9e66e2df3ec8d3cde814a188e7f69a8eb1a70dc55a0ad0ec7d2": 1,
+        "b1f963de69bafd1f488396709c3cb9217c8c741eabd2e2ac175960129125eaa1": 1,
+        "b22ed16db4cda9a6b5c743ce5427359984c3ae4cdf12c882519d81c20d072721": 1,
+        "b5437f382a122c18fa0b62bb5e380e1a9c2ca2a202e85176d1cb09b3032f7646": 1,
+        "b7f63569dfe487f4743ac5cfd77a383f59bf285cf463166ff487a57feb378410": 1,
+        "b8322713e066e93addc6f7f50a31fac79e59e43ec0822ba10aef13263ca58915": 2,
+        "b8e34bab251867ffe7e12d23324167d0e978d87e07561e5c440ede7173617b3e": 1,
+        "bb90bd0e174d11f9f4a7d41796c17eb1ce6c0aebd94640cd0c6efd8def843886": 1,
+        "bd5267eb57ca6ed651250f66d7afe2194d8b0732112156edd59c915634e17581": 1,
+        "c46555797f4d20a35a858c260c7de3fcffa0092486aa0c39e424f5d621d6ad40": 1,
+        "c6d38a3168cadfa64987e9b41f1284fc58301a0fd91ea60047e2e2529a013b28": 1,
+        "cd76c363c336bb3090b4014952931d433a906c8def8c3c2a3e2e00f8f5b06377": 1,
+        "cfc563def8d8147b0d311dbe1da4e9a0eacd7b13581227f9aab3783e98cf174d": 1,
+        "d1745f2296f1c0601036aadfc05bea17dcbc5b81d1aeaf960a2917a991f92109": 8,
+        "d46311e20db82a24eaf04295664ddb292fbea09b758018d310a837ac4ccdc978": 1,
+        "e818169f4da5b0b687345fedcbdfa21ce0e868b9e054b4cb5bd21bea06edc881": 2,
+        "ee2145c27d3da8a3709ddf0092ea4be4d2a050ed2b72f6ef19d664c3951bf638": 1,
+        "effa922ce28fe64ecf20fe247754000b29f6c70c74dbef69e2cf14f7f328b28b": 1,
+        "fde11d975d066817870dd8f7faa3e06621da33462d5f85aa02321161fe450b58": 1,
+        "ff07d99f78e09ad32860960604e84bb750059119c073a30943ac46469ad2ab90": 1
+      },
+      "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
+    },
+    "src/pack_trust.rs": {
+      "lines": {
+        "28d1aece644779fe2248c848c2f2c5fa60c1acb1301c9e996b4a1d913fc8721b": 1,
+        "5f72769d99c3212cbec5d3d411f95936818d87328a612e35f6aeefdf3b2fd23b": 1
+      },
+      "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
+    },
+    "src/package.rs": {
+      "lines": {
+        "13b9cd665f4fdcab670b40efe4894fdfcda8ab55490a5cdabe4eabfb5fc41a61": 1,
+        "13bf0fab4ed4e9bb7fbfb9aff1bfc3a9802563721184e812024e106d9865a1af": 1,
+        "43bd51aa24365b6891a3458a8460555708346162578f3901c7bee5cd6e82cd61": 1,
+        "9055b17cf525296e6df7c56261887aa3ad596ff355ad8d15cdc144adc54bedd6": 1,
+        "a02b31e78b051b89c3838ab8d178bc5382ff2916594ff961046a42279f72335d": 1
+      },
+      "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
+    },
+    "src/pendant_hooks.rs": {
+      "lines": {
+        "182ae49492c26cfe84bf93082d4aa810b60acd9dc805db4c541a4821474487b1": 1
+      },
+      "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
+    },
+    "src/pendant_sync.rs": {
+      "lines": {
+        "57593cdbd9944fade16a5f65621d133aa90a2e4f247e30066b7df6cbe2f4ad31": 1,
+        "9f4a41aacb97011923015da797e311ad73061f48486c2af7885e90e7bc5075d1": 1,
+        "b1f67323317a9f9d124f921bd29bbde539112ae07faa2127a8d6fa640a22d38b": 1,
+        "dca76bae5de124afb895b13e1c8ff89d5dce189384aa8f429e6c43f23694845c": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "src/projection.rs": {
+      "lines": {
+        "a35e98f644788ab8b4b48732cb8903d37902f15edb494fd6874620976d0770f5": 1,
+        "d9d3e20ec25e06b0d150fcd97757fccac0d0f8c954d1751c90c471cc4771a189": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "src/quipu_credential.rs": {
+      "lines": {
+        "467612b2dfcdde1ab6e4276d405912dc20221fc28bd5b90ec2f315864c44de38": 1,
+        "85e17746b267344de4c180ba453d07e329d0fbbb71675d0996e9a4b5efcc8b93": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "src/quipu_mcp.rs": {
+      "lines": {
+        "7952cc1a865b715b6356ca37bca9ef274c5b46400ebcb7b632e9661f78fd7a97": 1
+      },
+      "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
+    },
+    "src/release_update.rs": {
+      "lines": {
+        "05d6b8baf339bd6e8a4b6f2401407f39e5f59f3643bb92bbb64e8b59cc0ac8b5": 1,
+        "1d23664c7995a3475ba623032056c4501e1bc0bd581f025facb4ed1f852a9f2c": 1,
+        "2a15f3a0fbcde03daa11dabf02e1dc0ec9bf186661b25dd5ca1ce417aafa6867": 1,
+        "2e3b926696d01b6a1dd4a0948fb14422fd1e4db5ae1f65011789d97c9fb482b5": 1,
+        "36d41ab848ca154128629545b6319f25da458cec8ab8ba188d600269dfae6fa1": 1,
+        "91f23116673a01619170fd631110551da37bdaac56954079627d75098e831ccb": 1,
+        "bb133ea94efe92ecad898a6297d89328e6c0767338c76d15688b9cf7eb68d8ba": 1,
+        "cf47c710277560956efb348538400aa67bbf4cbfaffc8d4db5aff2620d6e64c9": 1,
+        "d6cbc4b104ee8781b26bbd795e771d70370b9465947764005a9c46d8d241a306": 1
+      },
+      "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
+    },
+    "src/release_update/quipu.rs": {
+      "lines": {
+        "2c0eea76b7827df18d5978d9a70b3c0937c88777dc91333e94ba01deefca7f79": 1,
+        "716a5be755d47e74f4ff870d0df6c703170501c3915c91a68025b97e2b507b50": 1,
+        "825673d6e75b63d735f4205e2b70e24f21e8f9948b4c73637ee4c50015de3a42": 1,
+        "920871fb23a9b582ea0b08e5ef2f715f243b6b8f4b616f4d83c3499db2e26800": 1
+      },
+      "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
+    },
+    "src/release_update/self_pair.rs": {
+      "lines": {
+        "277bb5f67aa6d74c2035bdcb67759f46ff9c6a084f264f12f8c8538074dcb57e": 1,
+        "2960543bc2b1a9e4ff626c1c6505f4e1102a1579589310133d40d6e97dc33386": 2,
+        "37cc2375cc0acc126558df6fb6423501db828080bf4e233aeb230e87eb672d4b": 1,
+        "457e3d295476b12e51c531943f1f58c530742748a561d12fcdaa1f9243a46e7e": 1,
+        "63e5b7d68ab750b4c38416e3ea7f826136fe6d5478b4732b6efe0b12310148f1": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "src/vocabulary.rs": {
+      "lines": {
+        "a6ed744f06e42a0ac90a4dcc0c28b0ec3732b8b8c4dce098b2dff04fe2131753": 1,
+        "c2caafcbfc2bdc949f43ecc182468008ae3d840cbca5cee51f3b046c846bf3a2": 1,
+        "c4e6c19c10305b179174a3585f0daff7b468c0ea3029f3e3f7fc11f173d5443b": 1
+      },
+      "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
+    },
+    "tests/chaski_member_live.rs": {
+      "lines": {
+        "3877e42d591a66f920ffc7b311581b7884ee96272b93bf53e28a21aa9a7df644": 1,
+        "eb514e44540e5b7a21aa5a1c0e89080f9937cc8bcdd8aae25571d16df881384a": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "tests/cli.rs": {
+      "lines": {
+        "00a475a30704f78f27148ea17587d875993ffe097d6b7bc027a18cc5662dddc3": 1,
+        "027e7bb9ea72f9adff078c148ea5c7a3cc8f3b30a3e084eed4eafa031ce99d9c": 1,
+        "034b8c0061079a6fa863c1036808a949ef710bcab2ed8475215f884f30eca925": 1,
+        "0532fced6632d54a4fd659cc72158f05c82e79fed000e543113b7533d3c2e891": 1,
+        "0539c038f4acc91034cd5af7d9384ab24efd9c70711625db0d689c98225624c4": 1,
+        "0a2f7b0df1c97795d995ed336e0a36678832a37908bf96149d9dae2d44d326d5": 1,
+        "0bdff4da42707ef8e870b312d3816326349d270ad9d08902dc13fefcc665a580": 1,
+        "0e7d02c371cbc1be2f8ef982d52cc24acc0191ab87e4418827708af39eaf5d70": 1,
+        "131ac2612902cb0ddb023006f622960631521348899f4b66e1f7b9cacaaabba5": 1,
+        "1445350a75650b76a0dd9513348d26c417b8f65170d5ff73e909320097b67322": 1,
+        "150b96b52649f55049593531b892e03a1252f59ab6f52e1517cc53cf058531a8": 1,
+        "155b3d8f2a2d4ff4d1c9e2eb4444b7442d413d5aa9871d08b7168f72d8c2445f": 1,
+        "18ba2bafd52818b76ec74c2bad574176258b3e7ff0ddc2976c8093110069efb1": 2,
+        "1dffccba53ce1ec4dae4e8023ff41228afc0fe5ac0fe08880cf4c0d9dfb44f7d": 2,
+        "1ff68942ab13a4d59558b7666e24992cf8ba7aed75bff1af9cdd8a6eec557a36": 1,
+        "23e6f7e36299ec7a44d07ae680b463073ef6a845acd2feda266113d493389e3a": 4,
+        "251cc2b347316e2c3fe8458464dedf171edf3784c39feea33c6d4126a8090cc5": 2,
+        "265cf71fb508a76c36e2fff8be989071d4fec4cf8811b7a3dbb9e5f947e56ec1": 1,
+        "278e07879fe66dd5619fa59d8fee706c63a26850cc24c67cb0d44f0a7ec39f76": 1,
+        "28a858de8c8739da25a2988ad1027a036ab9a2d95fa1a01694aff855f8edb087": 1,
+        "28ae1bd1e1fd730d51f81ba11f6aecbd85ac3bd93026ac7fa8df587b0ffd58cf": 1,
+        "30e34a14e72ecf23a38150af17eabb07699a93dd937e4165153e007a55a03c72": 2,
+        "331fea0644bd5aab350833a9a8f928d7c2c5ae2f7394c89ec134bcaf243cf22f": 1,
+        "366929ed28d913a4c9bb81a66a6e27fdd1f0dfe49e48073742a85dc87dc54343": 1,
+        "3cef08dea8b7261b0c8a9b7bd1c2ca2f3a29c3872f35d9a7bc8622a4f0be7951": 1,
+        "3d9c84081b61e134b14b2215f43ab7e840d1ef0bfc7262b179fdc939e78c8c8f": 1,
+        "40bceaf38294dea4f9447c4ee6ea9b76182de72fcd5c2a5ea39e6ac065578de5": 1,
+        "4373c215128ad7d047880001fa6868148b222d91fd370712475ce4e0141c2dc6": 1,
+        "49cbb86075fe5dce44309c112f1f8b5369c392722ff0275fde2b1a8111b2d1c0": 7,
+        "4e8b2950d4e1244c53749d40fb168aa7d6d3602ede745d21cd39fcee5bd17fa7": 1,
+        "5460e7fb9520793b8e0b77c6f67a11440cc13b201b7fa8b5b9a2d5b916159822": 1,
+        "549946f40fcb39d8f69ef555a7b1c284996b1aac5f6044a294cdad686fb13232": 2,
+        "58a390e8365677da152b202026b4bee238ef5277ad2f6fef0f467debc67959c5": 1,
+        "58e04cbfe22f6c5a782f50a199fffe8e268fce4f683c37d77e1546687a80b118": 1,
+        "5efc974aca2750823a56f7a43ee5e01474cfc6cf8c56b43d815993bc6e9331fd": 1,
+        "62526146251366542a91ff502fe0ccf134780b9ba345b93811ebd8fea3b7a600": 1,
+        "6499d1b4602d056a3dc8aa9d3cf9a1d4ab5202d21d4030d6627e17b2b678e33e": 1,
+        "66f101e8ee22cf03b9a01123a934f699fc76fbf9c33cb690c3879502d7799bfa": 1,
+        "671897a82f87cdadb505f73d98189d8d959904e79108daf20590523d9a57bbac": 1,
+        "6897a9185b33a0b4a9b49a4824ee1885f1be77dcc58a47b57835f6426eb7a398": 1,
+        "6aafad05c98fb8f870f0d6348add945c4a217a401f0404c1696bb66b6be0d376": 1,
+        "715a72fdf203a46e9d375b07032735f2fdaabbe99450b6224b8e5f0e32f157b7": 1,
+        "7d2cbc61a8d3c4b75764950ee5093756866a7abe4a8f3923e1a1e3a38a35882a": 1,
+        "7e641ed94354a72c24b35ea2af43589f731b2bbee6e4163af285d3e206298007": 1,
+        "7f6fff788e6fd5f5afeacf23e6ace485ba7320a5b8c900dd12b92a62da91dc72": 1,
+        "7fa2d8e07be03fceaf19b0a26deaa99b8441817fb7dbd0243a45fdf6682255ae": 1,
+        "81641e6422405c83bde8c12d5adeac221227d459132852f668cb3be781c64612": 1,
+        "83d7d857e52b610e602c899e45e231374cf4055b2966114ce26c911b76d88901": 1,
+        "864829f79567ae81d45523704a587c06ca471bf66ccbb14dc1da0997fcef6e89": 2,
+        "86b82e1ec98aec503b4812fca31a5955d87ad531cdac8aa2886c4560eeb2b6ab": 1,
+        "87a07c8af9e4757ba907a284a7dfd46944b9d9438a46cc5a88943f9e0034340c": 1,
+        "87b2f29ecc2d9c923c8bbe28182c13dec89910e9310a30ba6bb88bb9077c08c2": 1,
+        "88cd219dfffd3fff7bb0c0faa8db89608bad0d0b44d7f1c9daae58942d79e04f": 1,
+        "8aefa7e1f3078deca831d357d2c31013cf323b840e9f23b60eb4a654081fc9de": 1,
+        "90eccdc9d4208f06e2da45efc70f86744b8017c8de41fc66c62fb0ed639b9551": 1,
+        "911deceb696519414e71e96456a9cb49a67f44a2eb1b6c64ea2cf396dc64cb49": 1,
+        "91470fda4083b6c613b521a58d8ea68c97a73701df0f87b84df66f0d34f41e40": 1,
+        "920871fb23a9b582ea0b08e5ef2f715f243b6b8f4b616f4d83c3499db2e26800": 1,
+        "96f2bd88d52cd808e8bffd3d73741c2bde620e397b38ffb526685a39a87a9755": 1,
+        "a0d42100936b5258c76566562caa65856eeb7d9c1da79b45e72cc0e1f5afc94d": 1,
+        "a4f45bedf8cd8a2b09d0828499e2825d708a2054ed0c7e5950197ae918cccbfc": 2,
+        "a51543202f8ba5f803e86302e7e4a6d67063a7be6265cb1127531550f7c5082d": 1,
+        "a860726a68b73e65192e1aa78b43d7e72816d274b3948dfbe97d989062426278": 1,
+        "a930597ce8720010eeb2542ffd226785c75498bba84c79734bc117aa83ca8a4b": 1,
+        "acb9ea142447e7b70df7cf1406c9c8a6669dd6271b6c424047fe9bd1b115fb49": 1,
+        "b3109b179e94ad12583f82dace9941db4790373102bae43803d931a2c96714bb": 1,
+        "bce9e96ae286a0d44948734561da0c42e0175c99d39d1c6bfa1428f8c71a6119": 1,
+        "c0aeb95a57ba3a753312a88da724f0ec113af998370d1251c9f829ea72d5563c": 1,
+        "c153625df64ec2e1bf9c77d0438c0810c27a075f706e271e98360500ddc82bf1": 1,
+        "c16ec09fb917266ba6cdf7acc2361fce0fc800654ea9903b2482880a2d3a6cea": 1,
+        "c46d543b654908801373fb4d4085914c7780e21f5f6451a5c205053042ffa4c3": 5,
+        "c81ed67b49ea36617910c542041c986caf55bddea6401477b444773c512a8c6e": 2,
+        "c8e5db7b39f123688ee372c27c793eb2769f4343874a44fd4c100961d7ed1558": 1,
+        "c91c7ea0187cc4d4a591b51565a66ce92c7ab03251695a33b2b13ff610098b9b": 1,
+        "ca4dee333501074de991095b1ed7ecc57c758973972f2ee450ef70afe1720325": 2,
+        "cf1dd986b81a17b58a78312d2f8a7516f017a8fa88357b80aa447d19535ff88b": 10,
+        "d1f8f6dfd23e1501f507497037e34a61eb162d8859aabcd2b3d95afd5cdcbdce": 1,
+        "d232e6eb2b32d1b4251410cdd5b4ff0a6796c4ef6bdbf9a08bf503b6dfd91a7f": 1,
+        "d4b0259a70021da8ab437e23d127e17f6e2ee79a79764d64573ee447cde7bb02": 1,
+        "dbfaa30db7d56a5ab2d2c101229d6a2b991a8f559e8d4b07ab001455cc1bb0af": 1,
+        "dd924eeb423dd349b80b626c9b94069a2830447d57ab9bad39c82c449b644a24": 1,
+        "de3fb1c8d653f68691c485c1d31864ee4f3650aaca73b6ff24ce69a59189afdf": 1,
+        "dedf7ca1db7bc703751c70f7a841ace9ccf4ae37e23e55e5e78bc8b61e2e9bb9": 1,
+        "e0b5e3329c2c5c07a89c5aa9f734481b083a64048767a413e1270e40ac0297fa": 1,
+        "e13a6dea9a0f57053cf18dd5cc75253fbef1466ae68eb7c65b442d294dfbae65": 1,
+        "e3347665445042c5ec8a95f0f2759c38a1e06b7bf01435476b54fbb6ff54900e": 2,
+        "e7eba4ca1990e21a4000311e55fdbe21c71862c02ac56665048a76b519b733ad": 1,
+        "e809f537f0911a1b9c407ef127092b74735cca5858ebc9cd13c755fc40a071b5": 1,
+        "ec5b1c3584e7fa4070055a94874a2fede18162561f7aba8a0fa6e69036535400": 1,
+        "f4f5923d03d0081ee123e5610d38db5ac07a0e0996b0e4b9f12f9f68a507834d": 1,
+        "f56108b64ebd5219b0fb5c59abebd32b95b5b700a2563062b3ace5ca8d95180a": 1,
+        "f8cef9de7fa66797df4e7d30c47d38631403dea5e13b2d4e771ba76f240f5868": 1,
+        "fcc55c3de52ef22e09d368d363f0962f1afc3158f14fd8c48f2d7ef9c8b45fee": 1,
+        "feb246daa22edba47d740e17096c91937c3d62aebf51949cf4b26546a7d5feac": 1,
+        "fecc03fb6ec7ab6cde77654004193ab30d9bb48b7f97ebe0a34bcf1ec07c8333": 1
+      },
+      "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
+    },
+    "tests/endpoint_trust_cli.rs": {
+      "lines": {
+        "2f08cd82e75208c1bf6ac4c08a51819c747690a7e8baf08a509087981715b333": 1,
+        "739621214fb14089991885612c05aa338833de3238a1b6eec079daa3f8c796fe": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "tests/external_quipu.rs": {
+      "lines": {
+        "02095c5319e3956c7605435f29a090ace636cdcc7f9d0a55d49bf068acee5d1e": 1,
+        "582c3d9e78262c992545a06fd392196f1ae7f4793f4d81db308d40ac90c01524": 1,
+        "916d783b5357d34447396e3c111214b5a3ffda15b310426b20385026030bad82": 1,
+        "e254246614142f6ef3d720acefdb893ffbe629534e94653ecac28bba0fe9446e": 1
+      },
+      "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
+    },
+    "tests/member_adapter.rs": {
+      "lines": {
+        "35701123fca9be93628536233a695e1a4d48105b6cbd6718d4a6b6b0298e1487": 1,
+        "3877e42d591a66f920ffc7b311581b7884ee96272b93bf53e28a21aa9a7df644": 1,
+        "495f52d63c51280ba129df428f3d8dbbec1716e0821dca177f4c4e06e8889808": 1,
+        "a80d23bfe811619817d02fc88909c022c62f034404512e2d074cea52828546d9": 1,
+        "d19c504f44f1d3624a60357e70696f4ef38a821edfd9a12e87a91e5d9768f11d": 1,
+        "e016545391f3c090853e5ae64c8ee927facd30b362d11b74086a602153a68534": 1,
+        "eb514e44540e5b7a21aa5a1c0e89080f9937cc8bcdd8aae25571d16df881384a": 1
+      },
+      "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
+    },
+    "tests/member_bump.rs": {
+      "lines": {
+        "0bdff4da42707ef8e870b312d3816326349d270ad9d08902dc13fefcc665a580": 1
+      },
+      "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
+    },
+    "tests/member_update_release.rs": {
+      "lines": {
+        "0bdff4da42707ef8e870b312d3816326349d270ad9d08902dc13fefcc665a580": 1,
+        "1d57e0a50b9fb78e08819d9e939c992a8a428cafb78abbec5dbba59a3d534537": 1,
+        "5472cab407f4567a62f421f2bbda31e90e9b1bbb1ae9608307a08a22282cc80b": 1,
+        "f8b33858e29b0c58e98243f0221c9f743d73ced6de83c04406f38537dd2a092b": 1
+      },
+      "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
+    },
+    "tests/member_wheel.rs": {
+      "lines": {
+        "3877e42d591a66f920ffc7b311581b7884ee96272b93bf53e28a21aa9a7df644": 1,
+        "c4c58c7e3e5b0999128aef4b634c76399d0c1bbb1a16d123c72dbbfcc16a9988": 2,
+        "eb514e44540e5b7a21aa5a1c0e89080f9937cc8bcdd8aae25571d16df881384a": 1
+      },
+      "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
+    },
+    "tests/pendant_sync.rs": {
+      "lines": {
+        "223cd448c03b8a83e83c947fdd4170388c8831b187be372a825882398e6a1e39": 1,
+        "a5bf65699c6d9293f90b36c2d43c8a5484e816b110aed8bdbf14db94b06ab040": 1,
+        "ae0fb5f39b0e9fd8b617d4742f280d040d74f8ab22f58a383195329f61da74e1": 2,
+        "e7a405d5c3b4eb32862f3fb4c85da969da227bdf5b8a31fb4035875502f887c8": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "tests/prime_cli.rs": {
+      "lines": {
+        "80d139fdf71fddb4c545cc025ae0d172834c3e3026e8521aecda33d82a6d4a59": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "tests/prime_site.rs": {
+      "lines": {
+        "4d22a02237a4ddf58fa5e0807448451cae79dd71e98eeecc3e02081f6ba04f67": 1,
+        "e5bc21e8bda0850883c1049d97bd8286d5385382bb5676512bc26da36b5165c5": 2
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "tests/seeds_member_live.rs": {
+      "lines": {
+        "3877e42d591a66f920ffc7b311581b7884ee96272b93bf53e28a21aa9a7df644": 1,
+        "eb514e44540e5b7a21aa5a1c0e89080f9937cc8bcdd8aae25571d16df881384a": 1
+      },
+      "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
+    },
+    "tests/shuttle_member_live.rs": {
+      "lines": {
+        "3877e42d591a66f920ffc7b311581b7884ee96272b93bf53e28a21aa9a7df644": 1,
+        "eb514e44540e5b7a21aa5a1c0e89080f9937cc8bcdd8aae25571d16df881384a": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "tests/test_pendant_setup.py": {
+      "lines": {
+        "3b86e56b28c3e46e15def39117b44544fc1b6abbb88af007cee8ebd8ba9b9963": 1,
+        "572e3873220982611210d9223e45377ceb3746f1e384a74257ae5ea868af665c": 1,
+        "5ff85c528953e14e309b99c6f8931fe891bf40132fc1f7d0503112ae3a1739b8": 1,
+        "8729304f0f60f4341b1494eaf8f9d624e6a1e747c5d65eb04b831c19665dc594": 1,
+        "c716d7f632e325b410ab16135805253397c3acaf7967fd69e60e5273aa7757e7": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    },
+    "tests/vocabulary.rs": {
+      "lines": {
+        "102987a91babe63f87bf668161288e856c626d2d02dad39dfa8d3a58c74d143a": 1,
+        "292f12633baa950e348bc493b7a8a76d7da019ae64d6010bd57b64f7e8120cb0": 1,
+        "3cc4475f3be9b331cd223de304eea24ea42dec8feb9b169689b134fb4ced21aa": 1,
+        "3e4e8d429159197765e83cbf8c8e0e8cf097729a16826b2d554feb3500e2201c": 1,
+        "5b54d27bf5c83d9ed6038e9006c42ea73f862f1277340dbee998cc3755a4e044": 1,
+        "916d783b5357d34447396e3c111214b5a3ffda15b310426b20385026030bad82": 1,
+        "dc1f7733c937ce5b58da009322cda354f98800e014f74b3558e3113df2105bef": 1,
+        "e254246614142f6ef3d720acefdb893ffbe629534e94653ecac28bba0fe9446e": 1
+      },
+      "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
+    },
+    "tests/yupana_release_live.rs": {
+      "lines": {
+        "3877e42d591a66f920ffc7b311581b7884ee96272b93bf53e28a21aa9a7df644": 1,
+        "eb514e44540e5b7a21aa5a1c0e89080f9937cc8bcdd8aae25571d16df881384a": 1
+      },
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+    }
+  },
+  "version": 1
+}

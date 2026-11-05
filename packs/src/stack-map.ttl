@@ -1,67 +1,94 @@
 @prefix rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix caboodle: <https://caboodle.dev/ns#> .
-@prefix stack:    <https://caboodle.dev/stack/> .
+@prefix tambo: <https://w3id.org/intigraph/tambo/ns#> .
+@prefix stack:    <https://w3id.org/intigraph/tambo/id/stack/> .
+@prefix owl:      <http://www.w3.org/2002/07/owl#> .
 
 # ── The stack map ───────────────────────────────────────────────────────────
 # What each tool IS and how the pieces relate. Facts true at write time:
 # roles and repository locations, not versions or health — those decay, and
-# caboodle's verify proofs exist to measure them live instead.
+# Tambo's verify proofs exist to measure them live instead.
 
-stack:caboodle a caboodle:StackComponent ;
-    rdfs:label "caboodle" ;
+stack:tambo a tambo:StackComponent ;
+    rdfs:label "tambo" ;
     rdfs:comment "The whole kit — an AI-installable install wizard that installs the stack, proves it works with paired negative controls, and watches it run." ;
-    caboodle:repository <https://github.com/scbrown/caboodle> ;
-    caboodle:language "Rust" ;
-    caboodle:installs stack:quipu, stack:camayoc, stack:bobbin, stack:yupana, stack:shantytown ;
-    caboodle:observes stack:prometheus .
+    tambo:repository <https://github.com/intigraph/tambo> ;
+    tambo:language "Rust" ;
+    tambo:installs stack:quipu, stack:camayoc, stack:bobbin, stack:yupana, stack:shantytown ;
+    tambo:observes stack:prometheus .
 
-stack:quipu a caboodle:StackComponent ;
+stack:quipu a tambo:StackComponent ;
     rdfs:label "quipu" ;
     rdfs:comment "AI-native knowledge graph with strict ontology enforcement — the governed store. Bitemporal EAVT fact log, SPARQL, SHACL-gated writes, named graphs, knowledge packs." ;
-    caboodle:repository <https://github.com/scbrown/quipu> ;
-    caboodle:language "Rust" ;
-    caboodle:roleInStack "governed store" .
+    tambo:repository <https://github.com/scbrown/quipu> ;
+    tambo:language "Rust" ;
+    tambo:roleInStack "governed store" .
 
-stack:camayoc a caboodle:StackComponent ;
+stack:camayoc a tambo:StackComponent ;
     rdfs:label "camayoc" ;
     rdfs:comment "The knot-keeper: bootstrap ontology, knowledge ingress discipline, and knowledge-pack production. Owns what facts MEAN and how they earn their way into the graph; runs the governed RML executor for structured sources." ;
-    caboodle:repository <https://github.com/scbrown/camayoc> ;
-    caboodle:language "Python" ;
-    caboodle:roleInStack "ingress keeper" ;
-    caboodle:writesTo stack:quipu .
+    tambo:repository <https://github.com/intigraph/camayoc> ;
+    tambo:language "Python" ;
+    tambo:roleInStack "ingress keeper" ;
+    tambo:writesTo stack:quipu .
 
-stack:bobbin a caboodle:StackComponent ;
+stack:bobbin a tambo:StackComponent ;
     rdfs:label "bobbin" ;
     rdfs:comment "Semantic code indexing and retrieval — chunks code, generates embeddings into LanceDB, and serves search, context injection, and RAG over MCP." ;
-    caboodle:repository <https://github.com/scbrown/bobbin> ;
-    caboodle:language "Rust" ;
-    caboodle:roleInStack "retrieval index" ;
-    caboodle:readsFrom stack:quipu .
+    tambo:repository <https://github.com/scbrown/bobbin> ;
+    tambo:language "Rust" ;
+    tambo:roleInStack "retrieval index" ;
+    tambo:readsFrom stack:quipu .
 
-stack:yupana a caboodle:StackComponent ;
+stack:yupana a tambo:StackComponent ;
     rdfs:label "yupana" ;
     rdfs:comment "In-memory, multi-tenant code-analysis engine — AST, symbols, and call graph as the structural signal, served over MCP/HTTP with tier-tagged facts." ;
-    caboodle:repository <https://github.com/scbrown/yupana> ;
-    caboodle:language "Rust" ;
-    caboodle:roleInStack "structural code facts" ;
-    caboodle:feedsInto stack:bobbin .
+    tambo:repository <https://github.com/scbrown/yupana> ;
+    tambo:language "Rust" ;
+    tambo:roleInStack "structural code facts" ;
+    tambo:feedsInto stack:bobbin .
 
-stack:shantytown a caboodle:StackComponent ;
+stack:shantytown a tambo:StackComponent ;
     rdfs:label "shantytown" ;
     rdfs:comment "A small zero-dependency Python harness for running a crew of coding agents; installs the st console script." ;
-    caboodle:repository <https://github.com/scbrown/shantytown> ;
-    caboodle:language "Python" ;
-    caboodle:roleInStack "crew harness" .
+    tambo:repository <https://github.com/scbrown/shantytown> ;
+    tambo:language "Python" ;
+    tambo:roleInStack "crew harness" .
 
-stack:creel a caboodle:StackComponent ;
+stack:creel a tambo:StackComponent ;
     rdfs:label "creel" ;
     rdfs:comment "A static page that runs agent loops in browser tabs — no server, no build step, in-page MCP backends, durable state pushed to creel-state." ;
-    caboodle:repository <https://github.com/scbrown/creel> ;
-    caboodle:language "JavaScript" ;
-    caboodle:roleInStack "browser harness" .
+    tambo:repository <https://github.com/scbrown/creel> ;
+    tambo:language "JavaScript" ;
+    tambo:roleInStack "browser harness" .
 
-stack:prometheus a caboodle:StackComponent ;
+stack:prometheus a tambo:StackComponent ;
     rdfs:label "prometheus" ;
-    rdfs:comment "Every tool's metrics, consolidated. Caboodle's third proof: observable means Prometheus actually scrapes each tool's declared exporter." ;
-    caboodle:roleInStack "observability" .
+    rdfs:comment "Every tool's metrics, consolidated. Tambo's third proof: observable means Prometheus actually scrapes each tool's declared exporter." ;
+    tambo:roleInStack "observability" .
+
+# Former product identifiers
+# Public entity names live under w3id.org/intigraph/tambo/id/stack/. Each
+# links to its former caboodle.dev name so stores holding an older pack still
+# resolve it. Current vocabulary and graph names use the Tambo namespace.
+stack:bobbin owl:sameAs <https://caboodle.dev/stack/bobbin> .
+stack:tambo owl:sameAs <https://caboodle.dev/stack/caboodle> .
+stack:camayoc owl:sameAs <https://caboodle.dev/stack/camayoc> .
+stack:creel owl:sameAs <https://caboodle.dev/stack/creel> .
+stack:prometheus owl:sameAs <https://caboodle.dev/stack/prometheus> .
+stack:quipu owl:sameAs <https://caboodle.dev/stack/quipu> .
+stack:shantytown owl:sameAs <https://caboodle.dev/stack/shantytown> .
+stack:yupana owl:sameAs <https://caboodle.dev/stack/yupana> .
+
+# Explicit former-name mappings; current facts use the Tambo vocabulary above.
+tambo:StackComponent owl:equivalentClass <https://caboodle.dev/ns#StackComponent> .
+tambo:feedsInto owl:equivalentProperty <https://caboodle.dev/ns#feedsInto> .
+tambo:installs owl:equivalentProperty <https://caboodle.dev/ns#installs> .
+tambo:language owl:equivalentProperty <https://caboodle.dev/ns#language> .
+tambo:observes owl:equivalentProperty <https://caboodle.dev/ns#observes> .
+tambo:readsFrom owl:equivalentProperty <https://caboodle.dev/ns#readsFrom> .
+tambo:repository owl:equivalentProperty <https://caboodle.dev/ns#repository> .
+tambo:roleInStack owl:equivalentProperty <https://caboodle.dev/ns#roleInStack> .
+tambo:writesTo owl:equivalentProperty <https://caboodle.dev/ns#writesTo> .
+stack:tambo owl:sameAs <https://w3id.org/intigraph/tambo/id/stack/caboodle> .
+<https://w3id.org/intigraph/tambo/graph/stack-map> owl:sameAs <https://caboodle.dev/graph/stack-map> .

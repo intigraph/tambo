@@ -1,5 +1,147 @@
 # Changelog
 
+## [0.11.0](https://github.com/intigraph/tambo/compare/v0.10.1...v0.11.0) (2026-11-05)
+
+
+### Features
+
+* add macOS controller packet and pinned job runtime ([#238](https://github.com/intigraph/tambo/issues/238)) ([ebb0a83](https://github.com/intigraph/tambo/commit/ebb0a83b6b130fd88d455d29765dc3e6bc42d55b))
+
+## [0.10.1](https://github.com/intigraph/tambo/compare/v0.10.0...v0.10.1) (2026-11-05)
+
+
+### Bug Fixes
+
+* preserve repository pendant carriers and pack aliases ([#235](https://github.com/intigraph/tambo/issues/235)) ([46bf1e8](https://github.com/intigraph/tambo/commit/46bf1e8975d206bd13a6f5e8df70f405590d7191))
+
+## [0.10.0](https://github.com/intigraph/tambo/compare/v0.9.0...v0.10.0) (2026-11-05)
+
+
+### Features
+
+* **hooks:** install and verify the query-first hooks for Claude Code and Codex ([#227](https://github.com/intigraph/tambo/issues/227)) ([82f710e](https://github.com/intigraph/tambo/commit/82f710e4723a56f5f1160bc9412c4ee91689fa71))
+
+
+### Bug Fixes
+
+* require pinned embedding providers in repository shares ([#233](https://github.com/intigraph/tambo/issues/233)) ([0461437](https://github.com/intigraph/tambo/commit/04614379596614e4aa5acc39576bce3b2356a6b8))
+
+## [0.9.0](https://github.com/intigraph/tambo/compare/v0.8.0...v0.9.0) (2026-11-04)
+
+
+### Features
+
+* **packs:** name stack-map entities under w3id.org/intigraph/tambo ([#221](https://github.com/intigraph/tambo/issues/221)) ([76f63a2](https://github.com/intigraph/tambo/commit/76f63a2e00b01d92c30c99c86a59f02dc5160572))
+
+
+### Bug Fixes
+
+* bootstrap Seeds instead of the legacy tracker ([#225](https://github.com/intigraph/tambo/issues/225)) ([3c6688f](https://github.com/intigraph/tambo/commit/3c6688ff6b3b117185a5bafc8dd2776f80be663f))
+* **compat:** drop the vision line [#224](https://github.com/intigraph/tambo/issues/224) removed from the legacy-name ledger ([#226](https://github.com/intigraph/tambo/issues/226)) ([a3b6765](https://github.com/intigraph/tambo/commit/a3b676560c0ba54e3b390ca0ede995c6d1c6c79a))
+* **macos:** accept native dscl properties and honor packet directory modes ([#222](https://github.com/intigraph/tambo/issues/222)) ([517f6c7](https://github.com/intigraph/tambo/commit/517f6c7c6b0522be33792e3818da90a2dd7c7b34))
+
+## [0.8.0](https://github.com/intigraph/tambo/compare/v0.7.1...v0.8.0) (2026-11-02)
+
+
+### Features
+
+* **jobs:** prepare a pinned Mac account operator packet ([#212](https://github.com/intigraph/tambo/issues/212)) ([b196d44](https://github.com/intigraph/tambo/commit/b196d441c2cbe29ebbeb110212663bd2ca3dcb42))
+
+
+### Bug Fixes
+
+* **compat:** classify the eight drifted legacy-name files ([#217](https://github.com/intigraph/tambo/issues/217)) ([36eb5a5](https://github.com/intigraph/tambo/commit/36eb5a5366310fc850d7dde2c8cbe4f16bc169d9))
+* **demos:** keep the prompt colour on every row of a wrapped command ([#218](https://github.com/intigraph/tambo/issues/218)) ([c4406c9](https://github.com/intigraph/tambo/commit/c4406c9a94f874059812a2c4ee63a448ca273986))
+* **install:** install Camayoc from intigraph/camayoc ([#215](https://github.com/intigraph/tambo/issues/215)) ([d1e0f48](https://github.com/intigraph/tambo/commit/d1e0f48feae89605ea7c01df9289fc31e414e15b))
+
+## [0.7.1](https://github.com/intigraph/tambo/compare/v0.7.0...v0.7.1) (2026-10-30)
+
+
+### Bug Fixes
+
+* **tests:** keep brew PATH fixture aligned with seeds pin (aegis-ko21) ([#209](https://github.com/intigraph/tambo/issues/209)) ([b40e46a](https://github.com/intigraph/tambo/commit/b40e46a8202062151c9102a13c6ee5681b7b1d87))
+
+## [0.7.0](https://github.com/intigraph/tambo/compare/v0.6.4...v0.7.0) (2026-10-28)
+
+
+### Features
+
+* **install:** wire camayoc's memory-file redirect hook into Claude and Codex, with verify (aegis-gshu.1) ([#202](https://github.com/intigraph/tambo/issues/202)) ([610cbe6](https://github.com/intigraph/tambo/commit/610cbe69eba94109b94a22513d121f5682f70c65))
+* **memory:** plan/apply/restore/verify for the agent-memory setup (aegis-gshu.9) ([#203](https://github.com/intigraph/tambo/issues/203)) ([76ee7c8](https://github.com/intigraph/tambo/commit/76ee7c88a02fbd9c61414587563caa339706699a))
+* **prime:** rikuy brief site reachability in tambo prime (aegis-sp21) ([#201](https://github.com/intigraph/tambo/issues/201)) ([3ce2863](https://github.com/intigraph/tambo/commit/3ce2863e5f7790686e6e97c125c520b6f53642b8))
+* **prime:** stack prime contract and tambo prime ([#200](https://github.com/intigraph/tambo/issues/200)) ([4cbc9b3](https://github.com/intigraph/tambo/commit/4cbc9b3bd46065270efe816eba8e9ec0719b142c))
+
+
+### Bug Fixes
+
+* reconcile the reviewed product-name inventory ledger (aegis-i0p2) ([#198](https://github.com/intigraph/tambo/issues/198)) ([3973eda](https://github.com/intigraph/tambo/commit/3973edaa8c8458cfb6d21e26f5c5e513e143b394))
+
+## [0.6.4](https://github.com/intigraph/tambo/compare/v0.6.3...v0.6.4) (2026-10-27)
+
+
+### Bug Fixes
+
+* **update-self:** follow GitHub renames and read intigraph/tambo ([#196](https://github.com/intigraph/tambo/issues/196)) ([df6454e](https://github.com/intigraph/tambo/commit/df6454e980c9a702978e9d707ffae5eef702025a))
+
+## [0.6.3](https://github.com/intigraph/tambo/compare/v0.6.2...v0.6.3) (2026-10-25)
+
+
+### Bug Fixes
+
+* **stack:** pin Bobbin 0.30.0, Yupana 0.16.2, Desire Path v0.10.0 and Shuttle 0.6.1 ([#193](https://github.com/intigraph/tambo/issues/193)) ([39c134d](https://github.com/intigraph/tambo/commit/39c134df8e8eb279a70aa33ca0fc7a522f221c17))
+
+## [0.6.2](https://github.com/intigraph/tambo/compare/v0.6.1...v0.6.2) (2026-10-24)
+
+
+### Bug Fixes
+
+* **hooks:** refresh the shipped Yupana bundle to 0.15.4 ([#190](https://github.com/intigraph/tambo/issues/190)) ([bcf91fc](https://github.com/intigraph/tambo/commit/bcf91fc36c75417b9fb758e081bb8bad9d3fbcf4))
+
+## [0.6.1](https://github.com/intigraph/tambo/compare/v0.6.0...v0.6.1) (2026-10-23)
+
+
+### Bug Fixes
+
+* **release:** record pendant admission and verify only when admitted ([#186](https://github.com/intigraph/tambo/issues/186)) ([45b2ffb](https://github.com/intigraph/tambo/commit/45b2ffb4d8802d9ec7310d03b6269195ad94db7b))
+
+## [0.6.0](https://github.com/intigraph/tambo/compare/v0.5.0...v0.6.0) (2026-10-23)
+
+
+### Features
+
+* add repository knowledge pendant source ([#172](https://github.com/intigraph/tambo/issues/172)) ([6db2109](https://github.com/intigraph/tambo/commit/6db2109095785981ced864106c14a0a6949636cd))
+
+
+### Bug Fixes
+
+* complete Tambo branding and preserve compatibility contracts ([#173](https://github.com/intigraph/tambo/issues/173)) ([032919c](https://github.com/intigraph/tambo/commit/032919cca58cb656da69cf09c46e6af57e8a0482))
+* **knowledge:** stop witnessing Cargo.toml, which every release rewrites ([#185](https://github.com/intigraph/tambo/issues/185)) ([154fbb0](https://github.com/intigraph/tambo/commit/154fbb05c6b90948bcf69d2df6e619ad92667123))
+* **release:** use canonical Tambo owner and retain repository guard ([#183](https://github.com/intigraph/tambo/issues/183)) ([60744cf](https://github.com/intigraph/tambo/commit/60744cf5fbfa5eba724b38818c8b1a7a12b780c3))
+* **share:** publish and verify the repository share as intigraph/tambo ([#184](https://github.com/intigraph/tambo/issues/184)) ([8ed2f2d](https://github.com/intigraph/tambo/commit/8ed2f2d8b5fa8cdba2b3ee6d911877d20a460cc3))
+
+## [0.5.0](https://github.com/scbrown/tambo/compare/v0.4.0...v0.5.0) (2026-10-21)
+
+
+### Features
+
+* **members:** declare explicit compatible identity alternatives ([#174](https://github.com/scbrown/tambo/issues/174)) ([7ca1260](https://github.com/scbrown/tambo/commit/7ca1260652c384653e271fa0b67abed51b19e330))
+
+## [0.4.0](https://github.com/scbrown/tambo/compare/v0.3.7...v0.4.0) (2026-10-19)
+
+
+### Features
+
+* **pendants:** select native monorepo project shares by checkout ([#167](https://github.com/scbrown/tambo/issues/167)) ([fe969dd](https://github.com/scbrown/tambo/commit/fe969dd7e9439dd6f50c9d9484f41f72cd7d4f77))
+* **pendants:** sync repository packs with opt-in hooks ([#165](https://github.com/scbrown/tambo/issues/165)) ([6054a00](https://github.com/scbrown/tambo/commit/6054a00fbeeedc9541c9049d40b8d2f19ca73b14))
+* **trust:** expose endpoint decisions for federation consumers ([#168](https://github.com/scbrown/tambo/issues/168)) ([70199b4](https://github.com/scbrown/tambo/commit/70199b472793ff94e1639c3d9c1b405ac1b3396d))
+
+## [0.3.7](https://github.com/scbrown/tambo/compare/v0.3.6...v0.3.7) (2026-10-17)
+
+
+### Bug Fixes
+
+* **packages:** verify manifest members through package launchers ([#161](https://github.com/scbrown/tambo/issues/161)) ([ed418d9](https://github.com/scbrown/tambo/commit/ed418d9fd3e8c74ee8c4754967e060ff8262a587))
+
 ## [0.3.6](https://github.com/scbrown/tambo/compare/v0.3.5...v0.3.6) (2026-10-17)
 
 

@@ -1,4 +1,4 @@
-# caboodle — the whole kit
+# Tambo — the stack installer
 
 default:
     @just --list
@@ -16,13 +16,23 @@ verify plan="caboodle-plan.toml":
     cargo run -- verify --plan "{{plan}}"
 
 check:
+    python3 scripts/check-product-name.py
+    python3 scripts/test-product-name.py
+    python3 scripts/test-macos-job-account-packet.py
+    python3 scripts/test-macos-controller-account-packet.py
+    python3 scripts/test-macos-job-manifest-migration.py
+    python3 scripts/test-macos-job-runtime-build.py
     sh -n scripts/install.sh scripts/check-release-assets.sh scripts/test-release-install.sh scripts/check-crate-version.sh scripts/setup-environment.sh scripts/build-stack-packs.sh
     cargo fmt --check
     cargo clippy --all-targets --all-features -- -D warnings
     cargo test --all-features
     scripts/test-release-install.sh
+    python3 scripts/test-release-repository.py
+    python3 scripts/test-install-bootstrap.py
     python3 scripts/test-crate-version.py
+    python3 scripts/test-memory-redirect-hook.py
     python3 scripts/test-stack-pendants.py
+    python3 tests/test_skill_render_source.py
 
 # Build the mdBook (requires mdbook)
 book:

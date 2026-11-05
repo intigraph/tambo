@@ -1,0 +1,370 @@
+{
+  "roster_count": 12,
+  "variants": [
+    {
+      "tool": "quipu",
+      "strict_rendered": true,
+      "png_metadata_empty": true,
+      "nearest_replication_exact": true,
+      "theme_interior_identical": true,
+      "declared_palette_only": true,
+      "files": [
+        {
+          "file": "renders/quipu.png",
+          "bytes": 9970,
+          "sha256": "c79583b921ccb05937989bd6a2447893b559569eef8b93eee191c77ea0aed31d"
+        },
+        {
+          "file": "renders/quipu@2x.png",
+          "bytes": 25345,
+          "sha256": "f28a4d3819bb41c269cbfe8482aa603ab063d962fbc73b2efaf57637b7dd07fa"
+        },
+        {
+          "file": "previews/quipu-dark.png",
+          "bytes": 9984,
+          "sha256": "26b14a0b4dbfcfbddc5c503146aec5e71b7349ec5ab3e195fa8506c009e33a4f"
+        },
+        {
+          "file": "previews/quipu-light.png",
+          "bytes": 9976,
+          "sha256": "75896c0d20d7fa73b717a1a17f0fc6efa8f529efeca94e760c241cfcedeb95d7"
+        }
+      ]
+    },
+    {
+      "tool": "seeds",
+      "strict_rendered": true,
+      "png_metadata_empty": true,
+      "nearest_replication_exact": true,
+      "theme_interior_identical": true,
+      "declared_palette_only": true,
+      "files": [
+        {
+          "file": "renders/seeds.png",
+          "bytes": 9569,
+          "sha256": "0bd1f1986ad36841d80374fb8b571440d5b871d57ac4e62ebb624b14117e39e8"
+        },
+        {
+          "file": "renders/seeds@2x.png",
+          "bytes": 24934,
+          "sha256": "a23591cd03c965c7fb9db42cb537ff4ab01b1a23081e13ce99b2d27d2eb4b558"
+        },
+        {
+          "file": "previews/seeds-dark.png",
+          "bytes": 9583,
+          "sha256": "eb9883fee54dc76b50118a629b3e8d3c33498bebcf30abc0cdd90ede238b48d6"
+        },
+        {
+          "file": "previews/seeds-light.png",
+          "bytes": 9576,
+          "sha256": "8d3746bd555adc2107593886914c73debfdc6293ff1344ebfde5399943caca5e"
+        }
+      ]
+    },
+    {
+      "tool": "shantytown",
+      "strict_rendered": true,
+      "png_metadata_empty": true,
+      "nearest_replication_exact": true,
+      "theme_interior_identical": true,
+      "declared_palette_only": true,
+      "files": [
+        {
+          "file": "renders/shantytown.png",
+          "bytes": 11039,
+          "sha256": "c3e7974cfe2abb18791d062469b57fe2ce9a18eed2e2924e786b226f69550a0b"
+        },
+        {
+          "file": "renders/shantytown@2x.png",
+          "bytes": 26423,
+          "sha256": "6d32fe7c7f4e4729f4af16c3afee9f8bb4e318d890e3a656e0886c1ce4fc95c3"
+        },
+        {
+          "file": "previews/shantytown-dark.png",
+          "bytes": 11064,
+          "sha256": "b103baaa67ca1a2e29cc071bd8c8e00320b9723921b65bc605547e579f0226a9"
+        },
+        {
+          "file": "previews/shantytown-light.png",
+          "bytes": 11047,
+          "sha256": "e0522548105cf8dfeb595362bbbf385441c3e47d56846ede387c212b72fd0b6e"
+        }
+      ]
+    },
+    {
+      "tool": "bobbin",
+      "strict_rendered": true,
+      "png_metadata_empty": true,
+      "nearest_replication_exact": true,
+      "theme_interior_identical": true,
+      "declared_palette_only": true,
+      "files": [
+        {
+          "file": "renders/bobbin.png",
+          "bytes": 10165,
+          "sha256": "ab9af34d4c4f0b2eefdceef3d4572fcbda51c6e764e5706b4fda2c42e84ca654"
+        },
+        {
+          "file": "renders/bobbin@2x.png",
+          "bytes": 25519,
+          "sha256": "24796fd38225b5c23da10bce43947b733866d75b7c56fd44a0cce6493a3a4f72"
+        },
+        {
+          "file": "previews/bobbin-dark.png",
+          "bytes": 10183,
+          "sha256": "906ae4bdb4927d54450f44e476b2804f825128e20b5191c5472e52cf7f094555"
+        },
+        {
+          "file": "previews/bobbin-light.png",
+          "bytes": 10172,
+          "sha256": "de08e0d488dec96af4bf56cf922bef5360745f72431dc5fbb881aa2ff4af2c50"
+        }
+      ]
+    },
+    {
+      "tool": "yupana",
+      "strict_rendered": true,
+      "png_metadata_empty": true,
+      "nearest_replication_exact": true,
+      "theme_interior_identical": true,
+      "declared_palette_only": true,
+      "files": [
+        {
+          "file": "renders/yupana.png",
+          "bytes": 10116,
+          "sha256": "50e8a3e5e818d91a4cf359b0eddda0ffacc137164a7bd666eda95dace26ef7c4"
+        },
+        {
+          "file": "renders/yupana@2x.png",
+          "bytes": 25471,
+          "sha256": "89c469138b4ba40d288a33a929fa78921d5539db6cb63b48b466bd0b28ac4420"
+        },
+        {
+          "file": "previews/yupana-dark.png",
+          "bytes": 10134,
+          "sha256": "ad50904b4c1b4017a8814fa34dd462fdc2e0bdc4574f7471580ad9618557788f"
+        },
+        {
+          "file": "previews/yupana-light.png",
+          "bytes": 10124,
+          "sha256": "46f06748fb62d1fc136d7995bb7d3cc49236b2c6ddd617736b9ce6c6d0239a43"
+        }
+      ]
+    },
+    {
+      "tool": "camayoc",
+      "strict_rendered": true,
+      "png_metadata_empty": true,
+      "nearest_replication_exact": true,
+      "theme_interior_identical": true,
+      "declared_palette_only": true,
+      "files": [
+        {
+          "file": "renders/camayoc.png",
+          "bytes": 10280,
+          "sha256": "71e522ce60bd7be80f13afbb5f3478adfe07e264edf6578443d1edfbd4a55993"
+        },
+        {
+          "file": "renders/camayoc@2x.png",
+          "bytes": 25653,
+          "sha256": "34f1ce72497ceffeda7c969bfa632e2be3457b26886492a7af4586085c0646f2"
+        },
+        {
+          "file": "previews/camayoc-dark.png",
+          "bytes": 10297,
+          "sha256": "a4b01fa7093edb564ee74c0eb8a30493ee258602e3f01c94972e3d2962b86fdb"
+        },
+        {
+          "file": "previews/camayoc-light.png",
+          "bytes": 10287,
+          "sha256": "3eeaaf6828ceb130474ce838e834e6363057c1e3c415f1663efc2ddfb249d4db"
+        }
+      ]
+    },
+    {
+      "tool": "quechua",
+      "strict_rendered": true,
+      "png_metadata_empty": true,
+      "nearest_replication_exact": true,
+      "theme_interior_identical": true,
+      "declared_palette_only": true,
+      "files": [
+        {
+          "file": "renders/quechua.png",
+          "bytes": 9806,
+          "sha256": "b6f9923d9a6f230bb7cd647c29616013eb637801029574efd8dcd5f2380b8b4c"
+        },
+        {
+          "file": "renders/quechua@2x.png",
+          "bytes": 25153,
+          "sha256": "7063fd0768b56f603b1a6decf1fb800e569f59ca750cb9031620f895cacecb06"
+        },
+        {
+          "file": "previews/quechua-dark.png",
+          "bytes": 9823,
+          "sha256": "b425d39cc1d0c826614232c7833b267613b4e0164d9252c062f1fd83e8e479c8"
+        },
+        {
+          "file": "previews/quechua-light.png",
+          "bytes": 9813,
+          "sha256": "7af12e5f1544651d75ad11ce29388ec542dfbf614d4fa6b0e4b43f7815387068"
+        }
+      ]
+    },
+    {
+      "tool": "chaski",
+      "strict_rendered": true,
+      "png_metadata_empty": true,
+      "nearest_replication_exact": true,
+      "theme_interior_identical": true,
+      "declared_palette_only": true,
+      "files": [
+        {
+          "file": "renders/chaski.png",
+          "bytes": 10405,
+          "sha256": "6d2f3709793bd5c464bff8961705c259e83bcf20e3a4b0b2cef92a9dd401a1c0"
+        },
+        {
+          "file": "renders/chaski@2x.png",
+          "bytes": 25791,
+          "sha256": "cc1e653d51116b84a45f91de0031591b8573f09f25ce9f9d185ca15e1229f0fe"
+        },
+        {
+          "file": "previews/chaski-dark.png",
+          "bytes": 10423,
+          "sha256": "0393381edd6890ee855401a5a97ae11dfda6426ab516e757c8df831f032c3b11"
+        },
+        {
+          "file": "previews/chaski-light.png",
+          "bytes": 10412,
+          "sha256": "29ae7d726e13dc9742ba8b3a2b7e9cdb7c4a2bf550a02905c6e0412b58ed5911"
+        }
+      ]
+    },
+    {
+      "tool": "shuttle",
+      "strict_rendered": true,
+      "png_metadata_empty": true,
+      "nearest_replication_exact": true,
+      "theme_interior_identical": true,
+      "declared_palette_only": true,
+      "files": [
+        {
+          "file": "renders/shuttle.png",
+          "bytes": 10672,
+          "sha256": "dd2e1a9f64d1ba54dc3a18ecbeb631f05a9e44bcb38dce70faf88a62094f7993"
+        },
+        {
+          "file": "renders/shuttle@2x.png",
+          "bytes": 26072,
+          "sha256": "3ad8e2395b6b1e989d436e24328e31255c836f0aadd60a0e530e0170ae360aef"
+        },
+        {
+          "file": "previews/shuttle-dark.png",
+          "bytes": 10694,
+          "sha256": "599bba741a130d32555234941240e820e19a974f42d79b05e685eee4ffb0e5cd"
+        },
+        {
+          "file": "previews/shuttle-light.png",
+          "bytes": 10680,
+          "sha256": "4649d0e310a7947ff85b0909fb612d2efe55e4e885c7e70e5b6ad4e4dfa4d6e1"
+        }
+      ]
+    },
+    {
+      "tool": "rikuy",
+      "strict_rendered": true,
+      "png_metadata_empty": true,
+      "nearest_replication_exact": true,
+      "theme_interior_identical": true,
+      "declared_palette_only": true,
+      "files": [
+        {
+          "file": "renders/rikuy.png",
+          "bytes": 11044,
+          "sha256": "c748079a2105b1f7abbc4efb9a45ffa83df59b2b4fc24fdc0ead79b337ba09dd"
+        },
+        {
+          "file": "renders/rikuy@2x.png",
+          "bytes": 26424,
+          "sha256": "51d443e01a24ca3c524cfd313dc167f4fb52a59933f0d4d40c6c1de7700a3b14"
+        },
+        {
+          "file": "previews/rikuy-dark.png",
+          "bytes": 11062,
+          "sha256": "667429dc706e1df2fd345955bdcb521d900a4a3ab9b72adbd0e678dfbbe6583a"
+        },
+        {
+          "file": "previews/rikuy-light.png",
+          "bytes": 11052,
+          "sha256": "b07845a50244eeb26182d1fd8d1e05b14927e97e0fa44ab50bfd6201af478794"
+        }
+      ]
+    },
+    {
+      "tool": "desire-path",
+      "strict_rendered": true,
+      "png_metadata_empty": true,
+      "nearest_replication_exact": true,
+      "theme_interior_identical": true,
+      "declared_palette_only": true,
+      "files": [
+        {
+          "file": "renders/desire-path.png",
+          "bytes": 10273,
+          "sha256": "392812e251d30467639d61fc5ecaa28244586e111a1faba5cfaf56118a93b23d"
+        },
+        {
+          "file": "renders/desire-path@2x.png",
+          "bytes": 25662,
+          "sha256": "493285e2dc486fade6c5f37e8de9815f90981a72addd8ecc3b11640c18d7604c"
+        },
+        {
+          "file": "previews/desire-path-dark.png",
+          "bytes": 10291,
+          "sha256": "2895420b47ed5f8f51bfa19681ae3bfc6cb768253bbb6fa41c6a4092e7749869"
+        },
+        {
+          "file": "previews/desire-path-light.png",
+          "bytes": 10280,
+          "sha256": "d69b104751a3dbbe0e635c1b7443826e7ca317e431518f82d0bcf66ba6ce7364"
+        }
+      ]
+    },
+    {
+      "tool": "tambo",
+      "strict_rendered": true,
+      "png_metadata_empty": true,
+      "nearest_replication_exact": true,
+      "theme_interior_identical": true,
+      "declared_palette_only": true,
+      "files": [
+        {
+          "file": "renders/tambo.png",
+          "bytes": 9221,
+          "sha256": "40cf6fc4244515f5d918712a1a04f15ac51fc74fbffc4f2fa2514f3cea14f5ec"
+        },
+        {
+          "file": "renders/tambo@2x.png",
+          "bytes": 24579,
+          "sha256": "f57246148642f082ae593ec36c99de2d550191fc7c0b57e3cc2219b2ea74eaa9"
+        },
+        {
+          "file": "previews/tambo-dark.png",
+          "bytes": 9235,
+          "sha256": "efb0fbc56d4ea96cb059ab5e75447f33a5cb363012ee03a9895ffa9f157cbc39"
+        },
+        {
+          "file": "previews/tambo-light.png",
+          "bytes": 9228,
+          "sha256": "f713e7c48a5ff6f5413a418b9dcbaf19d661df72cd07a39ef5c08dbe686c920e"
+        }
+      ]
+    }
+  ],
+  "text_and_metadata_leak_check": "PASS",
+  "leak_patterns_checked": 7,
+  "renderer_source": "48023226cacf81ce5ba5e493cc98d94fea5d7e23",
+  "renderer_sha256": "b8fef7067f623c6255b8fc16ae1b732715b2dc6ffd2cc9f4eab836d521e71040",
+  "scope": "geometry, raster and metadata checks; visual review recorded separately"
+}

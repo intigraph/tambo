@@ -21,7 +21,7 @@ for label, revision, expected in [('BEFORE', BEFORE, 1), ('AFTER', AFTER, 0)]:
         source = subprocess.check_output(['git', 'show', f'{revision}:scripts/install.sh'], cwd=REPO)
         (root / 'scripts/install.sh').write_bytes(source)
         Bootstrap.run_installer.__globals__['ROOT'] = root
-        case = Bootstrap('test_default_uses_compatibility_repository_and_legacy_release')
+        case = Bootstrap('test_default_uses_canonical_repository_and_legacy_release')
         case.setUp()
         try:
             case.routes['https://api.github.com/repos/scbrown/caboodle/releases/latest'] = {

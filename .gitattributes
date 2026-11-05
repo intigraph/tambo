@@ -4,3 +4,5 @@
 **/pendant/manifest.json merge=quipu
 **/pendant/manifest.ttl merge=quipu
 *.nt diff=quipu
+# Preserve terminal recording bytes; CRLF is part of scriptreplay's byte counts.
+docs/demos/monorepo-sync/output.log -text whitespace=cr-at-eol

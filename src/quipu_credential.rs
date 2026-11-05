@@ -3,7 +3,7 @@ use std::{env, fs, path::Path, process::Command};
 
 use anyhow::{bail, Context, Result};
 
-const FIX: &str = "install the issued token with `install -d -m 700 \"$HOME/.config/quipu\" && install -m 400 /secure/issued-token \"$HOME/.config/quipu/token\"`; run `caboodle doctor`";
+const FIX: &str = "install the issued token with `install -d -m 700 \"$HOME/.config/quipu\" && install -m 400 /secure/issued-token \"$HOME/.config/quipu/token\"`; run `tambo doctor`";
 
 fn check_file(home: &Path) -> Result<()> {
     let path = home.join(".config/quipu/token");
@@ -35,7 +35,7 @@ fn classify(code: u16) -> Result<()> {
     match code {
         200..=299 => Ok(()),
         401 => bail!("Quipu credential rejected by authenticated /shapes read; checked QUIPU_AUTH_TOKEN > QUIPU_AUTH_TOKEN_FILE > ~/.config/quipu/token; verify issuer and server; {FIX}"),
-        other => bail!("Quipu credential acceptance unproven: /shapes HTTP {other}; check server/connectivity; run `caboodle doctor`"),
+        other => bail!("Quipu credential acceptance unproven: /shapes HTTP {other}; check server/connectivity; run `tambo doctor`"),
     }
 }
 
@@ -56,7 +56,7 @@ fn verify_current(server: &str) -> Result<()> {
     ))?;
     let control = read_status(server, None, "auth-negative-probe")?;
     if control != 401 {
-        bail!("Quipu credential acceptance unproven: unauthenticated /shapes control returned HTTP {control}, expected 401; run `caboodle doctor`");
+        bail!("Quipu credential acceptance unproven: unauthenticated /shapes control returned HTTP {control}, expected 401; run `tambo doctor`");
     }
     classify(read_status(server, Some(auth.path()), "caboodle-verify")?)
 }
@@ -144,7 +144,7 @@ fn read_status(server: &str, auth: Option<&Path>, client: &str) -> Result<u16> {
         .output()
         .context("cannot run authenticated Quipu credential read")?;
     if !output.status.success() {
-        bail!("Quipu credential acceptance unproven: authenticated read transport failed; check server/connectivity; run `caboodle doctor`");
+        bail!("Quipu credential acceptance unproven: authenticated read transport failed; check server/connectivity; run `tambo doctor`");
     }
     Ok(String::from_utf8_lossy(&output.stdout)
         .trim()

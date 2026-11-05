@@ -5,6 +5,7 @@ on:
 permissions:
   contents: read
 jobs:
+  # Compatibility: retain the existing required-check identity.
   caboodle-verify:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -22,11 +23,11 @@ jobs:
         run: |
           VERIFY_HOME=$(mktemp -d)
           trap 'rm -rf "$VERIFY_HOME"' EXIT
-          HOME="$VERIFY_HOME" target/debug/caboodle verify-member seeds
+          HOME="$VERIFY_HOME" target/debug/tambo verify-member seeds
       - name: Install and functionally verify the pinned Chaski wheel
         run: cargo test --locked --test chaski_member_live -- --ignored
   chaski-macos-verify:
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
