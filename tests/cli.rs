@@ -1151,7 +1151,17 @@ fn retrieval_plan_with_bobbin(
     let bin = root.path().join("bin");
     fs::create_dir(&bin).unwrap();
     install_fakes(root.path(), &bin);
-    if !functional || version != "0.30.0" {
+    if functional && version != "0.30.0" {
+        fs::rename(bin.join("bobbin"), bin.join("bobbin-functional")).unwrap();
+        fake_tool(
+            &bin,
+            "bobbin",
+            &format!(
+                r#"if [ "${{1:-}}" = --version ]; then echo 'bobbin {version}'; exit 0; fi
+exec "$(dirname "$0")/bobbin-functional" "$@""#
+            ),
+        );
+    } else if !functional {
         // Any subcommand but --version fails like a clap argument error, which is
         // what an old bobbin says to the reviewed release's verification contract.
         fake_tool(
@@ -4701,4 +4711,46 @@ fn crew_hosts_get_no_user_level_query_first_hooks() {
         ));
     assert!(!root.path().join(".claude/settings.json").exists());
     assert!(!root.path().join(".codex/config.toml").exists());
+}
+
+#[test]
+fn skip_install_keeps_newer_bobbin_but_still_requires_functional_verification() {
+    for functional in [true, false] {
+        let (root, bin) = retrieval_plan_with_bobbin("0.35.1", functional);
+        let before = fs::read(bin.join("bobbin")).unwrap();
+        command(root.path(), &bin)
+            .args(["apply", "--skip-install"])
+            .assert()
+            .success()
+            .stdout(predicate::str::contains(
+                "warning: retaining newer installed bobbin 0.35.1",
+            ));
+        assert_eq!(fs::read(bin.join("bobbin")).unwrap(), before);
+        assert!(!root.path().join(".local/share/caboodle/bobbin").exists());
+        let state: serde_json::Value =
+            serde_json::from_slice(&fs::read(root.path().join(".caboodle/state.json")).unwrap())
+                .unwrap();
+        assert_eq!(state["tools"]["bobbin"]["verified"], false);
+        let mut verify = command(root.path(), &bin);
+        let result = verify.arg("verify").assert();
+        if functional {
+            result.success();
+        } else {
+            result
+                .failure()
+                .stderr(predicate::str::contains("functional verification"));
+        }
+    }
+}
+
+#[test]
+fn skip_install_refuses_unknown_bobbin_version_without_replacing_it() {
+    let (root, bin) = retrieval_plan_with_bobbin("development-build", false);
+    let before = fs::read(bin.join("bobbin")).unwrap();
+    command(root.path(), &bin)
+        .args(["apply", "--skip-install"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("refuses to converge"));
+    assert_eq!(fs::read(bin.join("bobbin")).unwrap(), before);
 }
