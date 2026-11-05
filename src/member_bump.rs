@@ -1,7 +1,7 @@
 //! Bump a member's reviewed pin from its published release (wu M2, aegis-1i5h1j).
 //!
 //! A member is pinned to one version and its per-target digests, so a new
-//! member release reaches users only through a caboodle change. This writes
+//! member release reaches users only through a Tambo change. This writes
 //! that change: it reads the release, downloads the published sums file AND
 //! every reviewed target's asset, requires each asset's bytes to hash to its
 //! published line, and rewrites only `version` and the `[sha256]` values of the

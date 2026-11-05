@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 //! Explicit opt-in only. Existing or redirected Git hooks are never replaced.
 use crate::pendant_sync::{git, git_command, Options};
 use anyhow::{bail, Context, Result};
@@ -68,7 +70,7 @@ pub fn install(options: &Options<'_>) -> Result<Vec<PathBuf>> {
     if options.monorepo {
         line.push_str(" --monorepo");
     }
-    let body = format!("#!/bin/sh\n# caboodle pendant sync: installed by explicit init --pack-hooks\nset -eu\nroot=$(git rev-parse --show-toplevel)\n{line}\n");
+    let body = format!("#!/bin/sh\n# Tambo pendant sync: installed by explicit init --pack-hooks\nset -eu\nroot=$(git rev-parse --show-toplevel)\n{line}\n");
     let paths: Vec<_> = ["post-checkout", "post-merge"]
         .map(|n| hooks.join(n))
         .into();

@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 #![cfg(unix)]
 
 use std::{fs, os::unix::fs::PermissionsExt, path::Path};
@@ -149,7 +151,7 @@ if [ "${1:-}" = "read" ]; then
       esac
       exit 0 ;;
   esac
-  [ ! -f "$db" ] || echo 'caboodle-verify-roundtrip'
+  [ ! -f "$db" ] || echo 'tambo-verify-roundtrip'
   exit 0
 fi
 exit 2
@@ -177,7 +179,7 @@ if [ "${1:-}" = "index" ]; then
   exit 0
 fi
 if [ "${1:-}" = "grep" ]; then
-  if grep -q caboodle_verify_marker_ .bobbin/indexed 2>/dev/null; then echo '{"count":1,"results":[{"file_path":"fixture.rs"}]}';
+  if grep -q tambo_verify_marker_ .bobbin/indexed 2>/dev/null; then echo '{"count":1,"results":[{"file_path":"fixture.rs"}]}';
   else echo '{"count":0,"results":[]}'; fi
   exit 0
 fi
@@ -231,7 +233,7 @@ exit 2
 if [ "${1:-}" = "--version" ]; then echo 'yupana 0.16.2'; exit 0; fi
 if [ "${1:-}" = "analyze" ]; then exit 0; fi
 if [ "${1:-}" = "callers" ]; then
-  if [ -f fixture.rs ]; then echo 'fixture.rs:2 caboodle_yupana_caller';
+  if [ -f fixture.rs ]; then echo 'fixture.rs:2 tambo_yupana_caller';
   else echo 'no definition found'; fi
   exit 0
 fi
@@ -248,7 +250,7 @@ while [ "$#" -gt 0 ]; do
   if [ "$1" = "--db" ]; then shift; db=$1; fi
   if [ "$1" = "ingest" ]; then cat >/dev/null; touch "$db.recorded"; exit 0; fi
   if [ "$1" = "list" ]; then
-    if [ -f "$db.recorded" ]; then echo '[{"tool_name":"caboodle_desire_path_marker"}]'; else echo '[]'; fi
+    if [ -f "$db.recorded" ]; then echo '[{"tool_name":"tambo_desire_path_marker"}]'; else echo '[]'; fi
     exit 0
   fi
   # One bd command rule in $HOME/bd.alias. Like the real dp (aegis-fbaso4,
@@ -276,7 +278,7 @@ exit 2
     // --help and the version from --version, exactly as the manifest reads them;
     // list/create keep the verify marker in a file in the hermetic root. The
     // version is the PINNED one, read from the embedded manifest: a hardcoded
-    // version would turn every bump-member PR red (caboodle#50).
+    // version would turn every bump-member PR red (Tambo#50).
     let seeds = caboodle::members::get("seeds").expect("seeds is an embedded member");
     fake_tool(
         bin,
@@ -380,7 +382,7 @@ case "$args" in
     ;;
   *"/query"*)
     case "$args" in
-      *caboodle-camayoc-control-must-stay-absent*)
+      *tambo-camayoc-control-must-stay-absent*)
         if [ "${FAKE_CAMAYOC_MODE:-}" = control-present ]; then echo '{"count":1,"rows":[{"s":"bad-control"}]}'
         else echo '{"count":0,"rows":[]}'; fi
         ;;
@@ -485,7 +487,7 @@ fn guided_interview_offers_a_self_test_question_that_verifies_on_a_fresh_box() {
             "using the built-in self-test question",
         ));
     let plan = fs::read_to_string(root.path().join("caboodle-plan.toml")).unwrap();
-    assert!(plan.contains("caboodle-verify-roundtrip"), "{plan}");
+    assert!(plan.contains("tambo-verify-roundtrip"), "{plan}");
 
     // It must pass without any store of the user's, even when pointed at one
     // that does not exist: the self-test seeds and reads its own scratch store.
@@ -757,11 +759,11 @@ fn check_updates_reports_ahead_without_proposing_an_update_or_touching_the_tool(
 
 #[test]
 fn package_owned_tools_are_judged_by_receipt_and_never_installed_by_caboodle() {
-    // aegis-6f1 option A: dpkg owns bobbin, so caboodle reads the package
+    // aegis-6f1 option A: dpkg owns bobbin, so Tambo reads the package
     // receipt (Debian revision stripped) and leaves delivery to the package lane.
     for (deb_version, verdict) in [
         ("0.31.0", "bobbin: ahead of reviewed pin; downgrade refused (package-owned: apt bobbin 0.31.0;"),
-        ("0.1.0-2", "bobbin: behind reviewed pin; delivered by the package lane, not installed by caboodle (package-owned: apt bobbin 0.1.0;"),
+        ("0.1.0-2", "bobbin: behind reviewed pin; delivered by the package lane, not installed by Tambo (package-owned: apt bobbin 0.1.0;"),
     ] {
         let root = tempfile::tempdir().unwrap();
         let bin = root.path().join("bin");
@@ -1065,7 +1067,7 @@ fn expanded_adapter_negative_controls_turn_verification_red() {
     fake_tool(
         &yupana_bin,
         "yupana",
-        "if [ \"${1:-}\" = --version ]; then echo 'yupana 0.16.2'; exit 0; fi\nif [ \"${1:-}\" = analyze ]; then exit 0; fi\nif [ \"${1:-}\" = callers ]; then echo 'fixture.rs:2 caboodle_yupana_caller'; exit 0; fi\nexit 2",
+        "if [ \"${1:-}\" = --version ]; then echo 'yupana 0.16.2'; exit 0; fi\nif [ \"${1:-}\" = analyze ]; then exit 0; fi\nif [ \"${1:-}\" = callers ]; then echo 'fixture.rs:2 tambo_yupana_caller'; exit 0; fi\nexit 2",
     );
     command(yupana_root.path(), &yupana_bin)
         .args(["plan", "--profile", "code-intel"])
@@ -1086,7 +1088,7 @@ fn expanded_adapter_negative_controls_turn_verification_red() {
     fake_tool(
         &dp_bin,
         "dp",
-        "if [ \"${1:-}\" = version ]; then echo 'dp v0.10.0 (0681233)'; exit 0; fi\necho '[{\"tool_name\":\"caboodle_desire_path_marker\"}]'",
+        "if [ \"${1:-}\" = version ]; then echo 'dp v0.10.0 (0681233)'; exit 0; fi\necho '[{\"tool_name\":\"tambo_desire_path_marker\"}]'",
     );
     command(dp_root.path(), &dp_bin)
         .args(["plan", "--profile", "everything"])
@@ -1527,7 +1529,7 @@ tools = ["quipu", "camayoc", "bobbin"]
 
 #[test]
 fn a_plan_naming_an_unknown_member_is_refused_by_name() {
-    // wu M1: a member a later caboodle removed must refuse with a named message.
+    // wu M1: a member a later Tambo removed must refuse with a named message.
     let root = tempfile::tempdir().unwrap();
     fs::write(
         root.path().join("removed.toml"),
@@ -1539,9 +1541,7 @@ fn a_plan_naming_an_unknown_member_is_refused_by_name() {
         .assert()
         .failure()
         .stderr(predicate::str::contains("unknown tool 'retired-member'"))
-        .stderr(predicate::str::contains(
-            "stack member of this caboodle build",
-        ));
+        .stderr(predicate::str::contains("stack member of this Tambo build"));
 }
 
 #[test]
@@ -1799,7 +1799,7 @@ fn host_profile_excludes_crew_explicitly_and_refuses_unknown_names() {
         .unwrap();
     let stdout = String::from_utf8_lossy(&out.stdout);
     assert!(stdout.contains(
-        "crew: EXCLUDED on host profile mac; owned by st-peer-autopull; not installed or verified by caboodle"
+        "crew: EXCLUDED on host profile mac; owned by st-peer-autopull; not installed or verified by Tambo"
     ), "{stdout}");
     assert!(
         !stdout.contains("shantytown:") && !stdout.contains("creel:"),
@@ -2573,9 +2573,9 @@ case "$url" in */releases/latest|*/releases/tags/*) cat "$HOME/latest.json" ;; *
         return;
     }
     let repair_line = if repair_fails {
-        "caboodle: note: post-install repair failed"
+        "tambo: note: post-install repair failed"
     } else {
-        "caboodle: post-install repair: qp ok"
+        "tambo: post-install repair: qp ok"
     };
     updater
         .assert()

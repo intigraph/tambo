@@ -1,8 +1,10 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 //! Package-manager receipts for stack tools (aegis-6f1).
 //!
 //! On a host whose stack is delivered by a package manager, that manager is
 //! the only writer. On apt hosts that is the root unattended-upgrades lane;
-//! automated caboodle runs never call apt or sudo. Tambo still has to judge
+//! automated Tambo runs never call apt or sudo. Tambo still has to judge
 //! such a tool, so it reads the package receipt (the package that owns the
 //! binary PATH runs, and its version) and compares the upstream version with
 //! the reviewed pin: current, ahead (never downgraded) or behind (the package
@@ -74,11 +76,11 @@ pub fn apt_receipt(program: &str) -> Option<Receipt> {
 }
 
 /// The Homebrew tap that publishes the stack (aegis-em2). A formula installed
-/// from any other tap is package-owned but never driven by caboodle.
+/// from any other tap is package-owned but never driven by Tambo.
 pub const STACK_TAP: &str = "scbrown/tap";
 
 /// The stack formula for a member tool. caboodle-self is NOT here: on the Mac
-/// its installer lane owns it until the caboodle cutover (aegis-6f1 (a)).
+/// its installer lane owns it until the Tambo cutover (aegis-6f1 (a)).
 #[must_use]
 pub fn brew_formula(tool: ToolName) -> Option<&'static str> {
     match tool {
@@ -94,7 +96,7 @@ pub fn brew_formula(tool: ToolName) -> Option<&'static str> {
     }
 }
 
-/// The brew executable, only where caboodle may drive it: macOS by default,
+/// The brew executable, only where Tambo may drive it: macOS by default,
 /// or any host that names one explicitly in CABOODLE_BREW (tests use a fake).
 #[must_use]
 pub fn brew_program() -> Option<std::ffi::OsString> {
@@ -257,7 +259,7 @@ pub fn brew_channel(tool: ToolName) -> anyhow::Result<Option<BrewChannel>> {
 }
 
 /// Install or upgrade a member from the stack tap. Brew runs as the user (no
-/// root), so caboodle drives it directly (aegis-6f1 ruling).
+/// root), so Tambo drives it directly (aegis-6f1 ruling).
 pub fn brew_converge(tool: ToolName, upgrade: bool) -> anyhow::Result<()> {
     let formula = brew_formula(tool).ok_or_else(|| anyhow::anyhow!("no stack formula"))?;
     let brew = brew_program().ok_or_else(|| anyhow::anyhow!("brew is not available"))?;

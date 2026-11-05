@@ -52,7 +52,7 @@ This makes “what should the graph answer?” an install acceptance test.
 
 A first install usually has no ontology to ask about yet. Pressing enter at the
 question-count prompt selects the built-in self-test question instead. It seeds one
-`caboodle-verify-roundtrip` node into a scratch store and queries for it, so it
+`tambo-verify-roundtrip` node into a scratch store and queries for it, so it
 passes on a fresh machine. `verify-questions` always runs it against that scratch
 store, even when `--db` points at your own. Replace it with real questions later
 by editing `[intent]` in the plan.

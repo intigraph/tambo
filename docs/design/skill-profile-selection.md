@@ -1,6 +1,6 @@
 # Pinned skill-profile selection
 
-`caboodle::skill_profile::select` validates a selected set of skill releases
+`tambo::skill_profile::select` validates a selected set of skill releases
 before the installer performs any I/O. Each pin names a skill, an exact native
 pendant `share_id` and a version. Selection uses all three values and produces a
 stable order for Claude and Codex consumers. Native share identifiers retain

@@ -1,7 +1,7 @@
 # Convention over manifest
 
 There is no per-repo manifest file to parse or rot. Each tool is
-caboodle-ready by exposing the pattern the repos already follow:
+tambo-ready by exposing the pattern the repos already follow:
 
 - conventional CLI verbs: `<tool> selftest`, `<tool> health`, `<tool> init`
 - and/or `just` recipes: `just install`, `just verify`

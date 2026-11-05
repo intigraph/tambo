@@ -55,7 +55,7 @@ when inspecting the bootstrap. After installation, `tambo --version` reads
 back the installed release.
 
 Supported release targets are Linux x86_64, macOS x86_64, and macOS arm64.
-The default destination is `${CARGO_HOME:-$HOME/.cargo}/bin/caboodle`; override
+The primary executable is `${CARGO_HOME:-$HOME/.cargo}/bin/tambo`; override
 it with `CABOODLE_INSTALL_DIR` when that directory is managed elsewhere.
 
 `tambo --version` prints the release version and the commit it was built
@@ -258,7 +258,7 @@ quipu import packs/stack-operations/pendant --db scratch.db
 Import verifies the bundle's hashes and stages or quarantines its graph; it
 does not promote it automatically. These shares intentionally contain no
 domain shapes or stored queries. An empty receiver quarantines `stack-map`
-because `https://caboodle.dev/ns#StackComponent` is outside its local vocabulary.
+because `https://tambo.dev/ns#StackComponent` is outside its local vocabulary.
 Configure reviewed receiver shapes for that class before expecting admission.
 Hash integrity alone is not vocabulary, shape or producer certification.
 
@@ -309,6 +309,8 @@ corpus tools are intentionally left in place because they may be shared with
 other workflows:
 
 ```bash
+rm "${CARGO_HOME:-$HOME/.cargo}/bin/tambo"
+# Remove the deliberate compatibility alias as well:
 rm "${CARGO_HOME:-$HOME/.cargo}/bin/caboodle"
 # Optional, from the directory where Tambo was run:
 rm -r .caboodle
@@ -460,7 +462,7 @@ never touches the server at `QUIPU_SERVER`. To set camayoc up against your real 
 server, run the bundle's bootstrap yourself as a separate step:
 `QUIPU_SERVER=<your server> bash ~/.local/share/caboodle/camayoc/<revision>/scripts/bootstrap.sh`.
 
-To remove Tambo, delete `~/.cargo/bin/caboodle` and the `.caboodle/`
+To remove Tambo, delete `~/.cargo/bin/tambo` and the `.caboodle/`
 directory. Installed tools stay, because other workflows may use them. The
 [install guide](installing.md) covers release pins, source
 installs, and updates.

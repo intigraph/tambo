@@ -1,10 +1,12 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 //! seeds, the first real stack member, installed from its PUBLISHED release and
 //! proven (aegis-1i5h1j .10). Needs the network, so it is ignored by default:
 //!
 //!     cargo test --test seeds_member_live -- --ignored
 //!
 //! Run it after every `bump-member members/seeds.toml`: it is the same path
-//! `caboodle apply` + `verify` take for this member, against the real asset.
+//! `Tambo apply` + `verify` take for this member, against the real asset.
 #![cfg(target_os = "linux")]
 
 use std::env;
