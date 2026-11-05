@@ -133,7 +133,8 @@ def inventory(kind, key):
     result = {}
     for line in answer.splitlines():
         parts = line.split()
-        if len(parts) != 2 or not parts[1].isdigit() or parts[0] in result:
+        # macOS includes signed system IDs (nobody -2, nogroup -1).
+        if len(parts) != 2 or not re.fullmatch(r'-?[0-9]+', parts[1]) or parts[0] in result:
             raise ValueError('native account inventory unknown')
         result[parts[0]] = int(parts[1])
     if not result:
