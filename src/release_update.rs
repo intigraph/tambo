@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 //! Opt-in published-release delivery for binary tools selected by a reviewed plan.
 //! Source-managed services and source bundles retain their own update contracts.
 mod durable;
@@ -312,7 +314,7 @@ fn lock_state_unrecovered(state_path: &Path) -> Result<fs::File> {
 ///
 /// A member tracks its REVIEWED PIN, never the newest published release: the
 /// pin's digest is the member's trust anchor (members/README), and pins move by
-/// `bump-member` PR -> caboodle release -> `update-self`. So this installs the
+/// `bump-member` PR -> Tambo release -> `update-self`. So this installs the
 /// pinned asset, accepted on the digest embedded in this build, over the copy
 /// PATH runs (the same copy the built-in tools update), with the same backup,
 /// transaction and rollback-on-failed-verify. Every run ends in a functional
@@ -476,7 +478,7 @@ pub fn update_self_pinned(
     )
 }
 
-/// GitHub owner of each published release. Tambo moved from scbrown/caboodle to
+/// GitHub owner of each published release. Tambo moved from scbrown/Tambo to
 /// intigraph/tambo; the other tools still publish under scbrown.
 fn release_owner(tool: Option<ToolName>) -> &'static str {
     if tool.is_none() {
@@ -824,7 +826,7 @@ fn update_binary(
             let canonical = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
             if canonical(&current) != canonical(&destination) {
                 println!(
-                    "caboodle: note: updated {} (the copy PATH runs); this binary {} was NOT changed",
+                    "tambo: note: updated {} (the copy PATH runs); this binary {} was NOT changed",
                     destination.display(),
                     current.display()
                 );
@@ -845,16 +847,16 @@ fn post_install_repair(installed: &Path) {
     {
         Ok(out) if out.status.success() => {
             for line in String::from_utf8_lossy(&out.stdout).lines() {
-                println!("caboodle: {line}");
+                println!("tambo: {line}");
             }
         }
         Ok(out) => println!(
-            "caboodle: note: post-install repair failed ({}): {}; the update itself is complete",
+            "tambo: note: post-install repair failed ({}): {}; the update itself is complete",
             out.status,
             String::from_utf8_lossy(&out.stderr).trim()
         ),
         Err(error) => println!(
-            "caboodle: note: post-install repair could not run: {error}; the update itself is complete"
+            "tambo: note: post-install repair could not run: {error}; the update itself is complete"
         ),
     }
 }

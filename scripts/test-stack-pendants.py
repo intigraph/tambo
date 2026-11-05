@@ -12,7 +12,7 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-NAMES = {"stack-map": 62, "stack-operations": 44}
+NAMES = {"stack-map": 73, "stack-operations": 54}
 MEMBERS = {"manifest.json", "manifest.ttl", "export.nt", "shapes.ttl"}
 QUIPU = shutil.which(os.environ.get("QUIPU", "quipu"))
 
@@ -40,7 +40,7 @@ class TextPendants(unittest.TestCase):
                     path.read_text(encoding="utf-8")
                 manifest = json.loads((bundle / "manifest.json").read_text())
                 self.assertEqual(manifest["pack_dir"], "pendant")
-                self.assertEqual(manifest["scope"]["value"], f"https://caboodle.dev/graph/{name}")
+                self.assertEqual(manifest["scope"]["value"], f"https://w3id.org/intigraph/tambo/graph/{name}")
                 result = self.native("import", bundle, "--db", self.work / f"{name}.db")
                 self.assertEqual(result.returncode, 0, result.stderr)
                 receipt = json.loads(result.stdout)
@@ -53,6 +53,22 @@ class TextPendants(unittest.TestCase):
                     self.assertIn("off_vocabulary", receipt["promotion"]["blockers"])
                 else:
                     self.assertEqual(receipt["outcome"], "staged")
+
+    def test_current_names_and_explicit_former_name_mappings(self):
+        # Compatibility: former identifiers occur only as mapping objects.
+        allowed = ("http://www.w3.org/2002/07/owl#sameAs",
+                   "http://www.w3.org/2002/07/owl#equivalentClass",
+                   "http://www.w3.org/2002/07/owl#equivalentProperty")
+        for name in NAMES:
+            text = (self.bundle(name) / "export.nt").read_text()
+            for line in text.splitlines():
+                if "caboodle" in line.lower():
+                    self.assertTrue(any("<" + iri + ">" in line for iri in allowed), line)
+                    self.assertNotIn("caboodle", line.split(">", 1)[0].lower())
+            self.assertIn("<https://w3id.org/intigraph/tambo/id/stack/tambo>", text)
+            self.assertNotIn("<https://caboodle.dev/ns#", "\n".join(
+                line for line in text.splitlines()
+                if not any("<" + iri + ">" in line for iri in allowed)))
 
     def test_tampered_graph_and_manifest_are_refused(self):
         for field in ("graph", "manifest"):
@@ -77,7 +93,7 @@ class TextPendants(unittest.TestCase):
         shape = self.work / "known.ttl"
         shape.write_text('''@prefix sh: <http://www.w3.org/ns/shacl#> .
 <urn:fixture:Component> a sh:NodeShape ;
- sh:targetClass <https://caboodle.dev/ns#StackComponent> .
+ sh:targetClass <https://w3id.org/intigraph/tambo/ns#StackComponent> .
 ''')
         db = self.work / "known.db"
         loaded = self.native("shapes", "load", "fixture", shape, "--db", db)
@@ -86,7 +102,7 @@ class TextPendants(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         receipt = json.loads(result.stdout)
         self.assertEqual(receipt["outcome"], "staged")
-        self.assertEqual(receipt["triples"], {"accepted": 62, "quarantined": 0})
+        self.assertEqual(receipt["triples"], {"accepted": 73, "quarantined": 0})
 
     def test_rebuild_preserves_semantic_graphs(self):
         output = self.work / "rebuilt"

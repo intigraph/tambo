@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 use std::{
     env,
     ffi::{OsStr, OsString},
@@ -488,11 +490,11 @@ impl Quipu {
         let root = tempfile::tempdir().context("create quipu verification directory")?;
         let db = root.path().join("verify.db");
         let episode = root.path().join("episode.json");
-        let marker = "caboodle-verify-roundtrip";
+        let marker = "tambo-verify-roundtrip";
         fs::write(
             &episode,
             format!(
-                r#"{{"name":"caboodle verification","episode_body":"functional round trip","source":"caboodle","group_id":"caboodle-verification","nodes":[{{"name":"{marker}","type":"Verification","description":"caboodle isolated verification"}}],"edges":[]}}"#
+                r#"{{"name":"Tambo verification","episode_body":"functional round trip","source":"caboodle","group_id":"caboodle-verification","nodes":[{{"name":"{marker}","type":"Verification","description":"Tambo isolated verification"}}],"edges":[]}}"#
             ),
         )
         .context("write quipu verification episode")?;
@@ -819,7 +821,7 @@ impl Adapter for Camayoc {
             );
         }
         if !scratch.path().join(".quipu/server.pid").exists() {
-            bail!("Camayoc bootstrap did not start a scratch Quipu at {server}; refusing to verify against a server caboodle does not own");
+            bail!("Camayoc bootstrap did not start a scratch Quipu at {server}; refusing to verify against a server Tambo does not own");
         }
         verify_camayoc_first_ingest(&root, &server)
     }
@@ -874,13 +876,13 @@ impl Adapter for Bobbin {
             .duration_since(UNIX_EPOCH)
             .context("system clock predates Unix epoch")?
             .as_nanos();
-        let repo = format!("caboodle-verify-{}-{nonce}", std::process::id());
-        let marker = format!("caboodle_verify_marker_{}_{nonce}", std::process::id());
+        let repo = format!("tambo-verify-{}-{nonce}", std::process::id());
+        let marker = format!("tambo_verify_marker_{}_{nonce}", std::process::id());
         checked("git", ["init", "--quiet"], Some(root.path()))?;
         checked("bobbin", ["init"], Some(root.path()))?;
         fs::write(
             root.path().join("control.rs"),
-            "/// Proves the negative-control index is live.\npub fn caboodle_control() -> usize {\n    1\n}\n",
+            "/// Proves the negative-control index is live.\npub fn tambo_control() -> usize {\n    1\n}\n",
         )
         .context("write bobbin negative-control fixture")?;
         checked(
@@ -975,28 +977,20 @@ impl Adapter for Yupana {
         let state = root.path().join("state");
         fs::write(
             root.path().join("control.rs"),
-            "pub fn caboodle_yupana_control() -> usize { 1 }\n",
+            "pub fn tambo_yupana_control() -> usize { 1 }\n",
         )?;
         yupana_checked(root.path(), &state, ["analyze", "."])?;
-        let before = yupana_checked(
-            root.path(),
-            &state,
-            ["callers", "caboodle_yupana_target", "."],
-        )?;
-        if String::from_utf8_lossy(&before.stdout).contains("caboodle_yupana_caller") {
+        let before = yupana_checked(root.path(), &state, ["callers", "tambo_yupana_target", "."])?;
+        if String::from_utf8_lossy(&before.stdout).contains("tambo_yupana_caller") {
             bail!("Yupana negative control unexpectedly found the fixture caller");
         }
         fs::write(
             root.path().join("fixture.rs"),
-            "pub fn caboodle_yupana_target() -> usize { 1 }\npub fn caboodle_yupana_caller() -> usize { caboodle_yupana_target() }\n",
+            "pub fn tambo_yupana_target() -> usize { 1 }\npub fn tambo_yupana_caller() -> usize { tambo_yupana_target() }\n",
         )?;
         yupana_checked(root.path(), &state, ["analyze", "."])?;
-        let after = yupana_checked(
-            root.path(),
-            &state,
-            ["callers", "caboodle_yupana_target", "."],
-        )?;
-        if !String::from_utf8_lossy(&after.stdout).contains("caboodle_yupana_caller") {
+        let after = yupana_checked(root.path(), &state, ["callers", "tambo_yupana_target", "."])?;
+        if !String::from_utf8_lossy(&after.stdout).contains("tambo_yupana_caller") {
             bail!("Yupana analyzed the fixture but callers did not return its caller");
         }
         Ok(())
@@ -1169,7 +1163,7 @@ impl Adapter for DesirePath {
         let dp = desire_path_program()?;
         let root = tempfile::tempdir().context("create Desire Path verification directory")?;
         let db = root.path().join("desires.db");
-        let marker = "caboodle_desire_path_marker";
+        let marker = "tambo_desire_path_marker";
         let before = checked(
             &dp,
             [
@@ -1295,10 +1289,10 @@ fn ensure_bobbin_link(link: &Path, target: &Path) -> Result<()> {
         {
             return Ok(());
         }
-        // A DANGLING symlink is caboodle's own debris, not a user's install, and
+        // A DANGLING symlink is Tambo's own debris, not a user's install, and
         // refusing to repair it deadlocks the tool against itself.
         //
-        // Measured on caboodle CI, red on main 2026-08-31 -> 2026-09-02, one job,
+        // Measured on Tambo CI, red on main 2026-08-31 -> 2026-09-02, one job,
         // every run:
         //
         //     bobbin: not installed (run bobbin --version:
@@ -1389,8 +1383,8 @@ fn install_camayoc_bundle() -> Result<()> {
 
 fn verify_camayoc_first_ingest(root: &Path, server: &str) -> Result<()> {
     let namespace = camayoc_aegis_namespace(&root.join("ontology/core.ttl"))?;
-    let control = "caboodle-camayoc-control-must-stay-absent";
-    let marker = "caboodle-camayoc-first-ingest-v1";
+    let control = "tambo-camayoc-control-must-stay-absent";
+    let marker = "tambo-camayoc-first-ingest-v1";
 
     if label_count(server, &namespace, control)? != 0 {
         bail!("Camayoc negative control unexpectedly exists");
@@ -1404,7 +1398,7 @@ fn verify_camayoc_first_ingest(root: &Path, server: &str) -> Result<()> {
     let payload = json!({
         "turtle": turtle,
         "actor": "caboodle",
-        "source": "caboodle Camayoc first-ingest verification"
+        "source": "Tambo Camayoc first-ingest verification"
     });
     if label_count(server, &namespace, marker)? == 0 {
         let first = curl_json(&format!("{server}/knot"), &payload)?;

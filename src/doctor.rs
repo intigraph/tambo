@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 //! Read-only preflight: what will stop `tambo install` on this host, before
 //! anything is downloaded, built, or started.
 //!
@@ -56,7 +58,7 @@ pub struct Scope {
     pub external_quipu: bool,
     pub remote_quipu: Option<String>,
     pub crew: Option<CrewMode>,
-    /// Doctor runs in the caboodle work directory, which holds the plan. MCP
+    /// Doctor runs in the Tambo work directory, which holds the plan. MCP
     /// servers are registered per indexed repository, so none is expected
     /// here (aegis-65xet3).
     pub work_dir: bool,
@@ -103,7 +105,7 @@ pub fn installed(plan: &Plan, state: &State) -> bool {
 }
 
 /// A plan given by a bare file name lives in the current directory, which is
-/// then the caboodle work directory.
+/// then the Tambo work directory.
 pub fn is_work_dir(plan: &Path) -> bool {
     plan.parent().map_or(true, |dir| {
         dir.as_os_str().is_empty() || dir == Path::new(".")
@@ -485,7 +487,7 @@ fn check_bin_dir_on_path(bin: Option<&Path>, path: Option<&std::ffi::OsStr>) -> 
         return vec![Finding::new(
             Level::Fail,
             "install directory",
-            "neither CARGO_HOME nor HOME is set; caboodle has nowhere to install binaries",
+            "neither CARGO_HOME nor HOME is set; Tambo has nowhere to install binaries",
         )];
     };
     let on_path = path.is_some_and(|path| env::split_paths(path).any(|entry| entry == bin));
@@ -604,7 +606,7 @@ fn check_tool(tool: ToolName, flavor: QuipuFlavor, path: Option<&std::ffi::OsStr
 fn source_hint(tool: ToolName) -> String {
     match adapter::source_install_command(tool) {
         Some(command) => format!("Build it from source first, then rerun: `{command}`"),
-        None => "Install it by hand first, then rerun; caboodle adopts an installed tool that passes verification".to_owned(),
+        None => "Install it by hand first, then rerun; Tambo adopts an installed tool that passes verification".to_owned(),
     }
 }
 
@@ -781,7 +783,7 @@ yupana: yupana serve - ✗ Failed to connect\n";
 
     #[test]
     fn missing_install_directory_on_path_is_a_blocker() {
-        let bin = PathBuf::from("/opt/caboodle-test/bin");
+        let bin = PathBuf::from("/opt/tambo-test/bin");
         let without = OsString::from("/usr/bin:/bin");
         let with = env::join_paths([Path::new("/usr/bin"), &bin]).unwrap();
         let missing = check_bin_dir_on_path(Some(&bin), Some(&without));
@@ -897,7 +899,7 @@ yupana: yupana serve - ✗ Failed to connect\n";
         );
     }
 
-    // aegis-65xet3 item 3: in the caboodle work dir a missing per-repository
+    // aegis-65xet3 item 3: in the Tambo work dir a missing per-repository
     // registration is expected, not a warning; elsewhere it still warns.
     #[test]
     fn missing_registration_does_not_warn_in_the_work_dir() {

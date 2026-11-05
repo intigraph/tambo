@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 //! `update-release --tool <member>` tracks the member's REVIEWED PIN
 //! (aegis-2ezq5j). Driven through the CLI against the committed fixture-demo
 //! release, with a fake curl serving it.
@@ -30,7 +32,7 @@ fn demo(dir: &Path, version: &str) {
             r#"store="$HOME/.fixture-demo"
 case "$1" in
   --version) echo "fixture-demo {version}" ;;
-  --help) echo "fixture-demo is the caboodle fixture stack member" ;;
+  --help) echo "fixture-demo is the Tambo fixture stack member" ;;
   list) cat "$store" 2>/dev/null; exit 0 ;;
   add) echo "$2" >> "$store" ;;
 esac"#

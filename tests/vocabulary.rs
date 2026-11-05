@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 //! The pinned Quechua vocabulary (aegis-1i5h1j.3): verify must prove the term
 //! resolves AND that its controls can fail. Env is process-global, so the
 //! fake-quipu arms run in one test function.
@@ -59,7 +61,7 @@ fn verify_refuses_a_tampered_file_and_a_quipu_that_cannot_tell() {
 }
 
 /// Against the REAL quipu, when one is on PATH. CI's clean-machine job runs
-/// the same proof through `caboodle install`.
+/// the same proof through `Tambo install`.
 #[test]
 #[ignore = "needs a real quipu on PATH"]
 fn the_pinned_release_resolves_a_term_in_a_real_quipu() {

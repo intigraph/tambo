@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 //! The data-declared member adapter, driven against a fake release (aegis-1i5h1j C1).
 //!
 //! These arms mutate PATH and CARGO_HOME, which are process-global, so they run
@@ -174,7 +176,7 @@ printf 200"#,
     script(
         &lossy,
         "fixture-demo",
-        r#"case "$1" in --help) echo 'fixture-demo is the caboodle fixture stack member' ;; *) exit 0 ;; esac"#,
+        r#"case "$1" in --help) echo 'fixture-demo is the Tambo fixture stack member' ;; *) exit 0 ;; esac"#,
     );
     set_path(&system, &[&lossy]);
     assert!(err(demo.verify()).contains("not present after it was created"));
