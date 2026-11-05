@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 //! The Quipu stack's hook bundles, and the verification that st renders them.
 //!
 //! Each tool's hooks are declared as a bundle (schema `st.hook-bundle/1`) under
@@ -341,11 +343,11 @@ mod tests {
             .find(|(n, _)| *n == "bobbin")
             .copied()
             .unwrap();
-        let lines = verify_with(&[bobbin], "caboodle-test-no-such-st").unwrap();
+        let lines = verify_with(&[bobbin], "tambo-test-no-such-st").unwrap();
         assert_eq!(lines.len(), 1);
         assert!(lines[0].starts_with("NOT verified:"), "{lines:?}");
         assert_eq!(
-            verify_with(&[], "caboodle-test-no-such-st").unwrap(),
+            verify_with(&[], "tambo-test-no-such-st").unwrap(),
             ["none selected by this plan"]
         );
     }

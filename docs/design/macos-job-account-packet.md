@@ -25,7 +25,7 @@ values attached to the ASK, not values fetched by the script):
 
 ```sh
 sudo /usr/bin/python3 -I scripts/macos-job-account-packet.py setup \
-  --tool /absolute/path/to/reviewed/caboodle --tool-sha256 TOOL_SHA256 \
+  --tool /absolute/path/to/reviewed/tambo --tool-sha256 TOOL_SHA256 \
   --inventory /absolute/path/to/reviewed/catalog --inventory-sha256 CATALOG_SHA256
 sudo /usr/bin/python3 -I scripts/macos-job-account-packet.py verify
 ```
@@ -86,7 +86,7 @@ Tambo0.7.1 compatibility artifact (installed under its legacy executable name) (
 
 ```sh
 sudo /usr/bin/python3 -I scripts/macos-job-account-packet.py setup \
-  --tool /Users/stiwi/.local/bin/caboodle \
+  --tool /absolute/path/to/reviewed/tambo \
   --tool-sha256 29c29ceef6ac89728686cd8922bf0e142dc8200fa6067b171b05d45e38fc397c \
   --inventory docs/operator-packets/e579/catalog \
   --inventory-sha256 21d6283211c709dd3370bf558b5c2e69529a59849b63d48d5b1af1b6c7b5c10a

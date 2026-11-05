@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 //! Pendant autoload trust (aegis-2eckx0): which packs and pointer endpoints may load.
 //!
 //! A pack lands in the graph agents query first, so loading it is a trust decision
@@ -238,7 +240,7 @@ impl TrustConfig {
         Decision::Refuse {
             message: format!(
                 "foreign pack {pack} (sha256 {sha}) from {} has no allow entry. Admit exactly \
-                 this archive with: caboodle packs trust allow {} {sha}",
+                 this archive with: tambo packs trust allow {} {sha}",
                 repo.key(),
                 repo.key()
             ),
@@ -275,7 +277,7 @@ impl TrustConfig {
         Decision::Refuse {
             message: format!(
                 "endpoint {url} declared by foreign repository {} has no allow entry; a pack \
-                 declaring it is not consent. Admit it with: caboodle packs trust \
+                 declaring it is not consent. Admit it with: tambo packs trust \
                  allow-endpoint {} {url}",
                 repo.key(),
                 repo.key()

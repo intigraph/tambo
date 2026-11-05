@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 //! The python-wheel member kind, driven against a committed fixture wheel
 //! (aegis-1i5h1j.2). PATH, HOME and CARGO_HOME are process-global, so every
 //! arm runs in ONE test function, in order.
@@ -69,7 +71,7 @@ printf 200"#,
     demo.install().expect("install the fixture wheel");
     assert_eq!(
         fs::read_to_string(&log).unwrap().trim(),
-        "https://github.com/caboodle-fixtures/fixture-wheel/releases/download/v0.1.0/\
+        "https://github.com/tambo-fixtures/fixture-wheel/releases/download/v0.1.0/\
          fixture_wheel-0.1.0-py3-none-any.whl"
     );
     assert!(installed.is_file());
@@ -82,7 +84,7 @@ printf 200"#,
             .path()
             .join("bin/python")
             .exists(),
-        "the venv lives under the caboodle-owned members dir"
+        "the venv lives under the Tambo-owned members dir"
     );
     let version = demo.version().unwrap();
     assert_eq!(version, "fixture-wheel 0.1.0");
@@ -146,7 +148,7 @@ exec {} "$@""#,
 
     // 2c. aegis-z1u9s0: a cache restored $CARGO_HOME/bin but not the venvs, so
     //     the installed script cannot run to prove its identity. It is this
-    //     member's own launcher (its interpreter is inside the caboodle-owned
+    //     member's own launcher (its interpreter is inside the Tambo-owned
     //     venv dir), so install replaces it instead of refusing.
     fs::remove_dir_all(&members).unwrap();
     assert!(
@@ -212,7 +214,7 @@ exec {} "$@""#,
         &deaf,
         "fixture-wheel",
         r#"case "$1" in
-  --help) echo 'fixture-wheel is the caboodle python-wheel fixture stack member' ;;
+  --help) echo 'fixture-wheel is the tambo python-wheel fixture stack member' ;;
   list) cat "$HOME/.fixture-wheel" 2>/dev/null; true ;;
   add) cat >/dev/null; echo "$2" >> "$HOME/.fixture-wheel" ;;
 esac"#,
