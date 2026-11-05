@@ -164,7 +164,18 @@ def materialize_release(source, revision, destination):
         ["git", "-C", str(source), "archive", "--format=tar", revision], check=True, capture_output=True
     ).stdout
     with tarfile.open(fileobj=io.BytesIO(archive), mode="r:") as bundle:
+        members = {member.name.rstrip("/"): member for member in bundle.getmembers()}
+        aliases = {"packs/" + pack + suffix: pack + "/pendant"
+                   for pack in ("stack-map", "stack-operations")
+                   for suffix in (".pendant.db", ".qpack.db")}
         for member in bundle.getmembers():
+            if member.issym() and aliases.get(member.name) == member.linkname:
+                target = members.get("packs/" + member.linkname)
+                if target is None or not target.isdir():
+                    raise ValueError("tracked pack alias target is not a release directory")
+                # These four compatibility aliases duplicate tracked pack directories.
+                # Omit aliases from the corpus; never follow archive symlinks.
+                continue
             relative = Path(member.name)
             if relative.is_absolute() or ".." in relative.parts or not (member.isfile() or member.isdir()):
                 raise ValueError("unsupported tracked release member")
@@ -205,6 +216,49 @@ def alignment_carrier(source):
         ):
             raise ValueError("empty alignment profile contains mapping data")
     return data.decode()
+
+
+FORMER_NAME_LEGACY = "http://aegis.gastown.local/ontology/"
+
+
+def former_name(public):
+    """The exact name the release query renamed ``public`` from, or None."""
+    match = re.fullmatch(r"https://w3id\.org/intigraph/([A-Za-z0-9-]+)/id/(.+)", public)
+    if not match:
+        return None
+    owner, rest = match.groups()
+    kind, _, tail = rest.partition("/")
+    if kind in ("code", "doc", "chunk") and tail:
+        return f"{FORMER_NAME_LEGACY}{kind}/{owner}/{tail}"
+    if owner == "tambo" and rest == "repo":
+        return FORMER_NAME_LEGACY + "repo_caboodle"
+    if rest == "repo":
+        return f"{FORMER_NAME_LEGACY}repo_{owner}"
+    if owner == "quipu" and kind == "idea" and tail:
+        return "https://quipu.dev/knowledge/" + tail
+    if owner == "stack" and rest == "repo-embedded-knowledge-databases-directive-2026-09-03":
+        return FORMER_NAME_LEGACY + rest
+    return None
+
+
+def verify_former_names(export):
+    """Admit owl:sameAs only from a public name to its exact former name."""
+    same_as = "<http://www.w3.org/2002/07/owl#sameAs>"
+    linked = set()
+    for line in Path(export).read_text().splitlines():
+        parts = line.split(" ", 2)
+        if len(parts) < 3 or parts[1] != same_as:
+            continue
+        subject, value = parts[0], parts[2].rstrip(" .")
+        if not (subject.startswith("<") and value.startswith("<")):
+            raise ValueError("owl:sameAs between non-IRIs")
+        expected = former_name(subject[1:-1])
+        if expected is None or value[1:-1] != expected:
+            raise ValueError(f"owl:sameAs is not a former-name link: {subject} {value}")
+        if subject in linked:
+            raise ValueError(f"more than one former name: {subject}")
+        linked.add(subject)
+    return len(linked)
 
 
 def build(revision, source, tooling, binary, bobbin, output):
@@ -336,8 +390,9 @@ aegis:repo-embedded-knowledge-databases-directive-2026-09-03 a aegis:Directive ;
     register_queries(binary, database, json.loads(queries.read_text()))
     query = (source / "queries/repository-share-tambo.rq").read_text()
     stage = private / "share"
-    run([binary, "share", "--construct", query, "--turtle", "--output", stage, "--db", database])
+    run([binary, "share", "--construct", query, "--turtle", "--alignments", alignments, "--output", stage, "--db", database])
     provider_contract.verify_manifest(stage, expected_provider)
+    verify_former_names(stage / "export.nt")
     if not (stage / "shapes.ttl").is_file() or (stage / "shapes.ttl").stat().st_size == 0:
         raise ValueError("repository share omitted receiver shapes")
     receiver = private / "receiver.db"

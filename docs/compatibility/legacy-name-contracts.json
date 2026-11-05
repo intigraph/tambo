@@ -1,6 +1,7 @@
 {
   "files": {
     ".github/workflows/ci.yml": {
+      "reason": "Explicit compatibility: preserve existing required-check identity and persisted default plan, state and observability filenames; commands and temporary fixtures use Tambo.",
       "lines": {
         "0fd19f0516d977308f379dce9f031a64813f34653e10510c59f4756c0acb86ec": 1,
         "1a19074bb73dd1dddce9794a0a444cf1a25d146f06cba5a7286da484bca7d79c": 1,
@@ -18,14 +19,13 @@
         "d72fe5e847939f156cc1480ee8236d58038fdd550d21eb424d81cf770adff29e": 1,
         "e959717c2b65b0e36e26ffde89ba883f23ab949a2d9cce029c55d7b5f0a7554c": 1,
         "f15fd5d91696afb5de57157088489e5813b1c24b99631f664ccefef5b95986e1": 1
-      },
-      "reason": "Explicit compatibility: preserve existing required-check identity and persisted default plan, state and observability filenames; commands and temporary fixtures use Tambo."
+      }
     },
     ".github/workflows/member-verify.yml": {
+      "reason": "Explicit compatibility: preserve existing required-check identity and persisted default plan, state and observability filenames; commands and temporary fixtures use Tambo.",
       "lines": {
         "dbf8216c24d7e33c8cf195dad9c1ef71355a90ce118d838cacb09c5990f6caee": 1
-      },
-      "reason": "Explicit compatibility: preserve existing required-check identity and persisted default plan, state and observability filenames; commands and temporary fixtures use Tambo."
+      }
     },
     ".github/workflows/release.yml": {
       "lines": {
@@ -670,16 +670,19 @@
     },
     "queries/repository-share-tambo.rq": {
       "lines": {
-        "a11a91a4d19cab9d64bf84f3b9ade47fc5d15389c8e4395a3608ece93a454a37": 1
+        "370316d9a197612759ece1ffa8330ce139ed842efbbb72128a1ec9b155a4417d": 1,
+        "a11a91a4d19cab9d64bf84f3b9ade47fc5d15389c8e4395a3608ece93a454a37": 1,
+        "cbc1d453f13246b4aa3de2c68b0abb46f8c51c7070674074b704bf2566b8f16d": 1
       },
-      "reason": "Existing repo_caboodle graph entity IRI; source renaming must not migrate graph identities."
+      "reason": "Exact legacy repo_caboodle input identity retained solely to map the same repository to the canonical tambo public name and its former-name compatibility link."
     },
     "scripts/build-repository-share.py": {
       "lines": {
         "1c4deda2a7f13c65e15044da0004a95ecce77886497411a4a65e0613e4668f45": 1,
-        "6a692b93eb125909349fff460af33b7855ec883b3ae641df7b40f480929ce9c4": 1
+        "6a692b93eb125909349fff460af33b7855ec883b3ae641df7b40f480929ce9c4": 1,
+        "781c5d54ffd8a352b16135f798f5b09415ab46acf51d482bb0d673d88b677d0e": 1
       },
-      "reason": "Existing repo_caboodle graph identity and provenance literal in the repository-share builder."
+      "reason": "Exact legacy repo_caboodle identity is retained as the canonical Tambo repository former name; negative controls forbid arbitrary, reversed, duplicate or mismatched identity links."
     },
     "scripts/check-doc-links.sh": {
       "lines": {
@@ -841,10 +844,9 @@
     },
     "scripts/test-repository-share-query.py": {
       "lines": {
-        "1f62e454c35279ffe84123531f43174d4dff7b0d5b1ce8117bea0eb65b59cd56": 1,
-        "6e051ffac67d1e2b7a4ce6c68244876861fde346ca919129e48f380bb7c7364b": 1
+        "e5c7831717f25ad9d8b3beb34883434b278446478e461ec42b38bd5a880ffa89": 1
       },
-      "reason": "Negative-control fixtures retain existing repo_caboodle graph identity."
+      "reason": "Exact legacy repo_caboodle identity is retained as the canonical Tambo repository former name; negative controls forbid arbitrary, reversed, duplicate or mismatched identity links."
     },
     "scripts/test-stack-pendants.py": {
       "lines": {
