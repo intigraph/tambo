@@ -478,7 +478,7 @@ pub fn update_self_pinned(
     )
 }
 
-/// GitHub owner of each published release. Tambo moved from scbrown/Tambo to
+/// GitHub owner of each published release. Tambo publishes under
 /// intigraph/tambo; the other tools still publish under scbrown.
 fn release_owner(tool: Option<ToolName>) -> &'static str {
     if tool.is_none() {
