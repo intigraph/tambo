@@ -5,6 +5,7 @@
 """
 
 import importlib.util
+import hashlib
 import json
 from pathlib import Path
 import tempfile
@@ -61,7 +62,89 @@ class Publication(unittest.TestCase):
             "engine_source_revision": "4" * 40,
         }
         self.proof_path = self.archive.with_name(self.archive.name + ".provenance.json")
+        if (self.stage / "alignments.ttl").exists():
+            self.proof["alignments_sha256"] = hashlib.sha256((self.stage / "alignments.ttl").read_bytes()).hexdigest()
         self.proof_path.write_text(json.dumps(self.proof))
+
+    def add_carrier(self):
+        carrier = (ROOT.parent / "docs/knowledge/alignments.ttl").read_bytes()
+        sealed = hashlib.sha256(carrier).hexdigest()
+        self.assertEqual(sealed, "f74d895765cf2975b23c6a095b3c09a992865950f9199a7e53f9d2042679db10")
+        (self.stage / "alignments.ttl").write_bytes(carrier)
+        manifest = json.loads((self.stage / "manifest.json").read_text())
+        manifest.update(files={"alignments": "alignments.ttl"}, alignments_hash="sha256:" + sealed)
+        (self.stage / "manifest.json").write_text(json.dumps(manifest))
+        return manifest, sealed
+
+    def test_reviewed_empty_carrier_roundtrip_and_provenance(self):
+        _, sealed = self.add_carrier()
+        self.prepare()
+        self.assertEqual(publisher.alignment_provenance(self.stage), {"alignments_sha256": sealed})
+        verifier.verify(self.root, "v1.2.3", self.revision)
+
+    def test_carrier_requires_matching_member_declaration_and_native_seal(self):
+        manifest, sealed = self.add_carrier()
+        variants = [
+            {**manifest, "files": {}},
+            {**manifest, "files": {"alignments": "../alignments.ttl"}},
+            {**manifest, "alignments_hash": None},
+            {**manifest, "alignments_hash": sealed},
+            {**manifest, "alignments_hash": "sha256:" + "0" * 64},
+        ]
+        for variant in variants:
+            with self.subTest(manifest=variant), self.assertRaises(ValueError):
+                (self.stage / "manifest.json").write_text(json.dumps(variant))
+                publisher.check_share(self.stage)
+        (self.stage / "manifest.json").write_text(json.dumps(manifest))
+        (self.stage / "alignments.ttl").unlink()
+        with self.assertRaises(ValueError):
+            publisher.check_share(self.stage)
+
+    def test_carrier_cannot_be_replaced_even_with_a_new_matching_hash(self):
+        manifest, _ = self.add_carrier()
+        member = self.stage / "alignments.ttl"
+        member.write_bytes(member.read_bytes() + b"<urn:a> <urn:p> <urn:b> .\n")
+        manifest["alignments_hash"] = "sha256:" + hashlib.sha256(member.read_bytes()).hexdigest()
+        (self.stage / "manifest.json").write_text(json.dumps(manifest))
+        with self.assertRaises(ValueError):
+            publisher.check_share(self.stage)
+
+    def test_carrier_is_bounded_and_must_be_a_regular_file(self):
+        self.add_carrier()
+        member = self.stage / "alignments.ttl"
+        original = member.read_bytes()
+        for data in (b"", b"x" * (2 * 1024 * 1024 + 1)):
+            member.write_bytes(data)
+            with self.subTest(size=len(data)), self.assertRaises(ValueError):
+                publisher.check_share(self.stage)
+        member.unlink()
+        target = self.root / "carrier-target"
+        target.write_bytes(original)
+        member.symlink_to(target)
+        with self.assertRaises(ValueError):
+            publisher.check_share(self.stage)
+
+    def test_readback_binds_alignment_provenance_to_the_verified_member(self):
+        self.add_carrier()
+        self.prepare()
+        for value in (None, "0" * 64):
+            proof = {**self.proof, "alignments_sha256": value}
+            self.proof_path.write_text(json.dumps(proof))
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                verifier.verify(self.root, "v1.2.3", self.revision)
+
+    def test_legacy_envelope_cannot_claim_an_unshipped_carrier(self):
+        self.prepare()
+        self.proof["alignments_sha256"] = "f74d895765cf2975b23c6a095b3c09a992865950f9199a7e53f9d2042679db10"
+        self.proof_path.write_text(json.dumps(self.proof))
+        with self.assertRaises(ValueError):
+            verifier.verify(self.root, "v1.2.3", self.revision)
+
+    def test_new_build_requires_carrier_but_legacy_readback_stays_valid(self):
+        self.prepare()
+        verifier.verify(self.root, "v1.2.3", self.revision)
+        with self.assertRaisesRegex(ValueError, "omitted.*carrier"):
+            publisher.alignment_provenance(self.stage)
 
     def test_deterministic_archive_and_exact_readback(self):
         self.prepare()

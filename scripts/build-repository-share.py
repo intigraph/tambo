@@ -336,7 +336,7 @@ aegis:repo-embedded-knowledge-databases-directive-2026-09-03 a aegis:Directive ;
     register_queries(binary, database, json.loads(queries.read_text()))
     query = (source / "queries/repository-share-tambo.rq").read_text()
     stage = private / "share"
-    run([binary, "share", "--construct", query, "--turtle", "--output", stage, "--db", database])
+    run([binary, "share", "--construct", query, "--turtle", "--alignments", alignments, "--output", stage, "--db", database])
     provider_contract.verify_manifest(stage, expected_provider)
     if not (stage / "shapes.ttl").is_file() or (stage / "shapes.ttl").stat().st_size == 0:
         raise ValueError("repository share omitted receiver shapes")
