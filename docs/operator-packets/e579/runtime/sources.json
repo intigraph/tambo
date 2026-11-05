@@ -9,13 +9,13 @@
   },
   "shantytown": {
     "version": "0.10.0",
-    "commit": "bd499fbcc4cddd14aa679f5e71c0b5bed746d31f",
-    "url": "https://codeload.github.com/intigraph/shantytown/tar.gz/bd499fbcc4cddd14aa679f5e71c0b5bed746d31f",
-    "sha256": "e654681a737b9cc821124edf45b92000bd1780e696ad54e4d46ab8752a7f2b58"
+    "commit": "dd11e1ce4a1bb63988e3df457a842cb743ea5222",
+    "url": "https://codeload.github.com/intigraph/shantytown/tar.gz/dd11e1ce4a1bb63988e3df457a842cb743ea5222",
+    "sha256": "8ac726ab3d39dfcef7b4d10f034f00870aa121f817df90d945c8656a52f1c25f"
   },
   "seeds": {
-    "version": "0.13.0",
-    "url": "https://github.com/intigraph/seeds/releases/download/seeds-ai-v0.13.0/sd-seeds-ai-v0.13.0-aarch64-apple-darwin.tar.gz",
-    "sha256": "a4b3c67622ef21070add3e4b5545cee77a0666e5392cbc5ab4ffeca184f3e81f"
+    "version": "0.14.0",
+    "url": "https://github.com/intigraph/seeds/releases/download/seeds-ai-v0.14.0/sd-seeds-ai-v0.14.0-aarch64-apple-darwin.tar.gz",
+    "sha256": "74a996635b7ece44ef896581b0689ed85d1a7b7c307334927a19a1a04c1e779a"
   }
 }
