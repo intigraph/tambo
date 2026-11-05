@@ -196,7 +196,6 @@ Run `just check`, `just book` and `just docs-check`.
 
 [Apache-2.0 license](LICENSE).
 
-
 ### Repository pendant provider
 
 Repository pendant builders require explicitly pinned model and tokenizer bytes
