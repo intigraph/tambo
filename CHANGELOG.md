@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.0](https://github.com/intigraph/tambo/compare/v0.10.1...v0.11.0) (2026-11-05)
+
+
+### Features
+
+* add macOS controller packet and pinned job runtime ([#238](https://github.com/intigraph/tambo/issues/238)) ([ebb0a83](https://github.com/intigraph/tambo/commit/ebb0a83b6b130fd88d455d29765dc3e6bc42d55b))
+
 ## [0.10.1](https://github.com/intigraph/tambo/compare/v0.10.0...v0.10.1) (2026-11-05)
 
 
