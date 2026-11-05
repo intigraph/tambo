@@ -87,6 +87,21 @@ jobs:
           else
             (cd dist && shasum -a 256 "$legacy" > "$legacy.sha256")
           fi
+      - name: Build pinned macOS arm64 job runtime
+        if: matrix.target == 'aarch64-apple-darwin'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/fetch-macos-job-runtime-inputs.py --directory "$RUNNER_TEMP/job-inputs"
+          python3 scripts/build-macos-job-runtime.py \
+            --python-archive "$RUNNER_TEMP/job-inputs/python.tar.gz" \
+            --shantytown-archive "$RUNNER_TEMP/job-inputs/shantytown.tar.gz" \
+            --seeds-archive "$RUNNER_TEMP/job-inputs/seeds.tar.gz" \
+            --output "$RUNNER_TEMP/macos-arm64-job-runtime"
+          python3 scripts/verify-macos-job-runtime.py --directory "$RUNNER_TEMP/macos-arm64-job-runtime" --native
+          pin=$(python3 -c 'import json; print(json.load(open("docs/operator-packets/e579/runtime/artifact.json"))["manifest_sha256"])')
+          'target/${{ matrix.target }}/release/tambo' job-runtime --directory "$RUNNER_TEMP/macos-arm64-job-runtime" --manifest-sha256 "$pin"
+          cp "$RUNNER_TEMP/macos-arm64-job-runtime.tar.gz" "$RUNNER_TEMP/macos-arm64-job-runtime.tar.gz.sha256" dist/
       - uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.target }}
@@ -114,6 +129,7 @@ jobs:
       - name: Verify complete release metadata
         env:
           TAMBO_EXPECT_TARGETS: x86_64-unknown-linux-gnu x86_64-apple-darwin aarch64-apple-darwin
+          TAMBO_EXPECT_JOB_RUNTIME: "1"
         run: scripts/check-release-assets.sh "$VERSION" dist
       - name: Publish immutable GitHub release
         env:

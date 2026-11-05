@@ -252,10 +252,10 @@ this way.
 
 1. **quipu:** the per-repository current pointer and snapshot retention, with
    retraction carry-forward across snapshots of one pack.
-2. **caboodle:** the `.quipu/packs/` convention, `tambo packs sync`, and
+2. **tambo:** the `.quipu/packs/` convention, `tambo packs sync`, and
    the opt-in git hooks.
-3. **caboodle:** the trust allow-list for foreign packs and pointer endpoints.
-4. **quipu and caboodle:** monorepo derived shares by path prefix, proven on
+3. **tambo:** the trust allow-list for foreign packs and pointer endpoints.
+4. **quipu and tambo:** monorepo derived shares by path prefix, proven on
    `scbrown/reckoning`.
 5. **quipu:** pointer entries in the pack manifest, and lazy `kind = "pack"`
    pointers.

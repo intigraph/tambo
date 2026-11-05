@@ -3,3 +3,11 @@
 __pycache__/
 .DS_Store
 docs/book/book/
+
+# Legacy local tracker state stays private.
+/.beads/
+
+!docs/demos/runtime-ca-successor/output.log
+!docs/demos/runtime-ca-successor/timing.log
+!docs/demos/controller-implicit-groups/output.log
+!docs/demos/controller-implicit-groups/timing.log

@@ -8,7 +8,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/tambo/README.md",
       "summary": "Tambo installs and verifies the knowledge-tool stack from a reviewable plan. The transition retains the caboodle command and existing plan/state paths; publication and installed verification remain separate.",
-      "source_sha256": "7df268c8af488a0366bcafec878b7affabf3497ee07fcb6b49b5bbb72372400f",
+      "source_sha256": "8f11339549688e1817c593f483cbb5165efbc00a1cff861fb3039ee8b33c05f8",
       "type": "Concept"
     },
     {
@@ -24,7 +24,7 @@
       "source": "src/main.rs",
       "subject": "http://aegis.gastown.local/ontology/code/tambo/src%2Fmain.rs",
       "summary": "The Clap command tree defines quickstart, plan, apply, verify and doctor, with explicit plan/state paths and opt-in remote credential provisioning. Explicit job-slots, job-runtime, job-metadata and job-policy commands separate read-only planning from protected root apply operations.",
-      "source_sha256": "d91ac59a0651e9b6bf5f41167e6b2bb0a278550fcad65a7f3b2bd11501a34db5",
+      "source_sha256": "660b7168ddc2aa85e16df10e523590535bf2dad1ded75ea317e8c7051e01505e",
       "properties": {
         "interfaceKind": "CLI",
         "publicName": "tambo and compatible caboodle command tree"
@@ -35,7 +35,7 @@
       "source": "src/model.rs",
       "subject": "http://aegis.gastown.local/ontology/code/tambo/src%2Fmodel.rs",
       "summary": "The serialized Plan schema defines profiles, ordered tools, optional shares and destination database, intended-use contracts and host exclusions. Unknown plan fields are rejected.",
-      "source_sha256": "6df656921ea4b7423f0ff8c2b2bb96a2a79bdf91bd6063b663f402451748c660",
+      "source_sha256": "f381cb75867932d242fe1121c2cb6f754f0cc38499ee2075e09b466b25ff57e1",
       "properties": {
         "interfaceKind": "file-format",
         "publicName": "caboodle-plan.toml Plan and JSON State"
@@ -46,7 +46,7 @@
       "source": "src/adapter.rs",
       "subject": "http://aegis.gastown.local/ontology/code/tambo/src%2Fadapter.rs",
       "summary": "The Adapter trait separates desired version, installation, version read-back and functional verification. Built-in adapters integrate the selected stack tools; package adapters may bind verification to PATH executables.",
-      "source_sha256": "3690f9472912ce7492e6f0acbc1fa1400ff893b3200a46a92b261a0b09145ed7",
+      "source_sha256": "4ca8daabd174c8958975a1282139416a0dec790ea1e82fb76f8c074f0c937de7",
       "properties": {
         "interfaceKind": "library",
         "publicName": "caboodle::adapter::Adapter"
@@ -72,7 +72,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/tambo/README.md",
       "summary": "Start with the local single-user quickstart and its verified-tool success checks before selecting remote service mode.",
-      "source_sha256": "7df268c8af488a0366bcafec878b7affabf3497ee07fcb6b49b5bbb72372400f",
+      "source_sha256": "8f11339549688e1817c593f483cbb5165efbc00a1cff861fb3039ee8b33c05f8",
       "properties": {
         "startHereOrder": 1,
         "glossaryTerm": "https://scbrown.github.io/quechua/ns#Tool"

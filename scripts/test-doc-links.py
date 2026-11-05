@@ -13,6 +13,7 @@ import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 REPO = Path(__file__).resolve().parent.parent
+# Compatibility controls intentionally exercise former repository/site aliases.
 OWN = "https://github.com/scbrown/caboodle/blob/main/"
 LEGACY = "https://github.com/scbrown/tambo/blob/main/"
 CANONICAL = "https://github.com/intigraph/tambo/blob/main/"

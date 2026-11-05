@@ -1,5 +1,48 @@
 # Changelog
 
+## [0.11.2](https://github.com/intigraph/tambo/compare/v0.11.1...v0.11.2) (2026-11-05)
+
+
+### Bug Fixes
+
+* **ci:** fetch pinned Quipu verifier from canonical repository ([#243](https://github.com/intigraph/tambo/issues/243)) ([8ffeb60](https://github.com/intigraph/tambo/commit/8ffeb603e4bf503976dcc6b93f95dfa0a71c164d))
+* **macos:** distinguish implicit controller groups from explicit grants ([#245](https://github.com/intigraph/tambo/issues/245)) ([194bad9](https://github.com/intigraph/tambo/commit/194bad93da758a90eb97fb1b38db7b27ba6af284))
+
+## [0.11.1](https://github.com/intigraph/tambo/compare/v0.11.0...v0.11.1) (2026-11-05)
+
+
+### Bug Fixes
+
+* **macos:** accept signed system account inventory IDs ([#241](https://github.com/intigraph/tambo/issues/241)) ([509f576](https://github.com/intigraph/tambo/commit/509f576f71f925235a9313b79805dd68c5e738ef))
+* **quickstart:** retain newer Bobbin under skip-install ([#244](https://github.com/intigraph/tambo/issues/244)) ([8ca86f7](https://github.com/intigraph/tambo/commit/8ca86f7138fc149f7508dc1fbe9cabe703fadc00))
+* **runtime:** ship CA-capable macOS job runtime inputs ([#240](https://github.com/intigraph/tambo/issues/240)) ([6236480](https://github.com/intigraph/tambo/commit/62364807aa6597e11f476a1cf5eb1a590716382a))
+
+## [0.11.0](https://github.com/intigraph/tambo/compare/v0.10.1...v0.11.0) (2026-11-05)
+
+
+### Features
+
+* add macOS controller packet and pinned job runtime ([#238](https://github.com/intigraph/tambo/issues/238)) ([ebb0a83](https://github.com/intigraph/tambo/commit/ebb0a83b6b130fd88d455d29765dc3e6bc42d55b))
+
+## [0.10.1](https://github.com/intigraph/tambo/compare/v0.10.0...v0.10.1) (2026-11-05)
+
+
+### Bug Fixes
+
+* preserve repository pendant carriers and pack aliases ([#235](https://github.com/intigraph/tambo/issues/235)) ([46bf1e8](https://github.com/intigraph/tambo/commit/46bf1e8975d206bd13a6f5e8df70f405590d7191))
+
+## [0.10.0](https://github.com/intigraph/tambo/compare/v0.9.0...v0.10.0) (2026-11-05)
+
+
+### Features
+
+* **hooks:** install and verify the query-first hooks for Claude Code and Codex ([#227](https://github.com/intigraph/tambo/issues/227)) ([82f710e](https://github.com/intigraph/tambo/commit/82f710e4723a56f5f1160bc9412c4ee91689fa71))
+
+
+### Bug Fixes
+
+* require pinned embedding providers in repository shares ([#233](https://github.com/intigraph/tambo/issues/233)) ([0461437](https://github.com/intigraph/tambo/commit/04614379596614e4aa5acc39576bce3b2356a6b8))
+
 ## [0.9.0](https://github.com/intigraph/tambo/compare/v0.8.0...v0.9.0) (2026-11-04)
 
 

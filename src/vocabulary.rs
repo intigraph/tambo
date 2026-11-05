@@ -1,8 +1,10 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 //! The Quechua vocabulary, pinned and loaded into the stack's Quipu
 //! (aegis-1i5h1j.3).
 //!
 //! Quechua publishes the stack's shared terms. Pages serves a copy that follows
-//! main; a RELEASE asset is immutable, so caboodle pins one by the SHA-256 it was
+//! main; a RELEASE asset is immutable, so Tambo pins one by the SHA-256 it was
 //! reviewed with (the same rule as every member: the release's own sums file is
 //! never trusted at install time). Install caches the verified file and knots its
 //! declarations into the plan's Quipu store; verify proves, in a throwaway
@@ -161,7 +163,7 @@ pub(crate) fn verify_at(client: &Path) -> Result<()> {
     if !declared(&db, KNOWN_TERM, client)? {
         bail!("Quechua v{QUECHUA_VERSION} loaded but quechua:{KNOWN_TERM} does not resolve");
     }
-    let absent = "CaboodleVerifyAbsentTerm";
+    let absent = "TamboVerifyAbsentTerm";
     if declared(&db, absent, client)? {
         bail!("Quechua control failed: an undeclared term resolved");
     }

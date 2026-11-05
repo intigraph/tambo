@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Cloud-environment setup script for the caboodle stack.
+# Cloud-environment setup script for the Tambo stack.
 #
 # Paste the BODY of this file into the Setup script field of a Claude Code
 # cloud environment (claude.ai/code → the cloud icon above the message box →
@@ -25,9 +25,9 @@
 # after ~7 days.
 #
 # WHAT THIS DELIBERATELY DOES NOT DO: build bobbin, yupana, or the rest of
-# the corpus. Installing the whole stack is caboodle's own job — this script
-# bootstraps caboodle and its prerequisites, and a session that needs the
-# full stack runs `caboodle install --plan <reviewed plan>` and lets the
+# the corpus. Installing the whole stack is Tambo's own job — this script
+# bootstraps Tambo and its prerequisites, and a session that needs the
+# full stack runs `tambo install --plan <reviewed plan>` and lets the
 # wizard prove each tool rather than trusting this script's exit codes.
 #
 # NOT installed here — already in the base image: Rust, Python+uv+ruff+mypy+
@@ -88,15 +88,15 @@ install_quipu_source_fallback() {
 ) &
 QUIPU_PID=$!
 
-# ── Lane 2: caboodle ───────────────────────────────────────────────────────
+# ── Lane 2: Tambo ───────────────────────────────────────────────────────
 (
   # Prebuilt, sha256-verified release binary — seconds, not a cargo build.
-  have caboodle || curl -fsSL \
+  have tambo || curl -fsSL \
       https://raw.githubusercontent.com/intigraph/tambo/main/scripts/install.sh \
       | sh >/dev/null 2>&1 || true
 
 ) &
-CABOODLE_PID=$!
+TAMBO_PID=$!
 
 # ── Lane 3: npm + pip + prebuilt tools — small, fast ───────────────────────
 (
@@ -118,7 +118,7 @@ CABOODLE_PID=$!
   python3 -c 'import _cffi_backend' 2>/dev/null || \
       pip install --quiet --break-system-packages cffi >/dev/null 2>&1 || true
 
-  # mdbook + mdbook-mermaid: quipu's and caboodle's `just check` run an
+  # mdbook + mdbook-mermaid: quipu's and Tambo's `just check` run an
   # mdbook-build hook, which hard-fails when either is missing. Prebuilt
   # binaries — a `cargo install mdbook` from source is minutes against the
   # 5-minute cap.
@@ -131,7 +131,7 @@ CABOODLE_PID=$!
 ) &
 TOOLS_PID=$!
 
-wait "$QUIPU_PID" "$CABOODLE_PID" "$TOOLS_PID" 2>/dev/null || true
+wait "$QUIPU_PID" "$TAMBO_PID" "$TOOLS_PID" 2>/dev/null || true
 
 # ── Post-install: consume a repository share directly by reference ─────────
 # A pendant is a text share, not a SQLite file. The caller pins an immutable
@@ -156,11 +156,11 @@ sync_repo_pendants() {
         1) set -- "$@" --monorepo ;;
         *) printf '%s\n' 'CABOODLE_PACKS_MONOREPO must be 0 or 1' >&2; return 1 ;;
     esac
-    caboodle "$@"
+    tambo "$@"
 }
 if [ -n "${CABOODLE_PACKS_REPO:-}" ]; then
-    if ! have caboodle; then
-        PENDANT_STATUS="FAILED: caboodle is missing"
+    if ! have tambo; then
+        PENDANT_STATUS="FAILED: tambo is missing"
     elif [ ! -d "$CABOODLE_PACKS_REPO" ]; then
         PENDANT_STATUS="not run: repository is not available yet; run packs sync after checkout"
     elif [ -z "${CABOODLE_PACKS_SHAPES_FROM:-}" ]; then
@@ -176,7 +176,7 @@ fi
 # A setup script that half-worked and exited 0 is worse than one that failed,
 # so print the truth rather than assuming the installs above landed.
 log "Installed"
-for tool in just sd pre-commit mdbook mdbook-mermaid quipu quipu-server caboodle; do
+for tool in just sd pre-commit mdbook mdbook-mermaid quipu quipu-server tambo; do
     if [ "$tool" = sd ] && have sd && ! have_seeds; then
         printf '  %-24s UNRECOGNIZED (not Seeds)\n' "$tool"
     elif have "$tool"; then

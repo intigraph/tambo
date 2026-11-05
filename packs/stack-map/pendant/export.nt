@@ -1,62 +1,73 @@
-<https://w3id.org/intigraph/tambo/id/stack/bobbin> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://caboodle.dev/ns#StackComponent> .
+<https://w3id.org/intigraph/tambo/graph/stack-map> <http://www.w3.org/2002/07/owl#sameAs> <https://caboodle.dev/graph/stack-map> .
+<https://w3id.org/intigraph/tambo/id/stack/bobbin> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/intigraph/tambo/ns#StackComponent> .
 <https://w3id.org/intigraph/tambo/id/stack/bobbin> <http://www.w3.org/2000/01/rdf-schema#comment> "Semantic code indexing and retrieval — chunks code, generates embeddings into LanceDB, and serves search, context injection, and RAG over MCP." .
 <https://w3id.org/intigraph/tambo/id/stack/bobbin> <http://www.w3.org/2000/01/rdf-schema#label> "bobbin" .
 <https://w3id.org/intigraph/tambo/id/stack/bobbin> <http://www.w3.org/2002/07/owl#sameAs> <https://caboodle.dev/stack/bobbin> .
-<https://w3id.org/intigraph/tambo/id/stack/bobbin> <https://caboodle.dev/ns#language> "Rust" .
-<https://w3id.org/intigraph/tambo/id/stack/bobbin> <https://caboodle.dev/ns#readsFrom> <https://w3id.org/intigraph/tambo/id/stack/quipu> .
-<https://w3id.org/intigraph/tambo/id/stack/bobbin> <https://caboodle.dev/ns#repository> <https://github.com/scbrown/bobbin> .
-<https://w3id.org/intigraph/tambo/id/stack/bobbin> <https://caboodle.dev/ns#roleInStack> "retrieval index" .
-<https://w3id.org/intigraph/tambo/id/stack/caboodle> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://caboodle.dev/ns#StackComponent> .
-<https://w3id.org/intigraph/tambo/id/stack/caboodle> <http://www.w3.org/2000/01/rdf-schema#comment> "The whole kit — an AI-installable install wizard that installs the stack, proves it works with paired negative controls, and watches it run." .
-<https://w3id.org/intigraph/tambo/id/stack/caboodle> <http://www.w3.org/2000/01/rdf-schema#label> "tambo" .
-<https://w3id.org/intigraph/tambo/id/stack/caboodle> <http://www.w3.org/2002/07/owl#sameAs> <https://caboodle.dev/stack/caboodle> .
-<https://w3id.org/intigraph/tambo/id/stack/caboodle> <https://caboodle.dev/ns#installs> <https://w3id.org/intigraph/tambo/id/stack/bobbin> .
-<https://w3id.org/intigraph/tambo/id/stack/caboodle> <https://caboodle.dev/ns#installs> <https://w3id.org/intigraph/tambo/id/stack/camayoc> .
-<https://w3id.org/intigraph/tambo/id/stack/caboodle> <https://caboodle.dev/ns#installs> <https://w3id.org/intigraph/tambo/id/stack/quipu> .
-<https://w3id.org/intigraph/tambo/id/stack/caboodle> <https://caboodle.dev/ns#installs> <https://w3id.org/intigraph/tambo/id/stack/shantytown> .
-<https://w3id.org/intigraph/tambo/id/stack/caboodle> <https://caboodle.dev/ns#installs> <https://w3id.org/intigraph/tambo/id/stack/yupana> .
-<https://w3id.org/intigraph/tambo/id/stack/caboodle> <https://caboodle.dev/ns#language> "Rust" .
-<https://w3id.org/intigraph/tambo/id/stack/caboodle> <https://caboodle.dev/ns#observes> <https://w3id.org/intigraph/tambo/id/stack/prometheus> .
-<https://w3id.org/intigraph/tambo/id/stack/caboodle> <https://caboodle.dev/ns#repository> <https://github.com/intigraph/tambo> .
-<https://w3id.org/intigraph/tambo/id/stack/camayoc> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://caboodle.dev/ns#StackComponent> .
+<https://w3id.org/intigraph/tambo/id/stack/bobbin> <https://w3id.org/intigraph/tambo/ns#language> "Rust" .
+<https://w3id.org/intigraph/tambo/id/stack/bobbin> <https://w3id.org/intigraph/tambo/ns#readsFrom> <https://w3id.org/intigraph/tambo/id/stack/quipu> .
+<https://w3id.org/intigraph/tambo/id/stack/bobbin> <https://w3id.org/intigraph/tambo/ns#repository> <https://github.com/scbrown/bobbin> .
+<https://w3id.org/intigraph/tambo/id/stack/bobbin> <https://w3id.org/intigraph/tambo/ns#roleInStack> "retrieval index" .
+<https://w3id.org/intigraph/tambo/id/stack/camayoc> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/intigraph/tambo/ns#StackComponent> .
 <https://w3id.org/intigraph/tambo/id/stack/camayoc> <http://www.w3.org/2000/01/rdf-schema#comment> "The knot-keeper: bootstrap ontology, knowledge ingress discipline, and knowledge-pack production. Owns what facts MEAN and how they earn their way into the graph; runs the governed RML executor for structured sources." .
 <https://w3id.org/intigraph/tambo/id/stack/camayoc> <http://www.w3.org/2000/01/rdf-schema#label> "camayoc" .
 <https://w3id.org/intigraph/tambo/id/stack/camayoc> <http://www.w3.org/2002/07/owl#sameAs> <https://caboodle.dev/stack/camayoc> .
-<https://w3id.org/intigraph/tambo/id/stack/camayoc> <https://caboodle.dev/ns#language> "Python" .
-<https://w3id.org/intigraph/tambo/id/stack/camayoc> <https://caboodle.dev/ns#repository> <https://github.com/intigraph/camayoc> .
-<https://w3id.org/intigraph/tambo/id/stack/camayoc> <https://caboodle.dev/ns#roleInStack> "ingress keeper" .
-<https://w3id.org/intigraph/tambo/id/stack/camayoc> <https://caboodle.dev/ns#writesTo> <https://w3id.org/intigraph/tambo/id/stack/quipu> .
-<https://w3id.org/intigraph/tambo/id/stack/creel> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://caboodle.dev/ns#StackComponent> .
+<https://w3id.org/intigraph/tambo/id/stack/camayoc> <https://w3id.org/intigraph/tambo/ns#language> "Python" .
+<https://w3id.org/intigraph/tambo/id/stack/camayoc> <https://w3id.org/intigraph/tambo/ns#repository> <https://github.com/intigraph/camayoc> .
+<https://w3id.org/intigraph/tambo/id/stack/camayoc> <https://w3id.org/intigraph/tambo/ns#roleInStack> "ingress keeper" .
+<https://w3id.org/intigraph/tambo/id/stack/camayoc> <https://w3id.org/intigraph/tambo/ns#writesTo> <https://w3id.org/intigraph/tambo/id/stack/quipu> .
+<https://w3id.org/intigraph/tambo/id/stack/creel> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/intigraph/tambo/ns#StackComponent> .
 <https://w3id.org/intigraph/tambo/id/stack/creel> <http://www.w3.org/2000/01/rdf-schema#comment> "A static page that runs agent loops in browser tabs — no server, no build step, in-page MCP backends, durable state pushed to creel-state." .
 <https://w3id.org/intigraph/tambo/id/stack/creel> <http://www.w3.org/2000/01/rdf-schema#label> "creel" .
 <https://w3id.org/intigraph/tambo/id/stack/creel> <http://www.w3.org/2002/07/owl#sameAs> <https://caboodle.dev/stack/creel> .
-<https://w3id.org/intigraph/tambo/id/stack/creel> <https://caboodle.dev/ns#language> "JavaScript" .
-<https://w3id.org/intigraph/tambo/id/stack/creel> <https://caboodle.dev/ns#repository> <https://github.com/scbrown/creel> .
-<https://w3id.org/intigraph/tambo/id/stack/creel> <https://caboodle.dev/ns#roleInStack> "browser harness" .
-<https://w3id.org/intigraph/tambo/id/stack/prometheus> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://caboodle.dev/ns#StackComponent> .
+<https://w3id.org/intigraph/tambo/id/stack/creel> <https://w3id.org/intigraph/tambo/ns#language> "JavaScript" .
+<https://w3id.org/intigraph/tambo/id/stack/creel> <https://w3id.org/intigraph/tambo/ns#repository> <https://github.com/scbrown/creel> .
+<https://w3id.org/intigraph/tambo/id/stack/creel> <https://w3id.org/intigraph/tambo/ns#roleInStack> "browser harness" .
+<https://w3id.org/intigraph/tambo/id/stack/prometheus> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/intigraph/tambo/ns#StackComponent> .
 <https://w3id.org/intigraph/tambo/id/stack/prometheus> <http://www.w3.org/2000/01/rdf-schema#comment> "Every tool's metrics, consolidated. Tambo's third proof: observable means Prometheus actually scrapes each tool's declared exporter." .
 <https://w3id.org/intigraph/tambo/id/stack/prometheus> <http://www.w3.org/2000/01/rdf-schema#label> "prometheus" .
 <https://w3id.org/intigraph/tambo/id/stack/prometheus> <http://www.w3.org/2002/07/owl#sameAs> <https://caboodle.dev/stack/prometheus> .
-<https://w3id.org/intigraph/tambo/id/stack/prometheus> <https://caboodle.dev/ns#roleInStack> "observability" .
-<https://w3id.org/intigraph/tambo/id/stack/quipu> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://caboodle.dev/ns#StackComponent> .
+<https://w3id.org/intigraph/tambo/id/stack/prometheus> <https://w3id.org/intigraph/tambo/ns#roleInStack> "observability" .
+<https://w3id.org/intigraph/tambo/id/stack/quipu> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/intigraph/tambo/ns#StackComponent> .
 <https://w3id.org/intigraph/tambo/id/stack/quipu> <http://www.w3.org/2000/01/rdf-schema#comment> "AI-native knowledge graph with strict ontology enforcement — the governed store. Bitemporal EAVT fact log, SPARQL, SHACL-gated writes, named graphs, knowledge packs." .
 <https://w3id.org/intigraph/tambo/id/stack/quipu> <http://www.w3.org/2000/01/rdf-schema#label> "quipu" .
 <https://w3id.org/intigraph/tambo/id/stack/quipu> <http://www.w3.org/2002/07/owl#sameAs> <https://caboodle.dev/stack/quipu> .
-<https://w3id.org/intigraph/tambo/id/stack/quipu> <https://caboodle.dev/ns#language> "Rust" .
-<https://w3id.org/intigraph/tambo/id/stack/quipu> <https://caboodle.dev/ns#repository> <https://github.com/scbrown/quipu> .
-<https://w3id.org/intigraph/tambo/id/stack/quipu> <https://caboodle.dev/ns#roleInStack> "governed store" .
-<https://w3id.org/intigraph/tambo/id/stack/shantytown> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://caboodle.dev/ns#StackComponent> .
+<https://w3id.org/intigraph/tambo/id/stack/quipu> <https://w3id.org/intigraph/tambo/ns#language> "Rust" .
+<https://w3id.org/intigraph/tambo/id/stack/quipu> <https://w3id.org/intigraph/tambo/ns#repository> <https://github.com/scbrown/quipu> .
+<https://w3id.org/intigraph/tambo/id/stack/quipu> <https://w3id.org/intigraph/tambo/ns#roleInStack> "governed store" .
+<https://w3id.org/intigraph/tambo/id/stack/shantytown> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/intigraph/tambo/ns#StackComponent> .
 <https://w3id.org/intigraph/tambo/id/stack/shantytown> <http://www.w3.org/2000/01/rdf-schema#comment> "A small zero-dependency Python harness for running a crew of coding agents; installs the st console script." .
 <https://w3id.org/intigraph/tambo/id/stack/shantytown> <http://www.w3.org/2000/01/rdf-schema#label> "shantytown" .
 <https://w3id.org/intigraph/tambo/id/stack/shantytown> <http://www.w3.org/2002/07/owl#sameAs> <https://caboodle.dev/stack/shantytown> .
-<https://w3id.org/intigraph/tambo/id/stack/shantytown> <https://caboodle.dev/ns#language> "Python" .
-<https://w3id.org/intigraph/tambo/id/stack/shantytown> <https://caboodle.dev/ns#repository> <https://github.com/scbrown/shantytown> .
-<https://w3id.org/intigraph/tambo/id/stack/shantytown> <https://caboodle.dev/ns#roleInStack> "crew harness" .
-<https://w3id.org/intigraph/tambo/id/stack/yupana> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://caboodle.dev/ns#StackComponent> .
+<https://w3id.org/intigraph/tambo/id/stack/shantytown> <https://w3id.org/intigraph/tambo/ns#language> "Python" .
+<https://w3id.org/intigraph/tambo/id/stack/shantytown> <https://w3id.org/intigraph/tambo/ns#repository> <https://github.com/scbrown/shantytown> .
+<https://w3id.org/intigraph/tambo/id/stack/shantytown> <https://w3id.org/intigraph/tambo/ns#roleInStack> "crew harness" .
+<https://w3id.org/intigraph/tambo/id/stack/tambo> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/intigraph/tambo/ns#StackComponent> .
+<https://w3id.org/intigraph/tambo/id/stack/tambo> <http://www.w3.org/2000/01/rdf-schema#comment> "The whole kit — an AI-installable install wizard that installs the stack, proves it works with paired negative controls, and watches it run." .
+<https://w3id.org/intigraph/tambo/id/stack/tambo> <http://www.w3.org/2000/01/rdf-schema#label> "tambo" .
+<https://w3id.org/intigraph/tambo/id/stack/tambo> <http://www.w3.org/2002/07/owl#sameAs> <https://caboodle.dev/stack/caboodle> .
+<https://w3id.org/intigraph/tambo/id/stack/tambo> <http://www.w3.org/2002/07/owl#sameAs> <https://w3id.org/intigraph/tambo/id/stack/caboodle> .
+<https://w3id.org/intigraph/tambo/id/stack/tambo> <https://w3id.org/intigraph/tambo/ns#installs> <https://w3id.org/intigraph/tambo/id/stack/bobbin> .
+<https://w3id.org/intigraph/tambo/id/stack/tambo> <https://w3id.org/intigraph/tambo/ns#installs> <https://w3id.org/intigraph/tambo/id/stack/camayoc> .
+<https://w3id.org/intigraph/tambo/id/stack/tambo> <https://w3id.org/intigraph/tambo/ns#installs> <https://w3id.org/intigraph/tambo/id/stack/quipu> .
+<https://w3id.org/intigraph/tambo/id/stack/tambo> <https://w3id.org/intigraph/tambo/ns#installs> <https://w3id.org/intigraph/tambo/id/stack/shantytown> .
+<https://w3id.org/intigraph/tambo/id/stack/tambo> <https://w3id.org/intigraph/tambo/ns#installs> <https://w3id.org/intigraph/tambo/id/stack/yupana> .
+<https://w3id.org/intigraph/tambo/id/stack/tambo> <https://w3id.org/intigraph/tambo/ns#language> "Rust" .
+<https://w3id.org/intigraph/tambo/id/stack/tambo> <https://w3id.org/intigraph/tambo/ns#observes> <https://w3id.org/intigraph/tambo/id/stack/prometheus> .
+<https://w3id.org/intigraph/tambo/id/stack/tambo> <https://w3id.org/intigraph/tambo/ns#repository> <https://github.com/intigraph/tambo> .
+<https://w3id.org/intigraph/tambo/id/stack/yupana> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/intigraph/tambo/ns#StackComponent> .
 <https://w3id.org/intigraph/tambo/id/stack/yupana> <http://www.w3.org/2000/01/rdf-schema#comment> "In-memory, multi-tenant code-analysis engine — AST, symbols, and call graph as the structural signal, served over MCP/HTTP with tier-tagged facts." .
 <https://w3id.org/intigraph/tambo/id/stack/yupana> <http://www.w3.org/2000/01/rdf-schema#label> "yupana" .
 <https://w3id.org/intigraph/tambo/id/stack/yupana> <http://www.w3.org/2002/07/owl#sameAs> <https://caboodle.dev/stack/yupana> .
-<https://w3id.org/intigraph/tambo/id/stack/yupana> <https://caboodle.dev/ns#feedsInto> <https://w3id.org/intigraph/tambo/id/stack/bobbin> .
-<https://w3id.org/intigraph/tambo/id/stack/yupana> <https://caboodle.dev/ns#language> "Rust" .
-<https://w3id.org/intigraph/tambo/id/stack/yupana> <https://caboodle.dev/ns#repository> <https://github.com/scbrown/yupana> .
-<https://w3id.org/intigraph/tambo/id/stack/yupana> <https://caboodle.dev/ns#roleInStack> "structural code facts" .
+<https://w3id.org/intigraph/tambo/id/stack/yupana> <https://w3id.org/intigraph/tambo/ns#feedsInto> <https://w3id.org/intigraph/tambo/id/stack/bobbin> .
+<https://w3id.org/intigraph/tambo/id/stack/yupana> <https://w3id.org/intigraph/tambo/ns#language> "Rust" .
+<https://w3id.org/intigraph/tambo/id/stack/yupana> <https://w3id.org/intigraph/tambo/ns#repository> <https://github.com/scbrown/yupana> .
+<https://w3id.org/intigraph/tambo/id/stack/yupana> <https://w3id.org/intigraph/tambo/ns#roleInStack> "structural code facts" .
+<https://w3id.org/intigraph/tambo/ns#StackComponent> <http://www.w3.org/2002/07/owl#equivalentClass> <https://caboodle.dev/ns#StackComponent> .
+<https://w3id.org/intigraph/tambo/ns#feedsInto> <http://www.w3.org/2002/07/owl#equivalentProperty> <https://caboodle.dev/ns#feedsInto> .
+<https://w3id.org/intigraph/tambo/ns#installs> <http://www.w3.org/2002/07/owl#equivalentProperty> <https://caboodle.dev/ns#installs> .
+<https://w3id.org/intigraph/tambo/ns#language> <http://www.w3.org/2002/07/owl#equivalentProperty> <https://caboodle.dev/ns#language> .
+<https://w3id.org/intigraph/tambo/ns#observes> <http://www.w3.org/2002/07/owl#equivalentProperty> <https://caboodle.dev/ns#observes> .
+<https://w3id.org/intigraph/tambo/ns#readsFrom> <http://www.w3.org/2002/07/owl#equivalentProperty> <https://caboodle.dev/ns#readsFrom> .
+<https://w3id.org/intigraph/tambo/ns#repository> <http://www.w3.org/2002/07/owl#equivalentProperty> <https://caboodle.dev/ns#repository> .
+<https://w3id.org/intigraph/tambo/ns#roleInStack> <http://www.w3.org/2002/07/owl#equivalentProperty> <https://caboodle.dev/ns#roleInStack> .
+<https://w3id.org/intigraph/tambo/ns#writesTo> <http://www.w3.org/2002/07/owl#equivalentProperty> <https://caboodle.dev/ns#writesTo> .

@@ -1,4 +1,6 @@
-//! Embed the git commit in `caboodle --version`. Two builds of one release
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
+//! Embed the git commit in `Tambo --version`. Two builds of one release
 //! version are otherwise indistinguishable, which hid a stale copy shadowing a
 //! current one on PATH (aegis-nvw6ye.1).
 use std::process::Command;
@@ -47,7 +49,7 @@ fn main() {
 
 /// Embed every stack-member manifest (aegis-1i5h1j C1). A member is DATA: adding
 /// one is a reviewed `members/<name>.toml`, never a Rust match arm. Embedded at
-/// build time so the pinned version and digests are those this caboodle build
+/// build time so the pinned version and digests are those this Tambo build
 /// was reviewed with, not whatever a runtime directory holds.
 fn embed_members() {
     let root = std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());

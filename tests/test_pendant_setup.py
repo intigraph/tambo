@@ -11,18 +11,18 @@ BLOCK = SCRIPT[SCRIPT.index("# Repo pendants are opt-in"):SCRIPT.index("# ──
 
 
 class PendantSetup(unittest.TestCase):
-    def probe(self, *, available=True, authority=True, status=0, requested=True, monorepo=None):
+    def probe(self, *, available=True, authority=True, status=0, requested=True, monorepo=None, binary_name="tambo"):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             repo = root / "checkout with spaces"
             if available:
                 repo.mkdir()
-            binary = root / "caboodle"
+            binary = root / binary_name
             binary.write_text('#!/usr/bin/python3\nimport json,os,sys\n'
                               'open(os.environ["CALLS"],"w").write(json.dumps(sys.argv[1:]))\n'
                               'sys.exit(int(os.environ["STATUS"]))\n')
             binary.chmod(0o755)
-            env = {"PATH": str(root) + ":/usr/bin:/bin", "CALLS": str(root / "calls"),
+            env = {"PATH": str(root), "CALLS": str(root / "calls"),
                    "STATUS": str(status), "HOME": str(root)}
             if requested:
                 env["CABOODLE_PACKS_REPO"] = str(repo)
@@ -30,12 +30,18 @@ class PendantSetup(unittest.TestCase):
                 env["CABOODLE_PACKS_MONOREPO"] = monorepo
             if authority:
                 env["CABOODLE_PACKS_SHAPES_FROM"] = str(root / "authority with spaces.pendant.tar.gz")
-            result = subprocess.run(["sh", "-c", "have() { command -v \"$1\" >/dev/null 2>&1; }\n"
+            result = subprocess.run(["/bin/sh", "-c", "have() { command -v \"$1\" >/dev/null 2>&1; }\n"
                                      + BLOCK + '\nprintf "%s\\n" "$PENDANT_STATUS"\nexit 0\n'],
                                     env=env, capture_output=True, text=True, timeout=10)
             self.assertEqual(result.returncode, 0, result.stderr)
             calls = json.loads((root / "calls").read_text()) if (root / "calls").exists() else None
             return result.stdout, calls, str(repo), env.get("CABOODLE_PACKS_SHAPES_FROM")
+
+    def test_former_alias_alone_does_not_masquerade_as_current_setup(self):
+        # Deliberate old-name negative control: no current executable is present.
+        output, calls, _, _ = self.probe(binary_name="caboodle")
+        self.assertIsNone(calls)
+        self.assertIn("FAILED: tambo is missing", output)
 
     def test_available_checkout_uses_the_same_sync_command(self):
         output, calls, repo, authority = self.probe()

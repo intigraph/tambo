@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 use std::{ffi::OsString, path::Path};
 
 use anyhow::{bail, Context, Result};
@@ -93,6 +95,22 @@ pub fn apply(plan: &Plan, state_path: &Path, skip_install: bool) -> Result<State
         let version = (|| -> Result<String> {
             Ok(match adapter.version() {
                 Ok(installed) if adapter.is_current(&installed) => installed,
+
+                // Keep externally installed newer Bobbin builds without replacing
+                // them. Quickstart still requires the functional round-trip below;
+                // retaining a version never means it has been verified.
+                Ok(installed)
+                    if name == crate::model::ToolName::Bobbin
+                        && skip_install
+                        && crate::release_update::behind_reviewed(&desired, &installed)
+                            == Some(true) =>
+                {
+                    println!(
+                        "bobbin: warning: retaining newer installed {installed}; reviewed {desired}. \
+                         No installation performed; functional verification is still required."
+                    );
+                    installed
+                }
 
                 // Known-wrong under --skip-install. The flag means "do not install",
                 // not "call it applied anyway", and a MISSING tool already fails
@@ -552,7 +570,7 @@ pub(crate) fn reviewed_drift_status(installed: &str, desired: &str) -> &'static 
 }
 
 /// A tool whose binary a package manager owns is judged by its package receipt
-/// and never installed by caboodle (aegis-6f1, option A): the package lane is
+/// and never installed by Tambo (aegis-6f1, option A): the package lane is
 /// its only writer. Returns the line to print and whether it is current.
 fn package_owned_status(name: crate::model::ToolName, desired: &str) -> Option<(String, bool)> {
     use crate::package::{apt_receipt, primary_program, standing, Standing};
@@ -564,7 +582,7 @@ fn package_owned_status(name: crate::model::ToolName, desired: &str) -> Option<(
         Standing::Current => "current",
         Standing::Ahead => "ahead of reviewed pin; downgrade refused",
         Standing::Behind => {
-            "behind reviewed pin; delivered by the package lane, not installed by caboodle"
+            "behind reviewed pin; delivered by the package lane, not installed by Tambo"
         }
         Standing::Unknown => "version drift; review required",
     };
@@ -581,7 +599,7 @@ fn package_owned_status(name: crate::model::ToolName, desired: &str) -> Option<(
 }
 
 /// Member delivery through the stack's Homebrew tap (aegis-6f1). Applies only
-/// where caboodle may drive brew and the tool has a stack formula. Returns the
+/// where Tambo may drive brew and the tool has a stack formula. Returns the
 /// verified version when brew delivered (or already holds) the tool, `None` to
 /// fall back to the other lanes (the release download when the tap is older
 /// than the pin). Never downgrades.
@@ -914,7 +932,7 @@ fn seed_self_test_store() -> Result<(tempfile::TempDir, std::path::PathBuf)> {
     std::fs::write(
         &episode,
         format!(
-            r#"{{"name":"caboodle self-test question","episode_body":"self-test seed","source":"caboodle","group_id":"caboodle-verification","nodes":[{{"name":"{SELF_TEST_MARKER}","type":"Verification","description":"caboodle self-test question seed"}}],"edges":[]}}"#
+            r#"{{"name":"Tambo self-test question","episode_body":"self-test seed","source":"caboodle","group_id":"caboodle-verification","nodes":[{{"name":"{SELF_TEST_MARKER}","type":"Verification","description":"Tambo self-test question seed"}}],"edges":[]}}"#
         ),
     )
     .context("write self-test episode")?;

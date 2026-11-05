@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 #![cfg(unix)]
 use caboodle::{
     adapter::{adapter_for_plan, path_resolution, PathResolution},
@@ -29,9 +31,9 @@ case "$verb" in
  knot) touch "$db.vocab" ;;
  read)
   case "$query" in
-   *CaboodleVerifyAbsentTerm*) echo false ;;
+   *TamboVerifyAbsentTerm*) echo false ;;
    ASK*) if [ -f "$db.vocab" ]; then echo true; else echo false; fi ;;
-   *) if [ -f "$db.marker" ]; then echo caboodle-verify-roundtrip; fi ;;
+   *) if [ -f "$db.marker" ]; then echo tambo-verify-roundtrip; fi ;;
   esac ;;
 esac
 "#;

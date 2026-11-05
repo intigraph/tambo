@@ -1,4 +1,4 @@
-"""fixture-wheel is the caboodle python-wheel fixture stack member.
+"""fixture-wheel is the tambo python-wheel fixture stack member.
 
 It keeps a list under $HOME/.fixture-wheel, so a hermetic HOME isolates it.
 `add -` reads the item from stdin, which exercises a verify step's stdin.
