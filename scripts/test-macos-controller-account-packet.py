@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Private native-command controls; no real dscl, accounts, sudo or host mutation."""
 import hashlib
+from contextlib import contextmanager
 import importlib.util
 import json
 from pathlib import Path
@@ -22,6 +23,150 @@ ROW, _ = p.packet(PACKET, PIN)
 
 
 class ControllerTests(unittest.TestCase):
+    @contextmanager
+    def macos_groups(self):
+        from types import SimpleNamespace
+        # Actual macOS 15.7.3 e579 step-1 observations (u6oi).
+        state = {'_stctl': '51000 12 61 701 100',
+                 'login': '20 12 61 79 80 81 701 33 98 100',
+                 'nobody': '4294967294 12 61 701 100',
+                 'primary': '4294967294', 'names': '', 'guids': ''}
+        expected = {'UniqueID': '51000', 'PrimaryGroupID': '51000',
+                    'NFSHomeDirectory': ROW['home'], 'UserShell': '/usr/bin/false',
+                    'IsHidden': '1', 'AuthenticationAuthority': ';DisabledUser;'}
+        guid = '11111111-2222-3333-4444-555555555555'
+        info = SimpleNamespace(st_mode=0o40700, st_uid=51000, st_gid=51000)
+        home = SimpleNamespace(parent=Path('/nonexistent-parent'), lstat=lambda: info)
+        calls = []
+        def native(args, ok=True):
+            calls.append(args)
+            if args[0] == '/usr/sbin/dseditgroup':
+                return SimpleNamespace(returncode=1, stdout='no _stctl is NOT a member of admin')
+            if args[:2] == ['/usr/bin/id', '-g']:
+                return SimpleNamespace(returncode=0, stdout=state['primary'])
+            if args[:2] == ['/usr/bin/id', '-G']:
+                return SimpleNamespace(returncode=0, stdout=state[args[-1]])
+            if args[:4] == ['/usr/bin/dscl', '.', '-search', '/Groups']:
+                self.assertIn(args[4:], [['GroupMembership', '_stctl'], ['GroupMembers', guid]])
+                return SimpleNamespace(returncode=0, stdout=state['names' if args[4] == 'GroupMembership' else 'guids'])
+            self.fail('unexpected native command: ' + repr(args))
+        def props(record, keys):
+            self.assertEqual(record, '/Users/_stctl')
+            return {'GeneratedUID': guid} if keys == ['GeneratedUID'] else expected
+        with patch.object(p, 'inventories', return_value=(
+                {'_stctl': 51000, 'login': 501, 'nobody': -2}, {'_stctl': 51000})), \
+                patch.object(p, 'properties', side_effect=props), patch.object(p, 'run', side_effect=native), \
+                patch.object(p, 'Path', return_value=home), patch.object(p, 'protected'):
+            yield state, calls
+
+    def test_native_macos_implicit_groups_are_not_explicit_grants(self):
+        with self.macos_groups() as (_, calls):
+            p.native_verify(ROW)
+            self.assertIn(['/usr/bin/id', '-G', 'nobody'], calls)
+            self.assertIn(['/usr/bin/id', '-g', 'nobody'], calls)
+            self.assertIn(['/usr/bin/dscl', '.', '-search', '/Groups', 'GroupMembership', '_stctl'], calls)
+            self.assertTrue(any('GroupMembers' in args for args in calls))
+
+    def test_native_macos_explicit_shared_staff_still_refuses(self):
+        with self.macos_groups() as (state, _):
+            state['_stctl'] += ' 20'
+            with self.assertRaises(ValueError):
+                p.native_verify(ROW)
+
+    def test_native_macos_baseline_is_derived_not_a_numeric_skip_list(self):
+        with self.macos_groups() as (state, _):
+            for name in ['_stctl', 'login', 'nobody']:
+                state[name] += ' 888'
+            p.native_verify(ROW)
+
+    def test_native_macos_explicit_membership_in_implicit_group_refuses(self):
+        for field, answer in [('names', 'everyone GroupMembership = _stctl'),
+                              ('guids', 'localaccounts GroupMembers = 11111111-2222-3333-4444-555555555555')]:
+            with self.subTest(field=field), self.macos_groups() as (state, _):
+                state[field] = answer
+                with self.assertRaisesRegex(ValueError, 'explicit'):
+                    p.native_verify(ROW)
+
+    def test_native_macos_unknown_or_nonbaseline_groups_refuse(self):
+        for field, value in [('_stctl', '51000 12 61 701 100 999'),
+                             ('_stctl', '12 61 701 100'),
+                             ('nobody', ''), ('primary', ''),
+                             ('primary', '-2'), ('primary', '12 61'),
+                             ('nobody', '12 61 701 100'),
+                             ('nobody', '4294967294 12 61 701 100 51000'),
+                             ('_stctl', '51000 12 61 701 100 4294967294'),
+                             ('login', ''), ('_stctl', '51000 ١٢')]:
+            with self.subTest(field=field, value=value), self.macos_groups() as (state, _):
+                state[field] = value
+                with self.assertRaises(ValueError):
+                    p.native_verify(ROW)
+
+    def test_native_macos_explicit_membership_lookup_failure_refuses(self):
+        for key in ['GroupMembership', 'GroupMembers']:
+            with self.subTest(key=key), self.macos_groups():
+                original = p.run
+                def native(args, ok=True):
+                    if key in args:
+                        raise ValueError('native command refused')
+                    return original(args, ok=ok)
+                with patch.object(p, 'run', side_effect=native):
+                    with self.assertRaisesRegex(ValueError, 'native command refused'):
+                        p.native_verify(ROW)
+
+    def test_native_macos_missing_or_malformed_generated_identity_refuses(self):
+        for identity in [{}, {'GeneratedUID': ''}, {'GeneratedUID': '_stctl'},
+                         {'GeneratedUID': '11111111-2222-3333-4444-555555555555', 'unexpected': 'x'}]:
+            with self.subTest(identity=identity), self.macos_groups():
+                original = p.properties
+                def props(record, keys):
+                    return identity if keys == ['GeneratedUID'] else original(record, keys)
+                with patch.object(p, 'properties', side_effect=props):
+                    with self.assertRaisesRegex(ValueError, 'group identity unknown'):
+                        p.native_verify(ROW)
+
+    def test_inventory_preserves_macos_signed_system_ids(self):
+        from types import SimpleNamespace
+        # Stock macOS dscl records reported in the native e579 step-1 refusal.
+        for kind, key, output, expected in [
+            ('/Users', 'UniqueID', 'root 0\nnobody -2\nlogin 501\n',
+             {'root': 0, 'nobody': -2, 'login': 501}),
+            ('/Groups', 'PrimaryGroupID', 'wheel 0\nnobody -2\nnogroup -1\n',
+             {'wheel': 0, 'nobody': -2, 'nogroup': -1}),
+        ]:
+            with self.subTest(kind=kind), patch.object(p, 'run', return_value=SimpleNamespace(stdout=output)) as native:
+                self.assertEqual(p.inventory(kind, key), expected)
+                native.assert_called_once_with(['/usr/bin/dscl', '.', '-list', kind, key])
+
+    def test_inventory_refuses_malformed_duplicate_and_empty_rows(self):
+        from types import SimpleNamespace
+        for output in ['', '\n', 'nobody\n', 'nobody -2 extra\n',
+                       'nobody --2\n', 'nobody -\n', 'nobody +2\n',
+                       'nobody 2.0\n', 'nobody ²\n', 'nobody ٢\n',
+                       'nobody -2\nnobody -1\n']:
+            with self.subTest(output=output), patch.object(p, 'run', return_value=SimpleNamespace(stdout=output)):
+                with self.assertRaisesRegex(ValueError, 'native account inventory'):
+                    p.inventory('/Users', 'UniqueID')
+
+    def test_signed_inventory_still_refuses_controller_collision_before_writes(self):
+        from types import SimpleNamespace
+        for collision_kind in ['/Users', '/Groups']:
+            def native(args, ok=True):
+                output = 'root 0\nnobody -2\n' if args[3] == '/Users' else 'wheel 0\nnobody -2\nnogroup -1\n'
+                if args[3] == collision_kind:
+                    output += 'foreign 51000\n'
+                return SimpleNamespace(stdout=output)
+            with self.subTest(kind=collision_kind), tempfile.TemporaryDirectory() as raw, \
+                    patch.object(p, 'RECEIPT', Path(raw) / 'receipt'), \
+                    patch.object(p, 'STOP', Path(raw) / 'stop'), \
+                    patch.object(p, 'run', side_effect=native) as commands, \
+                    patch.object(p, 'directory') as directory, patch.object(p, 'install') as install:
+                with self.assertRaisesRegex(ValueError, 'collision'):
+                    p.setup(ROW, PIN, b'pinned tool')
+                self.assertEqual(len(commands.call_args_list), 2)
+                self.assertTrue(all(call.args[0][2] == '-list' for call in commands.call_args_list))
+                directory.assert_not_called()
+                install.assert_not_called()
+
     def test_cli_help_and_unprivileged_offline_verify_python39(self):
         for arguments in [['--help'], ['verify', '--offline', '--packet', str(PACKET),
                 '--packet-sha256', PIN, '--inventory', str(CATALOG), '--inventory-sha256', CATALOG_PIN]]:
@@ -127,17 +272,29 @@ class ControllerTests(unittest.TestCase):
         expected = {'UniqueID': '51000', 'PrimaryGroupID': '51000',
                     'NFSHomeDirectory': ROW['home'], 'UserShell': '/usr/bin/false',
                     'IsHidden': '1', 'AuthenticationAuthority': ';DisabledUser;'}
-        groups = {'_stctl': '51000', 'login': '20 80'}
+        groups = {'_stctl': '51000', 'login': '20 80', 'nobody': '4294967294'}
         info = SimpleNamespace(st_mode=0o40700, st_uid=51000, st_gid=51000)
         home = SimpleNamespace(parent=Path('/nonexistent-parent'), lstat=lambda: info)
         def native(args, ok=True):
             if args[0] == '/usr/sbin/dseditgroup':
                 return SimpleNamespace(returncode=1, stdout='no _stctl is NOT a member of admin')
+            if args[0] == '/usr/bin/dscl':
+                return SimpleNamespace(returncode=0, stdout='')
             return SimpleNamespace(returncode=0, stdout=groups[args[-1]])
+        def props(record, keys):
+            return {'GeneratedUID': '11111111-2222-3333-4444-555555555555'} if keys == ['GeneratedUID'] else expected
         with patch.object(p, 'inventories', return_value=({'_stctl': 51000, 'login': 501}, {'_stctl': 51000})), \
-                patch.object(p, 'properties', return_value=expected), patch.object(p, 'run', side_effect=native), \
+                patch.object(p, 'properties', side_effect=props), patch.object(p, 'run', side_effect=native), \
                 patch.object(p, 'Path', return_value=home), patch.object(p, 'protected'):
             p.native_verify(ROW)
+            groups['_stctl'] = '-2'
+            with self.assertRaisesRegex(ValueError, 'group inventory unknown'):
+                p.native_verify(ROW)
+            groups['_stctl'] = '51000'
+            groups['login'] = '20 -1'
+            with self.assertRaisesRegex(ValueError, 'group inventory unknown'):
+                p.native_verify(ROW)
+            groups['login'] = '20 80'
             groups['_stctl'] = '51000 20'
             with self.assertRaisesRegex(ValueError, 'shares a login group'):
                 p.native_verify(ROW)

@@ -133,7 +133,8 @@ def inventory(kind, key):
     result = {}
     for line in answer.splitlines():
         parts = line.split()
-        if len(parts) != 2 or not parts[1].isdigit() or parts[0] in result:
+        # macOS includes signed system IDs (nobody -2, nogroup -1).
+        if len(parts) != 2 or not re.fullmatch(r'-?[0-9]+', parts[1]) or parts[0] in result:
             raise ValueError('native account inventory unknown')
         result[parts[0]] = int(parts[1])
     if not result:
@@ -151,6 +152,42 @@ def unique(row, users, groups):
             raise ValueError('controller UID/GID is not unique')
 
 
+def group_ids(name, primary=False):
+    values = run(['/usr/bin/id', '-g' if primary else '-G', name]).stdout.split()
+    if (not values or any(not re.fullmatch(r'[0-9]+', value) for value in values)
+            or len(values) != len(set(values)) or (primary and len(values) != 1)):
+        raise ValueError('controller/login group inventory unknown')
+    return set(values)
+
+
+def controller_groups(row, login):
+    """Distinguish native implicit groups from any explicit controller grant."""
+    name = row['username']
+    identity = properties('/Users/' + name, ['GeneratedUID'])
+    guid = identity.get('GeneratedUID', '')
+    if (set(identity) != {'GeneratedUID'} or not re.fullmatch(
+            r'[0-9A-Fa-f]{8}-(?:[0-9A-Fa-f]{4}-){3}[0-9A-Fa-f]{12}', guid)):
+        raise ValueError('controller group identity unknown')
+    # Directory Services supports both short-name and UUID explicit memberships.
+    # Even a grant into an otherwise implicit group must be refused. Setup only
+    # assigns PrimaryGroupID; it never adds either supplementary membership.
+    for key, value in [('GroupMembership', name), ('GroupMembers', guid)]:
+        if run(['/usr/bin/dscl', '.', '-search', '/Groups', key, value]).stdout.strip():
+            raise ValueError('controller has an explicit supplementary group membership')
+    own = group_ids(name)
+    login_groups = group_ids(login)
+    baseline = group_ids('nobody')
+    primary = group_ids('nobody', primary=True)
+    if not primary.issubset(baseline):
+        raise ValueError('native implicit group baseline unknown')
+    baseline -= primary
+    # macOS expands everyone/localaccounts through nested groups. Derive those
+    # identities on this host, never hardcode IDs observed on another machine.
+    if (str(row['gid']) in baseline or own - baseline != {str(row['gid'])}
+            or own.intersection(login_groups) - baseline):
+        raise ValueError('controller shares a login group or has a nonbaseline group')
+
+
 def native_verify(row):
     unique(row, *inventories())
     name = row['username']
@@ -162,16 +199,11 @@ def native_verify(row):
     member = run(['/usr/sbin/dseditgroup', '-o', 'checkmember', '-m', name, 'admin'], ok=False)
     if member.returncode == 0 or member.stdout.strip() != 'no ' + name + ' is NOT a member of admin':
         raise ValueError('controller non-admin membership not proved')
-    own_groups = run(['/usr/bin/id', '-G', name]).stdout.split()
     users, _ = inventories()
     login = [user for user, uid in users.items() if uid == 501]
-    if len(login) != 1 or not own_groups or any(not value.isdigit() for value in own_groups):
+    if len(login) != 1:
         raise ValueError('controller/login group inventory unknown')
-    login_groups = run(['/usr/bin/id', '-G', login[0]]).stdout.split()
-    if (set(own_groups) != {str(row['gid'])} or not login_groups
-            or any(not value.isdigit() for value in login_groups)
-            or set(own_groups).intersection(login_groups)):
-        raise ValueError('controller shares a login group')
+    controller_groups(row, login[0])
     home = Path('/private' + row['home'])
     protected(home.parent)
     info = home.lstat()

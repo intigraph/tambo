@@ -106,3 +106,13 @@ less caboodle-observability/contracts.json
 Validation fails on a missing or malformed selected target, a target for a tool
 whose pinned contract has no exporter, a missing scrape job, or an alert or
 dashboard metric absent from the versioned contracts.
+
+### Newer Bobbin under skip-install
+
+`quickstart --skip-install` and `apply --skip-install` retain an installed Bobbin
+whose release version is strictly newer than the reviewed pin, with a warning.
+They do not install or downgrade it. Quickstart still runs Bobbin's isolated
+functional round-trip before reporting success. Apply alone records an applied
+version, not a new functional verification. Older or unrecognised Bobbin versions
+still refuse under this flag; missing tools must be provisioned separately.
+The exception does not change other tools' version contracts.
