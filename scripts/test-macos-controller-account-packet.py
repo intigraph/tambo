@@ -22,6 +22,49 @@ ROW, _ = p.packet(PACKET, PIN)
 
 
 class ControllerTests(unittest.TestCase):
+    def test_inventory_preserves_macos_signed_system_ids(self):
+        from types import SimpleNamespace
+        # Stock macOS dscl records reported in the native e579 step-1 refusal.
+        for kind, key, output, expected in [
+            ('/Users', 'UniqueID', 'root 0\nnobody -2\nlogin 501\n',
+             {'root': 0, 'nobody': -2, 'login': 501}),
+            ('/Groups', 'PrimaryGroupID', 'wheel 0\nnobody -2\nnogroup -1\n',
+             {'wheel': 0, 'nobody': -2, 'nogroup': -1}),
+        ]:
+            with self.subTest(kind=kind), patch.object(p, 'run', return_value=SimpleNamespace(stdout=output)) as native:
+                self.assertEqual(p.inventory(kind, key), expected)
+                native.assert_called_once_with(['/usr/bin/dscl', '.', '-list', kind, key])
+
+    def test_inventory_refuses_malformed_duplicate_and_empty_rows(self):
+        from types import SimpleNamespace
+        for output in ['', '\n', 'nobody\n', 'nobody -2 extra\n',
+                       'nobody --2\n', 'nobody -\n', 'nobody +2\n',
+                       'nobody 2.0\n', 'nobody ²\n', 'nobody ٢\n',
+                       'nobody -2\nnobody -1\n']:
+            with self.subTest(output=output), patch.object(p, 'run', return_value=SimpleNamespace(stdout=output)):
+                with self.assertRaisesRegex(ValueError, 'native account inventory'):
+                    p.inventory('/Users', 'UniqueID')
+
+    def test_signed_inventory_still_refuses_controller_collision_before_writes(self):
+        from types import SimpleNamespace
+        for collision_kind in ['/Users', '/Groups']:
+            def native(args, ok=True):
+                output = 'root 0\nnobody -2\n' if args[3] == '/Users' else 'wheel 0\nnobody -2\nnogroup -1\n'
+                if args[3] == collision_kind:
+                    output += 'foreign 51000\n'
+                return SimpleNamespace(stdout=output)
+            with self.subTest(kind=collision_kind), tempfile.TemporaryDirectory() as raw, \
+                    patch.object(p, 'RECEIPT', Path(raw) / 'receipt'), \
+                    patch.object(p, 'STOP', Path(raw) / 'stop'), \
+                    patch.object(p, 'run', side_effect=native) as commands, \
+                    patch.object(p, 'directory') as directory, patch.object(p, 'install') as install:
+                with self.assertRaisesRegex(ValueError, 'collision'):
+                    p.setup(ROW, PIN, b'pinned tool')
+                self.assertEqual(len(commands.call_args_list), 2)
+                self.assertTrue(all(call.args[0][2] == '-list' for call in commands.call_args_list))
+                directory.assert_not_called()
+                install.assert_not_called()
+
     def test_cli_help_and_unprivileged_offline_verify_python39(self):
         for arguments in [['--help'], ['verify', '--offline', '--packet', str(PACKET),
                 '--packet-sha256', PIN, '--inventory', str(CATALOG), '--inventory-sha256', CATALOG_PIN]]:
@@ -138,6 +181,14 @@ class ControllerTests(unittest.TestCase):
                 patch.object(p, 'properties', return_value=expected), patch.object(p, 'run', side_effect=native), \
                 patch.object(p, 'Path', return_value=home), patch.object(p, 'protected'):
             p.native_verify(ROW)
+            groups['_stctl'] = '-2'
+            with self.assertRaisesRegex(ValueError, 'group inventory unknown'):
+                p.native_verify(ROW)
+            groups['_stctl'] = '51000'
+            groups['login'] = '20 -1'
+            with self.assertRaisesRegex(ValueError, 'shares a login group'):
+                p.native_verify(ROW)
+            groups['login'] = '20 80'
             groups['_stctl'] = '51000 20'
             with self.assertRaisesRegex(ValueError, 'shares a login group'):
                 p.native_verify(ROW)
