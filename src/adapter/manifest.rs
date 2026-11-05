@@ -849,10 +849,11 @@ mod release_verification_tests {
             .join("tests/fixtures/releases/fixture-demo-v0.1.0-x86_64-unknown-linux-gnu.tar.gz");
         let unpack = materialize(&manifest, &archive, &root.path().join("unpack")).unwrap();
         verify_staged_member(&manifest, &unpack).unwrap();
+        let expected_identity = manifest.programs[0].identity_contains.clone();
         manifest.programs[0].identity_contains = "foreign identity".to_owned();
         assert!(verify_staged_member(&manifest, &unpack).is_err());
-        manifest.programs[0].identity_contains =
-            "fixture-demo is the Tambo fixture stack member".to_owned();
+        manifest.programs[0].identity_contains = expected_identity;
+        verify_staged_member(&manifest, &unpack).unwrap();
         manifest.version = "0.1.1".to_owned();
         assert!(verify_staged_member(&manifest, &unpack).is_err());
         manifest.version = "0.1.0".to_owned();

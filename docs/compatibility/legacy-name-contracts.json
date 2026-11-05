@@ -1,7 +1,6 @@
 {
   "files": {
     ".github/workflows/ci.yml": {
-      "reason": "Explicit compatibility: preserve existing required-check identity and persisted default plan, state and observability filenames; commands and temporary fixtures use Tambo.",
       "lines": {
         "0fd19f0516d977308f379dce9f031a64813f34653e10510c59f4756c0acb86ec": 1,
         "1a19074bb73dd1dddce9794a0a444cf1a25d146f06cba5a7286da484bca7d79c": 1,
@@ -19,13 +18,14 @@
         "d72fe5e847939f156cc1480ee8236d58038fdd550d21eb424d81cf770adff29e": 1,
         "e959717c2b65b0e36e26ffde89ba883f23ab949a2d9cce029c55d7b5f0a7554c": 1,
         "f15fd5d91696afb5de57157088489e5813b1c24b99631f664ccefef5b95986e1": 1
-      }
+      },
+      "reason": "Explicit compatibility: preserve existing required-check identity and persisted default plan, state and observability filenames; commands and temporary fixtures use Tambo."
     },
     ".github/workflows/member-verify.yml": {
-      "reason": "Explicit compatibility: preserve existing required-check identity and persisted default plan, state and observability filenames; commands and temporary fixtures use Tambo.",
       "lines": {
         "dbf8216c24d7e33c8cf195dad9c1ef71355a90ce118d838cacb09c5990f6caee": 1
-      }
+      },
+      "reason": "Explicit compatibility: preserve existing required-check identity and persisted default plan, state and observability filenames; commands and temporary fixtures use Tambo."
     },
     ".github/workflows/release.yml": {
       "lines": {
@@ -93,12 +93,6 @@
       },
       "reason": "Existing state/cache filename, command alias, environment, package, immutable vocabulary IRI or live compatibility anchor."
     },
-    "docs/book/src/conventions.md": {
-      "lines": {
-        "e5b436a0ba4329edc18a9d4891a3428575252ae92cb96b08a9bef2aff09e27b5": 1
-      },
-      "reason": "Existing state/cache filename, command alias, environment, package, immutable vocabulary IRI or live compatibility anchor."
-    },
     "docs/book/src/corpus.md": {
       "lines": {
         "ca2c3a61f1d501084203938625db83ec8894a1b413c40a4c3e466a3d26940784": 1
@@ -154,10 +148,8 @@
         "4e0139304cfb12cff0b6b18732f2264c7e6fa335f7a4223c2b1b7e712bae8d25": 1,
         "5ee493c99b8729381640bb3279b4b4a772377a969db1fd13885c84b8002466a2": 1,
         "725b753e5a7c7004faebd885f4f5499748a57f18c969444c07ab64026cc3fe9a": 1,
-        "7a585731419e2fc3178e3e400fed4d1d7de30447057b2c528ca0ba2255d06a77": 1,
-        "b3eb5e96b91991571b1300620c264fd98eb92012e379fd7fb79b45240ac54bbb": 1,
+        "9a63dd284dfbb92134f4386175255701fc6c66d8b73ac6d6ae3d81554e187040": 1,
         "bff8408800e264e3044cfa40ef1d28260012980085b7dcb8582a3c266b6278d1": 1,
-        "ed617108f5d1380d1967d2fc74a88943a50a6d6d011c2d2bb967509ab1d16f21": 1,
         "ede13c63ae06f69a6b705f9ac9d3c0a423a2ccbf27ca1f68dbe505f0a374ce5a": 1,
         "f9789f7a1f3832feefda4e59814134d84a386bf2bfe5839cfd25db44f08622ab": 1,
         "fcd3a09b875efeafbf6f5a012c1edc45057537720b3231ef40f47cc9b2da959a": 1
@@ -166,11 +158,8 @@
     },
     "docs/book/src/pendant-autoload.md": {
       "lines": {
-        "117d2e9d2d532abc3ba7d9fcf649cfb44da217bc7d2c8e156dba0467d6067fc5": 1,
-        "31100ce1a48ad97f94477758d1d37d490c1c12b90e72fded9e59b645ad196ad8": 1,
         "36cdfa6c7a164a842736631ca47d48225dc67505758e51575d1e12b43565a60c": 1,
         "4061004344c6710b11b6a08e8b62d16937a42152ca62810f1a5d48ae80f44b8d": 1,
-        "746766d516d984f744082ef48f40f3a571e422a2551c74e1702b792cbc9a63df": 1,
         "818834b9054ca9d2bcf8ee9c7319596262975073abe1aa84311931a0e58e33c8": 1,
         "b02a5f55f750ea89e8611a681319f55ed06566bb5770de176b96f859092a4d74": 1,
         "bfb70c80d7c39b60af459a888b36313aab01f5969d1aff8b17020fb276a7b91f": 1
@@ -434,54 +423,6 @@
       },
       "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
     },
-    "docs/design/macos-job-account-packet.md": {
-      "lines": {
-        "2a208d4d5c11292a88a3b5ccf5333e0113f1724a9570d8c5a07caf1b83f787e2": 1,
-        "93eb0e776bf2db6f2794790e879c38603d74f59f52e2fae715e51b05138addf8": 1
-      },
-      "reason": "Exact pre-existing legacy executable path for the checksum-pinned 0.7.1 compatibility artifact; operator must not silently select a newer executable."
-    },
-    "docs/design/skill-profile-selection.md": {
-      "lines": {
-        "a20eb4c92699cc6e2fbdc4b2562a21eb8833e6e7d2a3198ae380c05f53c7f282": 1
-      },
-      "reason": "Existing caboodle library ABI in skill-profile selection design; module identifiers remain stable."
-    },
-    "docs/design/txtai-gap-analysis.md": {
-      "lines": {
-        "78e056c5da92c50ace032517ed488ea313f778c6ce689d2aeae0387a19824a0e": 1,
-        "8e34d0d432f39c7bf4c6919b08d5dd7d2cbc6744089ce21e84c42f8a1aacacbb": 1,
-        "db4ddd478c27478900ae6314252a076372f26b7ed1c5528fcf46c4a7cef7afde": 1,
-        "dd1abe2439b8f245cba5ddf4b2cbce4a027d043e0a12540f4facaf339a5249d7": 1,
-        "efbac24bd1090d916184cb6055166748de31bbe8f951073b1f110d54f483bffe": 1,
-        "f317fe0f20061e04ca0df9c05340d51772d9ab9c088faddb8567b2c062dea58d": 1,
-        "fbf6fa446b58f916f3a7ae53c3d980f49813cd9208c48f029658ca9120df030f": 1
-      },
-      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
-    },
-    "docs/design/vision.md": {
-      "lines": {
-        "295e08b411caa331cfac0732c25e6d0cfbb2df3f5d38b4178111fc68b54e083c": 1,
-        "3097a2896fd4e2e55f29b8419054b11b4c90a6a0b3acd73b64cfd209d253fef9": 1,
-        "315ce858f4cff0fb52a9d6524545ec8530d2102788dbb37c09413e37ebb800e4": 1,
-        "3c15ce1d32b78c8e0d26011dd09f3e219dc11bc6fc3e8e3c00ebba2d29f660fd": 1,
-        "421677f1f493454809361033eebb89ae75a7042c365ef77307dd2b83d2c5fe56": 1,
-        "431a40528068d878b9dd08727bc60a231b33bf88da747f779f1a77a908d7c179": 1,
-        "5343a2bf99c0a3ac353b8867fb3ddea2580e73db5506ca1a1d250383202a5cc2": 1,
-        "5a3c4c846e61762492eaa35f443cff2562e96d7ec73214f4b88e749fb18021d8": 1,
-        "72de4c4d0d538c9861028125173d5966c0f683ea345de9be538f2c7ea847c37f": 1,
-        "76d9fde6f2acbdd86af77c37e43f6fde1280fa670883c62c78c7931717ea9773": 1,
-        "7b81a925e738dbdb9080cd5b9fd57951a1f691924b8c2c6016a4f3560df2f33a": 1,
-        "7c6a91d2ef134a301e8d082d09964bd53cc56e1326726cbb931cbd0568e3260f": 1,
-        "80ebe063b1d7302c028f3949ee4c98686bcf5ce9f4b25f1f1ef6a455ec9219d7": 1,
-        "9d3a2f7aba1410274215b2ad36c6ac156ed9d3adbedadf150ab3ebb319ec1b57": 1,
-        "c5e65255c39b47e73bd8e52e8958b537176946d27fbbfc4e3903d907579c41e2": 1,
-        "c85c3fc093d7fda742e3f9d8a9db6fe669dacffe828dafe228f49050785f9b95": 1,
-        "ca07b425512c6323fcc1d762f65b447ee8084edddc24ccd943e26266698334f6": 1,
-        "e7ea7524f00ef2547c9c12d3e817d43139ab0d94a5a54d36237d7ce13086dc9b": 1
-      },
-      "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
-    },
     "docs/knowledge/repository-knowledge.json": {
       "lines": {
         "12434b0bae9d6239cf06eb190cf3554c679e23b783ebfde7c58c7da031b720de": 1,
@@ -546,12 +487,9 @@
     "examples/caboodle-intent.toml": {
       "lines": {
         "03530b66be1d5fcb8a3a2cbef627ce294eb9a17e766a4c7b74b735fc707c5608": 1,
-        "3009de9c9c308101e41be95fe83c4c695c78becd52ef9fbccb661582559cb61a": 1,
-        "42fcc7b9e8227bb7bbbd4352a4fa4c4d013aa57537d98557822e1ed5b696d16b": 1,
-        "4b04e1b65ad0e22f40bfab8416a20bea3eb5bc3f44635cd3c8fa27d50b143533": 1,
-        "4dd7521edb2c23a17b20aaa7973ddd3e22663910a2e3db5324ff0efaf1bb10ed": 1,
         "54ceabb38cbe1e51219f107385ea4c7b6dc41d2d54a7bd3cdc978b8b1a628f07": 1,
-        "600db61c58aca4b7323a8b1b3572e2e84627dd09236287af51840f4f66f115d1": 1
+        "600db61c58aca4b7323a8b1b3572e2e84627dd09236287af51840f4f66f115d1": 1,
+        "c6defce38b0965fe59c32bf32038aed3ff609b80fb36a03e2e9361217937f453": 1
       },
       "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
     },
@@ -610,11 +548,7 @@
     },
     "members/README.md": {
       "lines": {
-        "56afb8c00fa359f3a755dc4a9d2bd22f01e0d3885d0b966ef978f49503482ff0": 1,
-        "707fce6076ec289e14cc6aa70bcc91ee167d0dd7ebbeac656cd4b9129ebf71c3": 1,
-        "98a710e8363f38e67420be9b344e2b8afc92436bf97720ad3829f1036d1a058a": 1,
-        "f366652c66bc9d82e0defbf6576d1faa3fa9963bcace753c0da428ddb207627f": 1,
-        "f6889b43a0f61f660ece9f2a4542daf74f6aac0f53acf8285bef4ba0a9ef70d0": 1
+        "98a710e8363f38e67420be9b344e2b8afc92436bf97720ad3829f1036d1a058a": 1
       },
       "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
     },
@@ -800,25 +734,12 @@
       "lines": {
         "055cc48a62f9671c391b120a2b1e9a0a88a4f62bab1031eaf6f59bd71159394a": 1,
         "1865ed4789ffd14bcca3f552aef94c5309c9d8a8d0a666e829ca430c78cc4483": 1,
-        "2a7e62dcb92dea9a3345d9efa57cf7200ea35b7ff8c222f6be7f78a49779fb5e": 1,
         "2bdc64bf5826534a737eba60ff6126b15e4dd3f5d775da9fa3c62a40ff795673": 1,
-        "33e64e31fa4c99faf8d7c11a620603f4f72a5d16a3f3d4c5e126256577a049e6": 1,
-        "34689fcec2a4c87149b51ea0b2bda8f79be6eea10cca094933d9f6cee918d2c7": 1,
         "3b08c85d4ce7fb916ec403a2b9d9945672ff63993c8834a868f9e6cf6ab37f3e": 1,
-        "407e155f71158f2a0f04062660586ed7d37f139fa8b4c99af78219800431b755": 1,
         "45eb370b12ffbdba1bd7161fbf638bb91846d66e55dda8c912d4c05a2e361ebf": 1,
         "4658687bc5e2229a867a5f27ed2e5fed6a5a2843f00cba3b4e8e591194c7492c": 1,
-        "50238a40053da27d49424250235922fd9c97e4f3e112c0f7e46d5884ee884eaf": 1,
-        "64770069a5a8a4c0f608d6724c17a8b9b0a45cdc1900558ad866c7e83017bc77": 1,
-        "6631fab0b7b4a58d887b0c52ebdf65d5ac21fe15082bb0ca9cbc8197b3fbfffd": 1,
-        "74a227cb53874fb4131734ff0fa425a2f5740cc408a9ab79072a7b8aa61919a6": 1,
-        "78023110e3dab38add18f5d8fbac0187d287ff9d3e45478c625a93e33b5ef788": 1,
-        "8965400e8593975fc8ad500f4bfa57af483992692749736db762c27001dbb15a": 1,
         "90c54ff5bb32253cc2bdea719c21e943a74266d0081346b0720d7dcc7c54b79f": 1,
         "a61828fe19072624e36708dc6fc023af8432f7b48e45ea54a1ffbf0f9b9c6ba4": 1,
-        "a73fcea39bd02943b80961063fbd26dbfa75d883768aadb9c3f7844c0d655f25": 1,
-        "be7360fb6c15212c8f9ee3791affbd7eea0590a82039c1a67342870554b3e924": 1,
-        "ca18d046086160105ab0923ecf1c6e0a1bd1878393f0b5a4c3ead56a836775e2": 1,
         "e6f48254908d2a717ffae33f31302ab94f1362b83be1ebc48edff4288bcd1c9c": 1,
         "eba17c1bd810d9a12aae32d292b8cd0c9290c1c01f2e9d8af0fd74d52c6102ac": 1,
         "eff2e730ea5eb6ca34c30d7c7a9b992a96fa2a30cc69809118a72ac66171b712": 1,
@@ -833,7 +754,6 @@
       "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
     },
     "scripts/test-doc-links.py": {
-      "reason": "Explicit compatibility and negative controls for former repository and documentation-site aliases; current canonical links are tested separately.",
       "lines": {
         "07b1de95060bc8b34ab2be90e9f8ae3aa194c35994506752830dc336cdd845ab": 1,
         "153d86aa1d1f722a6ec0e5902d438a8fe08391e363a06a441d9aae797c31f37a": 1,
@@ -843,11 +763,11 @@
         "be9c3626da878d455ab0ed4b5717c95b12b9e7a03ad82c47ae2e745d93464628": 1,
         "c234e67bf28c3427f04fd42adf52b6464783270861e99ecfd0a0cc20ec4d2bfb": 1,
         "d9d7f02135dd7388286f9e54e85d088476460869d0a09a471175b05b757a0e7d": 1
-      }
+      },
+      "reason": "Explicit compatibility and negative controls for former repository and documentation-site aliases; current canonical links are tested separately."
     },
     "scripts/test-install-bootstrap.py": {
       "lines": {
-        "18f6d14cb99812adb622b625dc2e66e581ed83b76103eb5281ff90b7e103541e": 1,
         "1f09c191d2781a00496ca8b5a4ff2cfd085c7e0b216eb3662b5adc057ee6e959": 1,
         "25229e8d06b9f996789a4f1e17d1b29929a029954e3092d76e567e356fb710d9": 2,
         "2b6ad3b88ecd8eea48f436b66274a8d0794c0f7b06fdc486036a966a10cd50e8": 4,
@@ -1252,7 +1172,6 @@
         "91470fda4083b6c613b521a58d8ea68c97a73701df0f87b84df66f0d34f41e40": 1,
         "920871fb23a9b582ea0b08e5ef2f715f243b6b8f4b616f4d83c3499db2e26800": 1,
         "96f2bd88d52cd808e8bffd3d73741c2bde620e397b38ffb526685a39a87a9755": 1,
-        "9c07825e042944a24b07a9a3bbce5e636af4066bbe61d4f3f411b5df2a80c559": 1,
         "a0d42100936b5258c76566562caa65856eeb7d9c1da79b45e72cc0e1f5afc94d": 1,
         "a4f45bedf8cd8a2b09d0828499e2825d708a2054ed0c7e5950197ae918cccbfc": 2,
         "a51543202f8ba5f803e86302e7e4a6d67063a7be6265cb1127531550f7c5082d": 1,
@@ -1308,32 +1227,11 @@
       },
       "reason": "Explicit compatibility: retained Rust import ABI, persisted state/configuration/environment keys, old executable and version/refusal probes; current product prose is renamed."
     },
-    "tests/fixtures/members/fixture-demo.toml": {
-      "lines": {
-        "01fbe08ae0b98630f861ef2940dbde3dbc17e895505001b7c89dd7c3b6f50998": 1,
-        "ae0df5b38d5d475d21f584e918de90ef707383882311c6e1bad3db58eae7bdc1": 1
-      },
-      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
-    },
-    "tests/fixtures/members/fixture-wheel.toml": {
-      "lines": {
-        "4e90c2ca8def218e916335cbfc3259e33d55a3b8c7ba6c518ba44fbc6daf8f60": 1,
-        "d38df5639f75ff9f23cadc2c42a2b3d9c87296d094ab4ad138dafdb6958f09f9": 1
-      },
-      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
-    },
-    "tests/fixtures/wheel-src/fixture_wheel/__init__.py": {
-      "lines": {
-        "065d7576ffeee0a5bc0156812820a266dead5b11ceb03e0c587f7212404edc49": 1
-      },
-      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
-    },
     "tests/member_adapter.rs": {
       "lines": {
         "35701123fca9be93628536233a695e1a4d48105b6cbd6718d4a6b6b0298e1487": 1,
         "3877e42d591a66f920ffc7b311581b7884ee96272b93bf53e28a21aa9a7df644": 1,
         "495f52d63c51280ba129df428f3d8dbbec1716e0821dca177f4c4e06e8889808": 1,
-        "5ba3f945563f93d45737b9fc34e59ab2e81e0a802e53768a914cd37e8ab034ba": 1,
         "a80d23bfe811619817d02fc88909c022c62f034404512e2d074cea52828546d9": 1,
         "d19c504f44f1d3624a60357e70696f4ef38a821edfd9a12e87a91e5d9768f11d": 1,
         "e016545391f3c090853e5ae64c8ee927facd30b362d11b74086a602153a68534": 1,
@@ -1359,8 +1257,6 @@
     "tests/member_wheel.rs": {
       "lines": {
         "3877e42d591a66f920ffc7b311581b7884ee96272b93bf53e28a21aa9a7df644": 1,
-        "5e29b6ded9304dabb4b731df23c67c5d4d255b8fd222c856e767cf3cc1eaeee6": 1,
-        "703b7b347a6b82eeec0b87bf7950970c83642cfac9b0e22eb7d70bdc6c0b9004": 1,
         "c4c58c7e3e5b0999128aef4b634c76399d0c1bbb1a16d123c72dbbfcc16a9988": 2,
         "eb514e44540e5b7a21aa5a1c0e89080f9937cc8bcdd8aae25571d16df881384a": 1
       },
@@ -1404,7 +1300,7 @@
     },
     "tests/test_pendant_setup.py": {
       "lines": {
-        "2298288ed222942a3e2d1b3da873aae5ad4854616a3a756337c2ad36036ace35": 1,
+        "3b86e56b28c3e46e15def39117b44544fc1b6abbb88af007cee8ebd8ba9b9963": 1,
         "572e3873220982611210d9223e45377ceb3746f1e384a74257ae5ea868af665c": 1,
         "5ff85c528953e14e309b99c6f8931fe891bf40132fc1f7d0503112ae3a1739b8": 1,
         "8729304f0f60f4341b1494eaf8f9d624e6a1e747c5d65eb04b831c19665dc594": 1,

@@ -71,7 +71,7 @@ printf 200"#,
     demo.install().expect("install the fixture wheel");
     assert_eq!(
         fs::read_to_string(&log).unwrap().trim(),
-        "https://github.com/caboodle-fixtures/fixture-wheel/releases/download/v0.1.0/\
+        "https://github.com/tambo-fixtures/fixture-wheel/releases/download/v0.1.0/\
          fixture_wheel-0.1.0-py3-none-any.whl"
     );
     assert!(installed.is_file());
@@ -214,7 +214,7 @@ exec {} "$@""#,
         &deaf,
         "fixture-wheel",
         r#"case "$1" in
-  --help) echo 'fixture-wheel is the caboodle python-wheel fixture stack member' ;;
+  --help) echo 'fixture-wheel is the tambo python-wheel fixture stack member' ;;
   list) cat "$HOME/.fixture-wheel" 2>/dev/null; true ;;
   add) cat >/dev/null; echo "$2" >> "$HOME/.fixture-wheel" ;;
 esac"#,

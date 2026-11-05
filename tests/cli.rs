@@ -2575,7 +2575,7 @@ case "$url" in */releases/latest|*/releases/tags/*) cat "$HOME/latest.json" ;; *
     let repair_line = if repair_fails {
         "tambo: note: post-install repair failed"
     } else {
-        "caboodle: post-install repair: qp ok"
+        "tambo: post-install repair: qp ok"
     };
     updater
         .assert()

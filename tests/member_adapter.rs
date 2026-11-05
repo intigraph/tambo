@@ -87,7 +87,7 @@ printf 200"#,
     assert!(installed.is_file());
     assert_eq!(
         fs::read_to_string(&log).unwrap().trim(),
-        "https://github.com/caboodle-fixtures/fixture-demo/releases/download/v0.1.0/\
+        "https://github.com/tambo-fixtures/fixture-demo/releases/download/v0.1.0/\
          fixture-demo-v0.1.0-x86_64-unknown-linux-gnu.tar.gz"
     );
     let version = demo.version().unwrap();
@@ -176,7 +176,7 @@ printf 200"#,
     script(
         &lossy,
         "fixture-demo",
-        r#"case "$1" in --help) echo 'fixture-demo is the Tambo fixture stack member' ;; *) exit 0 ;; esac"#,
+        r#"case "$1" in --help) echo 'fixture-demo is the tambo fixture stack member' ;; *) exit 0 ;; esac"#,
     );
     set_path(&system, &[&lossy]);
     assert!(err(demo.verify()).contains("not present after it was created"));

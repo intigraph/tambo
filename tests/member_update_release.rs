@@ -32,7 +32,7 @@ fn demo(dir: &Path, version: &str) {
             r#"store="$HOME/.fixture-demo"
 case "$1" in
   --version) echo "fixture-demo {version}" ;;
-  --help) echo "fixture-demo is the Tambo fixture stack member" ;;
+  --help) echo "fixture-demo is the tambo fixture stack member" ;;
   list) cat "$store" 2>/dev/null; exit 0 ;;
   add) echo "$2" >> "$store" ;;
 esac"#

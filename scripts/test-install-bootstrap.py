@@ -205,7 +205,7 @@ class CloudEnvironment(unittest.TestCase):
             shutil.copyfile(shutil.which(tool), target)
             target.chmod(0o755)
         for tool in ('just', 'pre-commit', 'mdbook', 'mdbook-mermaid',
-                     'quipu', 'quipu-server', 'caboodle'):
+                     'quipu', 'quipu-server', 'tambo'):
             self.executable(tool, f'#!/bin/sh\necho "{tool} fixture"\n')
         for tool in ('npm', 'pip', 'cargo'):
             self.executable(tool, '#!/bin/sh\nprintf "%s\\n" "$0 $*" >> "$FIXTURE_CALLS"\nexit 1\n')
