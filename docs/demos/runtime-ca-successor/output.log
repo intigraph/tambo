@@ -1,0 +1,9 @@
+Script started on 2026-11-05 08:55:51-05:00 [COMMAND="python3 docs/demos/runtime-ca-successor/demo.py --directory "$RUNTIME_DIR"" <not executed on terminal>]
+before: Seeds 0.13.0; ST bd499fbcc4cddd14aa679f5e71c0b5bed746d31f
+before: manifest da70317bd2a35987d927a152c3d5dce5844d153d61678a6e9d5d3a2fb0272537
+after: Seeds 0.14.0; ST dd11e1ce4a1bb63988e3df457a842cb743ea5222
+after: manifest 33de07c81561a45b3fd49a8f88160b9761300732cc99c16b21670d5c026acb9a
+VERIFIED pinned runtime inventory; native=False; readiness UNPROVED
+Public input and exact inventory proof only; native UID/CA acceptance remains OPEN.
+
+Script done on 2026-11-05 08:55:51-05:00 [COMMAND_EXIT_CODE="0"]
