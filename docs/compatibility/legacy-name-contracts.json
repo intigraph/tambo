@@ -732,6 +732,12 @@
       },
       "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
     },
+    "scripts/public-install-census.json": {
+      "reason": "Measured v0.9.0 installer contract: retain the published caboodle compatibility command beside tambo without rewriting the pinned release census.",
+      "lines": {
+        "968fa28a3248e45814be59971f5aa0f8b1627900b07b06d1bcc963fd7c111870": 1
+      }
+    },
     "scripts/setup-environment.sh": {
       "lines": {
         "055cc48a62f9671c391b120a2b1e9a0a88a4f62bab1031eaf6f59bd71159394a": 1,
