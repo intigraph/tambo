@@ -227,6 +227,16 @@ def build(revision, source, tooling, binary, bobbin, output):
         raise ValueError("release lacks a supported public corpus positive control")
     private = output.parent / "build-private"
     private.mkdir(mode=0o700)
+    # The provider belongs to this private working directory, not ambient HOME.
+    import importlib.util
+
+    provider_spec = importlib.util.spec_from_file_location(
+        "repository_share_embedding", Path(__file__).with_name("repository_share_embedding.py")
+    )
+    provider_contract = importlib.util.module_from_spec(provider_spec)
+    provider_spec.loader.exec_module(provider_contract)
+    expected_provider = provider_contract.configure(private)
+
 
     def run(args, *, env=None):
         return command(args, env=env, cwd=private)
@@ -259,6 +269,7 @@ entities = false
 model = "all-MiniLM-L6-v2"
 batch_size = 64
 """)
+    provider_contract.configure_indexer(index, private, expected_provider)
     env = isolated_environment(private)
     # Keep default inference concurrency bounded; a caller may supply its measured limit.
     env.setdefault("BOBBIN_ONNX_THREADS", "1")
@@ -326,6 +337,7 @@ aegis:repo-embedded-knowledge-databases-directive-2026-09-03 a aegis:Directive ;
     query = (source / "queries/repository-share-tambo.rq").read_text()
     stage = private / "share"
     run([binary, "share", "--construct", query, "--turtle", "--output", stage, "--db", database])
+    provider_contract.verify_manifest(stage, expected_provider)
     if not (stage / "shapes.ttl").is_file() or (stage / "shapes.ttl").stat().st_size == 0:
         raise ValueError("repository share omitted receiver shapes")
     receiver = private / "receiver.db"
