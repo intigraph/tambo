@@ -164,7 +164,18 @@ def materialize_release(source, revision, destination):
         ["git", "-C", str(source), "archive", "--format=tar", revision], check=True, capture_output=True
     ).stdout
     with tarfile.open(fileobj=io.BytesIO(archive), mode="r:") as bundle:
+        members = {member.name.rstrip("/"): member for member in bundle.getmembers()}
+        aliases = {"packs/" + pack + suffix: pack + "/pendant"
+                   for pack in ("stack-map", "stack-operations")
+                   for suffix in (".pendant.db", ".qpack.db")}
         for member in bundle.getmembers():
+            if member.issym() and aliases.get(member.name) == member.linkname:
+                target = members.get("packs/" + member.linkname)
+                if target is None or not target.isdir():
+                    raise ValueError("tracked pack alias target is not a release directory")
+                # These four compatibility aliases duplicate tracked pack directories.
+                # Omit aliases from the corpus; never follow archive symlinks.
+                continue
             relative = Path(member.name)
             if relative.is_absolute() or ".." in relative.parts or not (member.isfile() or member.isdir()):
                 raise ValueError("unsupported tracked release member")
