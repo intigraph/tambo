@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.11.0](https://github.com/intigraph/tambo/compare/v0.10.1...v0.11.0) (2026-11-05)
+
+
+### Features
+
+* add macOS controller packet and pinned job runtime ([#238](https://github.com/intigraph/tambo/issues/238)) ([ebb0a83](https://github.com/intigraph/tambo/commit/ebb0a83b6b130fd88d455d29765dc3e6bc42d55b))
+
+## [0.10.1](https://github.com/intigraph/tambo/compare/v0.10.0...v0.10.1) (2026-11-05)
+
+
+### Bug Fixes
+
+* preserve repository pendant carriers and pack aliases ([#235](https://github.com/intigraph/tambo/issues/235)) ([46bf1e8](https://github.com/intigraph/tambo/commit/46bf1e8975d206bd13a6f5e8df70f405590d7191))
+
+## [0.10.0](https://github.com/intigraph/tambo/compare/v0.9.0...v0.10.0) (2026-11-05)
+
+
+### Features
+
+* **hooks:** install and verify the query-first hooks for Claude Code and Codex ([#227](https://github.com/intigraph/tambo/issues/227)) ([82f710e](https://github.com/intigraph/tambo/commit/82f710e4723a56f5f1160bc9412c4ee91689fa71))
+
+
+### Bug Fixes
+
+* require pinned embedding providers in repository shares ([#233](https://github.com/intigraph/tambo/issues/233)) ([0461437](https://github.com/intigraph/tambo/commit/04614379596614e4aa5acc39576bce3b2356a6b8))
+
 ## [0.9.0](https://github.com/intigraph/tambo/compare/v0.8.0...v0.9.0) (2026-11-04)
 
 

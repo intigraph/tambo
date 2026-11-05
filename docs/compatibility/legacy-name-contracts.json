@@ -10,63 +10,31 @@
       "reason": "Retained historical records, demonstrations, design provenance or reproducibility fixtures; never rewritten as newly measured evidence."
     },
     ".github/workflows/ci.yml": {
+      "reason": "Explicit compatibility: preserve existing required-check identity and persisted default plan, state and observability filenames; commands and temporary fixtures use Tambo.",
       "lines": {
-        "084f1c4ec860098a08621fbfa8ec36596799b73fa691f5dff740765f70056150": 1,
         "0fd19f0516d977308f379dce9f031a64813f34653e10510c59f4756c0acb86ec": 1,
-        "10ef5148c8f1506b9744f3d06bd9550af5bc1a7435923d6dcf784553f68f4bb4": 1,
+        "1a19074bb73dd1dddce9794a0a444cf1a25d146f06cba5a7286da484bca7d79c": 1,
         "1a637d6fbbbe5aa3d11724c2468068a7a3199551f427fabdcb592c745d652cf7": 1,
-        "2581656270d2a750d4838baa08f3f9104a69151852002c069d2ff53220b55e83": 1,
-        "27deea77862f3026d9d686ea137ae98c76ad789cc8f80456ab71443ca212e984": 1,
-        "2c1ece3ebb4e333b3f177eda90c396862beeffb5b2c407eb1785dec6a8aaed9e": 1,
-        "2e90c094d45282ea8ecd814b3a4a1914ef451f5e2c59b7ca5afa75146f99cae1": 1,
-        "31d79e056fefef83d1b29575ae0d92b1e663fb916120572d69289155136b2df0": 1,
-        "35f9ed3a660a25195bce0763c8b0b802ea9edfa08822b2fcbe7a29f2883d097e": 5,
-        "3b76b8fc63fd343a2a0b806b2e6e8d68ad82d1e2abb5a70db8d918c8c2e23588": 1,
         "3cb3f95298dfc4ca96121715d8c57d904feac18546658a4a5f5f8d9b685c4317": 1,
         "3e37c6ff66e58be9ca1aad65b94399f475d6c8c272d3a569e7e2b3205eb2d067": 1,
-        "520561a74418f537120dfaaac93fafce776edb9f2426d3614442479707876e8e": 1,
-        "552f0529d2202859dcc7bac78359eddec2343f73b93d5d6a321f611b1d2f8b9f": 1,
-        "66dfe8dba8a0700b40a6bfc943311ba6aa362d47425f1e75fbf9615ba334d5e7": 1,
-        "67b0f8405abf974c1440a89adbf324ac4bbba21724903112c5f5cc260fe12b8c": 7,
-        "69e0e2f4527c47dcfdf5131713910ff4352d25f5b99b23b1b061922584a283d2": 1,
-        "7e51b9f8bfabbde68319d401b05f51b95e8e076eb3db1daa67edfe63c366acef": 1,
+        "48bc6e2b0fa822cd0855822fd6b2315c518d6d096711d5c82f13008f9200bf22": 1,
         "815b2734ca9b305f8de72bd4717823a4d83883bcdb679c9a38c7f482811ef643": 1,
-        "84f18567ac8049bc666b66cd4d47e02e470df7881984fba83cc78cb6088ff902": 1,
-        "850036b59a6f1397df24bd79d1a6c46d019b689b2c790f8266652ac479e27236": 1,
         "89b3cc66c2f306f077932afa8b06bf51c13aed82e392170e5d7e86ded6785872": 1,
-        "8b3fe9e3be06e88a61206e6d1a68b76f011e85bc1d27e2b668d9fcabf13b78fc": 1,
-        "9367c8e4b0d82a2e2ae5dbc7faddc8bec6133ff35180c38f30c4ed079f1ace06": 1,
-        "96621c7f8a73a4a6cd2de4cf0d09311f4bc75642d7692ffc920a7ac3ed311e3f": 1,
-        "9f8fcee97efc435f46aab35ac846f56c3e6c6b3ad7f82c6149c4c4ec5cbe1813": 1,
-        "a4a4dfbc5331d24c98cc7eddbc75ece77e6322586e407e2fb0cf7465230721fd": 1,
-        "a5ff38d664bd91c5a0b106f0481ae10384c78ee2cbe4b29563484702951190dd": 1,
+        "9b8abf7fd8c352368c0cf65e1a53a317eb232452a4321f14a1ea32a6b592a741": 1,
+        "9b9075f8179a0fb4558b197406fc674ab8774a1a5b54a5747b5380c8a71874f8": 1,
         "a6c20b2e26879c39b7a56475d0e83ae49362bc6cf2477291000a46f169d1914d": 1,
-        "a90ea8b0a70b481620ddd3c8a84d507021a58d80a625013be728ebae99ce8107": 1,
-        "ab88a720453613c901da904769aa2f9a9aeb145f0d653d930cdc327391e215f5": 1,
-        "afbd54d0866bc96da4ae31e03be317e0426643d333a4b8258897525d58e9bbc5": 2,
         "b01623a8530368e4e1aa8c2a1e336334baebba955698cfe3683ff2538e451e34": 1,
-        "b3d7f9a8f284a89eda061258908e76a54f21da2123efbaad143e4d23c6a9130c": 1,
-        "b99e98e1d5afff0e2d11dd1bab619f2b3ee741f8fa2c811ecf001cfecfe51b8c": 1,
-        "bf19aea307754133ab44219b808f13f27579342f3c9fe56c7c3da2afd961906d": 2,
         "d3ae7b8ea7ff8a2fa3ce1afeb90670af3a2c8a76109ed16046e5c11c1302e6f8": 1,
         "d72fe5e847939f156cc1480ee8236d58038fdd550d21eb424d81cf770adff29e": 1,
-        "d828298cffb8fe06ecc1dee72cbe94d2c8d56d66a3554f3845deb1ff4840e862": 5,
         "e959717c2b65b0e36e26ffde89ba883f23ab949a2d9cce029c55d7b5f0a7554c": 1,
-        "ea98f7ef81b10264c525a0b76d011d847ed0b8508310c51a5ee329c5521b6069": 1,
-        "f0421d8885a786b4fb476dffada19db9dcfd49fad93177a3d71988a849ec2f4c": 1,
-        "f15fd5d91696afb5de57157088489e5813b1c24b99631f664ccefef5b95986e1": 1,
-        "f17866cc073a92796814343330eaf7cd40bf0c51ab7f96cf6bd27f218c6f6cfb": 1,
-        "f874862c479b5c5bc4891ab675450416eaae65809cb868ab21b5fa3aa88f96ce": 1,
-        "fb0b48c747f460d98bced139d41db478ca26652bc224241d51babb00cdcdea3e": 1
-      },
-      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+        "f15fd5d91696afb5de57157088489e5813b1c24b99631f664ccefef5b95986e1": 1
+      }
     },
     ".github/workflows/member-verify.yml": {
+      "reason": "Explicit compatibility: preserve existing required-check identity and persisted default plan, state and observability filenames; commands and temporary fixtures use Tambo.",
       "lines": {
-        "1ad84cd3f4bdb90eff5b0383984841ae60ac9eaf13e0f25a6ae674d952ac3146": 1,
         "dbf8216c24d7e33c8cf195dad9c1ef71355a90ce118d838cacb09c5990f6caee": 1
-      },
-      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+      }
     },
     ".github/workflows/release.yml": {
       "lines": {
@@ -900,16 +868,19 @@
     },
     "queries/repository-share-tambo.rq": {
       "lines": {
-        "a11a91a4d19cab9d64bf84f3b9ade47fc5d15389c8e4395a3608ece93a454a37": 1
+        "370316d9a197612759ece1ffa8330ce139ed842efbbb72128a1ec9b155a4417d": 1,
+        "a11a91a4d19cab9d64bf84f3b9ade47fc5d15389c8e4395a3608ece93a454a37": 1,
+        "cbc1d453f13246b4aa3de2c68b0abb46f8c51c7070674074b704bf2566b8f16d": 1
       },
-      "reason": "Existing repo_caboodle graph entity IRI; source renaming must not migrate graph identities."
+      "reason": "Exact legacy repo_caboodle input identity retained solely to map the same repository to the canonical tambo public name and its former-name compatibility link."
     },
     "scripts/build-repository-share.py": {
       "lines": {
         "1c4deda2a7f13c65e15044da0004a95ecce77886497411a4a65e0613e4668f45": 1,
-        "6a692b93eb125909349fff460af33b7855ec883b3ae641df7b40f480929ce9c4": 1
+        "6a692b93eb125909349fff460af33b7855ec883b3ae641df7b40f480929ce9c4": 1,
+        "781c5d54ffd8a352b16135f798f5b09415ab46acf51d482bb0d673d88b677d0e": 1
       },
-      "reason": "Existing repo_caboodle graph identity and provenance literal in the repository-share builder."
+      "reason": "Exact legacy repo_caboodle identity is retained as the canonical Tambo repository former name; negative controls forbid arbitrary, reversed, duplicate or mismatched identity links."
     },
     "scripts/build-stack-packs.sh": {
       "lines": {
@@ -1092,10 +1063,9 @@
     },
     "scripts/test-repository-share-query.py": {
       "lines": {
-        "1f62e454c35279ffe84123531f43174d4dff7b0d5b1ce8117bea0eb65b59cd56": 1,
-        "6e051ffac67d1e2b7a4ce6c68244876861fde346ca919129e48f380bb7c7364b": 1
+        "e5c7831717f25ad9d8b3beb34883434b278446478e461ec42b38bd5a880ffa89": 1
       },
-      "reason": "Negative-control fixtures retain existing repo_caboodle graph identity."
+      "reason": "Exact legacy repo_caboodle identity is retained as the canonical Tambo repository former name; negative controls forbid arbitrary, reversed, duplicate or mismatched identity links."
     },
     "scripts/test-stack-pendants.py": {
       "lines": {

@@ -51,10 +51,14 @@ def verify(folder, tag, revision):
                 not m.isfile() or m.name not in publisher.MEMBERS for m in members
             ):
                 raise ValueError("unexpected, duplicate, or unsafe archive member")
+            if any(m.name == "alignments.ttl" and not 0 < m.size <= publisher.MAX_ALIGNMENT_BYTES for m in members):
+                raise ValueError("alignment archive member exceeds ancillary bound")
             # Every member is a flat allowlisted regular file; no path, link or device extraction.
             for member in members:
                 (stage / member.name).write_bytes(tar.extractfile(member).read())
         publisher.check_share(stage)
+        if proof.get("alignments_sha256") != publisher.alignment_digest(stage):
+            raise ValueError("alignment provenance differs from verified carrier")
     return expected
 
 
