@@ -980,11 +980,7 @@ impl Adapter for Yupana {
             "pub fn tambo_yupana_control() -> usize { 1 }\n",
         )?;
         yupana_checked(root.path(), &state, ["analyze", "."])?;
-        let before = yupana_checked(
-            root.path(),
-            &state,
-            ["callers", "tambo_yupana_target", "."],
-        )?;
+        let before = yupana_checked(root.path(), &state, ["callers", "tambo_yupana_target", "."])?;
         if String::from_utf8_lossy(&before.stdout).contains("tambo_yupana_caller") {
             bail!("Yupana negative control unexpectedly found the fixture caller");
         }
@@ -993,11 +989,7 @@ impl Adapter for Yupana {
             "pub fn tambo_yupana_target() -> usize { 1 }\npub fn tambo_yupana_caller() -> usize { tambo_yupana_target() }\n",
         )?;
         yupana_checked(root.path(), &state, ["analyze", "."])?;
-        let after = yupana_checked(
-            root.path(),
-            &state,
-            ["callers", "tambo_yupana_target", "."],
-        )?;
+        let after = yupana_checked(root.path(), &state, ["callers", "tambo_yupana_target", "."])?;
         if !String::from_utf8_lossy(&after.stdout).contains("tambo_yupana_caller") {
             bail!("Yupana analyzed the fixture but callers did not return its caller");
         }

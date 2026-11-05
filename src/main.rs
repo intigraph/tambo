@@ -1095,9 +1095,7 @@ fn main() -> Result<()> {
                     for (target, digest) in digests {
                         println!("  {target} {digest}");
                     }
-                    println!(
-                        "review the diff and open a PR; it ships in the next Tambo release"
-                    );
+                    println!("review the diff and open a PR; it ships in the next Tambo release");
                 }
             }
         }

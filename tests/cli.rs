@@ -1541,9 +1541,7 @@ fn a_plan_naming_an_unknown_member_is_refused_by_name() {
         .assert()
         .failure()
         .stderr(predicate::str::contains("unknown tool 'retired-member'"))
-        .stderr(predicate::str::contains(
-            "stack member of this Tambo build",
-        ));
+        .stderr(predicate::str::contains("stack member of this Tambo build"));
 }
 
 #[test]
