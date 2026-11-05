@@ -42,3 +42,14 @@ for target in ${TAMBO_EXPECT_TARGETS:-${CABOODLE_EXPECT_TARGETS:-}}; do
     done
 done
 printf '%s\n' "release metadata: $found archive(s) verified for $tag"
+
+if [ "${TAMBO_EXPECT_JOB_RUNTIME:-0}" = 1 ]; then
+    runtime=macos-arm64-job-runtime.tar.gz
+    test -f "$directory/$runtime"
+    test "$(awk '{print $2}' "$directory/$runtime.sha256")" = "$runtime"
+    (cd "$directory" && sha256sum -c "$runtime.sha256")
+    pin=$(python3 -c 'import json; print(json.load(open("docs/operator-packets/e579/runtime/artifact.json"))["manifest_sha256"])')
+    actual=$(tar -xOf "$directory/$runtime" macos-arm64-job-runtime/manifest.json | sha256sum | awk '{print $1}')
+    test "$actual" = "$pin"
+    echo "pinned macOS job runtime release asset verified"
+fi

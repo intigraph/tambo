@@ -305,3 +305,50 @@ jobs:
           python3 scripts/test-repository-knowledge.py
           python3 scripts/test-repository-share-publication.py
           python3 scripts/test-pendant-admission.py
+
+  macos-controller-packet:
+    name: Controller packet offline Python ${{ matrix.python }}
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        python: ['3.9', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python3 scripts/test-macos-controller-account-packet.py
+      - run: python3 scripts/test-macos-job-manifest-migration.py
+      - run: python3 scripts/test-macos-job-runtime-build.py
+      - run: sh -n scripts/macos-controller-account-rollback.sh
+
+  macos-job-runtime:
+    name: Pinned macOS arm64 job runtime
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Fetch reviewed public inputs unprivileged
+        run: python3 scripts/fetch-macos-job-runtime-inputs.py --directory "$RUNNER_TEMP/job-inputs"
+      - name: Build and inspect immutable runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/build-macos-job-runtime.py \
+            --python-archive "$RUNNER_TEMP/job-inputs/python.tar.gz" \
+            --shantytown-archive "$RUNNER_TEMP/job-inputs/shantytown.tar.gz" \
+            --seeds-archive "$RUNNER_TEMP/job-inputs/seeds.tar.gz" \
+            --output "$RUNNER_TEMP/macos-arm64-job-runtime"
+          python3 scripts/verify-macos-job-runtime.py --directory "$RUNNER_TEMP/macos-arm64-job-runtime" --native
+          pin=$(python3 -c 'import json; print(json.load(open("docs/operator-packets/e579/runtime/artifact.json"))["manifest_sha256"])')
+          cargo run --locked -- job-runtime --directory "$RUNNER_TEMP/macos-arm64-job-runtime" --manifest-sha256 "$pin"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64-job-runtime
+          path: |
+            ${{ runner.temp }}/macos-arm64-job-runtime.tar.gz
+            ${{ runner.temp }}/macos-arm64-job-runtime.tar.gz.sha256
+            ${{ runner.temp }}/macos-arm64-job-runtime/manifest.json
+          if-no-files-found: error
