@@ -900,9 +900,11 @@
     },
     "queries/repository-share-tambo.rq": {
       "lines": {
-        "a11a91a4d19cab9d64bf84f3b9ade47fc5d15389c8e4395a3608ece93a454a37": 1
+        "370316d9a197612759ece1ffa8330ce139ed842efbbb72128a1ec9b155a4417d": 1,
+        "a11a91a4d19cab9d64bf84f3b9ade47fc5d15389c8e4395a3608ece93a454a37": 1,
+        "cbc1d453f13246b4aa3de2c68b0abb46f8c51c7070674074b704bf2566b8f16d": 1
       },
-      "reason": "Existing repo_caboodle graph entity IRI; source renaming must not migrate graph identities."
+      "reason": "Exact legacy repo_caboodle input identity retained solely to map the same repository to the canonical tambo public name and its former-name compatibility link."
     },
     "scripts/build-repository-share.py": {
       "lines": {
