@@ -26,16 +26,16 @@ bundles its own **arm64 Python 3.12.16**, independently of `/usr/bin/python3`.
 
 - Python standalone build 20261026, native arm64 CPython 3.12.16, archive
   `fbf4afef53c2a6b72bb741bc06d5671a9dfaf87bd84e5aa73ac9b3d0d589f14e`.
-- Shantytown commit `bd499fbcc4cddd14aa679f5e71c0b5bed746d31f`
+- Shantytown commit `dd11e1ce4a1bb63988e3df457a842cb743ea5222`
   (v0.10.0), commit archive
-  `e654681a737b9cc821124edf45b92000bd1780e696ad54e4d46ab8752a7f2b58`.
+  `8ac726ab3d39dfcef7b4d10f034f00870aa121f817df90d945c8656a52f1c25f`.
   The source distribution omits `scripts/st-job-launcher`, so the builder uses
   this checksum-pinned complete commit archive instead.
-- Seeds 0.13.0 native arm64 archive
-  `a4b3c67622ef21070add3e4b5545cee77a0666e5392cbc5ab4ffeca184f3e81f`.
+- Seeds 0.14.0 native arm64 archive
+  `74a996635b7ece44ef896581b0689ed85d1a7b7c307334927a19a1a04c1e779a`.
 
 The artifact manifest pin is
-`da70317bd2a35987d927a152c3d5dce5844d153d61678a6e9d5d3a2fb0272537`.
+`33de07c81561a45b3fd49a8f88160b9761300732cc99c16b21670d5c026acb9a`.
 It binds 1180 regular files, about 88 MB: interpreter, standard library and
 native libraries, public Shantytown application, launcher, trusted `sd`, and
 licenses. Archive links are materialized from the pinned archive; output has
@@ -89,7 +89,7 @@ that sequence; do not continue with `|| true` or delete a prepared reservation.
   --inventory docs/operator-packets/e579/catalog \
   --inventory-sha256 21d6283211c709dd3370bf558b5c2e69529a59849b63d48d5b1af1b6c7b5c10a
 "$TOOL" job-runtime --directory macos-arm64-job-runtime \
-  --manifest-sha256 da70317bd2a35987d927a152c3d5dce5844d153d61678a6e9d5d3a2fb0272537
+  --manifest-sha256 33de07c81561a45b3fd49a8f88160b9761300732cc99c16b21670d5c026acb9a
 ```
 
 The offline message explicitly says native controller/readiness is unproved.
@@ -198,11 +198,12 @@ migration journal, then use the pinned runtime's full catalog verification.
 The physical order is controller -> runtime staging as needed -> identity and
 negative controls -> phase-A refusal -> explicit 1b expansion -> metadata and
 policy -> normal Chaski retry. This two-phase dependency prevents a single
-linear unattended setup. **Current blocking source dependencies:** the pinned
-Seeds lacks the private CA-file option, and the pinned ST report path compares
-literal `/var` against resolved `/private/var`. Both are owned by the follow-up
-source dependency; no lifecycle success is claimed by this packet. Until its
-new runtime pin is reviewed, stop before the synthetic execution.
+linear unattended setup. The successor runtime pins Seeds 0.14.0 with the
+CA-file configuration and ST `dd11e1ce`, including the protected macOS `/var`
+alias handling and canonical `/private/var` controller-root requirement. This
+closes the old input-pin gaps; it does not prove native lifecycle success.
+Stop before synthetic execution until this new runtime pin has completed the
+normal source review, release and native acceptance.
 
 2. **Immutable runtime**, before metadata: stage regular files with exact
 pins, never `extractall`, a root download/build, or a recursive copy of an
@@ -211,10 +212,10 @@ unverified user tree. The staging helper retains interrupted `.pending` state.
 ```sh
 sudo /usr/bin/python3 -I scripts/macos-job-runtime-stage.py \
   --archive "$ARCHIVE" --archive-sha256 "$ARCHIVE_SHA256" \
-  --manifest-sha256 da70317bd2a35987d927a152c3d5dce5844d153d61678a6e9d5d3a2fb0272537
+  --manifest-sha256 33de07c81561a45b3fd49a8f88160b9761300732cc99c16b21670d5c026acb9a
 sudo '/Library/Application Support/Shantytown/bin/tambo-controller-e579' job-runtime \
-  --directory '/Library/Application Support/Shantytown/runtime-artifacts/da70317bd2a35987d927a152c3d5dce5844d153d61678a6e9d5d3a2fb0272537' \
-  --manifest-sha256 da70317bd2a35987d927a152c3d5dce5844d153d61678a6e9d5d3a2fb0272537 --apply
+  --directory '/Library/Application Support/Shantytown/runtime-artifacts/33de07c81561a45b3fd49a8f88160b9761300732cc99c16b21670d5c026acb9a' \
+  --manifest-sha256 33de07c81561a45b3fd49a8f88160b9761300732cc99c16b21670d5c026acb9a --apply
 ```
 
 The existing runtime installer creates missing `/usr/local/libexec` through its
@@ -255,14 +256,13 @@ prepare/check/launch/stop/poll; job submit only; `NOSETENV` and a separate PTY.
 An unrelated broad rule, including an administrator's existing passwordless
 rule, must grant nothing to either dedicated account. A mismatch stops here.
 
-5. **Own-key enrollment and CA trust — BLOCKED until the separate reviewed
-Seeds CA-file config/release and Shantytown identity pass-through are delivered.**
-The pinned Seeds0.13 source does not implement a CA-file option. Do not invent
-an environment variable, expand system trust, turn verification off or fall back
-to HTTP. Its successor must provide a per-client pinned CA config path, survive
-the protected launch boundary, and refuse wrong/missing/tampered CA and hostname.
-Updating runtime inputs and its manifest pin is a separate reviewed artifact
-revision; do not patch installed bytes in place.
+5. **Own-key enrollment and CA trust — native acceptance remains required.**
+The successor pins published Seeds 0.14.0 and the ST identity pass-through.
+Use `[quipu] ca_file` and `ca_sha256` in the protected per-principal Seeds
+configuration. Verification stays enabled: wrong/missing/tampered CA and wrong
+hostname must refuse. Do not invent a CA environment variable, expand system
+trust or fall back to HTTP. The new manifest is a separate reviewed artifact
+revision; never patch installed runtime bytes in place.
 
 The private host packet supplies endpoint, controller principal, introducer,
 public CA bytes/provenance/hash and exact root-owned0644 CA path. Install public
@@ -275,6 +275,17 @@ a general sudo impersonation rule. Only public key output goes to the existing
 introducer for `quipu attest register`; no automatic `VerifierRegistration` and
 no private-key copy between accounts. Capture own-key success, wrong/missing-key
 and replay refusal with temporary synthetic credentials before policy activation.
+
+Generate each key **before** redirecting that UID's config. Prepare one distinct
+root-owned, non-writable configuration directory per principal; each contains
+`seeds/config.toml` with the CA path/hash and that UID's own `signing_key_file`,
+`signing_session` and `signing_introducer` returned by its enrollment. The key
+stays in its original private home. A CA-only redirected config silently loses
+the signing context and is not an acceptable packet. Each config directory and
+public CA must pass ST's protected-path checks. After redirect, `sd key init`
+as that UID must refuse without changing its key or config; retain this negative
+control alongside own-key and cross-UID signing proofs.
+
 
 `org.shantytown.controller.plist` is a disabled system-launchd proposal, not
 an installed/armed daemon. Its fixed interpreter/application run `st tend` as
@@ -296,9 +307,13 @@ python3 scripts/render-macos-controller-identity.py \
 ```
 
 The example endpoint is a fixture, not the native target. The real candidate is
-private and supplied before ASK, never guessed from the example. It maps51000
-and51001 to their distinct principal/home, HTTPS endpoint and trusted immutable
-`/opt/shantytown-job-launcher/bin/sd`. Create-only delivery is root:wheel0644 at
+private and supplied before ASK, never guessed from the example. Complete the
+rendered candidate with a distinct absolute `seeds_config_dir` on **each** UID
+binding, selecting its own protected config directory from step5. The renderer's
+baseline output without those fields is not CA-ready. Record the SHA256 only
+after completing these private fields; review the complete bytes before delivery.
+It maps51000 and51001 to their distinct principal/home, HTTPS endpoint and trusted
+immutable `/opt/shantytown-job-launcher/bin/sd`. Create-only delivery is root:wheel0644 at
 the fixed platform identity path, after checking exact candidate bytes/pin and
 safe parents. No `required:true` installation or server enforcement occurs from
 this source PR. Preserve any occupied different file for explicit migration.

@@ -6,3 +6,6 @@ docs/book/book/
 
 # Legacy local tracker state stays private.
 /.beads/
+
+!docs/demos/runtime-ca-successor/output.log
+!docs/demos/runtime-ca-successor/timing.log
