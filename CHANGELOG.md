@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.11.1](https://github.com/intigraph/tambo/compare/v0.11.0...v0.11.1) (2026-11-05)
+
+
+### Bug Fixes
+
+* **macos:** accept signed system account inventory IDs ([#241](https://github.com/intigraph/tambo/issues/241)) ([509f576](https://github.com/intigraph/tambo/commit/509f576f71f925235a9313b79805dd68c5e738ef))
+* **quickstart:** retain newer Bobbin under skip-install ([#244](https://github.com/intigraph/tambo/issues/244)) ([8ca86f7](https://github.com/intigraph/tambo/commit/8ca86f7138fc149f7508dc1fbe9cabe703fadc00))
+* **runtime:** ship CA-capable macOS job runtime inputs ([#240](https://github.com/intigraph/tambo/issues/240)) ([6236480](https://github.com/intigraph/tambo/commit/62364807aa6597e11f476a1cf5eb1a590716382a))
+
 ## [0.11.0](https://github.com/intigraph/tambo/compare/v0.10.1...v0.11.0) (2026-11-05)
 
 
