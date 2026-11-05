@@ -11,8 +11,15 @@ run:
 
 ```sh
 gh workflow run install-methods.yml --repo intigraph/tambo --ref main \
-  -f trust_brew_formula=true -f container=true -f image=ghcr.io/intigraph/quipu:0.8.1
+  -f method=all -f trust_brew_formula=true -f container=true -f image=ghcr.io/intigraph/quipu:0.8.1
 ```
+
+Select `method=brew`, `method=apt` or `method=container` to run only that
+method. For the failed Homebrew leg, keep the earlier apt PASS receipt and use
+`-f method=brew -f trust_brew_formula=true -f container=false`. The container
+owner uses `-f method=container -f container=true` only after its separate image
+gate is met. A skipped method is not re-qualified and does not erase an earlier
+receipt. `method=all` retains the initial multi-method qualification.
 
 Record the actual run's `head_sha`. A method qualifies only from its successful
 job and `result.json` with `status: PASS` at the accepted landed checkout.
