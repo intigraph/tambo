@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Disabled</key>
+	<true/>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>HOME</key>
+		<string>/var/lib/shantytown/controllers/_stctl</string>
+		<key>PATH</key>
+		<string>/opt/shantytown-job-launcher/bin:/usr/bin:/bin</string>
+	</dict>
+	<key>GroupName</key>
+	<string>_stctl</string>
+	<key>KeepAlive</key>
+	<false/>
+	<key>Label</key>
+	<string>org.shantytown.controller</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/opt/shantytown-job-launcher/bin/python3</string>
+		<string>-BIS</string>
+		<string>-c</string>
+		<string>import sys; sys.path.insert(0,"/opt/shantytown-job-launcher/app"); from shantytown.cli import main; raise SystemExit(main())</string>
+		<string>--root</string>
+		<string>/private/var/lib/shantytown/controllers/_stctl/root</string>
+		<string>tend</string>
+	</array>
+	<key>RunAtLoad</key>
+	<false/>
+	<key>UserName</key>
+	<string>_stctl</string>
+	<key>WorkingDirectory</key>
+	<string>/var/lib/shantytown/controllers/_stctl</string>
+</dict>
+</plist>
