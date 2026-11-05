@@ -3,6 +3,10 @@ name: Quipu install method qualification
 on:
   workflow_dispatch:
     inputs:
+      trust_brew_formula:
+        description: Explicitly trust only scbrown/tap/quipu on the disposable macOS runner (removed afterward)
+        type: boolean
+        default: false
       container:
         description: Qualify the published container as well as Homebrew and apt
         type: boolean
@@ -42,8 +46,14 @@ jobs:
       - name: Exercise the package-owned install, verification, upgrade and removal
         env:
           METHOD: ${{ matrix.method }}
+          TRUST_BREW_FORMULA: ${{ inputs.trust_brew_formula }}
           INSTALL_METHOD_RUNNER: ${{ runner.environment }}
-        run: python3 scripts/qualify-install-method.py "$METHOD" --output "$RUNNER_TEMP/install-methods/$METHOD"
+        run: |
+          args=()
+          if [[ "$METHOD" == brew && "$TRUST_BREW_FORMULA" == true ]]; then
+            args+=(--trust-brew-formula)
+          fi
+          python3 scripts/qualify-install-method.py "$METHOD" --output "$RUNNER_TEMP/install-methods/$METHOD" "${args[@]}"
       - name: Retain the exact checkout and per-command method receipt
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
