@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 //! The one adapter for every data-declared stack member (aegis-1i5h1j C1).
 //!
 //! Install fetches the member's release asset for this host and accepts it only
@@ -146,9 +148,9 @@ fn refuse_foreign_program(manifest: &Manifest) -> Result<()> {
 /// A python-wheel member's console script whose venv is gone, so it cannot run
 /// to prove its identity (aegis-z1u9s0). Seen on CI: a cache restored
 /// `$CARGO_HOME/bin` but not the venvs under `~/.local/share`, and the A2 guard
-/// then refused to overwrite caboodle's own launcher. Ownership is proved, not
+/// then refused to overwrite Tambo's own launcher. Ownership is proved, not
 /// assumed: the script's interpreter (a `#!` line, or pip's `/bin/sh`
-/// trampoline for a long path) must lie inside this member's caboodle-owned
+/// trampoline for a long path) must lie inside this member's Tambo-owned
 /// venv directory and must not exist. Anything else unrunnable stays refused.
 /// Returns the missing interpreter.
 fn orphaned_own_launcher(manifest: &Manifest, script: &Path) -> Option<PathBuf> {
@@ -502,7 +504,7 @@ fn reports_version(line: &str, version: &str) -> bool {
 /// This EXECUTES an unreviewed release. `wrapper`, when given, is run as
 /// `<wrapper> <program> <args...>` for every such execution, so the caller can
 /// confine it (the unattended bump cron uses a no-network, no-home sandbox,
-/// aegis-uy26l7). caboodle itself stays platform-neutral.
+/// aegis-uy26l7). Tambo itself stays platform-neutral.
 pub(crate) fn prove_release(
     manifest: &Manifest,
     archive: &Path,
@@ -542,12 +544,12 @@ pub(crate) fn prove_release(
     Ok(())
 }
 
-/// Where a python-wheel member's venv goes: caboodle-owned and UNIQUE per
+/// Where a python-wheel member's venv goes: Tambo-owned and UNIQUE per
 /// install (`<version>-<nanos>`), never reused. A venv cannot be moved (its
 /// scripts and pyvenv.cfg hold absolute paths), so a reinstall builds beside the
 /// live one and the swap is the atomic replacement of the console script. A
 /// failed pip leaves the live venv, and the script pointing into it, untouched
-/// (dearing, caboodle#59). Superseded venvs are left for rollback.
+/// (dearing, Tambo#59). Superseded venvs are left for rollback.
 fn venv_root(manifest: &Manifest) -> Result<PathBuf> {
     let home = env::var_os("HOME").context("HOME is required for a python-wheel member")?;
     let nanos = std::time::SystemTime::now()
@@ -850,7 +852,7 @@ mod release_verification_tests {
         manifest.programs[0].identity_contains = "foreign identity".to_owned();
         assert!(verify_staged_member(&manifest, &unpack).is_err());
         manifest.programs[0].identity_contains =
-            "fixture-demo is the caboodle fixture stack member".to_owned();
+            "fixture-demo is the Tambo fixture stack member".to_owned();
         manifest.version = "0.1.1".to_owned();
         assert!(verify_staged_member(&manifest, &unpack).is_err());
         manifest.version = "0.1.0".to_owned();

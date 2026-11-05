@@ -1,4 +1,6 @@
-//! `caboodle bump-member` against a fake release (wu M2, aegis-1i5h1j).
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
+//! `Tambo bump-member` against a fake release (wu M2, aegis-1i5h1j).
 // Bump proves the host target, and the fixture pins only x86_64 Linux.
 #![cfg(all(target_os = "linux", target_arch = "x86_64"))]
 
@@ -117,7 +119,7 @@ esac
 /// A release program that answers the fixture's identity and `tag`'s version.
 fn good_program(tag: &str) -> String {
     format!(
-        "case \"$1\" in --help) echo 'fixture-demo is the caboodle fixture stack member' ;; \
+        "case \"$1\" in --help) echo 'fixture-demo is the Tambo fixture stack member' ;; \
          --version) echo 'fixture-demo {}' ;; esac",
         tag.trim_start_matches('v')
     )
@@ -205,7 +207,7 @@ fn a_release_that_is_not_the_member_is_refused_before_anything_is_recorded() {
     // A release tagged 0.2.0 whose program reports another version is refused.
     fake.publish(
         "v0.2.0",
-        "case \"$1\" in --help) echo 'fixture-demo is the caboodle fixture stack member' ;; --version) echo 'fixture-demo 0.1.0' ;; esac",
+        "case \"$1\" in --help) echo 'fixture-demo is the Tambo fixture stack member' ;; --version) echo 'fixture-demo 0.1.0' ;; esac",
     );
     fake.bump(&[])
         .failure()

@@ -2,12 +2,12 @@
 //!
 //! A member is one reviewed `members/<name>.toml`, embedded at build time by
 //! `build.rs`, so the version and per-target digests a user installs are the
-//! ones this caboodle build was reviewed with. Adding a member is a data file,
+//! ones this Tambo build was reviewed with. Adding a member is a data file,
 //! never a Rust match arm: every site that dispatches on `ToolName` has one
 //! explicit `Member` arm that reads from here.
 //!
 //! Every manifest is parsed and validated by a unit test, so a malformed or
-//! unsafe manifest fails caboodle's CI and never reaches a user.
+//! unsafe manifest fails Tambo's CI and never reaches a user.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::OnceLock;
@@ -24,7 +24,7 @@ pub enum Kind {
     /// A `.tar.gz` GitHub release asset per target, holding the programs.
     RustRelease,
     /// One pure-Python `py3-none-any` wheel for every host, recorded under the
-    /// target key [`ANY_TARGET`]. Install puts it in a caboodle-owned venv and
+    /// target key [`ANY_TARGET`]. Install puts it in a Tambo-owned venv and
     /// links its console scripts. The wheel is digest-pinned; its declared
     /// dependencies are resolved by pip from the package index, so the pin
     /// covers the member's own code and NOT its dependencies.

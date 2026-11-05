@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 use std::path::PathBuf;
 
 use anyhow::Result;
@@ -921,7 +923,7 @@ fn main() -> Result<()> {
                 return Ok(());
             }
             if !guided {
-                anyhow::bail!("caboodle init currently requires --guided");
+                anyhow::bail!("tambo init currently requires --guided");
             }
             let stdin = std::io::stdin();
             let mut input = stdin.lock();
@@ -1094,7 +1096,7 @@ fn main() -> Result<()> {
                         println!("  {target} {digest}");
                     }
                     println!(
-                        "review the diff and open a PR; it ships in the next caboodle release"
+                        "review the diff and open a PR; it ships in the next Tambo release"
                     );
                 }
             }

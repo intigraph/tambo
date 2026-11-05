@@ -250,8 +250,8 @@ impl<'de> Deserialize<'de> for ToolName {
         Self::parse(&name).ok_or_else(|| {
             serde::de::Error::custom(format!(
                 "unknown tool '{name}': neither a built-in tool nor a stack member of this \
-                 caboodle build (a member removed since the plan was written, or a plan from \
-                 a newer caboodle); re-plan or use the caboodle that wrote it"
+                 Tambo build (a member removed since the plan was written, or a plan from \
+                 a newer Tambo); re-plan or use the Tambo that wrote it"
             ))
         })
     }
@@ -326,7 +326,7 @@ pub struct HostProfile {
     pub crew_excluded_owner: Option<String>,
     /// Plan tools another lane owns on this host, each named with that lane
     /// (aegis-fv4 D3: shuttle has no reviewed macOS delivery yet). Dropped for
-    /// the run and reported, never installed or verified by caboodle.
+    /// the run and reported, never installed or verified by Tambo.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub excluded_tools: Vec<ExcludedTool>,
 }
@@ -434,7 +434,7 @@ pub struct QuestionContract {
     pub expected: String,
     /// Set only on the built-in self-test contract. An explicit flag, not the
     /// marker: a user's own question may legitimately use the same marker (CI's
-    /// fixture does), and must never be answered from caboodle's scratch store.
+    /// fixture does), and must never be answered from Tambo's scratch store.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub self_test: bool,
 }
@@ -442,7 +442,7 @@ pub struct QuestionContract {
 /// Marker the built-in self-test question seeds and expects. Same contract CI's
 /// quipu round trip uses (adapter.rs), so a fresh box can pass it with no
 /// ontology of its own (aegis-ro425e.4).
-pub const SELF_TEST_MARKER: &str = "caboodle-verify-roundtrip";
+pub const SELF_TEST_MARKER: &str = "tambo-verify-roundtrip";
 
 impl QuestionContract {
     /// The question offered when a first-time user presses enter at the
@@ -454,7 +454,7 @@ impl QuestionContract {
             question: "does the knowledge store answer a query about a fact written to it?".to_owned(),
             answer_shape: "one entity label".to_owned(),
             seed_intent: format!(
-                "caboodle writes one Verification node named {SELF_TEST_MARKER} into a scratch store"
+                "Tambo writes one Verification node named {SELF_TEST_MARKER} into a scratch store"
             ),
             sparql: format!(
                 "SELECT ?s ?label WHERE {{ ?s <http://www.w3.org/2000/01/rdf-schema#label> ?label . FILTER(?label = \"{SELF_TEST_MARKER}\") }}"
@@ -482,7 +482,7 @@ impl InstallIntent {
     pub fn read(path: &Path) -> Result<Self> {
         if !path.exists() {
             bail!(
-                "no intent file at {}; run `tambo init --guided` to answer the interview instead, or write one (see the \"Using caboodle\" chapter of docs/book)",
+                "no intent file at {}; run `tambo init --guided` to answer the interview instead, or write one (see the \"Using Tambo\" chapter of docs/book)",
                 path.display()
             );
         }
@@ -717,7 +717,7 @@ impl Plan {
             }
             if self.crew.take().is_some() {
                 excluded.push(format!(
-                    "crew: EXCLUDED on host profile {host}; owned by {owner}; not installed or verified by caboodle"
+                    "crew: EXCLUDED on host profile {host}; owned by {owner}; not installed or verified by Tambo"
                 ));
             }
         }
@@ -730,7 +730,7 @@ impl Plan {
             if let Some(index) = self.tools.iter().position(|t| *t == entry.tool) {
                 self.tools.remove(index);
                 excluded.push(format!(
-                    "{}: EXCLUDED on host profile {host}; owned by {}; not installed or verified by caboodle",
+                    "{}: EXCLUDED on host profile {host}; owned by {}; not installed or verified by Tambo",
                     entry.tool.as_str(),
                     entry.owner
                 ));

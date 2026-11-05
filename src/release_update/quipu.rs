@@ -1,3 +1,5 @@
+// Compatibility: retained library imports, persisted paths, environment keys and
+// explicit old-command/version probes remain readable during the product rename.
 //! Paired Quipu artifacts, pinned at review time, with one durable transaction.
 use super::*;
 use crate::model::QuipuFlavor;
@@ -373,8 +375,8 @@ if [ "$1" = read ]; then
   case "$query" in
     ASK*)
       if [ ! -f "$db.knot" ]; then echo false
-      else case "$query" in *CaboodleVerifyAbsentTerm*) echo false;; *) echo true;; esac; fi;;
-    *) [ ! -f "$db" ] || echo caboodle-verify-roundtrip;;
+      else case "$query" in *TamboVerifyAbsentTerm*) echo false;; *) echo true;; esac; fi;;
+    *) [ ! -f "$db" ] || echo tambo-verify-roundtrip;;
   esac
 elif [ "$1" = episode ]; then touch "$4"
 elif [ "$1" = knot ]; then cp "$2" "$4.knot"
