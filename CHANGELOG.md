@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.11.2](https://github.com/intigraph/tambo/compare/v0.11.1...v0.11.2) (2026-11-05)
+
+
+### Bug Fixes
+
+* **ci:** fetch pinned Quipu verifier from canonical repository ([#243](https://github.com/intigraph/tambo/issues/243)) ([8ffeb60](https://github.com/intigraph/tambo/commit/8ffeb603e4bf503976dcc6b93f95dfa0a71c164d))
+* **macos:** distinguish implicit controller groups from explicit grants ([#245](https://github.com/intigraph/tambo/issues/245)) ([194bad9](https://github.com/intigraph/tambo/commit/194bad93da758a90eb97fb1b38db7b27ba6af284))
+
 ## [0.11.1](https://github.com/intigraph/tambo/compare/v0.11.0...v0.11.1) (2026-11-05)
 
 
