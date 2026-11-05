@@ -1,0 +1,78 @@
+name: Quipu install method qualification
+
+on:
+  workflow_dispatch:
+    inputs:
+      container:
+        description: Qualify the published container as well as Homebrew and apt
+        type: boolean
+        default: true
+      image:
+        description: Versioned or digest-pinned Quipu image (registry pin is independent of native releases)
+        type: string
+        default: ghcr.io/intigraph/quipu:0.8.1
+
+permissions:
+  contents: read
+
+concurrency:
+  group: install-method-qualification-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  packages:
+    name: Clean ${{ matrix.method }} lifecycle
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - method: brew
+            os: macos-15
+          - method: apt
+            os: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - name: Exercise the package-owned install, verification, upgrade and removal
+        env:
+          METHOD: ${{ matrix.method }}
+          INSTALL_METHOD_RUNNER: ${{ runner.environment }}
+        run: python3 scripts/qualify-install-method.py "$METHOD" --output "$RUNNER_TEMP/install-methods/$METHOD"
+      - name: Retain the exact checkout and per-command method receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: install-method-${{ matrix.method }}-${{ github.sha }}
+          path: ${{ runner.temp }}/install-methods/${{ matrix.method }}
+          if-no-files-found: error
+
+  container:
+    name: Clean container lifecycle
+    if: inputs.container
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - name: Pull, verify MCP, recreate, back up and remove only owned resources
+        env:
+          QUIPU_IMAGE: ${{ inputs.image }}
+          INSTALL_METHOD_RUNNER: ${{ runner.environment }}
+        run: python3 scripts/qualify-install-method.py container --image "$QUIPU_IMAGE" --output "$RUNNER_TEMP/install-methods/container"
+      - name: Retain the exact image digest and per-command method receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: install-method-container-${{ github.sha }}
+          path: ${{ runner.temp }}/install-methods/container
+          if-no-files-found: error
