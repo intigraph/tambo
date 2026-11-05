@@ -36,7 +36,13 @@ class ReleaseSnapshot(unittest.TestCase):
             source.mkdir()
             subprocess.run(["git", "init", "-q", str(source)], check=True)
             (source / "README.md").write_text("tracked pointer source\n")
-            subprocess.run(["git", "-C", str(source), "add", "README.md"], check=True)
+            for pack in ("stack-map", "stack-operations"):
+                target = source / "packs" / pack / "pendant"
+                target.mkdir(parents=True)
+                (target / "manifest.json").write_text("{}")
+                for suffix in (".pendant.db", ".qpack.db"):
+                    (source / "packs" / (pack + suffix)).symlink_to(pack + "/pendant")
+            subprocess.run(["git", "-C", str(source), "add", "."], check=True)
             subprocess.run(
                 [
                     "git",
@@ -59,6 +65,17 @@ class ReleaseSnapshot(unittest.TestCase):
             self.assertFalse((copied / "private.key").exists())
             self.assertEqual((source / "private.key").read_text(), "synthetic untracked sentinel")
             self.assertFalse((source / ".bobbin").exists())
+            for pack in ("stack-map", "stack-operations"):
+                self.assertEqual((copied / "packs" / pack / "pendant/manifest.json").read_text(), "{}")
+                self.assertFalse((copied / "packs" / (pack + ".pendant.db")).exists())
+            alias = source / "packs/stack-map.pendant.db"
+            alias.unlink()
+            alias.symlink_to("../../private.key")
+            subprocess.run(["git", "-C", str(source), "add", "packs"], check=True)
+            subprocess.run(["git", "-C", str(source), "-c", "user.name=fixture", "-c", "user.email=fixture@example.org", "commit", "-qm", "unsafe alias"], check=True)
+            unsafe = subprocess.check_output(["git", "-C", str(source), "rev-parse", "HEAD"], text=True).strip()
+            with self.assertRaisesRegex(ValueError, "unsupported tracked"):
+                builder.materialize_release(source, unsafe, root / "refused")
 
 
 class AlignmentCarrier(unittest.TestCase):
