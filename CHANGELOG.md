@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.10.0](https://github.com/intigraph/tambo/compare/v0.9.0...v0.10.0) (2026-11-05)
+
+
+### Features
+
+* **hooks:** install and verify the query-first hooks for Claude Code and Codex ([#227](https://github.com/intigraph/tambo/issues/227)) ([82f710e](https://github.com/intigraph/tambo/commit/82f710e4723a56f5f1160bc9412c4ee91689fa71))
+
+
+### Bug Fixes
+
+* require pinned embedding providers in repository shares ([#233](https://github.com/intigraph/tambo/issues/233)) ([0461437](https://github.com/intigraph/tambo/commit/04614379596614e4aa5acc39576bce3b2356a6b8))
+
 ## [0.9.0](https://github.com/intigraph/tambo/compare/v0.8.0...v0.9.0) (2026-11-04)
 
 
