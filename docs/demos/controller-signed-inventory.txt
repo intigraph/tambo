@@ -1,0 +1,13 @@
+Script started on 2026-11-05 09:14:46-05:00 [COMMAND="python3 -B docs/demos/controller-signed-inventory.py" <not executed on terminal>]
+BASE 7fd2777
+'root 0\nnobody -2\nnogroup -1\n' -> REFUSED: native account inventory unknown
+'nobody -2\nnobody -1\n' -> REFUSED: native account inventory unknown
+'nobody --2\n' -> REFUSED: native account inventory unknown
+'' -> REFUSED: native account inventory empty
+CANDIDATE script sha256 adaa908c7b98589bc38db80b06d3d1346fd465a13ae631a9e01591a2be171bf0
+'root 0\nnobody -2\nnogroup -1\n' -> {'root': 0, 'nobody': -2, 'nogroup': -1}
+'nobody -2\nnobody -1\n' -> REFUSED: native account inventory unknown
+'nobody --2\n' -> REFUSED: native account inventory unknown
+'' -> REFUSED: native account inventory empty
+
+Script done on 2026-11-05 09:14:46-05:00 [COMMAND_EXIT_CODE="0"]

@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.11.3](https://github.com/intigraph/tambo/compare/v0.11.2...v0.11.3) (2026-11-06)
+
+
+### Bug Fixes
+
+* **update:** preserve exact Quipu runtime aliases through rollback ([#160](https://github.com/intigraph/tambo/issues/160)) ([17206d2](https://github.com/intigraph/tambo/commit/17206d26206b6b1737935405921d022d325c3da4))
+
+## [0.11.2](https://github.com/intigraph/tambo/compare/v0.11.1...v0.11.2) (2026-11-05)
+
+
+### Bug Fixes
+
+* **ci:** fetch pinned Quipu verifier from canonical repository ([#243](https://github.com/intigraph/tambo/issues/243)) ([8ffeb60](https://github.com/intigraph/tambo/commit/8ffeb603e4bf503976dcc6b93f95dfa0a71c164d))
+* **macos:** distinguish implicit controller groups from explicit grants ([#245](https://github.com/intigraph/tambo/issues/245)) ([194bad9](https://github.com/intigraph/tambo/commit/194bad93da758a90eb97fb1b38db7b27ba6af284))
+
+## [0.11.1](https://github.com/intigraph/tambo/compare/v0.11.0...v0.11.1) (2026-11-05)
+
+
+### Bug Fixes
+
+* **macos:** accept signed system account inventory IDs ([#241](https://github.com/intigraph/tambo/issues/241)) ([509f576](https://github.com/intigraph/tambo/commit/509f576f71f925235a9313b79805dd68c5e738ef))
+* **quickstart:** retain newer Bobbin under skip-install ([#244](https://github.com/intigraph/tambo/issues/244)) ([8ca86f7](https://github.com/intigraph/tambo/commit/8ca86f7138fc149f7508dc1fbe9cabe703fadc00))
+* **runtime:** ship CA-capable macOS job runtime inputs ([#240](https://github.com/intigraph/tambo/issues/240)) ([6236480](https://github.com/intigraph/tambo/commit/62364807aa6597e11f476a1cf5eb1a590716382a))
+
 ## [0.11.0](https://github.com/intigraph/tambo/compare/v0.10.1...v0.11.0) (2026-11-05)
 
 

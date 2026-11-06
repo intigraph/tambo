@@ -96,6 +96,22 @@ pub fn apply(plan: &Plan, state_path: &Path, skip_install: bool) -> Result<State
             Ok(match adapter.version() {
                 Ok(installed) if adapter.is_current(&installed) => installed,
 
+                // Keep externally installed newer Bobbin builds without replacing
+                // them. Quickstart still requires the functional round-trip below;
+                // retaining a version never means it has been verified.
+                Ok(installed)
+                    if name == crate::model::ToolName::Bobbin
+                        && skip_install
+                        && crate::release_update::behind_reviewed(&desired, &installed)
+                            == Some(true) =>
+                {
+                    println!(
+                        "bobbin: warning: retaining newer installed {installed}; reviewed {desired}. \
+                         No installation performed; functional verification is still required."
+                    );
+                    installed
+                }
+
                 // Known-wrong under --skip-install. The flag means "do not install",
                 // not "call it applied anyway", and a MISSING tool already fails
                 // here — a SKEWED one reporting success was the inconsistency.
