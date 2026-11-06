@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.12.0](https://github.com/intigraph/tambo/compare/v0.11.3...v0.12.0) (2026-11-06)
+
+
+### Features
+
+* prepare bounded phase-A and own-UID enrollment packets ([#254](https://github.com/intigraph/tambo/issues/254)) ([0c2bb4b](https://github.com/intigraph/tambo/commit/0c2bb4b0cfb9b3c9bf9b3ec7e5eabcfe2a97a3f2))
+
+
+### Bug Fixes
+
+* **qualification:** require explicit Homebrew formula trust ([#248](https://github.com/intigraph/tambo/issues/248)) ([62b2727](https://github.com/intigraph/tambo/commit/62b2727c14450ccce147e5360663a1e81ea856f2))
+
 ## [0.11.3](https://github.com/intigraph/tambo/compare/v0.11.2...v0.11.3) (2026-11-06)
 
 
