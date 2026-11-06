@@ -1,0 +1,18 @@
+Script started on 2026-11-06 03:24:43-05:00 [COMMAND="python3 -B docs/demos/e579-enrollment/demo.py" <not executed on terminal>]
+Target: source checkout; fixtures only, no native keys/accounts/sudo/launchd/network
+Base62b2727: key-init/config renderer and job-local bounded delivery absent from that tree
+Candidate source0b41557: the following actual local controls
+render key-init exit=0
+org.shantytown.e579.key-init.stctl.plist sha256=bb103a9457a73af800e274b58985a0eda6af7832502ca643bbd5925a35f7309f
+SOURCE CANDIDATES ONLY; no key generation, installation or launch; readiness FALSE
+{"UserName": "_stctl", "GroupName": "_stctl", "Disabled": true, "RunAtLoad": false, "KeepAlive": false}
+wrong-UID render exit=1: REFUSED: account UID/GID/home differs from reviewed packet
+fake receiver invocation 1 exit=75
+reserved attempt=1 max_attempts=2
+fake receiver invocation 2 exit=75
+reserved attempt=2 max_attempts=2
+fake receiver invocation 3 exit=1
+REFUSED: job retry budget exhausted; no receiver invocation
+Observed fake receiver child calls=2; third child withheld; readiness FALSE
+
+Script done on 2026-11-06 03:24:43-05:00 [COMMAND_EXIT_CODE="0"]
