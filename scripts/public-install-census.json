@@ -1,6 +1,6 @@
 {
-  "observed_at": "2026-11-04",
-  "scope": "All nonarchived nonfork public scbrown/intigraph repositories with a GitHub latest stable release, from listings below200 rows per owner. Missing one-liners retained, not replaced by generated scripts.",
+  "observed_at": "2026-11-06",
+  "scope": "Rebind of the existing 17-repository public installer census inventory; current default-branch README and installer bytes and latest stable release observed once. This is not a fresh full-owner inventory or an installation acceptance claim. Missing documented one-liners retained.",
   "repositories": [
     {
       "repository": "scbrown/pixelsrc",
@@ -24,11 +24,11 @@
     },
     {
       "repository": "intigraph/shantytown",
-      "source_sha": "00aeb887d5ec2f8575283bd1c8eca5bbf09aa795",
-      "release_tag": "v0.9.1",
-      "release_url": "https://github.com/intigraph/shantytown/releases/tag/v0.9.1",
+      "source_sha": "fa4d7e08e1ae25c9da160553b463afeb99a1baa2",
+      "release_tag": "v0.11.1",
+      "release_url": "https://github.com/intigraph/shantytown/releases/tag/v0.11.1",
       "command": "curl -fsSL https://raw.githubusercontent.com/scbrown/shantytown/main/install.sh | sh",
-      "readme_line": 19,
+      "readme_line": 29,
       "commands": [
         "st"
       ],
@@ -37,11 +37,11 @@
     },
     {
       "repository": "intigraph/quipu",
-      "source_sha": "07c6a9bb2fdf381c130bd35a2f5ae43a75edac08",
-      "release_tag": "quipu-ai-v0.16.6",
-      "release_url": "https://github.com/intigraph/quipu/releases/tag/quipu-ai-v0.16.6",
+      "source_sha": "733b02f0e78888f2b8aeb5e8ab0b3783d0d12b94",
+      "release_tag": "quipu-ai-v0.17.0",
+      "release_url": "https://github.com/intigraph/quipu/releases/tag/quipu-ai-v0.17.0",
       "command": "curl -fsSL https://raw.githubusercontent.com/intigraph/quipu/main/install.sh | sh",
-      "readme_line": 45,
+      "readme_line": 40,
       "commands": [
         "quipu",
         "qp",
@@ -52,9 +52,9 @@
     },
     {
       "repository": "intigraph/bobbin",
-      "source_sha": "e3f91595a60c32901ba0096ce3f3cb02f6cca0e0",
-      "release_tag": "v0.34.0",
-      "release_url": "https://github.com/intigraph/bobbin/releases/tag/v0.34.0",
+      "source_sha": "f8786331c1cb63d4358ae0c829fd059f72106315",
+      "release_tag": "v0.35.2",
+      "release_url": "https://github.com/intigraph/bobbin/releases/tag/v0.35.2",
       "command": "curl -fsSL https://raw.githubusercontent.com/scbrown/bobbin/main/install.sh | sh",
       "readme_line": 21,
       "commands": [
@@ -65,9 +65,9 @@
     },
     {
       "repository": "intigraph/seeds",
-      "source_sha": "fc3c497dc5359b35ecee7d6a29c27e8bf1c02e60",
-      "release_tag": "seeds-ai-v0.12.0",
-      "release_url": "https://github.com/intigraph/seeds/releases/tag/seeds-ai-v0.12.0",
+      "source_sha": "6ec2f8a02279719f369ada86a02bbe9bcb702515",
+      "release_tag": "seeds-ai-v0.19.0",
+      "release_url": "https://github.com/intigraph/seeds/releases/tag/seeds-ai-v0.19.0",
       "command": "curl -fsSL https://raw.githubusercontent.com/scbrown/seeds/main/install.sh | sh",
       "readme_line": 26,
       "commands": [
@@ -78,9 +78,9 @@
     },
     {
       "repository": "intigraph/yupana",
-      "source_sha": "bad062ff8865d1574340181d08913f2d709012f6",
-      "release_tag": "v0.16.6",
-      "release_url": "https://github.com/intigraph/yupana/releases/tag/v0.16.6",
+      "source_sha": "8fb47b21a1058044b90181c915e7368b210acbb5",
+      "release_tag": "v0.17.3",
+      "release_url": "https://github.com/intigraph/yupana/releases/tag/v0.17.3",
       "command": "curl -fsSL https://raw.githubusercontent.com/scbrown/yupana/main/install.sh | sh",
       "readme_line": 27,
       "commands": [
@@ -92,20 +92,20 @@
     },
     {
       "repository": "intigraph/camayoc",
-      "source_sha": "088c403d7541eca1acad9a112aa8ab35d5410134",
-      "release_tag": "v0.1.4",
-      "release_url": "https://github.com/intigraph/camayoc/releases/tag/v0.1.4",
+      "source_sha": "688ee074654cd933c43254afd9df19af1eb1c63b",
+      "release_tag": "v0.1.5",
+      "release_url": "https://github.com/intigraph/camayoc/releases/tag/v0.1.5",
       "command": "curl -fsSL https://raw.githubusercontent.com/intigraph/camayoc/main/install.sh | sh",
-      "readme_line": 21,
+      "readme_line": 35,
       "commands": [],
       "kind": "source",
       "installer_sha256": "dc3165fceeefd8b7c0bb0ee2ea643a72c280ca48089f36c40d83767b95c5ef0b"
     },
     {
       "repository": "intigraph/tambo",
-      "source_sha": "82f710e4723a56f5f1160bc9412c4ee91689fa71",
-      "release_tag": "v0.9.0",
-      "release_url": "https://github.com/intigraph/tambo/releases/tag/v0.9.0",
+      "source_sha": "7eef699cafe364f7b16874137d68ec841907679e",
+      "release_tag": "v0.12.0",
+      "release_url": "https://github.com/intigraph/tambo/releases/tag/v0.12.0",
       "command": "curl -fsSL https://raw.githubusercontent.com/intigraph/tambo/main/install.sh | sh",
       "readme_line": 34,
       "commands": [
@@ -117,9 +117,9 @@
     },
     {
       "repository": "intigraph/shuttle",
-      "source_sha": "f6a8bea93125f5a5bc335e77a2c102e2e700cfa3",
-      "release_tag": "v0.8.0",
-      "release_url": "https://github.com/intigraph/shuttle/releases/tag/v0.8.0",
+      "source_sha": "bd56a4cc49104efc0b268493b1e7e76f0113db93",
+      "release_tag": "v0.8.1",
+      "release_url": "https://github.com/intigraph/shuttle/releases/tag/v0.8.1",
       "command": "curl -fsSL https://raw.githubusercontent.com/scbrown/shuttle/main/install.sh | sh",
       "readme_line": 21,
       "commands": [
@@ -130,9 +130,9 @@
     },
     {
       "repository": "intigraph/rikuy",
-      "source_sha": "489cefb34841efaeb870e1cac67e9dcf11646dc1",
-      "release_tag": "rikuy-v0.2.0",
-      "release_url": "https://github.com/intigraph/rikuy/releases/tag/rikuy-v0.2.0",
+      "source_sha": "2a13d7ffddfb3fdb7e8851613b13edd97f4fda3e",
+      "release_tag": "rikuy-v0.2.2",
+      "release_url": "https://github.com/intigraph/rikuy/releases/tag/rikuy-v0.2.2",
       "command": "curl -fsSL https://raw.githubusercontent.com/scbrown/rikuy/main/install.sh | sh",
       "readme_line": 35,
       "commands": [],
@@ -141,9 +141,9 @@
     },
     {
       "repository": "intigraph/desire-path",
-      "source_sha": "37ae4cebd76852446d24e8d69080faf7f67bea5b",
-      "release_tag": "v0.12.0",
-      "release_url": "https://github.com/intigraph/desire-path/releases/tag/v0.12.0",
+      "source_sha": "0c9e18b7363aff8acfefb2a1fb0515c3a0fe9461",
+      "release_tag": "v0.12.2",
+      "release_url": "https://github.com/intigraph/desire-path/releases/tag/v0.12.2",
       "command": "curl -fsSL https://raw.githubusercontent.com/scbrown/desire-path/main/install.sh | sh",
       "readme_line": 35,
       "commands": [
@@ -154,9 +154,9 @@
     },
     {
       "repository": "intigraph/quechua",
-      "source_sha": "12825417046f805fe91a84ee79dd9fdc875bfa88",
-      "release_tag": "v0.12.0",
-      "release_url": "https://github.com/intigraph/quechua/releases/tag/v0.12.0",
+      "source_sha": "c47705a77f153af89fecf79598a570e1636530d2",
+      "release_tag": "v0.12.2",
+      "release_url": "https://github.com/intigraph/quechua/releases/tag/v0.12.2",
       "command": "curl -fsSL https://raw.githubusercontent.com/scbrown/quechua/main/install.sh | sh",
       "readme_line": 17,
       "commands": [
@@ -167,9 +167,9 @@
     },
     {
       "repository": "intigraph/chaski",
-      "source_sha": "14f65b45958ec66e70ee5c565b094a56498d0b28",
-      "release_tag": "v0.3.0",
-      "release_url": "https://github.com/intigraph/chaski/releases/tag/v0.3.0",
+      "source_sha": "7f22808d78790f38949338866327d6bc9b3772e4",
+      "release_tag": "v0.4.1",
+      "release_url": "https://github.com/intigraph/chaski/releases/tag/v0.4.1",
       "command": "curl -fsSL https://raw.githubusercontent.com/scbrown/chaski/main/install.sh | sh",
       "readme_line": 17,
       "commands": [
@@ -192,13 +192,14 @@
     },
     {
       "repository": "intigraph/creel",
-      "source_sha": "77d3896c7aedc94114c2c370fcdc4a43315e923a",
-      "release_tag": "v0.1.1",
-      "release_url": "https://github.com/intigraph/creel/releases/tag/v0.1.1",
-      "command": null,
-      "readme_line": null,
+      "source_sha": "84cdb41bf36fe53aa57072bcdc94b593bed1d488",
+      "release_tag": "v0.2.0",
+      "release_url": "https://github.com/intigraph/creel/releases/tag/v0.2.0",
+      "command": "curl -fsSL https://raw.githubusercontent.com/intigraph/creel/main/install.sh | sh",
+      "readme_line": 44,
       "commands": [],
-      "kind": "cli"
+      "kind": "source-site",
+      "installer_sha256": "af013c79a602348133d82a8b15db1b262929b73ecc5cff22c5924ec29a4bdf69"
     },
     {
       "repository": "intigraph/willay",
