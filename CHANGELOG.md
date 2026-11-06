@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.1](https://github.com/intigraph/tambo/compare/v0.12.0...v0.12.1) (2026-11-06)
+
+
+### Bug Fixes
+
+* **census:** rebind documented installers to current releases ([#255](https://github.com/intigraph/tambo/issues/255)) ([3fb2812](https://github.com/intigraph/tambo/commit/3fb28127542219462c0d52fc7a9107209ff3a85a))
+
 ## [0.12.0](https://github.com/intigraph/tambo/compare/v0.11.3...v0.12.0) (2026-11-06)
 
 
