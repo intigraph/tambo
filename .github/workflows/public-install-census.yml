@@ -51,6 +51,8 @@ jobs:
         with:
           node-version: '22'
       - name: Observe documented installers with fresh per-repo HOME and no caller credentials
+        env:
+          CENSUS_GITHUB_METADATA_TOKEN: ${{ github.token }}
         run: |
           mkdir -p probe-results
           cat /etc/os-release > probe-results/os-release.txt
@@ -82,6 +84,8 @@ jobs:
         with:
           node-version: '22'
       - name: Observe in fresh per-repo HOME on disposable Mac runner
+        env:
+          CENSUS_GITHUB_METADATA_TOKEN: ${{ github.token }}
         run: |
           mkdir -p probe-results
           sw_vers > probe-results/os-release.txt
