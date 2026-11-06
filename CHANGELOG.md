@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.3](https://github.com/intigraph/tambo/compare/v0.11.2...v0.11.3) (2026-11-06)
+
+
+### Bug Fixes
+
+* **update:** preserve exact Quipu runtime aliases through rollback ([#160](https://github.com/intigraph/tambo/issues/160)) ([17206d2](https://github.com/intigraph/tambo/commit/17206d26206b6b1737935405921d022d325c3da4))
+
 ## [0.11.2](https://github.com/intigraph/tambo/compare/v0.11.1...v0.11.2) (2026-11-05)
 
 
