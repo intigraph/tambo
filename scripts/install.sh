@@ -23,6 +23,7 @@ else
     system=$(uname -s)
     case "$system:$machine" in
         Linux:x86_64) target=x86_64-unknown-linux-gnu ;;
+        Linux:aarch64|Linux:arm64) target=aarch64-unknown-linux-gnu ;;
         Darwin:x86_64) target=x86_64-apple-darwin ;;
         Darwin:arm64) target=aarch64-apple-darwin ;;
         *) printf '%s\n' "unsupported Tambo release target: $system $machine" >&2; exit 1 ;;
@@ -30,7 +31,7 @@ else
 fi
 
 case "$target" in
-    x86_64-unknown-linux-gnu|x86_64-apple-darwin|aarch64-apple-darwin) ;;
+    x86_64-unknown-linux-gnu|aarch64-unknown-linux-gnu|x86_64-apple-darwin|aarch64-apple-darwin) ;;
     *) printf '%s\n' "unsupported Tambo release target: $target" >&2; exit 1 ;;
 esac
 

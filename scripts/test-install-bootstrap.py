@@ -71,7 +71,7 @@ class Bootstrap(unittest.TestCase):
         checksum = '0' * 64 if corrupt_checksum else hashlib.sha256(path.read_bytes()).hexdigest()
         self.routes[f'{self.base}/{name}.sha256'] = {'status': 200, 'body': f'{checksum}  {name}\n'}
 
-    def run_installer(self, version=None, repository=None, legacy_repository=None):
+    def run_installer(self, version=None, repository=None, legacy_repository=None, platform=None):
         route_file = self.root / 'routes.json'
         route_file.write_text(json.dumps(self.routes))
         env = {k: v for k, v in os.environ.items() if not k.startswith(('TAMBO_', 'CABOODLE_'))}
@@ -80,6 +80,11 @@ class Bootstrap(unittest.TestCase):
                    CABOODLE_INSTALL_DIR=str(self.root / 'installed'),
                    CABOODLE_TARGET=self.target, CABOODLE_RELEASE_BASE_URL=self.base,
                    FIXTURE_ROUTES=str(route_file), FIXTURE_REQUESTS=str(self.requests))
+        if platform is not None:
+            env.pop("CABOODLE_TARGET")
+            uname = self.root / "bin/uname"
+            uname.write_text("#!/bin/sh\ncase \"$1\" in -s) echo Linux;; -m) echo " + platform + ";; *) exit 64;; esac\n")
+            uname.chmod(0o755)
         if repository is not None:
             env['TAMBO_REPOSITORY'] = repository
         if legacy_repository is not None:
@@ -133,6 +138,29 @@ class Bootstrap(unittest.TestCase):
         self.run_installer('v0.3.0')
         self.assert_installed(['tambo', 'caboodle'])
 
+    def test_linux_arm64_explicit_target_installs_matching_archive(self):
+        self.target = 'aarch64-unknown-linux-gnu'
+        self.archive('tambo', 'v0.4.0', ['tambo', 'caboodle'])
+        self.run_installer('v0.4.0')
+        self.assert_installed(['tambo', 'caboodle'])
+        self.assertIn('aarch64-unknown-linux-gnu', self.requests.read_text())
+        self.assertNotIn('x86_64', self.requests.read_text())
+
+    def test_linux_arm64_detected_target_installs_matching_archive(self):
+        self.target = 'aarch64-unknown-linux-gnu'
+        self.archive('tambo', 'v0.4.0', ['tambo', 'caboodle'])
+        self.run_installer('v0.4.0', platform='aarch64')
+        self.assert_installed(['tambo', 'caboodle'])
+        self.assertNotIn('x86_64', self.requests.read_text())
+
+    def test_linux_arm64_missing_asset_preserves_existing_without_x86_fallback(self):
+        self.target = 'aarch64-unknown-linux-gnu'
+        existing = self.root / 'installed/tambo'
+        existing.write_bytes(b'prior installed bytes')
+        self.assertNotEqual(self.run_installer('v0.4.0').returncode, 0)
+        self.assertEqual(existing.read_bytes(), b'prior installed bytes')
+        self.assertNotIn('x86_64', self.requests.read_text())
+
     def test_new_archive_requires_both_commands(self):
         for members in (['tambo'], ['caboodle']):
             with self.subTest(members=members):
@@ -155,7 +183,7 @@ class Bootstrap(unittest.TestCase):
                          (ROOT / 'scripts/install.sh').read_bytes())
 
     def test_unsupported_platform_preserves_existing_install(self):
-        self.target = 'aarch64-unknown-linux-gnu'
+        self.target = 'riscv64gc-unknown-linux-gnu'
         existing = self.root / 'installed/tambo'
         existing.write_bytes(b'prior installed bytes')
         self.assertNotEqual(self.run_installer('v0.4.0').returncode, 0)

@@ -3,7 +3,13 @@ set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
 version=$(sed -n 's/^version = "\([^"]*\)"$/\1/p' "$repo_root/Cargo.toml" | head -n 1)
-target=x86_64-unknown-linux-gnu
+case "$(uname -s):$(uname -m)" in
+    Linux:x86_64) target=x86_64-unknown-linux-gnu ;;
+    Linux:aarch64|Linux:arm64) target=aarch64-unknown-linux-gnu ;;
+    Darwin:x86_64) target=x86_64-apple-darwin ;;
+    Darwin:arm64) target=aarch64-apple-darwin ;;
+    *) echo "unsupported native release fixture platform" >&2; exit 1 ;;
+esac
 fixture=$(mktemp -d)
 trap 'rm -rf "$fixture"' EXIT HUP INT TERM
 archive="tambo-v$version-$target.tar.gz"
