@@ -99,6 +99,7 @@ fn names_for_platform(
     if tool.is_none() {
         let target = match (os, arch) {
             ("linux", "x86_64") => "x86_64-unknown-linux-gnu",
+            ("linux", "aarch64") => "aarch64-unknown-linux-gnu",
             ("macos", "x86_64") => "x86_64-apple-darwin",
             ("macos", "aarch64") => "aarch64-apple-darwin",
             _ => bail!("Tambo self-update has no published target for {os}/{arch}"),
@@ -923,9 +924,10 @@ mod tests {
     }
 
     #[test]
-    fn self_update_uses_only_published_platform_archives() {
+    fn self_update_uses_supported_platform_archive_layouts() {
         for (os, arch, triple) in [
             ("linux", "x86_64", "x86_64-unknown-linux-gnu"),
+            ("linux", "aarch64", "aarch64-unknown-linux-gnu"),
             ("macos", "x86_64", "x86_64-apple-darwin"),
             ("macos", "aarch64", "aarch64-apple-darwin"),
         ] {
@@ -936,7 +938,7 @@ mod tests {
             assert_eq!(sums, format!("{archive}.sha256"));
         }
         for (os, arch) in [
-            ("linux", "aarch64"),
+            ("linux", "riscv64"),
             ("windows", "x86_64"),
             ("macos", "arm"),
         ] {
