@@ -155,7 +155,10 @@ class Run:
         return 1 if error or failures else 0
 
 
-def brew(run):
+def brew(run, *, trust_formula=False):
+    if not trust_formula:
+        raise Failure("Homebrew requires explicit --trust-brew-formula admission for scbrown/tap/quipu")
+    run.report["formula_trust_admitted"] = "scbrown/tap/quipu"
     formulas = run.command(["brew", "list", "--formula"]).stdout.splitlines()
     prefix = Path(run.command(["brew", "--prefix"]).stdout.strip())
     names = [prefix / "bin" / name for name in ("quipu", "qp", "quipu-server")]
@@ -164,15 +167,25 @@ def brew(run):
     run.report["baseline_absent"] = True
     def remove():
         if "quipu" in run.command(["brew", "list", "--formula"]).stdout.splitlines():
-            run.command(["brew", "uninstall", "quipu"])
-            run.command(["brew", "cleanup", "quipu"])
+            # Cleanup uses the installed formula receipt; after uninstall,
+            # Homebrew can instead reload a now-untrusted tap formula.
+            # Keep a refusal fatal, while still removing our owned install.
+            try:
+                run.command(["brew", "cleanup", "quipu"])
+            finally:
+                run.command(["brew", "uninstall", "quipu"])
         if "quipu" in run.command(["brew", "list", "--formula"]).stdout.splitlines():
             raise Failure("formula remains after removal")
         if any(os.path.lexists(path) for path in names):
             raise Failure("a Homebrew-owned command or alias remains")
         run.report["package_and_alias_removed"] = True
+    def untrust():
+        run.command(["brew", "untrust", "--formula", "scbrown/tap/quipu"])
+        run.report["formula_trust_removed"] = True
+    run.cleanup.append(untrust)
     run.cleanup.append(remove)
     run.command(["brew", "tap", "scbrown/tap"])
+    run.command(["brew", "trust", "--formula", "scbrown/tap/quipu"])
     tap = run.command(["brew", "--repository", "scbrown/tap"]).stdout.strip()
     run.report["tap_commit_before"] = run.command(["git", "-C", tap, "rev-parse", "HEAD"]).stdout.strip()
     run.command(["brew", "install", "scbrown/tap/quipu"])
@@ -190,7 +203,9 @@ def brew(run):
                       version_before=version_before, version_after=version_after,
                       upgrade_command_executed=True, upgrade_version_changed=version_before != version_after)
     remove()
-    run.cleanup.clear()
+    run.cleanup.pop()  # removal completed
+    run.cleanup.pop()  # attempt untrust once; a refusal must not be retried
+    untrust()
     run.preserved()
 
 
@@ -336,6 +351,8 @@ def main(argv=None):
     parser.add_argument("method", choices=("brew", "apt", "container"))
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--image", default="ghcr.io/intigraph/quipu:0.8.1")
+    parser.add_argument("--trust-brew-formula", action="store_true",
+                        help="explicitly trust only scbrown/tap/quipu on the disposable runner")
     args = parser.parse_args(argv)
     try:
         require_hosted(args.method, args.output, os.environ)
@@ -345,7 +362,7 @@ def main(argv=None):
     run = Run(args.method, args.output)
     error = None
     try:
-        {"brew": brew, "apt": apt, "container": lambda r: container(r, args.image)}[args.method](run)
+        {"brew": lambda r: brew(r, trust_formula=args.trust_brew_formula), "apt": apt, "container": lambda r: container(r, args.image)}[args.method](run)
     except (Failure, OSError, ValueError, subprocess.SubprocessError) as caught:
         error = caught
     return run.finish(error)

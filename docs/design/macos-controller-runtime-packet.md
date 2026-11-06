@@ -74,6 +74,14 @@ refuses; replacement requires its own explicit reviewed pins and packet.
 
 ## Operator sequence and exit receipts
 
+The owner-acknowledged order is controller -> runtime -> phase-A refusal ->
+explicit 1b expansion -> metadata -> policy -> ownkeys -> identity. The
+[phase-A runbook](../operator-packets/e579/phase-a.md) records the exact
+producer/receiver/snapshot procedure and the still-held route/retry contract.
+The [own-UID key/config packet](../operator-packets/e579/principal-seeds.md)
+renders disabled launchd jobs and complete protected Seeds config candidates.
+Neither source packet grants native execution or readiness.
+
 Run previews unprivileged first, from the exact reviewed source. The examples
 use `TOOL`, `ARCHIVE` and `ARCHIVE_SHA256` as **operator-reviewed absolute input
 paths and the actual published checksum**, not discovered shell output. Retain
@@ -195,10 +203,10 @@ Never rerun the original provisioner's exact-receipt verifier as if this expande
 receipt were its original schema; inspect the retained identity fields and this
 migration journal, then use the pinned runtime's full catalog verification.
 
-The physical order is controller -> runtime staging as needed -> identity and
-negative controls -> phase-A refusal -> explicit 1b expansion -> metadata and
-policy -> normal Chaski retry. This two-phase dependency prevents a single
-linear unattended setup. The successor runtime pins Seeds 0.14.0 with the
+The physical order is controller -> runtime staging as needed -> public CA
+checks -> phase-A refusal -> explicit 1b expansion -> metadata and policy ->
+own-key enrollment -> identity and negative controls -> normal Chaski retry.
+This two-phase dependency prevents a single linear unattended setup. The successor runtime pins Seeds 0.14.0 with the
 CA-file configuration and ST `dd11e1ce`, including the protected macOS `/var`
 alias handling and canonical `/private/var` controller-root requirement. This
 closes the old input-pin gaps; it does not prove native lifecycle success.

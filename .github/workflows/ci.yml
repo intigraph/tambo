@@ -320,6 +320,8 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: python3 scripts/test-macos-controller-account-packet.py
+      - run: python3 scripts/test-macos-principal-seeds.py
+      - run: python3 scripts/test-e579-bounded-delivery.py
       - run: python3 scripts/test-macos-job-manifest-migration.py
       - run: python3 scripts/test-macos-job-runtime-build.py
       - run: sh -n scripts/macos-controller-account-rollback.sh

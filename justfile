@@ -20,6 +20,8 @@ check:
     python3 scripts/test-product-name.py
     python3 scripts/test-macos-job-account-packet.py
     python3 scripts/test-macos-controller-account-packet.py
+    python3 scripts/test-macos-principal-seeds.py
+    python3 scripts/test-e579-bounded-delivery.py
     python3 scripts/test-macos-job-manifest-migration.py
     python3 scripts/test-macos-job-runtime-build.py
     sh -n scripts/install.sh scripts/check-release-assets.sh scripts/test-release-install.sh scripts/check-crate-version.sh scripts/setup-environment.sh scripts/build-stack-packs.sh

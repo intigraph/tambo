@@ -11,8 +11,15 @@ run:
 
 ```sh
 gh workflow run install-methods.yml --repo intigraph/tambo --ref main \
-  -f container=true -f image=ghcr.io/intigraph/quipu:0.8.1
+  -f method=all -f trust_brew_formula=true -f container=true -f image=ghcr.io/intigraph/quipu:0.8.1
 ```
+
+Select `method=brew`, `method=apt` or `method=container` to run only that
+method. For the failed Homebrew leg, keep the earlier apt PASS receipt and use
+`-f method=brew -f trust_brew_formula=true -f container=false`. The container
+owner uses `-f method=container -f container=true` only after its separate image
+gate is met. A skipped method is not re-qualified and does not erase an earlier
+receipt. `method=all` retains the initial multi-method qualification.
 
 Record the actual run's `head_sha`. A method qualifies only from its successful
 job and `result.json` with `status: PASS` at the accepted landed checkout.
@@ -34,6 +41,16 @@ command, removes the package, checks command/alias absence, and proves that an
 independent project data marker survived removal. Explicit removal of that
 owned marker is a separate operation. If the upgrade command is a no-op,
 `upgrade_version_changed` is false; it is not a tested version transition.
+
+Homebrew requires the explicit `trust_brew_formula=true` dispatch admission
+(or `--trust-brew-formula` for the runner helper). Without it, that leg fails
+before any package-manager command. The admitted leg records and runs
+`brew trust --formula scbrown/tap/quipu`, never whole-tap trust or a disabled
+trust check. It runs cleanup while the formula is still installed, then
+uninstalls even if cleanup fails. A refusal remains fatal. Formula trust is
+removed with `brew untrust --formula scbrown/tap/quipu` afterward, including
+failure cleanup. See [Homebrew Tap Trust](https://docs.brew.sh/Tap-Trust).
+This changes only the fresh disposable runner, never a live Mac.
 
 The apt job checks the documented primary repository-key fingerprint before
 trusting the repository. Homebrew checks the formula's `qp` alias and both

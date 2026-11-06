@@ -105,7 +105,7 @@ class QualificationTests(unittest.TestCase):
         self.assertIsNone(run.report["commands"][0]["exit"])
         self.assertIn("before timeout", (run.root / "00.stdout.log").read_text())
 
-    def brew_fixture(self, *, preinstalled=False, partial_failure=False, delete_data=False):
+    def brew_fixture(self, *, preinstalled=False, partial_failure=False, delete_data=False, cleanup_refused=False, trust_formula=True, untrust_refused=False):
         prefix = self.root / "prefix"; (prefix / "bin").mkdir(parents=True)
         state = dict(installed=preinstalled)
         calls = []
@@ -125,6 +125,13 @@ class QualificationTests(unittest.TestCase):
                 (prefix / "bin/qp").symlink_to("quipu")
                 if partial_failure:
                     raise Q.Failure("injected install failure after partial ownership")
+            elif argv[:2] == ["brew", "untrust"] and untrust_refused:
+                raise Q.Failure("untrust refused")
+            elif argv[:2] == ["brew", "cleanup"]:
+                if not state["installed"]:
+                    raise Q.Failure("refusing removed formula reload from untrusted tap")
+                if cleanup_refused:
+                    raise Q.Failure("untrusted tap refusal while installed")
             elif argv[:2] == ["brew", "uninstall"]:
                 state["installed"] = False
                 for name in ["quipu", "quipu-server", "qp"]:
@@ -138,7 +145,8 @@ class QualificationTests(unittest.TestCase):
             return subprocess.CompletedProcess(argv, 0, stdout, "")
         output = self.root / "receipt"
         with patch.dict(os.environ, self.env, clear=True), patch.object(Q.Run, "command", command):
-            result = Q.main(["brew", "--output", str(output)])
+            result = Q.main(["brew", "--output", str(output)]
+                            + (["--trust-brew-formula"] if trust_formula else []))
         return result, state, calls, json.loads((output / "result.json").read_text())
 
     def test_clean_brew_path_removes_owned_commands_preserves_data_and_reports_noop_upgrade(self):
@@ -146,11 +154,37 @@ class QualificationTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertFalse(state["installed"])
         self.assertTrue(report["baseline_absent"])
+        self.assertEqual(report["formula_trust_admitted"], "scbrown/tap/quipu")
+        self.assertTrue(report["formula_trust_removed"])
         self.assertTrue(report["package_and_alias_removed"])
         self.assertTrue(report["data_preserved_by_package_removal"])
         self.assertTrue(report["explicit_owned_data_removal"])
         self.assertFalse(report["upgrade_version_changed"])
         self.assertIn(["brew", "upgrade", "quipu"], calls)
+        self.assertLess(calls.index(["brew", "cleanup", "quipu"]),
+                        calls.index(["brew", "uninstall", "quipu"]))
+
+    def test_cleanup_trust_refusal_remains_failed_and_still_removes_owned_install(self):
+        code, state, calls, report = self.brew_fixture(cleanup_refused=True)
+        self.assertEqual(code, 1)
+        self.assertFalse(state["installed"])
+        self.assertEqual(report["status"], "FAIL")
+        self.assertNotIn(["brew", "trust", "scbrown/tap"], calls)
+        self.assertIn("untrusted tap refusal", report["error"])
+
+    def test_untrust_refusal_is_fatal_and_never_retried(self):
+        code, state, calls, report = self.brew_fixture(untrust_refused=True)
+        self.assertEqual(code, 1)
+        self.assertFalse(state["installed"])
+        self.assertEqual(calls.count(["brew", "untrust", "--formula", "scbrown/tap/quipu"]), 1)
+        self.assertIn("untrust refused", report["error"])
+
+    def test_brew_without_explicit_trust_admission_performs_no_commands(self):
+        code, state, calls, report = self.brew_fixture(trust_formula=False)
+        self.assertEqual(code, 1)
+        self.assertFalse(state["installed"])
+        self.assertEqual(calls, [])
+        self.assertIn("explicit --trust-brew-formula", report["error"])
 
     def test_live_or_preinstalled_formula_never_gets_uninstalled(self):
         code, state, calls, report = self.brew_fixture(preinstalled=True)

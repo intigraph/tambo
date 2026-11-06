@@ -3,6 +3,15 @@ name: Quipu install method qualification
 on:
   workflow_dispatch:
     inputs:
+      method:
+        description: Qualify only the selected method; keep earlier successful method receipts
+        type: choice
+        options: [all, brew, apt, container]
+        default: all
+      trust_brew_formula:
+        description: Explicitly trust only scbrown/tap/quipu on the disposable macOS runner (removed afterward)
+        type: boolean
+        default: false
       container:
         description: Qualify the published container as well as Homebrew and apt
         type: boolean
@@ -22,15 +31,12 @@ concurrency:
 jobs:
   packages:
     name: Clean ${{ matrix.method }} lifecycle
+    if: inputs.method != 'container'
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - method: brew
-            os: macos-15
-          - method: apt
-            os: ubuntu-latest
-    runs-on: ${{ matrix.os }}
+        method: ${{ fromJSON(inputs.method == 'brew' && '["brew"]' || inputs.method == 'apt' && '["apt"]' || '["brew", "apt"]') }}
+    runs-on: ${{ matrix.method == 'brew' && 'macos-15' || 'ubuntu-latest' }}
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -42,8 +48,14 @@ jobs:
       - name: Exercise the package-owned install, verification, upgrade and removal
         env:
           METHOD: ${{ matrix.method }}
+          TRUST_BREW_FORMULA: ${{ inputs.trust_brew_formula }}
           INSTALL_METHOD_RUNNER: ${{ runner.environment }}
-        run: python3 scripts/qualify-install-method.py "$METHOD" --output "$RUNNER_TEMP/install-methods/$METHOD"
+        run: |
+          args=()
+          if [[ "$METHOD" == brew && "$TRUST_BREW_FORMULA" == true ]]; then
+            args+=(--trust-brew-formula)
+          fi
+          python3 scripts/qualify-install-method.py "$METHOD" --output "$RUNNER_TEMP/install-methods/$METHOD" "${args[@]}"
       - name: Retain the exact checkout and per-command method receipt
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -54,7 +66,7 @@ jobs:
 
   container:
     name: Clean container lifecycle
-    if: inputs.container
+    if: inputs.container && (inputs.method == 'all' || inputs.method == 'container')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
