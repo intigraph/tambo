@@ -136,6 +136,7 @@ fn rollback_at(
     transaction::begin(
         state_path,
         &transaction::Pending {
+            restore_alias: None,
             tool: "seeds".into(),
             destination: destination.to_path_buf(),
             backup: recovery.clone(),
@@ -287,6 +288,7 @@ mod tests {
         transaction::begin(
             &state,
             &transaction::Pending {
+                restore_alias: None,
                 tool: "seeds".into(),
                 destination: destination.clone(),
                 backup: recovery,
