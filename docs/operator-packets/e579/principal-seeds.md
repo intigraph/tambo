@@ -117,8 +117,8 @@ The JSON explicitly reports installed=false and readiness=false until native
 proof is attached. Copy the rendered seeds_config_dir into that UID's complete
 identity binding and review the final identity candidate/hash before delivery.
 
-Retain own-UID signing positive; cross-UID read/signing denial; bad/missing key,
-wrong/tampered CA and hostname negatives; and `sd key init` after protected
+Retain signing success for each UID and cross-UID read/signing denial. Test
+missing or incorrect keys, CA tampering and hostname mismatch. Run `sd key init` after protected
 redirect refusing without changing key/config. A rendered config is not any of
 these proofs. No readiness or identity enforcement is activated here.
 
