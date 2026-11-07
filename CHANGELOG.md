@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.1](https://github.com/intigraph/tambo/compare/v0.13.0...v0.13.1) (2026-11-07)
+
+
+### Bug Fixes
+
+* **census:** isolate authenticated release metadata reads ([#257](https://github.com/intigraph/tambo/issues/257)) ([1fb4b50](https://github.com/intigraph/tambo/commit/1fb4b5031a4867c939ddd391eb588fbc185faad3))
+
 ## [0.13.0](https://github.com/intigraph/tambo/compare/v0.12.1...v0.13.0) (2026-11-06)
 
 
