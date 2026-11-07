@@ -779,8 +779,9 @@
         "1f09c191d2781a00496ca8b5a4ff2cfd085c7e0b216eb3662b5adc057ee6e959": 1,
         "25229e8d06b9f996789a4f1e17d1b29929a029954e3092d76e567e356fb710d9": 2,
         "2b6ad3b88ecd8eea48f436b66274a8d0794c0f7b06fdc486036a966a10cd50e8": 4,
-        "38179de4886b68a780830ba7cf4f0e452c4bd849fbb03494d1c514f1219e7801": 1,
+        "38179de4886b68a780830ba7cf4f0e452c4bd849fbb03494d1c514f1219e7801": 3,
         "3fe2a7dd96ec7ab9cf3aa773b999fef6e231842370af301b64e66305cb03e731": 1,
+        "41b66074d17be9df3fe6bc808ff5212e5e6fd02bfff9fb24332516ba16c6ce27": 2,
         "437a5a1dc4c6f80363996022be72345366d6aed17b876bd2b5e51717bddae0c9": 2,
         "46cbc96418479eb2cb5b2411138dcec07fd8ccf5cdbd4a99925c3d42b618ec9c": 1,
         "4b9ca6457b90c7ed2819ba74f57c521baf5211e4e630e32366fdbc7bb3ebec52": 1,
@@ -788,6 +789,7 @@
         "72d0d8be702d83b4af3f7f108e8df633405b221c40d5ba93d8d7a1045f97aa1a": 1,
         "802569373320fa8f80d1fd4d498882d1487b6124bd6ac18a167b10736e5be182": 1,
         "813153b23ac9f119f0194be4f39960d3155abaa3cd7081ca913460f92c3f42e2": 1,
+        "86c965bd36397964427c16697e9a8f45f08c81064b01a77baa9bd7e6781dcd35": 1,
         "90f9b37ffb88cae45899f58fbe95a56c66b3f3565f4352b18ad18ad15bc36a35": 1,
         "954058b7d6aad64400752f3efe5d57fead6c77336c83e8c3b7416197fafce5ad": 1,
         "cd52eb76cf459d42dc59cbe37dbd1c9eca83018dd56203f71275e2431775cd42": 1,
@@ -796,7 +798,7 @@
         "da3f85061f010b2bbd9fb59e3c259d73644f5552d07f1b72ee326d9c9c701812": 1,
         "f9a1de1f3d2c595fe6cf7b5bd641a0cb6644f4000427fef6dcec7e59c4f8da54": 2
       },
-      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
+      "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control. Linux arm64 extends the existing tambo/caboodle compatibility contract: both aliases receive the same native archive and version smoke; platform-detection fixtures clear the legacy override to exercise actual uname selection."
     },
     "scripts/test-product-name.py": {
       "lines": {

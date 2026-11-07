@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.13.0](https://github.com/intigraph/tambo/compare/v0.12.1...v0.13.0) (2026-11-06)
+
+
+### Features
+
+* **install:** prepare Linux arm64 archive selection ([#258](https://github.com/intigraph/tambo/issues/258)) ([78484a1](https://github.com/intigraph/tambo/commit/78484a131cc458c74f94a1b01675fede99b6819d))
+
+## [0.12.1](https://github.com/intigraph/tambo/compare/v0.12.0...v0.12.1) (2026-11-06)
+
+
+### Bug Fixes
+
+* **census:** rebind documented installers to current releases ([#255](https://github.com/intigraph/tambo/issues/255)) ([3fb2812](https://github.com/intigraph/tambo/commit/3fb28127542219462c0d52fc7a9107209ff3a85a))
+
 ## [0.12.0](https://github.com/intigraph/tambo/compare/v0.11.3...v0.12.0) (2026-11-06)
 
 

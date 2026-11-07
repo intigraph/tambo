@@ -38,8 +38,10 @@ Downloads the latest release, verifies its SHA-256 and version, and installs
 `tambo` and `caboodle` in `${CARGO_HOME:-$HOME/.cargo}/bin`. Requires `curl`,
 `tar`, Python 3 and `sha256sum` or `shasum`. Add that directory to `PATH`.
 Published archives support Linux x86_64 and macOS arm64/x86_64; **Linux arm64
-has no published archive**. Source builds, pinned versions, removal and the
-Homebrew alternative are in the [installation reference](https://intigraph.github.io/tambo/installation-reference.html).
+has no published archive in releases through v0.12.1**. Target selection is
+prepared for future Linux arm64 assets, but those assets must actually be
+published before the binary installer can succeed there. Source builds, pinned
+versions, removal and the Homebrew alternative are in the [installation reference](https://intigraph.github.io/tambo/installation-reference.html).
 
 **Debian and Ubuntu (amd64):** install from the signed apt repository, which
 republishes each checksum-verified release. The package puts `tambo` and the
@@ -132,7 +134,8 @@ claude mcp add bobbin -- "$(command -v bobbin)" serve "$PWD"
 The local quickstart needs no account or remote server. Keep its plan and state
 in a writable directory. The release installer needs `curl`, `tar`, Python 3
 and a SHA-256 utility; source builds need Rust. Linux x86_64 and macOS
-arm64/x86_64 have release archives; Linux arm64 requires a source build.
+arm64/x86_64 have release archives. For releases through v0.12.1, Linux arm64
+requires a source build; later tags require an actual published arm64 archive.
 Remote stores need their own endpoint and issued credentials.
 
 ## What's next
