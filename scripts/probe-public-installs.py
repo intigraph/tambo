@@ -14,6 +14,7 @@ import sys
 import tempfile
 import time
 import urllib.request
+import urllib.parse
 
 
 def release_version(tag):
@@ -46,8 +47,29 @@ def fetch_installer(url, destination, environment, workspace):
                 url, '--output', str(destination)], environment, workspace, timeout=50)
 
 
+class GitHubMetadataRedirect(urllib.request.HTTPRedirectHandler):
+    """Keep the parent metadata credential on the HTTPS GitHub API only."""
+
+    def redirect_request(self, request, fp, code, message, headers, new_url):
+        target = urllib.parse.urlsplit(new_url)
+        if target.scheme != 'https' or target.netloc.lower() != 'api.github.com':
+            raise ValueError('metadata redirect outside GitHub API refused')
+        return super().redirect_request(request, fp, code, message, headers, new_url)
+
+
 def latest_release(repository):
-    with urllib.request.urlopen('https://api.github.com/repos/' + repository + '/releases/latest', timeout=30) as response:
+    if not re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repository):
+        raise ValueError('invalid GitHub repository identity')
+    headers = {'Accept': 'application/vnd.github+json', 'User-Agent': 'public-install-census'}
+    token = os.environ.get('CENSUS_GITHUB_METADATA_TOKEN', '')
+    if token:
+        if len(token) > 4096 or any(ord(char) < 33 or ord(char) > 126 for char in token):
+            raise ValueError('metadata token has invalid header bytes')
+        headers['Authorization'] = 'Bearer ' + token
+    request = urllib.request.Request(
+        'https://api.github.com/repos/' + repository + '/releases/latest', headers=headers)
+    opener = urllib.request.build_opener(GitHubMetadataRedirect())
+    with opener.open(request, timeout=30) as response:
         return json.load(response)['tag_name']
 
 
