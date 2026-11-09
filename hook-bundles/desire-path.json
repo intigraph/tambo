@@ -1,7 +1,7 @@
 {
   "schema": "st.hook-bundle/1",
   "name": "desire-path",
-  "version": "0.3.2",
+  "version": "0.10.0",
   "owner": "caboodle",
   "roles": [
     "*"
@@ -64,12 +64,13 @@
         "claude",
         "codex"
       ]
+    },
+    {
+      "event": "Stop",
+      "command": "dp ingest --source codex",
+      "harnesses": [
+        "codex"
+      ]
     }
-  ],
-  "codex_notify": [
-    "bash",
-    "-c",
-    "printf '%s' \"$1\" | dp ingest --source codex",
-    "--"
   ]
 }
