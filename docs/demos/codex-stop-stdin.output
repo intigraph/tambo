@@ -1,0 +1,11 @@
+Script started on 2026-11-09 04:08:32-05:00 [COMMAND="python3 docs/demos/codex-stop-stdin.py" <not executed on terminal>]
+Installed consumer: dp 0.12.2 (0c9e18b)
+Same synthetic Stop payload: 262144 message bytes
+BEFORE: execute base bundle's notify argv with appended payload
+Observed E2BIG before the consumer could start; no record
+AFTER: execute head bundle's Stop command with payload on stdin
+Exit 0; exactly one codex/agent_turn record with fixture session
+Negative control: non-Stop event refused; record count remains one
+PASS: private transport demonstration; no live hook reconfiguration
+
+Script done on 2026-11-09 04:08:32-05:00 [COMMAND_EXIT_CODE="0"]

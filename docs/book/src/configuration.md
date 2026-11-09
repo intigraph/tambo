@@ -165,8 +165,14 @@ warns that Claude Code must see the same variable. Re-plan with
 The desire-path hook bundle supplies `dp signpost-prefetch` before Codex Bash
 calls and `dp signpost` after successful calls. Codex uses the same
 `tool_name: Bash` and `tool_input.command` hook envelope for these events.
-Turn-completion ingestion remains in `codex_notify` with `--source codex`;
-these search hooks do not convert turn records into tool-failure desires.
+Turn-completion ingestion uses a native Codex `Stop` hook with
+`dp ingest --source codex`, which reads the payload on stdin. It requires
+Desire Path 0.10.0 or newer. The bundle no longer declares `codex_notify`:
+passing long turn JSON through argv exceeded the operating system's per-argument
+limit before ingestion could start. Normal bundle registration and provisioning
+retire the bundle-owned legacy notify; existing sessions need their normal
+configuration refresh before installed acceptance. These search hooks do not
+convert turn records into tool-failure desires.
 Failure-event signposting is not claimed by this bundle for Codex.
 
 Set `DP_SIGNPOST_BOBBIN_URL`, `DP_SIGNPOST_LOG`, and any deployment-specific
