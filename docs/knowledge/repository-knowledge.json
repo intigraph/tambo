@@ -46,7 +46,7 @@
       "source": "src/adapter.rs",
       "subject": "http://aegis.gastown.local/ontology/code/tambo/src%2Fadapter.rs",
       "summary": "The Adapter trait separates desired version, installation, version read-back and functional verification. Built-in adapters integrate the selected stack tools; package adapters may bind verification to PATH executables.",
-      "source_sha256": "260b8db05faf392be8c7a467bf48f2670321aacfb75cc502afdc52b27396fd2e",
+      "source_sha256": "09ac966545ad202d8d9793eaca7a5415d769c7468f66e98b12ebf8944cb70353",
       "properties": {
         "interfaceKind": "library",
         "publicName": "caboodle::adapter::Adapter"
