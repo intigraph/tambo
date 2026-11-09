@@ -409,7 +409,7 @@ esac
     fs::create_dir_all(camayoc.join("ontology")).unwrap();
     fs::write(
         camayoc.join("REVISION"),
-        "f443bf19974d06ab662c8ae3deeccfbb1e082f48\n",
+        "724b0a8dc191167da968285c677a8868a44e16a3\n",
     )
     .unwrap();
     // Behaves like the real bootstrap when nothing answers: starts a server process
@@ -417,7 +417,7 @@ esac
     // pointed at so tests can prove verification never used QUIPU_SERVER.
     fs::write(
         camayoc.join("scripts/bootstrap.sh"),
-        "#!/bin/sh\nprintf '%s\\n' \"$QUIPU_SERVER\" >> \"$HOME/camayoc-bootstrap.log\"\nmkdir -p \"$CLAUDE_PROJECT_DIR/.quipu\"\nsleep 300 >/dev/null 2>&1 &\necho $! > \"$CLAUDE_PROJECT_DIR/.quipu/server.pid\"\necho $! >> \"$HOME/camayoc-server-pids.log\"\nexit 0\n",
+        "#!/bin/sh\nprintf '%s\\n' \"$QUIPU_SERVER\" >> \"$FAKE_CAMAYOC_STATE.bootstrap.log\"\nmkdir -p \"$CLAUDE_PROJECT_DIR/.quipu\"\nmkdir -p \"$HOME/.config/quipu\"\nprintf '%s\\n' synthetic-scratch-token > \"$HOME/.config/quipu/token\"\nsleep 300 >/dev/null 2>&1 &\necho $! > \"$CLAUDE_PROJECT_DIR/.quipu/server.pid\"\necho $! >> \"$FAKE_CAMAYOC_STATE.server-pids.log\"\nexit 0\n",
     )
     .unwrap();
     fs::write(
@@ -1380,8 +1380,13 @@ fn camayoc_verification_uses_its_own_scratch_server_and_stops_it() {
         .assert()
         .success();
     command(root.path(), &bin).arg("verify").assert().success();
+    assert_eq!(
+        fs::read(root.path().join(".config/quipu/token")).unwrap(),
+        b"good-token\n",
+        "scratch bootstrap replaced the caller credential"
+    );
 
-    let servers = fs::read_to_string(root.path().join("camayoc-bootstrap.log")).unwrap();
+    let servers = fs::read_to_string(root.path().join("camayoc-ingested.bootstrap.log")).unwrap();
     assert!(!servers.is_empty(), "camayoc bootstrap never ran");
     for server in servers.lines() {
         assert!(
@@ -1397,7 +1402,7 @@ fn camayoc_verification_uses_its_own_scratch_server_and_stops_it() {
         !root.path().join(".quipu").exists(),
         "verification left a .quipu store in the working directory"
     );
-    let pids = fs::read_to_string(root.path().join("camayoc-server-pids.log")).unwrap();
+    let pids = fs::read_to_string(root.path().join("camayoc-ingested.server-pids.log")).unwrap();
     for pid in pids.lines() {
         // SIGTERM delivery and reaping are asynchronous. Keep the strict
         // disappearance assertion, but allow the child a bounded exit window.
@@ -4318,7 +4323,7 @@ exit 2
         fs::create_dir_all(root.path().join("camayoc")).unwrap();
         fs::write(
             root.path().join("camayoc/REVISION"),
-            "f443bf19974d06ab662c8ae3deeccfbb1e082f48",
+            "724b0a8dc191167da968285c677a8868a44e16a3",
         )
         .unwrap();
         let mut cmd = command(root.path(), &bin);
@@ -4398,7 +4403,7 @@ exit 2
     fs::create_dir_all(root.path().join("camayoc")).unwrap();
     fs::write(
         root.path().join("camayoc/REVISION"),
-        "f443bf19974d06ab662c8ae3deeccfbb1e082f48",
+        "724b0a8dc191167da968285c677a8868a44e16a3",
     )
     .unwrap();
     assert!(!bin.join("quipu").exists());
@@ -4524,7 +4529,7 @@ exit 2
         fs::create_dir_all(root.path().join("camayoc")).unwrap();
         fs::write(
             root.path().join("camayoc/REVISION"),
-            "f443bf19974d06ab662c8ae3deeccfbb1e082f48",
+            "724b0a8dc191167da968285c677a8868a44e16a3",
         )
         .unwrap();
         let mut cmd = command(root.path(), &bin);
