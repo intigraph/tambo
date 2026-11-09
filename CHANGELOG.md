@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.13.2](https://github.com/intigraph/tambo/compare/v0.13.1...v0.13.2) (2026-11-09)
+
+
+### Bug Fixes
+
+* **camayoc:** pin verified v0.1.6 source release ([#263](https://github.com/intigraph/tambo/issues/263)) ([e076a83](https://github.com/intigraph/tambo/commit/e076a8309a07b29d317429df3a91083adb1e98fe))
+* **hooks:** ingest Codex turns through Stop stdin ([#265](https://github.com/intigraph/tambo/issues/265)) ([8360bea](https://github.com/intigraph/tambo/commit/8360bea000a01e9ecc60f1bb3cd1e42633baa0a9))
+
 ## [0.13.1](https://github.com/intigraph/tambo/compare/v0.13.0...v0.13.1) (2026-11-07)
 
 
