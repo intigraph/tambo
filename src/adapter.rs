@@ -1345,9 +1345,10 @@ fn ensure_bobbin_link(link: &Path, target: &Path) -> Result<()> {
     Ok(())
 }
 
-const CAMAYOC_REVISION: &str = "f443bf19974d06ab662c8ae3deeccfbb1e082f48";
+// Official v0.1.6 source release; keep revision, release asset and digest paired.
+const CAMAYOC_REVISION: &str = "724b0a8dc191167da968285c677a8868a44e16a3";
 const CAMAYOC_ARCHIVE_SHA256: &str =
-    "67b1945615d811ac3c0251412d6b5d619f00d58a7ca87785474c0f1db46ba544";
+    "59128dc3e23a5631caad18066e4b1610983d00c7733498198b69f5c2be484909";
 
 pub(crate) fn camayoc_root() -> Result<PathBuf> {
     if let Some(path) = env::var_os("CABOODLE_CAMAYOC_ROOT") {
@@ -1367,7 +1368,7 @@ fn install_camayoc_bundle() -> Result<()> {
     let download = tempfile::tempdir().context("create Camayoc download directory")?;
     let archive = download.path().join("camayoc.tar.gz");
     download_https(
-        &format!("https://github.com/intigraph/camayoc/archive/{CAMAYOC_REVISION}.tar.gz"),
+        "https://github.com/intigraph/camayoc/releases/download/v0.1.6/camayoc-v0.1.6.tar.gz",
         &archive,
     )?;
     let digest = checked("sha256sum", [archive.as_os_str()], None)?;
