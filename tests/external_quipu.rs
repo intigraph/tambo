@@ -22,12 +22,21 @@ fn external_identity_roundtrip_and_ownership_controls() {
 if [ "$1" = --version ]; then echo 'quipu 0.11.1'; exit; fi
 verb=$1; shift
 query=$1; shift
+db=
+base_ns=
 while [ $# -gt 0 ]; do
- if [ "$1" = --db ]; then db=$2; break; fi
- shift
+ case "$1" in
+  --db) db=$2; shift 2 ;;
+  --base-ns) base_ns=$2; shift 2 ;;
+  *) shift ;;
+ esac
 done
 case "$verb" in
- episode) touch "$db.marker" ;;
+ episode)
+  # Current Quipu refuses name-minting writes without a base namespace.
+  # Require the probe's own namespace, independent of user configuration.
+  [ "$base_ns" = 'https://example.org/tambo/verification/' ] || exit 67
+  touch "$db.marker" ;;
  knot) touch "$db.vocab" ;;
  read)
   case "$query" in
