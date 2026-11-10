@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.3](https://github.com/intigraph/tambo/compare/v0.13.2...v0.13.3) (2026-11-10)
+
+
+### Bug Fixes
+
+* **verify:** give isolated episodes an explicit namespace ([#267](https://github.com/intigraph/tambo/issues/267)) ([75a9afc](https://github.com/intigraph/tambo/commit/75a9afc93313c0842b9a7e1dbb5ae22536304f9d))
+
 ## [0.13.2](https://github.com/intigraph/tambo/compare/v0.13.1...v0.13.2) (2026-11-09)
 
 
