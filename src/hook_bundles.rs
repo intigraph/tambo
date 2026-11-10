@@ -528,32 +528,30 @@ mod tests {
         }
     }
 
-    /// desire-path's codex source is codex's per-turn `notify`, not per-tool
-    /// hooks (aegis-331f7p). The argv is the one `dp init --source codex`
-    /// writes for dp 0.3.2 (measured in a sandbox CODEX_HOME); a hand edit
-    /// that drifts from it would leave codex invisible to desire-path.
+    /// Codex appends the whole turn to notify argv, which exceeds execve's
+    /// per-argument limit on long turns. dp >= 0.10.0 ingests native Stop stdin.
     #[test]
-    fn desire_path_bundle_claims_codex_notify_with_dp_installer_argv() {
+    fn desire_path_bundle_ingests_codex_stop_without_notify_argv() {
         let (_, json) = BUNDLES
             .iter()
             .find(|(name, _)| *name == "desire-path")
             .unwrap();
         let v: Value = serde_json::from_str(json).unwrap();
-        assert_eq!(
-            v["codex_notify"],
-            json!([
-                "bash",
-                "-c",
-                "printf '%s' \"$1\" | dp ingest --source codex",
-                "--"
-            ])
-        );
-        // codex notify is a single slot: exactly one shipped bundle claims it.
+        assert!(v.get("codex_notify").is_none());
+        let stops: Vec<_> = v["hooks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|h| h["event"] == "Stop" && h["harnesses"] == json!(["codex"]))
+            .collect();
+        assert_eq!(stops.len(), 1);
+        assert_eq!(stops[0]["command"], "dp ingest --source codex");
+        // No embedded bundle may reintroduce payload-in-argv ingestion.
         let claimants = BUNDLES
             .iter()
             .filter(|(_, j)| serde_json::from_str::<Value>(j).unwrap()["codex_notify"].is_array())
             .count();
-        assert_eq!(claimants, 1);
+        assert_eq!(claimants, 0);
     }
 
     #[test]

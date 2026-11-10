@@ -521,6 +521,8 @@ impl Quipu {
             [
                 OsStr::new("episode"),
                 episode.as_os_str(),
+                OsStr::new("--base-ns"),
+                OsStr::new("https://example.org/tambo/verification/"),
                 OsStr::new("--db"),
                 db.as_os_str(),
             ],
@@ -816,11 +818,17 @@ impl Adapter for Camayoc {
         let port = free_local_port()?;
         let server = format!("http://127.0.0.1:{port}");
         let _guard = ScratchServer(scratch.path().join(".quipu/server.pid"));
+        let home = scratch.path().join("home");
+        fs::create_dir(&home).context("create Camayoc verification HOME")?;
         let bootstrap = Command::new("bash")
             .arg(root.join("scripts/bootstrap.sh"))
             .current_dir(scratch.path())
             .env("QUIPU_SERVER", &server)
             .env("CLAUDE_PROJECT_DIR", scratch.path())
+            .env("HOME", &home)
+            .env_remove("XDG_CONFIG_HOME")
+            .env_remove("CLAUDE_CONFIG_DIR")
+            .env_remove("QUIPU_AUTH_TOKEN_FILE")
             .env_remove("QUIPU_AUTH_TOKEN")
             .output()
             .context("run Camayoc bootstrap against a scratch Quipu")?;
@@ -835,7 +843,16 @@ impl Adapter for Camayoc {
         if !scratch.path().join(".quipu/server.pid").exists() {
             bail!("Camayoc bootstrap did not start a scratch Quipu at {server}; refusing to verify against a server Tambo does not own");
         }
-        verify_camayoc_first_ingest(&root, &server)
+        let token = fs::read_to_string(home.join(".config/quipu/token"))
+            .context("read scratch Camayoc credential")?;
+        if token.trim().is_empty() {
+            bail!("scratch Camayoc credential is empty");
+        }
+        let auth = tempfile::NamedTempFile::new_in(scratch.path())
+            .context("create scratch Camayoc curl config")?;
+        fs::write(auth.path(), curl_auth_header_line(token.trim())?)
+            .context("write scratch Camayoc curl config")?;
+        verify_camayoc_first_ingest(&root, &server, auth.path())
     }
 }
 
@@ -1345,9 +1362,10 @@ fn ensure_bobbin_link(link: &Path, target: &Path) -> Result<()> {
     Ok(())
 }
 
-const CAMAYOC_REVISION: &str = "f443bf19974d06ab662c8ae3deeccfbb1e082f48";
+// Official v0.1.6 source release; keep revision, release asset and digest paired.
+const CAMAYOC_REVISION: &str = "724b0a8dc191167da968285c677a8868a44e16a3";
 const CAMAYOC_ARCHIVE_SHA256: &str =
-    "67b1945615d811ac3c0251412d6b5d619f00d58a7ca87785474c0f1db46ba544";
+    "59128dc3e23a5631caad18066e4b1610983d00c7733498198b69f5c2be484909";
 
 pub(crate) fn camayoc_root() -> Result<PathBuf> {
     if let Some(path) = env::var_os("CABOODLE_CAMAYOC_ROOT") {
@@ -1367,7 +1385,7 @@ fn install_camayoc_bundle() -> Result<()> {
     let download = tempfile::tempdir().context("create Camayoc download directory")?;
     let archive = download.path().join("camayoc.tar.gz");
     download_https(
-        &format!("https://github.com/intigraph/camayoc/archive/{CAMAYOC_REVISION}.tar.gz"),
+        "https://github.com/intigraph/camayoc/releases/download/v0.1.6/camayoc-v0.1.6.tar.gz",
         &archive,
     )?;
     let digest = checked("sha256sum", [archive.as_os_str()], None)?;
@@ -1393,12 +1411,12 @@ fn install_camayoc_bundle() -> Result<()> {
     Ok(())
 }
 
-fn verify_camayoc_first_ingest(root: &Path, server: &str) -> Result<()> {
+fn verify_camayoc_first_ingest(root: &Path, server: &str, auth: &Path) -> Result<()> {
     let namespace = camayoc_aegis_namespace(&root.join("ontology/core.ttl"))?;
     let control = "tambo-camayoc-control-must-stay-absent";
     let marker = "tambo-camayoc-first-ingest-v1";
 
-    if label_count(server, &namespace, control)? != 0 {
+    if label_count(server, &namespace, control, auth)? != 0 {
         bail!("Camayoc negative control unexpectedly exists");
     }
 
@@ -1412,17 +1430,25 @@ fn verify_camayoc_first_ingest(root: &Path, server: &str) -> Result<()> {
         "actor": "caboodle",
         "source": "Tambo Camayoc first-ingest verification"
     });
-    if label_count(server, &namespace, marker)? == 0 {
-        let first = curl_json(&format!("{server}/knot"), &payload)?;
+    if label_count(server, &namespace, marker, auth)? == 0 {
+        let first = curl_json_request_with_config(
+            &format!("{server}/knot"),
+            Some(payload.to_string()),
+            Some(auth),
+        )?;
         if first.get("count").and_then(Value::as_u64).unwrap_or(0) == 0 {
             bail!("Camayoc first ingest wrote no triples");
         }
     }
-    if label_count(server, &namespace, marker)? == 0 {
+    if label_count(server, &namespace, marker, auth)? == 0 {
         bail!("Camayoc first ingest was not retrievable");
     }
-    curl_json(&format!("{server}/knot"), &payload)?;
-    if label_count(server, &namespace, marker)? != 1 {
+    curl_json_request_with_config(
+        &format!("{server}/knot"),
+        Some(payload.to_string()),
+        Some(auth),
+    )?;
+    if label_count(server, &namespace, marker, auth)? != 1 {
         bail!("Camayoc idempotent replay wrote duplicate triples");
     }
     Ok(())
@@ -1441,11 +1467,15 @@ pub(crate) fn camayoc_aegis_namespace(path: &Path) -> Result<String> {
         .context("Camayoc ontology does not declare the aegis namespace")
 }
 
-fn label_count(server: &str, namespace: &str, label: &str) -> Result<u64> {
+fn label_count(server: &str, namespace: &str, label: &str, auth: &Path) -> Result<u64> {
     let query = format!(
         "SELECT ?s WHERE {{ ?s <http://www.w3.org/2000/01/rdf-schema#label> \"{label}\" . FILTER(STRSTARTS(STR(?s), \"{namespace}\")) }}"
     );
-    let response = curl_json(&format!("{server}/query"), &json!({"query": query}))?;
+    let response = curl_json_request_with_config(
+        &format!("{server}/query"),
+        Some(json!({"query": query}).to_string()),
+        Some(auth),
+    )?;
     response["count"]
         .as_u64()
         .context("Quipu query response omitted numeric count")
@@ -1521,6 +1551,14 @@ pub(crate) fn quipu_write_probe(server: &str) -> Result<(u16, String, bool)> {
 
 fn curl_json_request(url: &str, body: Option<String>) -> Result<Value> {
     let auth = quipu_auth_config()?;
+    curl_json_request_with_config(url, body, auth.as_ref().map(|file| file.path()))
+}
+
+fn curl_json_request_with_config(
+    url: &str,
+    body: Option<String>,
+    auth: Option<&Path>,
+) -> Result<Value> {
     let mut args = vec![
         OsString::from("--fail"),
         OsString::from("--silent"),
@@ -1538,7 +1576,7 @@ fn curl_json_request(url: &str, body: Option<String>) -> Result<Value> {
     }
     if let Some(file) = &auth {
         args.push(OsString::from("--config"));
-        args.push(file.path().as_os_str().to_owned());
+        args.push(file.as_os_str().to_owned());
     }
     args.push(OsString::from(url));
     let result = checked("curl", args, None)?;
