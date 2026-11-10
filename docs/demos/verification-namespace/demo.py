@@ -15,7 +15,7 @@ with tempfile.TemporaryDirectory() as tmp:
     root = Path(tmp)
     (root / 'episode.json').write_text(json.dumps({
         'name': 'Tambo verification', 'episode_body': 'functional round trip',
-        'source': 'caboodle', 'group_id': 'caboodle-verification',
+        'source': 'tambo-demo', 'group_id': 'tambo-verification-demo',
         'nodes': [{'name': 'tambo-verify-roundtrip', 'type': 'Verification',
                    'description': 'Tambo isolated verification'}], 'edges': []}))
     args = ['episode', 'episode.json', '--db', 'verify.db']
