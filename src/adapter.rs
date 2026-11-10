@@ -521,6 +521,8 @@ impl Quipu {
             [
                 OsStr::new("episode"),
                 episode.as_os_str(),
+                OsStr::new("--base-ns"),
+                OsStr::new("https://example.org/tambo/verification/"),
                 OsStr::new("--db"),
                 db.as_os_str(),
             ],

@@ -469,16 +469,28 @@ mod tests {
                 r#"
 if [ "$1" = --version ]; then echo 'quipu {version}'; exit 0; fi
 if [ '{broken}' = true ]; then exit 7; fi
-if [ "$1" = read ]; then
-  query=$2; db=$4
+command=$1; value=$2; shift 2
+db=''; base_ns=''
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --db) db=$2; shift 2;;
+    --base-ns) base_ns=$2; shift 2;;
+    *) exit 8;;
+  esac
+done
+[ -n "$db" ] || exit 8
+if [ "$command" = read ]; then
+  query=$value
   case "$query" in
     ASK*)
       if [ ! -f "$db.knot" ]; then echo false
       else case "$query" in *TamboVerifyAbsentTerm*) echo false;; *) echo true;; esac; fi;;
     *) [ ! -f "$db" ] || echo tambo-verify-roundtrip;;
   esac
-elif [ "$1" = episode ]; then touch "$4"
-elif [ "$1" = knot ]; then cp "$2" "$4.knot"
+elif [ "$command" = episode ]; then
+  [ "$base_ns" = 'https://example.org/tambo/verification/' ] || exit 8
+  touch "$db"
+elif [ "$command" = knot ]; then cp "$value" "$db.knot"
 else exit 8; fi
 "#
             )
