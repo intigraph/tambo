@@ -8,3 +8,4 @@
 docs/demos/monorepo-sync/output.log -text whitespace=cr-at-eol
 docs/demos/runtime-ca-successor/output.log -text whitespace=cr-at-eol
 docs/demos/controller-implicit-groups/output.log -text whitespace=cr-at-eol
+docs/demos/verification-namespace/output.log -text whitespace=cr-at-eol
