@@ -66,7 +66,9 @@ pub fn prerequisites(name: ToolName, quipu_flavor: QuipuFlavor) -> &'static [&'s
         ToolName::Quipu if quipu_flavor == QuipuFlavor::Lancedb => &["cargo"],
         ToolName::Quipu => &["curl", "tar"],
         // Camayoc's bootstrap is bash + python3, and it talks to Quipu with curl.
-        ToolName::Camayoc => &["curl", "tar", "sha256sum", "bash", "python3"],
+        // Checksums are computed in-process (aegis-em2.2): macOS ships sha256sum
+        // only in /sbin, which a LaunchAgent PATH need not contain.
+        ToolName::Camayoc => &["curl", "tar", "bash", "python3"],
         ToolName::Bobbin => &["curl", "tar", "git"],
         ToolName::Yupana => &["curl", "tar"],
         ToolName::DesirePath => &["go"],
@@ -1388,9 +1390,7 @@ fn install_camayoc_bundle() -> Result<()> {
         "https://github.com/intigraph/camayoc/releases/download/v0.1.6/camayoc-v0.1.6.tar.gz",
         &archive,
     )?;
-    let digest = checked("sha256sum", [archive.as_os_str()], None)?;
-    let digest = String::from_utf8_lossy(&digest.stdout);
-    if digest.split_whitespace().next() != Some(CAMAYOC_ARCHIVE_SHA256) {
+    if crate::embedding::sha256_file(&archive)? != CAMAYOC_ARCHIVE_SHA256 {
         bail!("Camayoc archive checksum mismatch");
     }
     fs::create_dir_all(&root)
@@ -1683,13 +1683,7 @@ fn verify_checksum(archive: &Path, sums: &Path) -> Result<()> {
             (listed == filename).then(|| digest.to_owned())
         })
         .with_context(|| format!("checksum manifest does not cover {filename}"))?;
-    let actual = checked("sha256sum", [archive.as_os_str()], None)?;
-    let actual = String::from_utf8_lossy(&actual.stdout)
-        .split_whitespace()
-        .next()
-        .context("sha256sum returned no digest")?
-        .to_owned();
-    if actual != expected {
+    if crate::embedding::sha256_file(archive)? != expected {
         bail!("checksum mismatch for {filename}");
     }
     Ok(())
@@ -1722,6 +1716,75 @@ mod yupana_release_tests {
         verify_yupana_checksum(&file, expected).unwrap();
         fs::write(&file, b"abd").unwrap();
         assert!(verify_yupana_checksum(&file, expected).is_err());
+    }
+
+    // aegis-em2.2: on the Mac the consumer LaunchAgent's PATH has no /sbin,
+    // where macOS keeps sha256sum, so every Camayoc install failed there.
+    #[test]
+    fn camayoc_needs_no_external_hash_command() {
+        for flavor in [QuipuFlavor::Release, QuipuFlavor::Lancedb] {
+            assert!(!prerequisites(ToolName::Camayoc, flavor).contains(&"sha256sum"));
+        }
+    }
+
+    /// Runs in a child copy of this test binary whose PATH is EMPTY, so no
+    /// external hash command can be found; env mutation in-process would race
+    /// the other tests (aegis-em2.2).
+    #[test]
+    fn checksums_verify_and_refuse_with_an_empty_path() {
+        const CHILD: &str = "TAMBO_EMPTY_PATH_CHECKSUM_CHILD";
+        if env::var_os(CHILD).is_some() {
+            assert_eq!(env::var_os("PATH").as_deref(), Some(OsStr::new("")));
+            let root = tempfile::tempdir().unwrap();
+            let archive = root.path().join("bobbin.tar.gz");
+            let sums = root.path().join("SHA256SUMS");
+            let abc = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
+            fs::write(&archive, b"abc").unwrap();
+            fs::write(&sums, format!("{abc}  bobbin.tar.gz\n")).unwrap();
+            verify_checksum(&archive, &sums).unwrap();
+            verify_yupana_checksum(&archive, abc).unwrap();
+            fs::write(&archive, b"abd").unwrap();
+            let mismatch = verify_checksum(&archive, &sums).unwrap_err();
+            assert!(
+                format!("{mismatch:#}").contains("checksum mismatch"),
+                "{mismatch:#}"
+            );
+            assert!(verify_yupana_checksum(&archive, abc).is_err());
+            return;
+        }
+        let output = Command::new(env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "adapter::yupana_release_tests::checksums_verify_and_refuse_with_an_empty_path",
+                "--nocapture",
+                "--test-threads=1",
+            ])
+            .env("PATH", "")
+            .env(CHILD, "1")
+            .output()
+            .unwrap();
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        assert!(
+            output.status.success() && stdout.contains("1 passed"),
+            "empty-PATH child failed:\n{stdout}\n{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+
+    #[test]
+    fn manifest_checksum_is_computed_in_process() {
+        let root = tempfile::tempdir().unwrap();
+        let archive = root.path().join("bobbin.tar.gz");
+        let sums = root.path().join("SHA256SUMS");
+        fs::write(&archive, b"abc").unwrap();
+        fs::write(
+            &sums,
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad  bobbin.tar.gz\n",
+        )
+        .unwrap();
+        verify_checksum(&archive, &sums).unwrap();
+        fs::write(&archive, b"abd").unwrap();
+        assert!(verify_checksum(&archive, &sums).is_err());
     }
 
     #[test]
