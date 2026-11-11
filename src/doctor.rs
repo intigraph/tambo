@@ -118,7 +118,7 @@ fn one_line(text: &str) -> String {
 }
 
 fn crew_prerequisites(mode: CrewMode) -> Vec<&'static str> {
-    let mut commands = vec!["curl", "sha256sum"];
+    let mut commands = vec!["curl"];
     if matches!(mode, CrewMode::Shantytown | CrewMode::Both) {
         commands.push("python3");
     }
@@ -130,7 +130,6 @@ fn crew_prerequisites(mode: CrewMode) -> Vec<&'static str> {
 
 fn prerequisite_hint(command: &str) -> &'static str {
     match command {
-        "sha256sum" => "older macOS lacks it: `brew install coreutils`; Debian/Ubuntu: coreutils",
         "go" => "Desire Path is built from source: install Go 1.22+ from https://go.dev/dl/",
         "cargo" => "install Rust from https://rustup.rs",
         "python3" => "install Python 3.9+ from your package manager",

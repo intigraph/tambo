@@ -305,13 +305,7 @@ fn verify_creel_bundle() -> Result<()> {
 }
 
 fn verify_fixed_checksum(path: &Path, expected: &str, label: &str) -> Result<()> {
-    let output = checked("sha256sum", [path.as_os_str()], None)?;
-    let actual = String::from_utf8_lossy(&output.stdout)
-        .split_whitespace()
-        .next()
-        .context("sha256sum returned no digest")?
-        .to_owned();
-    if actual != expected {
+    if crate::embedding::sha256_file(path)? != expected {
         bail!("{label} checksum mismatch");
     }
     Ok(())
