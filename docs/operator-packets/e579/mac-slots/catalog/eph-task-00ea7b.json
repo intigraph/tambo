@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "principal": "eph-task-00ea7b",
+  "uid": 60027,
+  "gid": 60027,
+  "controller_uid": 51000,
+  "username": "_stjobs_00ea7b",
+  "home": "/var/lib/shantytown/agents/crew-eph-task-00ea7b",
+  "root": "/var/lib/shantytown/job-stores/eph-task-00ea7b"
+}
