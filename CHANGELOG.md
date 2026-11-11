@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.4](https://github.com/intigraph/tambo/compare/v0.13.3...v0.13.4) (2026-11-11)
+
+
+### Bug Fixes
+
+* compute install checksums in-process, not via sha256sum on PATH ([#269](https://github.com/intigraph/tambo/issues/269)) ([53476e6](https://github.com/intigraph/tambo/commit/53476e666cffbcf1f81036e843d72ba2d99dd82e))
+
 ## [0.13.3](https://github.com/intigraph/tambo/compare/v0.13.2...v0.13.3) (2026-11-10)
 
 
