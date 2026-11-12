@@ -5,7 +5,7 @@
 name = "seeds"
 kind = "rust-release"
 repo = "scbrown/seeds"
-version = "0.20.0"
+version = "0.20.1"
 tag = "seeds-ai-v{version}"
 asset = "sd-{tag}-{target}.tar.gz"
 version_argv = ["--version"]
@@ -13,10 +13,10 @@ sums_asset = "SHA256SUMS.txt"
 profiles = ["crew", "everything"]
 
 [sha256]
-aarch64-apple-darwin = "d535e51a3d452a6f5b356c7ff551c278b040935bebffcff76b9520a57165af93"
-aarch64-unknown-linux-gnu = "a5683d3892dd1c91272fdcd5f604f2c8a16e4ef608e09971ff80cc750875f097"
-x86_64-apple-darwin = "15319f333006e6bf8c1524eef89695cd23f4d18fa90899d2a7c9488fbf6df94d"
-x86_64-unknown-linux-gnu = "ab4fa85ed9ec8aefc64c3121065c57eca70d910477d42cd869c84415dc1752d4"
+aarch64-apple-darwin = "280a716da1defce9828e56ba470af4ec24a29ff21b73d8f087513aae4a2606d6"
+aarch64-unknown-linux-gnu = "077973cfd972fdb8ac75039f8fc5ceddac2929719f20b6b9e872292357fc76ed"
+x86_64-apple-darwin = "1360deb421f03cb0bb4d1970204d8526b3001fd21fb73d138370371586a5917d"
+x86_64-unknown-linux-gnu = "7e344e1d1523226302352fa648580158234fdbb57e407adffc313dd580a0d053"
 
 # `sd` also names chmln/sd (find and replace). Identity is the --help text, which
 # released Seeds editions carry one of the explicit identities below,
