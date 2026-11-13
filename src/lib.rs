@@ -31,6 +31,8 @@ pub mod pendant_sync;
 pub mod prime;
 pub mod projection;
 pub mod skill_profile;
+#[cfg(unix)]
+pub mod skills;
 pub mod tool_bundles;
 
 #[cfg(unix)]

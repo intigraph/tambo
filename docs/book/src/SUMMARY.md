@@ -10,6 +10,7 @@
 - [Using it with agents](agents.md)
   - [Agent primer](agent-primer.md)
   - [Agent memory setup](agent-memory.md)
+  - [Skill pendants and profile staging](skills.md)
 - [Using Tambo](using.md)
 - [Reference](reference.md)
   - [Configuration](configuration.md)
