@@ -528,7 +528,11 @@ mod native {
             let digest = format!("{:x}", Sha256::digest(b"old"));
             assert!(install_policy(dir.path(), b"new", Some(&digest), |_| {
                 if concurrent {
+                    // Simulate a privileged competing writer even when this
+                    // fixture runs as an unprivileged CI user.
+                    fs::set_permissions(&target, fs::Permissions::from_mode(0o600))?;
                     fs::write(&target, b"foreign")?;
+                    fs::set_permissions(&target, fs::Permissions::from_mode(0o440))?;
                     Ok(())
                 } else {
                     bail!("fixture syntax refusal")
