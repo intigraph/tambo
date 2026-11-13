@@ -38,9 +38,10 @@ def main():
         def dump(path, value):
             path.write_text(json.dumps(value))
 
-        def snapshot():
-            return {str(p.relative_to(dest)): (p.stat().st_ino, p.stat().st_mtime_ns,
-                    stat.S_IMODE(p.stat().st_mode), p.read_bytes()) for p in dest.rglob('*') if p.is_file()}
+        def snapshot(directory=None):
+            directory = directory if directory is not None else dest
+            return {str(p.relative_to(directory)): (p.stat().st_ino, p.stat().st_mtime_ns,
+                    stat.S_IMODE(p.stat().st_mode), p.read_bytes()) for p in directory.rglob('*') if p.is_file()}
 
         database = root / 'authority.db'
         run(quipu, 'shapes', 'load', 'render', shapes, '--db', database)
@@ -97,8 +98,10 @@ def main():
                 expected[f'{harness}/{name}/SKILL.md'] = (markdown, 0o644)
                 expected[f'{harness}/{name}/helper'] = (binary, 0o755)
                 expected[f'{harness}/{name}/agents/openai.yaml'] = (agent_metadata, 0o644)
+            immutable = snapshot(output)
             run(tambo, 'skills', 'publish', '--source', source, '--metadata', metadata,
-                '--render-shapes', shapes, '--output', output, '--quipu', quipu, success=False)
+                '--render-shapes', shapes, '--output', output, '--quipu', quipu, *policy, success=False)
+            assert snapshot(output) == immutable
         profile = dict(id='urn:fixture:profile', public_only=False, harnesses=['claude', 'codex'],
                        pins=[release['pin'] for release in releases])
         catalogue = dict(transaction=1, complete=True, releases=releases)
@@ -175,6 +178,36 @@ def main():
         assert not (dest / 'claude/own').exists() and not (dest / 'codex/own').exists()
         assert (dest / 'claude/one/SKILL.md').read_bytes() == expected['claude/one/SKILL.md'][0]
         print('public-only positive + unknown preservation + owned-only retirement: PASS')
+        # Source change -> new native share -> exact new pin -> both harness trees.
+        unaffected = {k: v for k, v in snapshot().items() if k.endswith('/helper')
+                      or k.endswith('/agents/openai.yaml') or '/two/' in k}
+        source = root / 'one'
+        (source / 'SKILL.md').write_text((source / 'SKILL.md').read_text().replace('description: fixture', 'description: fixture v2'))
+        meta = json.loads((root / 'one.json').read_text())
+        meta.update(version='2', description='fixture v2')
+        dump(root / 'one-v2.json', meta)
+        output = root / 'one-v2-release'
+        changed = json.loads(run(tambo, 'skills', 'publish', '--source', source,
+            '--metadata', root / 'one-v2.json', '--render-shapes', shapes, '--output', output,
+            '--quipu', quipu, '--identifier-policy', repo / 'packs/policy/identifier-policy.ttl',
+            '--identifier-shapes', repo / 'packs/policy/identifier-policy.shapes.ttl').stdout)['release']
+        assert changed['pin']['share_id'] != releases[0]['pin']['share_id']
+        catalogue['releases'].append(changed)
+        catalogue['transaction'] = 2  # synthetic catalogue clock, not a shared-store tx
+        profile['pins'][0] = changed['pin']
+        bundles[changed['pin']['share_id']] = str(output / 'bundle.pendant.tar.gz')
+        dump(profile_path, profile); dump(catalogue_path, catalogue); dump(bundles_path, bundles)
+        sync()
+        for harness in ['claude', 'codex']:
+            assert 'description: fixture v2' in (dest / harness / 'one/SKILL.md').read_text()
+        current = snapshot()
+        assert all(current[k] == v for k, v in unaffected.items())
+        versions = {r['name']: r['pin']['version'] for r in json.loads((dest / 'profile.json').read_text())['selection']['releases']}
+        assert versions == {'one': '2', 'two': '1'}
+        print('source v1 -> v2 pinned propagation to both trees; unchanged files retain inode/mtime: PASS')
+        if args.demo:
+            print('current profile receipt versions:', versions)
+            print('current one description:', (dest / 'codex/one/SKILL.md').read_text().splitlines()[2])
         print('fixture only; no catalogue registration, harness settings or installed acceptance')
 
 

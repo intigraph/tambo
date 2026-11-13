@@ -1,0 +1,32 @@
+Script started (private command metadata omitted; real output/timing retained)
+BASELINE installed CLI
+tambo 0.13.4 (48ac88ea4fd8)
+error: unrecognized subcommand 'skills'
+
+Usage: tambo <COMMAND>
+
+For more information, try '--help'.
+baseline skills exit=2 (expected 2: command absent)
+
+CANDIDATE source CLI
+tambo 0.13.4 (b3ee8b8f00e0)
+publish one: outcome=published, public=True, share=sha256:5b41a9ed35a4ae76008e88d9a51b997091043f99778c6dc6dfc9b362fd3d5247
+publish two: outcome=published, public=True, share=sha256:f169a50f7bfda4aa8f65c166a9927e0f4395c55a5fee16fe9d8eb2772f99d01f
+publish own: outcome=published, public=False, share=sha256:3ebe3a2be030e6c583232f62780df38597562c852b675d872e4a88989cb80940
+before sync: destination_exists=False
+after sync claude: ['one', 'own', 'two']
+after sync codex: ['one', 'own', 'two']
+one/SKILL.md rendered text: ['{{ raw }}', 'Unicode λ']
+helper mode: 0o755
+nested agents/openai.yaml preserved: True
+repeat sync native diff.noop: True ; inode/mtime/bytes unchanged: True
+native three-skill/two-harness byte+mode+pin+NOOP: PASS
+partial/wrong-pin/public-internal/corrupt share preserve destination: PASS
+native internal share stamp defeats forged public metadata: PASS
+public-only positive + unknown preservation + owned-only retirement: PASS
+source v1 -> v2 pinned propagation to both trees; unchanged files retain inode/mtime: PASS
+current profile receipt versions: {'one': '2', 'two': '1'}
+current one description: description: fixture v2
+fixture only; no catalogue registration, harness settings or installed acceptance
+
+Script done on 2026-11-12 22:01:12-05:00 [COMMAND_EXIT_CODE="0"]
