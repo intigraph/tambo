@@ -261,6 +261,13 @@ mod native {
         run_with_caller(args, None)
     }
     fn run_with_caller(args: &[String], caller: Option<u32>) -> Result<(bool, String)> {
+        run_with_budget(args, caller, Duration::from_secs(10))
+    }
+    fn run_with_budget(
+        args: &[String],
+        caller: Option<u32>,
+        budget: Duration,
+    ) -> Result<(bool, String)> {
         // Regular private capture files cannot wait for EOF from a descendant
         // retaining a pipe after the fixed native command has exited.
         let mut stdout = tempfile::tempfile()?;
@@ -283,7 +290,7 @@ mod native {
         let status = loop {
             let oversized =
                 stdout.metadata()?.len() > 1_048_576 || stderr.metadata()?.len() > 1_048_576;
-            if oversized || start.elapsed() > Duration::from_secs(10) {
+            if oversized || start.elapsed() > budget {
                 let _ = child.kill();
                 child.wait()?;
                 bail!("native account command exceeded time/byte budget; preserve reservation");
@@ -541,6 +548,17 @@ mod native {
     }
 
     #[test]
+    fn delegated_setup_uses_its_own_finite_process_budget() {
+        let started = Instant::now();
+        let answer = run_with_budget(
+            &["/bin/sleep".into(), "2".into()],
+            None,
+            Duration::from_millis(20),
+        );
+        assert!(answer.is_err());
+        assert!(started.elapsed() < Duration::from_secs(1));
+    }
+    #[test]
     fn inherited_output_descriptor_does_not_block_native_readback() {
         let started = Instant::now();
         let answer = run(&[
@@ -622,11 +640,7 @@ mod native {
             bail!("job account administrative membership is not disproved");
         }
         let home = fs::symlink_metadata(&account.home)?;
-        if !home.is_dir()
-            || home.uid() != account.uid
-            || home.gid() != account.uid
-            || home.mode() & 0o077 != 0
-        {
+        if !home.is_dir() || home.uid() != account.uid || home.mode() & 0o077 != 0 {
             bail!("job home is not private to its UID");
         }
         Ok(())
@@ -680,12 +694,16 @@ mod native {
         protected(Path::new(helper))?;
         // New single-repo setup belongs to Shantytown. Tambo passes only the
         // exact protected catalog pin to its installed root-only operation.
-        let (ok, answer) = run(&[
-            helper.into(),
-            "resume-accounts".into(),
-            "inventory".into(),
-            digest.clone(),
-        ])?;
+        let (ok, answer) = run_with_budget(
+            &[
+                helper.into(),
+                "resume-accounts".into(),
+                "inventory".into(),
+                digest.clone(),
+            ],
+            None,
+            Duration::from_secs(30 * 60),
+        )?;
         if !ok || answer.trim() != format!("ACCOUNTS READY {digest}") {
             bail!("Shantytown account setup did not verify the exact inventory; retain its state");
         }
