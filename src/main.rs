@@ -728,7 +728,11 @@ fn main() -> Result<()> {
             resume,
         } => {
             let plan = if apply {
-                caboodle::job_slots::apply_with_resume(&directory, resume)?
+                if resume {
+                    caboodle::job_slots::resume_accounts(&directory)?
+                } else {
+                    caboodle::job_slots::apply(&directory)?
+                }
             } else {
                 caboodle::job_slots::load(&directory)?
             };

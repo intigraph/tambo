@@ -88,7 +88,9 @@ using its exact current hash for rollback; retain the archive and all receipts.
 
 ## Explicit interrupted-batch resume
 
-`job-slots --apply --resume` admits only reservations with the same principal,
+`job-slots --apply --resume` calls the installed Shantytown helper, passing only
+the exact protected catalog digest. The new setup logic lives in Shantytown;
+Tambo does not interpret its recovery journal. It admits only reservations with the same principal,
 UID and manifest hash. It verifies completed accounts without recreating them,
 continues untouched prepared slots, and can complete the receipt for a fully
 verified reserved account after a lost completion write. Every fresh UID is
@@ -98,14 +100,21 @@ refuses; the tool never blindly replays a partially executed account sequence.
 A native partial identity therefore needs a separately reviewed recovery rather
 than account adoption or receipt deletion.
 
-The original account receipt may retain its provision-only hash and a completed
+The Shantytown setup verifier recognizes that the original account receipt may retain its provision-only hash and a completed
 launch-field migration journal. Account verification follows only complete,
 matching prepared/completed migration pairs to the current manifest hash; it
 preserves the receipt bytes. A partial journal remains unknown. This allows
 migration before expansion without recreating the original account.
 
-Unit fixtures cover a batch interrupted after the first account, explicit resume
+Shantytown unit fixtures cover a batch interrupted after the first account, explicit resume
 without recreating that account, a lost completion write, partial native-state
 refusal, changed reservations and migration-chain mismatches. These are source
 controls, not proof that any account or policy was changed on a host. Installing
 both reviewed releases and native platform acceptance precede account expansion.
+
+New isolation setup is owned by Shantytown and is non-interactive. The existing
+Tambo account-creation implementation is retained, not migrated by this change.
+Use the explicit delegated resume path for post-migration expansion. The helper
+performs no key enrollment or readiness-toggle change; native isolation and key
+verification remain prerequisites to any unattended activation. Public keys belong
+to individual spawns, not a long-lived reusable slot credential.

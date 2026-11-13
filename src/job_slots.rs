@@ -205,146 +205,6 @@ pub fn load(directory: &Path) -> Result<Plan> {
     })
 }
 
-fn receipt_state(account: &Account, value: &Value) -> Result<bool> {
-    let object = value.as_object().context("invalid account reservation")?;
-    if object
-        .keys()
-        .any(|key| !["principal", "uid", "sha256", "state", "migrations"].contains(&key.as_str()))
-        || value["principal"] != account.principal
-        || value["uid"] != account.uid
-    {
-        bail!("retained UID reservation differs; never recycle it");
-    }
-    let digest = value["sha256"]
-        .as_str()
-        .filter(|v| hex(v, 64))
-        .context("invalid reservation digest")?;
-    let complete = match value["state"].as_str() {
-        Some("prepared") => false,
-        Some("complete") => true,
-        _ => bail!("unknown reservation state"),
-    };
-    let mut effective = digest;
-    if let Some(history) = object.get("migrations") {
-        let history = history.as_array().context("invalid migration history")?;
-        if !complete || ![2, 4].contains(&history.len()) {
-            bail!("migration is partial or unknown; preserve it");
-        }
-        for (index, pair) in history.chunks_exact(2).enumerate() {
-            let (before, after) = (&pair[0], &pair[1]);
-            let action = if index == 0 { "expand" } else { "rollback" };
-            let fields: BTreeSet<&str> = [
-                "action",
-                "old_sha256",
-                "new_sha256",
-                "reviewed_commit",
-                "operator",
-                "time",
-                "binding",
-            ]
-            .into_iter()
-            .collect();
-            for event in pair {
-                if event
-                    .as_object()
-                    .map(|o| o.keys().map(String::as_str).collect::<BTreeSet<_>>())
-                    != Some(fields.clone())
-                    || !event["reviewed_commit"]
-                        .as_str()
-                        .is_some_and(|v| hex(v, 40))
-                    || !event["operator"].as_str().is_some_and(|v| !v.is_empty())
-                    || !event["time"].as_str().is_some_and(|v| !v.is_empty())
-                {
-                    bail!("migration evidence is incomplete");
-                }
-            }
-            if before["action"] != format!("{action}-prepared")
-                || after["action"] != format!("{action}-complete")
-                || [
-                    "old_sha256",
-                    "new_sha256",
-                    "reviewed_commit",
-                    "operator",
-                    "binding",
-                ]
-                .iter()
-                .any(|key| before[*key] != after[*key])
-            {
-                bail!("migration completion does not match its preparation");
-            }
-            let old = before["old_sha256"]
-                .as_str()
-                .filter(|v| hex(v, 64))
-                .context("invalid migration old digest")?;
-            let new = before["new_sha256"]
-                .as_str()
-                .filter(|v| hex(v, 64))
-                .context("invalid migration new digest")?;
-            if old != digest || (index == 0 && effective != old) || (index == 1 && effective != new)
-            {
-                bail!("migration chain differs from the retained reservation");
-            }
-            effective = if index == 0 { new } else { old };
-        }
-    }
-    if effective != account.manifest_sha256 {
-        bail!("reservation does not bind the current manifest");
-    }
-    Ok(complete)
-}
-
-trait AccountProvisioner {
-    fn receipt(&mut self, account: &Account) -> Result<Option<Value>>;
-    fn pristine(&mut self, account: &Account) -> Result<bool>;
-    fn verify(&mut self, account: &Account) -> Result<()>;
-    fn reserve(&mut self, account: &Account) -> Result<()>;
-    fn create(&mut self, account: &Account) -> Result<()>;
-    fn complete(&mut self, account: &Account) -> Result<()>;
-}
-
-fn provision(plan: &Plan, ports: &mut impl AccountProvisioner, resume: bool) -> Result<()> {
-    let mut fresh = Vec::new();
-    let mut pending = Vec::new();
-    let mut reconciled = Vec::new();
-    // Preflight the entire inventory before writing a reservation or account.
-    for account in &plan.accounts {
-        match ports.receipt(account)? {
-            Some(value) if receipt_state(account, &value)? => ports.verify(account)?,
-            Some(_) => {
-                if !resume {
-                    bail!("prepared reservation requires explicit --resume; never recycle it");
-                }
-                if ports.pristine(account)? {
-                    pending.push(account);
-                } else {
-                    // A fully verified reserved identity can be reconciled.
-                    // Partial/foreign native state refuses: no blind dscl replay.
-                    ports.verify(account)?;
-                    reconciled.push(account);
-                }
-            }
-            None => {
-                if !ports.pristine(account)? {
-                    bail!("slot account/UID/home is occupied; no adoption");
-                }
-                fresh.push(account);
-            }
-        }
-    }
-    for account in &fresh {
-        ports.reserve(account)?;
-    }
-    for account in reconciled {
-        ports.complete(account)?;
-    }
-    for account in pending.into_iter().chain(fresh) {
-        ports.create(account)?;
-        ports.verify(account)?;
-        ports.complete(account)?;
-    }
-    Ok(())
-}
-
 /// Fixed native commands only. No shell, caller executable, or arbitrary user
 /// property is accepted. Separate per-job primary group, disabled login, hidden.
 pub fn commands(account: &Account) -> Vec<Vec<String>> {
@@ -809,99 +669,29 @@ mod native {
         Ok(())
     }
 
-    struct NativeAccounts {
-        receipts: PathBuf,
-        users: BTreeMap<String, u32>,
-        groups: BTreeMap<String, u32>,
-        consumed_uids: BTreeSet<u32>,
-        consumed_principals: BTreeSet<String>,
-    }
-    impl AccountProvisioner for NativeAccounts {
-        fn receipt(&mut self, account: &Account) -> Result<Option<Value>> {
-            let path = self.receipts.join(format!("{}.json", account.uid));
-            if absent(&path)? {
-                return Ok(None);
-            }
-            protected(&path)?;
-            if fs::symlink_metadata(&path)?.mode() & 0o777 != 0o600 {
-                bail!("account receipt must be root-private");
-            }
-            Ok(Some(serde_json::from_slice(&bounded(&path, 65536)?)?))
+    pub(super) fn resume_accounts(directory: &Path) -> Result<Plan> {
+        require_root()?;
+        let plan = protected_plan(directory)?;
+        let digest = format!(
+            "{:x}",
+            Sha256::digest(bounded(&directory.join("slots.json"), 1_048_576)?)
+        );
+        let helper = "/usr/local/libexec/st-job-launcher";
+        protected(Path::new(helper))?;
+        // New single-repo setup belongs to Shantytown. Tambo passes only the
+        // exact protected catalog pin to its installed root-only operation.
+        let (ok, answer) = run(&[
+            helper.into(),
+            "resume-accounts".into(),
+            "inventory".into(),
+            digest.clone(),
+        ])?;
+        if !ok || answer.trim() != format!("ACCOUNTS READY {digest}") {
+            bail!("Shantytown account setup did not verify the exact inventory; retain its state");
         }
-        fn pristine(&mut self, account: &Account) -> Result<bool> {
-            Ok(!self.users.contains_key(&account.username)
-                && !self.groups.contains_key(&account.username)
-                && !self.users.values().any(|uid| *uid == account.uid)
-                && !self.groups.values().any(|uid| *uid == account.uid)
-                && !self.consumed_uids.contains(&account.uid)
-                && !self.consumed_principals.contains(&account.principal)
-                && absent(Path::new(&account.home))?)
-        }
-        fn verify(&mut self, account: &Account) -> Result<()> {
-            let users = inventory("/Users", "UniqueID")?;
-            let groups = inventory("/Groups", "PrimaryGroupID")?;
-            if users.get(&account.username) != Some(&account.uid)
-                || groups.get(&account.username) != Some(&account.uid)
-                || users.values().filter(|uid| **uid == account.uid).count() != 1
-                || groups.values().filter(|uid| **uid == account.uid).count() != 1
-            {
-                bail!("job UID/GID uniqueness unproved");
-            }
-            check(account)?;
-            Ok(())
-        }
-        fn reserve(&mut self, account: &Account) -> Result<()> {
-            save(
-                &self.receipts.join(format!("{}.json", account.uid)),
-                account,
-                "prepared",
-                true,
-            )
-        }
-        fn create(&mut self, account: &Account) -> Result<()> {
-            for path in [
-                "/private/var",
-                "/private/var/lib",
-                "/private/var/lib/shantytown",
-                "/private/var/lib/shantytown/agents",
-            ] {
-                root_dir(Path::new(path))?;
-            }
-            for command in commands(account) {
-                if !run(&command)?.0 {
-                    bail!("native account creation failed; retain reservation");
-                }
-            }
-            let canonical = PathBuf::from(format!(
-                "/private/var/lib/shantytown/agents/crew-{}",
-                account.principal
-            ));
-            fs::DirBuilder::new().mode(0o700).create(&canonical)?;
-            fs::set_permissions(&canonical, fs::Permissions::from_mode(0o700))?;
-            if !run(&[
-                "/usr/sbin/chown".into(),
-                format!("{}:{}", account.uid, account.uid),
-                canonical.to_string_lossy().into_owned(),
-            ])?
-            .0
-            {
-                bail!("job home ownership unproved");
-            }
-            Ok(())
-        }
-        fn complete(&mut self, account: &Account) -> Result<()> {
-            save(
-                &self.receipts.join(format!("{}.json", account.uid)),
-                account,
-                "complete",
-                false,
-            )
-        }
+        Ok(plan)
     }
     pub fn apply(directory: &Path) -> Result<Plan> {
-        apply_with_resume(directory, false)
-    }
-    pub fn apply_with_resume(directory: &Path, resume: bool) -> Result<Plan> {
         if !cfg!(target_os = "macos") {
             bail!("macOS account apply requires native Darwin; Linux uses its IaC role");
         }
@@ -929,60 +719,100 @@ mod native {
         }
         let receipts = directory.join("account-receipts");
         root_dir(&receipts)?;
-        // Serialize with the launcher's consume operation and the initial
-        // launch-field migration; a consumed UID is never recreated on resume.
-        let used = directory.join("used");
-        root_dir(&used)?;
-        let used_lock = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .truncate(false)
-            .mode(0o600)
-            .custom_flags(NOFOLLOW)
-            .open(used.join(".lock"))?;
-        let meta = used_lock.metadata()?;
-        if !meta.is_file() || meta.uid() != 0 || meta.mode() & 0o077 != 0 || meta.nlink() != 1 {
-            bail!("invalid consumed UID lock");
-        }
-        FileExt::try_lock_exclusive(&used_lock)?;
-        let mut consumed_uids = BTreeSet::new();
-        let mut consumed_principals = BTreeSet::new();
-        for (index, entry) in fs::read_dir(&used)?.enumerate() {
-            if index > 1024 {
-                bail!("consumed UID inventory exceeds its bound");
-            }
-            let path = entry?.path();
-            protected(&path)?;
-            if path.file_name().is_some_and(|name| name == ".lock") {
-                continue;
-            }
-            let value: Value = serde_json::from_slice(&bounded(&path, 4096)?)?;
-            let uid = value["uid"]
-                .as_u64()
-                .filter(|uid| *uid >= 10000 && *uid <= u32::MAX as u64)
-                .context("unknown consumed UID")? as u32;
-            let name = value["principal"]
-                .as_str()
-                .filter(|name| principal(name))
-                .context("unknown consumed principal")?;
-            if !consumed_uids.insert(uid) || !consumed_principals.insert(name.to_owned()) {
-                bail!("duplicate consumed identity");
+        let users = inventory("/Users", "UniqueID")?;
+        let groups = inventory("/Groups", "PrimaryGroupID")?;
+        let mut fresh = Vec::new();
+        for account in &plan.accounts {
+            let receipt = receipts.join(format!("{}.json", account.uid));
+            if !absent(&receipt)? {
+                protected(&receipt)?;
+                let value: Value = serde_json::from_slice(&bounded(&receipt, 4096)?)?;
+                if value
+                    != serde_json::json!({"principal":account.principal,"uid":account.uid,"sha256":account.manifest_sha256,"state":"complete"})
+                {
+                    bail!("retained UID reservation needs explicit recovery; never recycle it");
+                }
+                if users.get(&account.username) != Some(&account.uid)
+                    || groups.get(&account.username) != Some(&account.uid)
+                    || users.values().filter(|uid| **uid == account.uid).count() != 1
+                    || groups.values().filter(|uid| **uid == account.uid).count() != 1
+                {
+                    bail!("retained job identity differs from native accounts");
+                }
+                check(account)?;
+            } else {
+                if users.contains_key(&account.username)
+                    || groups.contains_key(&account.username)
+                    || users.values().any(|uid| *uid == account.uid)
+                    || groups.values().any(|uid| *uid == account.uid)
+                    || !absent(Path::new(&account.home))?
+                {
+                    bail!("slot account/UID/home is already occupied; no adoption");
+                }
+                fresh.push(account);
             }
         }
-        let mut ports = NativeAccounts {
-            receipts,
-            users: inventory("/Users", "UniqueID")?,
-            groups: inventory("/Groups", "PrimaryGroupID")?,
-            consumed_uids,
-            consumed_principals,
-        };
-        provision(&plan, &mut ports, resume)?;
+        // Reserve every UID durably before the first account change. Any later
+        // error retains all prepared reservations, including an unused account.
+        for account in &fresh {
+            save(
+                &receipts.join(format!("{}.json", account.uid)),
+                account,
+                "prepared",
+                true,
+            )?;
+        }
+        for path in [
+            "/private/var",
+            "/private/var/lib",
+            "/private/var/lib/shantytown",
+            "/private/var/lib/shantytown/agents",
+        ] {
+            root_dir(Path::new(path))?;
+        }
+        for account in fresh {
+            for command in commands(account) {
+                if !run(&command)?.0 {
+                    bail!("native account creation failed; retain reservation");
+                }
+            }
+            let canonical = PathBuf::from(format!(
+                "/private/var/lib/shantytown/agents/crew-{}",
+                account.principal
+            ));
+            fs::DirBuilder::new().mode(0o700).create(&canonical)?;
+            fs::set_permissions(&canonical, fs::Permissions::from_mode(0o700))?;
+            if !run(&[
+                "/usr/sbin/chown".into(),
+                format!("{}:{}", account.uid, account.uid),
+                canonical.to_string_lossy().into_owned(),
+            ])?
+            .0
+            {
+                bail!("job home ownership unproved");
+            }
+            let users = inventory("/Users", "UniqueID")?;
+            let groups = inventory("/Groups", "PrimaryGroupID")?;
+            if users.get(&account.username) != Some(&account.uid)
+                || groups.get(&account.username) != Some(&account.uid)
+                || users.values().filter(|uid| **uid == account.uid).count() != 1
+                || groups.values().filter(|uid| **uid == account.uid).count() != 1
+            {
+                bail!("job UID/GID uniqueness unproved");
+            }
+            check(account)?;
+            save(
+                &receipts.join(format!("{}.json", account.uid)),
+                account,
+                "complete",
+                false,
+            )?;
+        }
         Ok(plan)
     }
 }
 #[cfg(unix)]
-pub use native::{apply, apply_with_resume};
+pub use native::apply;
 
 pub(crate) fn require_root() -> Result<()> {
     native::require_root()
@@ -1027,6 +857,9 @@ pub fn apply_policy(directory: &Path) -> Result<bool> {
 }
 pub fn replace_policy(directory: &Path, expected_sha256: &str) -> Result<bool> {
     native::policy(directory, Some(expected_sha256))
+}
+pub fn resume_accounts(directory: &Path) -> Result<Plan> {
+    native::resume_accounts(directory)
 }
 pub fn prepare_metadata(directory: &Path) -> Result<bool> {
     native::metadata(directory)
@@ -1239,156 +1072,6 @@ mod tests {
         assert!(!load(root.path()).unwrap().accounts[0].launch_fields_complete);
         let text = sudoers(root.path()).unwrap();
         assert!(!text.contains("NOPASSWD"));
-    }
-
-    #[derive(Default)]
-    struct FakeAccounts {
-        receipts: BTreeMap<u32, Value>,
-        native: BTreeSet<u32>,
-        partial: BTreeSet<u32>,
-        creates: Vec<u32>,
-        fail: Option<u32>,
-        lose_complete: bool,
-    }
-    impl AccountProvisioner for FakeAccounts {
-        fn receipt(&mut self, a: &Account) -> Result<Option<Value>> {
-            Ok(self.receipts.get(&a.uid).cloned())
-        }
-        fn pristine(&mut self, a: &Account) -> Result<bool> {
-            Ok(!self.native.contains(&a.uid) && !self.partial.contains(&a.uid))
-        }
-        fn verify(&mut self, a: &Account) -> Result<()> {
-            if !self.native.contains(&a.uid) || self.partial.contains(&a.uid) {
-                bail!("fixture native state incomplete");
-            }
-            Ok(())
-        }
-        fn reserve(&mut self, a: &Account) -> Result<()> {
-            assert!(!self.receipts.contains_key(&a.uid));
-            self.receipts.insert(a.uid, serde_json::json!({"principal":a.principal,"uid":a.uid,"sha256":a.manifest_sha256,"state":"prepared"}));
-            Ok(())
-        }
-        fn create(&mut self, a: &Account) -> Result<()> {
-            assert!(self.receipts.contains_key(&a.uid));
-            // Both slots are reserved BEFORE the first simulated native change.
-            assert_eq!(self.receipts.len(), 2);
-            if self.fail == Some(a.uid) {
-                bail!("fixture native command failed before mutation");
-            }
-            assert!(!self.native.contains(&a.uid));
-            self.creates.push(a.uid);
-            self.native.insert(a.uid);
-            Ok(())
-        }
-        fn complete(&mut self, a: &Account) -> Result<()> {
-            if self.lose_complete {
-                bail!("fixture completion write failed");
-            }
-            self.receipts.get_mut(&a.uid).unwrap()["state"] = "complete".into();
-            Ok(())
-        }
-    }
-    fn two_accounts() -> Plan {
-        let root = fixture();
-        let mut plan = load(root.path()).unwrap();
-        let mut second = plan.accounts[0].clone();
-        second.uid = 51002;
-        second.principal = "eph-task-123abd".into();
-        second.username = "_stjobs_123abd".into();
-        second.home = format!("/var/lib/shantytown/agents/crew-{}", second.principal);
-        plan.accounts.push(second);
-        plan
-    }
-    #[test]
-    fn halfway_failure_resumes_only_exact_unused_reservations() {
-        let plan = two_accounts();
-        let mut ports = FakeAccounts {
-            fail: Some(51002),
-            ..Default::default()
-        };
-        assert!(provision(&plan, &mut ports, false).is_err());
-        assert_eq!(ports.creates, vec![51001]);
-        assert_eq!(ports.receipts[&51001]["state"], "complete");
-        assert_eq!(ports.receipts[&51002]["state"], "prepared");
-        assert!(provision(&plan, &mut ports, false).is_err());
-        ports.fail = None;
-        provision(&plan, &mut ports, true).unwrap();
-        assert_eq!(ports.creates, vec![51001, 51002]);
-        provision(&plan, &mut ports, true).unwrap();
-        assert_eq!(ports.creates, vec![51001, 51002]);
-    }
-    #[test]
-    fn partial_native_identity_never_replays_or_adopts() {
-        let plan = two_accounts();
-        let mut ports = FakeAccounts {
-            fail: Some(51002),
-            ..Default::default()
-        };
-        assert!(provision(&plan, &mut ports, false).is_err());
-        ports.partial.insert(51002);
-        ports.fail = None;
-        let retained = ports.receipts.clone();
-        assert!(provision(&plan, &mut ports, true).is_err());
-        assert_eq!(ports.receipts, retained);
-        assert_eq!(ports.creates, vec![51001]);
-    }
-    #[test]
-    fn lost_completion_receipt_reconciles_without_repeating_native_creation() {
-        let plan = two_accounts();
-        let mut ports = FakeAccounts {
-            lose_complete: true,
-            ..Default::default()
-        };
-        assert!(provision(&plan, &mut ports, false).is_err());
-        assert_eq!(ports.creates, vec![51001]);
-        ports.lose_complete = false;
-        provision(&plan, &mut ports, true).unwrap();
-        assert_eq!(ports.creates, vec![51001, 51002]);
-    }
-    #[test]
-    fn changed_reservation_refuses_before_any_account_change() {
-        for key in ["principal", "sha256", "state"] {
-            let plan = two_accounts();
-            let mut ports = FakeAccounts {
-                fail: Some(51002),
-                ..Default::default()
-            };
-            assert!(provision(&plan, &mut ports, false).is_err());
-            ports.receipts.get_mut(&51002).unwrap()[key] = "changed".into();
-            ports.fail = None;
-            assert!(provision(&plan, &mut ports, true).is_err());
-            assert_eq!(ports.creates, vec![51001]);
-        }
-    }
-    #[test]
-    fn completed_step_1b_migration_is_read_without_rewriting_its_receipt() {
-        let plan = two_accounts();
-        let a = &plan.accounts[0];
-        let old = "a".repeat(64);
-        let event = serde_json::json!({"action":"expand-prepared", "old_sha256":old,
-            "new_sha256":a.manifest_sha256,"reviewed_commit":"b".repeat(40),"operator":"fixture",
-            "time":"2026-11-13T00:00:00Z","binding":null});
-        let mut complete = event.clone();
-        complete["action"] = "expand-complete".into();
-        let value = serde_json::json!({"principal":a.principal,"uid":a.uid,"sha256":old,"state":"complete","migrations":[event,complete]});
-        assert!(receipt_state(a, &value).unwrap());
-        for fault in ["partial", "wrong-digest", "changed-authority"] {
-            let mut bad = value.clone();
-            match fault {
-                "partial" => {
-                    bad["migrations"].as_array_mut().unwrap().pop();
-                }
-                "wrong-digest" => bad["migrations"][1]["new_sha256"] = "c".repeat(64).into(),
-                _ => bad["migrations"][1]["reviewed_commit"] = "c".repeat(40).into(),
-            }
-            assert!(receipt_state(a, &bad).is_err());
-        }
-        let mut ports = FakeAccounts::default();
-        ports.receipts.insert(a.uid, value.clone());
-        ports.native.insert(a.uid);
-        provision(&plan, &mut ports, true).unwrap();
-        assert_eq!(ports.receipts[&a.uid], value);
-        assert_eq!(ports.creates, vec![51002]);
     }
 
     #[cfg(not(target_os = "macos"))]
