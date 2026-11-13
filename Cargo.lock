@@ -582,6 +582,7 @@ dependencies = [
  "flate2",
  "fs2",
  "indexmap",
+ "libc",
  "predicates",
  "serde",
  "serde_json",

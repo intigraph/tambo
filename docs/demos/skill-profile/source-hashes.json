@@ -1,0 +1,11 @@
+{
+  "src/skills.rs": "33c4ced679c0f0497d3f5bb184bbe66ba7c5e48b72b94154273c7adf672eb4d1",
+  "src/skills/native.rs": "aa98661f50d208367f0adb94a1d14c1fb63900c18708e026c6394ec14ca16634",
+  "src/skills/publish.rs": "1b5abafc4aecec1c07bf77366991f2899104f2bed4e903a08dc0fe97cb264e90",
+  "src/skills/sync.rs": "97f8e8f8832f747ca0328b51eedf92489830d625b604e9ffbb3ad33da391d667",
+  "src/skills/tests.rs": "23d90ff04b9f53831d3c759e60b5d2566b4451e406677f1bd07c9edf33ab692c",
+  "src/main.rs": "4c959701f679517f843032c791664567f4968c43cc76d99c34a5d67d795fd2c0",
+  "src/lib.rs": "fd21c67359e8c02227f0ebb4cfc4ab47964aaf1dd7dfc17740e4c891c4c861d2",
+  "Cargo.toml": "0fdcc04b983ea09b961786270d11339ac8b8485dcfdcf226cfd21b44a0c3521f",
+  "Cargo.lock": "402c5b4ee3a9909769890d546732e9acbcdd1ac53cfdc4c732388a7860031daf"
+}
