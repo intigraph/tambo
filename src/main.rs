@@ -45,6 +45,10 @@ enum Commands {
         directory: PathBuf,
         #[arg(long)]
         apply: bool,
+
+        /// Replace only this exact installed predecessor; archive it before atomic installation
+        #[arg(long, requires = "apply")]
+        replace_sha256: Option<String>,
     },
     /// Prepare public own-job metadata only, from the protected host inventory
     #[cfg(unix)]
@@ -72,6 +76,9 @@ enum Commands {
         /// Create only the exact reviewed accounts; requires native macOS and root-owned input
         #[arg(long)]
         apply: bool,
+        /// Resume only retained exact reservations; partial native identities still refuse
+        #[arg(long, requires = "apply")]
+        resume: bool,
     },
     /// Review memory setup or inspect actual firing evidence (never disables auto-memory)
     #[cfg(unix)]
@@ -670,11 +677,18 @@ enum MemoryCommand {
 fn main() -> Result<()> {
     match Cli::parse().command {
         #[cfg(unix)]
-        Commands::JobPolicy { directory, apply } => {
+        Commands::JobPolicy {
+            directory,
+            apply,
+            replace_sha256,
+        } => {
             if apply {
                 println!(
                     "{}",
-                    serde_json::json!({"changed":caboodle::job_slots::apply_policy(&directory)?})
+                    serde_json::json!({"changed": match replace_sha256 {
+                        Some(pin) => caboodle::job_slots::replace_policy(&directory, &pin)?,
+                        None => caboodle::job_slots::apply_policy(&directory)?,
+                    }})
                 );
             } else {
                 print!("{}", caboodle::job_slots::sudoers(&directory)?);
@@ -708,9 +722,13 @@ fn main() -> Result<()> {
             println!("{}", serde_json::to_string_pretty(&plan)?);
         }
         #[cfg(unix)]
-        Commands::JobSlots { directory, apply } => {
+        Commands::JobSlots {
+            directory,
+            apply,
+            resume,
+        } => {
             let plan = if apply {
-                caboodle::job_slots::apply(&directory)?
+                caboodle::job_slots::apply_with_resume(&directory, resume)?
             } else {
                 caboodle::job_slots::load(&directory)?
             };
