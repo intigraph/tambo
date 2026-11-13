@@ -18,9 +18,11 @@ their authority. The renderer must enforce file ownership, hashes and atomic
 publication. A successful selection alone establishes none of these proofs.
 
 The live MCP/skill tooling manifest keeps its existing owner and projection
-route. This component writes no configuration, registers no harness entry and
-does not expose a skill-sync command. Graph catalogue publication, installation,
-retirement and loaded-version history remain follow-up implementation work.
+route. The selector itself writes nothing. The explicit local publisher and
+whole-profile staging adapter below expose `tambo skills publish` and
+`tambo skills sync`; neither changes that manifest or registers a harness.
+Authenticated catalogue transport, scheduled host adoption and graph-backed
+loaded-version history remain separate integration steps.
 
 The synthetic controls compose three pins for both harnesses, verify stable
 ordering, and exercise partial results, stale or wrong pins, ambiguous releases,
@@ -82,3 +84,94 @@ and enforces the existing destination ownership and atomic publication rules.
 Compilation does not decide public scope or scan for private information; the
 existing source review and share scrub remain required before publication.
 No catalogue identity, release version or share ID is invented by this step.
+
+
+## Native publisher and whole-profile staging
+
+On Unix, `tambo skills publish` compiles one explicit source tree, validates a
+native RenderSpec in a disposable database, builds a native text pendant and
+verifies it through native import. It emits a compressed native share,
+`release.json`, the original metadata and `catalogue.ttl` in a **new** output
+directory. Existing output refuses. `release.json` is the last completion
+marker; an I/O failure can leave a partial directory that must be inspected,
+not overwritten by a retry. Import quarantine stays quarantine. Integrity
+verification is not permission to promote a share or publish a catalogue.
+
+Metadata is JSON with `skill`, `name`, `description`, `repository`,
+`source_path`, `version`, `render_spec`, `public` and `harnesses`. Identifiers
+are absolute IRIs; `source_path` is provenance, never a path to fetch. The
+existing selector validates destination names, pins and supported harnesses.
+The native share ID comes from the actual native manifest, never from an
+archive filename or a guessed content hash. The source stays in its owning
+repository; no source repository URL is fetched by this adapter.
+
+```sh
+tambo skills publish --source skills/example --metadata release-metadata.json \
+  --render-shapes reviewed-render.ttl --output new-release --quipu /owned/quipu
+```
+
+Internal publications use the native internal destination. A public release
+requires the native outward identifier-policy gate; supply the reviewed
+`--identifier-policy` and `--identifier-shapes` together. The same native
+outward check covers generated catalogue metadata after the share ID is known.
+The catalogue cannot embed its own share ID inside the hashed share it names.
+No shared graph registration or release workflow is installed by publication.
+
+`skills sync` takes a `SkillProfile` JSON file, a `CatalogueSnapshot` JSON file,
+a local JSON map from each native share ID to its compressed share path, and
+an explicit caller-selected native shape-authority share. It calls
+`skill_profile::select` **before** opening archives or touching the destination.
+It refuses missing/duplicate pins, incomplete metadata, wrong versions,
+unsupported harnesses and public-only/internal conflicts. These files are
+caller-supplied data, not authenticated server or graph authority. A graph
+adapter must establish the explicit dataset, transaction and complete response
+before constructing them; this command neither fabricates that evidence nor
+silently substitutes current server state.
+
+```sh
+tambo skills sync --profile profile.json --catalogue catalogue.json \
+  --bundles local-bundles.json --authority reviewed-authority.pendant.tar.gz \
+  --render-shapes reviewed-render.ttl --dest owned-profile --quipu /owned/quipu
+```
+
+The adapter freezes bounded regular archive and shape files, checks each
+manifest's native identity against its selected pin, and invokes native
+composition with the separate caller-selected authority. Native composition
+verifies the complete frozen shares and decides admission. A public-only
+profile also requests native outward policy; metadata cannot relabel an
+internal share as public. No repository, source-path or render-specification
+IRI becomes a URL to download. Compressed and decompressed archives have
+aggregate 256 MiB budgets; profile includes are capped at 512 files and
+16 MiB of base64 data. Native per-operation limits still apply.
+
+Each selected specification is rendered privately, preserving raw markdown,
+binary bytes and executable modes, including any source-provided
+`agents/openai.yaml`. The source compiler rechecks paths and
+file limits. One aggregate native RenderSpec then publishes the complete
+`claude/<name>/` and `codex/<name>/` trees plus `profile.json` into the explicit
+owned destination. Native rendering owns publication, NOOP detection and
+retirement of previously owned files. Unknown or changed destination entries
+refuse; the adapter does not delete or replace a shared harness directory.
+The same selection produces a NOOP without changing bytes, inode or mtime.
+
+`profile.json` records the selected pins and source transaction. It is a
+staging receipt, **not proof that a harness loaded them**, and is not a
+server-authenticated history record. Both command reports explicitly retain
+`harness_registration: false` or `catalogue_registered: false`. Normal settings
+owners, scheduled lanes and fresh-session proof remain required for live use.
+No host configuration, symlink, scheduler or shared graph is changed here.
+
+The explicit private integration control publishes two public skills plus one
+private skill, composes them for both harnesses, checks exact bytes/modes and
+NOOP identity, and retains the destination across incomplete/wrong-pin/scope,
+corrupt-share and foreign-file refusals. It then retires only an owned skill:
+
+```sh
+python3 tests/test_skills_native.py --tambo /owned/candidate-tambo \
+  --quipu /owned/quipu --render-shapes /reviewed/render.ttl
+```
+
+The caller supplies the actual binaries; the test never downloads, installs or
+opens a served database. Standard unit tests also cover early refusal before
+native execution and no-follow input reads. Linux fixture results are not a
+Mac deployment or a fresh Claude/Codex consumer census.

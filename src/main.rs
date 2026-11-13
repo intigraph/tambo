@@ -32,6 +32,12 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Publish native skill pendants or render an explicitly selected profile
+    #[cfg(unix)]
+    Skills {
+        #[command(subcommand)]
+        command: caboodle::skills::Command,
+    },
     /// Render or separately install the exact per-slot helper permission fragment
     #[cfg(unix)]
     JobPolicy {
@@ -1170,6 +1176,8 @@ fn main() -> Result<()> {
             let count = emission::flush(&queue, &endpoint)?;
             println!("delivered queued episodes: {count}");
         }
+        #[cfg(unix)]
+        Commands::Skills { command } => caboodle::skills::run(command)?,
         Commands::Packs {
             command:
                 PacksCommand::Sync {

@@ -221,3 +221,19 @@ failure keeps its unreachable/unreadable category; only a deadline is partial.
 - The stack prime contract: <https://github.com/intigraph/tambo/blob/main/docs/stack/PRIME-CONTRACT.md>
 - Skill: <https://github.com/intigraph/tambo/blob/main/skills/tambo/SKILL.md>
 <!-- END tambo prime -->
+
+
+## Explicit skill publisher and profile staging
+
+On Unix, `tambo skills publish` builds a native skill pendant and catalogue
+metadata in a new output directory. `tambo skills sync` validates explicit
+profile/catalogue files through the pinned selector, composes exact local
+native shares with a separately selected authority, and uses native rendering
+to publish one owned profile tree. Inspect each command's `--help` and the
+source contract `docs/design/skill-profile-selection.md` before using it.
+
+These operations do not register a live catalogue, edit harness settings or
+prove that a session loaded a skill. Input files do not authenticate a server.
+Keep native quarantine, outward policy, scope, file ownership and unknown-entry
+refusals. Live catalogue publication, scheduled consumer adoption and loaded
+history require their own concrete reviewed packet and existing authority.
