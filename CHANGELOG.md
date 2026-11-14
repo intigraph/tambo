@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.0](https://github.com/intigraph/tambo/compare/v0.14.1...v0.15.0) (2026-11-14)
+
+
+### Features
+
+* **jobs:** add guarded controller runtime replacement transaction ([#283](https://github.com/intigraph/tambo/issues/283)) ([d912466](https://github.com/intigraph/tambo/commit/d91246666901b760ac30aab76cf3f76c27d105a4))
+
 ## [0.14.1](https://github.com/intigraph/tambo/compare/v0.14.0...v0.14.1) (2026-11-14)
 
 
