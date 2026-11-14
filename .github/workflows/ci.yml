@@ -327,6 +327,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: python3 scripts/test-macos-controller-account-packet.py
+      - run: python3 scripts/test-macos-e579-runtime-transaction.py
       - run: python3 scripts/test-macos-principal-seeds.py
       - run: python3 scripts/test-e579-bounded-delivery.py
       - run: python3 scripts/test-macos-job-manifest-migration.py

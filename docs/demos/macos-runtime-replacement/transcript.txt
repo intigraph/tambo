@@ -1,0 +1,6 @@
+SYNTHETIC public bytes; base create-only installer, candidate finite transaction
+Candidate source SHA256: f2d77c14a82578a9329179a762d7ecd6ee9d5f7c42cee295f20200ffbf7bd33b
+BEFORE: create-only install REFUSED occupied different tool; old bytes retained
+AFTER: guarded tool/runtime transition verified; both old backup/restore copies retained
+INVERSE: exact old tool/runtime restored; new bytes retained; readiness remains FALSE
+REPLAY: refused; no deletion or automatic recovery
