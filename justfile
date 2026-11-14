@@ -30,6 +30,7 @@ check:
     cargo test --all-features
     scripts/test-release-install.sh
     python3 scripts/test-release-repository.py
+    python3 scripts/test-release-candidate.py
     python3 scripts/test-install-bootstrap.py
     python3 scripts/test-crate-version.py
     python3 scripts/test-memory-redirect-hook.py
