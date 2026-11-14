@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.14.1](https://github.com/intigraph/tambo/compare/v0.14.0...v0.14.1) (2026-11-14)
+
+
+### Bug Fixes
+
+* **ci:** deduplicate PR checks and cancel superseded runs ([#281](https://github.com/intigraph/tambo/issues/281)) ([6dd0ce8](https://github.com/intigraph/tambo/commit/6dd0ce8af8cd7c6295d32ef380b2a3cf663742a1))
+* **jobs:** support exact policy replacement and interrupted provisioning ([#280](https://github.com/intigraph/tambo/issues/280)) ([8a364ef](https://github.com/intigraph/tambo/commit/8a364ef136304c08da6555c5ef250c827cfd3644))
+
 ## [0.14.0](https://github.com/intigraph/tambo/compare/v0.13.4...v0.14.0) (2026-11-13)
 
 
