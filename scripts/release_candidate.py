@@ -85,7 +85,15 @@ def plan(value):
     for key in ("compatibility_sha256", "previous_stable_sha256", "restore_plan_sha256",
                 "verification_policy_sha256"):
         sha(value[key])
-    for key in ("breaking_records", "experimental_features", "required_receipts"):
+    require(isinstance(value["breaking_records"], list), "ordered breaking record bindings required")
+    record_ids = set()
+    for record in value["breaking_records"]:
+        fields(record, "id sha256")
+        token(record["id"])
+        sha(record["sha256"])
+        require(record["id"] not in record_ids, "duplicate breaking record")
+        record_ids.add(record["id"])
+    for key in ("experimental_features", "required_receipts"):
         require(isinstance(value[key], list) and len(value[key]) == len(set(value[key])),
                 "invalid or duplicate evidence inventory")
         for name in value[key]:

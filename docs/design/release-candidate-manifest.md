@@ -57,7 +57,7 @@ hashed into itself.
 | `targets` | Unique OS/architecture rows; each has named distributions with kinds |
 | `toolchain`, `dependencies` | Nonempty named SHA256 inventories |
 | `compatibility_sha256` | Exact compatibility-set document |
-| `breaking_records` | Ordered existing record IDs, empty only for nonbreaking candidates |
+| `breaking_records` | Ordered unique `{id, sha256}` file bindings, empty only for nonbreaking candidates |
 | `previous_stable_sha256`, `restore_plan_sha256` | Previous artifact set and inverse/restore plan |
 | `capabilities` | Explicit store/pendant read/write, CLI and config version lists |
 | `feature_profile`, `experimental_features` | Supported profile and named experimental paths |
@@ -108,7 +108,10 @@ nor a new signing path; its only CI change runs offline controls.
 c7yh retains preview adapters, ro425e.16 retains pendant contracts. Pendant bytes
 may be advertised artifacts and their verified receipts are required inventory
 entries. Compatibility and breaking-record producers supply real digests/IDs;
-missing proofs must not be filled with synthetic release claims. Other source
+missing proofs must not be filled with synthetic release claims. Each breaking
+record entry binds its exact file SHA256 and ID, preserving order. Work package
+C's release validator must check actual record bytes and release admissibility;
+a nonempty digest here alone does not graduate a draft record. Other source
 repositories need reviewed committed-version adapters; the CLI only implements
 Tambo's explicit Cargo form and refuses to pretend it fits another repository.
 

@@ -75,6 +75,23 @@ class Candidate(unittest.TestCase):
         with self.assertRaises(ValueError):
             c.freeze(value)
 
+    def test_breaking_record_file_digest_order_and_identity_binding(self):
+        value = fixture()
+        value["breaking_records"] = [{"id": "change-one", "sha256": "7" * 64},
+                                     {"id": "change-two", "sha256": "8" * 64}]
+        original = c.freeze(value)["plan_id"]
+        value["breaking_records"].reverse()
+        self.assertNotEqual(c.freeze(value)["plan_id"], original)
+        value["breaking_records"].reverse()
+        value["breaking_records"][0]["sha256"] = "9" * 64
+        self.assertNotEqual(c.freeze(value)["plan_id"], original)
+        value["breaking_records"].append(value["breaking_records"][0])
+        with self.assertRaises(ValueError):
+            c.freeze(value)
+        value["breaking_records"] = ["unbound-record-id"]
+        with self.assertRaises(ValueError):
+            c.freeze(value)
+
     def test_missing_target_package_receipt_and_duplicate_refuse(self):
         for change in ("artifact", "receipt", "duplicate"):
             value = copy.deepcopy(self.inventory)
