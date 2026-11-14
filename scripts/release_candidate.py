@@ -90,7 +90,8 @@ def plan(value):
                 "invalid or duplicate evidence inventory")
         for name in value[key]:
             token(name)
-    require(value["required_receipts"], "test receipt inventory required")
+    require({"required", "extended", "upgrade", "compatibility"}.issubset(value["required_receipts"]),
+            "required, extended, upgrade and compatibility receipt inventories required")
     token(value["feature_profile"])
     fields(value["capabilities"], "store_read store_write pendant_read pendant_write cli config")
     for versions in value["capabilities"].values():

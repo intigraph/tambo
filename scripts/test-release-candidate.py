@@ -69,6 +69,12 @@ class Candidate(unittest.TestCase):
         with self.assertRaises(ValueError):
             c.seal(self.frozen, self.inventory, self.root)
 
+    def test_required_suite_names_cannot_be_narrowed(self):
+        value = fixture()
+        value["required_receipts"] = ["required"]
+        with self.assertRaises(ValueError):
+            c.freeze(value)
+
     def test_missing_target_package_receipt_and_duplicate_refuse(self):
         for change in ("artifact", "receipt", "duplicate"):
             value = copy.deepcopy(self.inventory)
@@ -134,6 +140,11 @@ class Candidate(unittest.TestCase):
         self.assertEqual(before, {name: (self.root / name).read_bytes() for name in before})
         with self.assertRaises(ValueError):
             c.verify(candidate, self.root, signature, public, "0" * 64)
+        changed_inventory = copy.deepcopy(self.inventory)
+        changed_inventory["receipts"]["extended"] = "6" * 64
+        changed = c.seal(self.frozen, changed_inventory, self.root)
+        with self.assertRaises(ValueError):
+            c.verify(changed, self.root, signature, public, identity)
         signature.write_bytes(b"bad signature")
         with self.assertRaises(ValueError):
             c.verify(candidate, self.root, signature, public, identity)
