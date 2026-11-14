@@ -1,0 +1,5 @@
+name: Frozen trixie qualification
+description: Verify frozen inputs before installing build tools in the disposable job
+runs:
+  using: node24
+  main: index.js

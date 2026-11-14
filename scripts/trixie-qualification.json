@@ -1,0 +1,3781 @@
+{
+  "schema": 1,
+  "snapshot": "20261104T112000Z",
+  "source_ref": "eebd1f548725403a845d60f1841f2dbfc4fd4a29",
+  "source_files": {
+    "Cargo.toml": "0fdcc04b983ea09b961786270d11339ac8b8485dcfdcf226cfd21b44a0c3521f",
+    "Cargo.lock": "402c5b4ee3a9909769890d546732e9acbcdd1ac53cfdc4c732388a7860031daf",
+    ".github/workflows/release.yml": "cacc61379c911b5ad13e95ddc823bdba87b6108f1a04adce4b7fc51b039eed79"
+  },
+  "snapshots": [
+    {
+      "suite": "trixie-updates",
+      "archive": "debian",
+      "release_sha256": "af7d6a5104ae167b436f537f41ac0ec69a31c5ba4a1a4a3da63b465582d24048",
+      "release_bytes": 47340,
+      "indexes": [
+        {
+          "name": "main/source/Sources.xz",
+          "sha256": "79552ccddf12a94348fe953e53a8584881b00a2c3eb984c871ae26783d67e391",
+          "bytes": 1396
+        },
+        {
+          "name": "main/binary-amd64/Packages.xz",
+          "sha256": "7b52592d46eb9bf694ffd99b90fb521064a6bfd1d0a9f69f22cabf31cb7ea38e",
+          "bytes": 1108
+        }
+      ]
+    },
+    {
+      "suite": "trixie",
+      "archive": "debian",
+      "release_sha256": "0584fba32e13e0ab8285fb16c27adea1ec03a73669c18702821094fd6ca86675",
+      "release_bytes": 140421,
+      "indexes": [
+        {
+          "name": "main/source/Sources.xz",
+          "sha256": "6002f81f463a2d976d84b34170367cc16da2d60bd0ba9ab9d868d6e1c1a935d9",
+          "bytes": 10540436
+        },
+        {
+          "name": "main/binary-amd64/Packages.xz",
+          "sha256": "7778d3e3f303b7ddb8ce0fe7c8d57473a076c6bf2e8f241f75421d2396352498",
+          "bytes": 9678380
+        }
+      ]
+    },
+    {
+      "suite": "trixie-security",
+      "archive": "debian-security",
+      "release_sha256": "789df83a1ff11b916f8dd64826c6f1b19cf88cd5f4f26ac4420f64bb42a40ff5",
+      "release_bytes": 43409,
+      "indexes": [
+        {
+          "name": "main/source/Sources.xz",
+          "sha256": "a4977d9d060da1988d0c4c49d51e90d679393883958a4cd3e246c89c50d20ae8",
+          "bytes": 258132
+        },
+        {
+          "name": "main/binary-amd64/Packages.xz",
+          "sha256": "7a27170c295f6a82554a3223205a63af68177c62b5e2faca74cf7f8e2f096868",
+          "bytes": 296156
+        }
+      ]
+    }
+  ],
+  "apt_build_dependencies": [
+    "build-essential",
+    "cargo",
+    "rustc",
+    "debhelper",
+    "dh-cargo",
+    "dpkg-dev",
+    "lintian",
+    "python3",
+    "librust-anyhow-dev",
+    "librust-clap+derive-dev",
+    "librust-libc-dev",
+    "librust-fs2-dev",
+    "librust-flate2-dev",
+    "librust-indexmap+serde-dev",
+    "librust-tar-dev",
+    "librust-serde+derive-dev",
+    "librust-serde-json-dev",
+    "librust-sha2-dev",
+    "librust-tempfile-dev",
+    "librust-toml-dev",
+    "librust-toml-edit-dev"
+  ],
+  "closure": {
+    "source": "eebd1f548725403a845d60f1841f2dbfc4fd4a29",
+    "version": "0.13.4",
+    "target": "x86_64-unknown-linux-gnu",
+    "release_features": "default (fixture-members excluded)",
+    "selection": "cargo tree --edges normal,build; unique package/version with displayed feature union",
+    "count": 61,
+    "metadata_count": 79,
+    "packages": [
+      {
+        "name": "adler2",
+        "version": "2.0.1",
+        "features": [],
+        "rust_version": null,
+        "license": "0BSD OR MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-0BSD",
+            "sha256": "861399f8c21c042b110517e76dc6b63a2b334276c8cf17412fc3c8908ca8dc17"
+          },
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "8ada45cd9f843acf64e4722ae262c622a2b3b3007c7310ef36ac1061a30f6adb"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "anstream",
+        "version": "1.0.0",
+        "features": [
+          "auto",
+          "default",
+          "wincon"
+        ],
+        "rust_version": "1.66.0",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-anstream-dev",
+            "version": "0.6.15-1",
+            "source": "rust-anstream",
+            "source_version": "0.6.15-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-anstream-dev",
+            "version": "0.6.15-1",
+            "source": "rust-anstream",
+            "source_version": "0.6.15-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-anstream-dev",
+            "version": "0.6.15-1",
+            "source": "rust-anstream",
+            "source_version": "0.6.15-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-anstream-dev",
+            "version": "0.6.15-1",
+            "source": "rust-anstream",
+            "source_version": "0.6.15-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "anstyle",
+        "version": "1.0.14",
+        "features": [
+          "default",
+          "std"
+        ],
+        "rust_version": "1.66.0",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-anstyle-dev",
+            "version": "1.0.8-1",
+            "source": "rust-anstyle",
+            "source_version": "1.0.8-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-anstyle-dev",
+            "version": "1.0.8-1",
+            "source": "rust-anstyle",
+            "source_version": "1.0.8-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-anstyle-dev",
+            "version": "1.0.8-1",
+            "source": "rust-anstyle",
+            "source_version": "1.0.8-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-anstyle-dev",
+            "version": "1.0.8-1",
+            "source": "rust-anstyle",
+            "source_version": "1.0.8-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "anstyle-parse",
+        "version": "1.0.0",
+        "features": [
+          "default",
+          "utf8"
+        ],
+        "rust_version": "1.66.0",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-anstyle-parse-dev",
+            "version": "0.2.1-1+b2",
+            "source": "rust-anstyle-parse",
+            "source_version": "0.2.1-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-anstyle-parse-dev",
+            "version": "0.2.1-1+b2",
+            "source": "rust-anstyle-parse",
+            "source_version": "0.2.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-anstyle-parse-dev",
+            "version": "0.2.1-1+b2",
+            "source": "rust-anstyle-parse",
+            "source_version": "0.2.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-anstyle-parse-dev",
+            "version": "0.2.1-1+b2",
+            "source": "rust-anstyle-parse",
+            "source_version": "0.2.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "anstyle-query",
+        "version": "1.1.5",
+        "features": [],
+        "rust_version": "1.66.0",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-anstyle-query-dev",
+            "version": "1.0.0-1+b2",
+            "source": "rust-anstyle-query",
+            "source_version": "1.0.0-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-anstyle-query-dev",
+            "version": "1.0.0-1+b2",
+            "source": "rust-anstyle-query",
+            "source_version": "1.0.0-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-anstyle-query-dev",
+            "version": "1.0.0-1+b2",
+            "source": "rust-anstyle-query",
+            "source_version": "1.0.0-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-anstyle-query-dev",
+            "version": "1.0.0-1+b2",
+            "source": "rust-anstyle-query",
+            "source_version": "1.0.0-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "anyhow",
+        "version": "1.0.104",
+        "features": [
+          "default",
+          "std"
+        ],
+        "rust_version": "1.68",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-anyhow-dev",
+            "version": "1.0.95-1",
+            "source": "rust-anyhow",
+            "source_version": "1.0.95-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-anyhow-dev",
+            "version": "1.0.95-1",
+            "source": "rust-anyhow",
+            "source_version": "1.0.95-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-anyhow-dev",
+            "version": "1.0.95-1",
+            "source": "rust-anyhow",
+            "source_version": "1.0.95-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-anyhow-dev",
+            "version": "1.0.95-1",
+            "source": "rust-anyhow",
+            "source_version": "1.0.95-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "bitflags",
+        "version": "2.13.1",
+        "features": [
+          "std"
+        ],
+        "rust_version": "1.56.0",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-bitflags-dev",
+            "version": "2.8.0-1",
+            "source": "rust-bitflags",
+            "source_version": "2.8.0-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-bitflags-dev",
+            "version": "2.8.0-1",
+            "source": "rust-bitflags",
+            "source_version": "2.8.0-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-bitflags-dev",
+            "version": "2.8.0-1",
+            "source": "rust-bitflags",
+            "source_version": "2.8.0-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-bitflags-dev",
+            "version": "2.8.0-1",
+            "source": "rust-bitflags",
+            "source_version": "2.8.0-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-bitflags-1-dev",
+            "version": "1.3.2-7",
+            "source": "rust-bitflags-1",
+            "source_version": "1.3.2-7",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-bitflags-1-dev",
+            "version": "1.3.2-7",
+            "source": "rust-bitflags-1",
+            "source_version": "1.3.2-7",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-bitflags-1-dev",
+            "version": "1.3.2-7",
+            "source": "rust-bitflags-1",
+            "source_version": "1.3.2-7",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "block-buffer",
+        "version": "0.10.4",
+        "features": [],
+        "rust_version": null,
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "d5c22aa3118d240e877ad41c5d9fa232f9c77d757d4aac0c2f943afc0a95e0ef"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-block-buffer-dev",
+            "version": "0.10.4-1",
+            "source": "rust-block-buffer",
+            "source_version": "0.10.4-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-block-buffer-dev",
+            "version": "0.10.4-1",
+            "source": "rust-block-buffer",
+            "source_version": "0.10.4-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-block-buffer-dev",
+            "version": "0.10.4-1",
+            "source": "rust-block-buffer",
+            "source_version": "0.10.4-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-block-buffer-dev",
+            "version": "0.10.4-1",
+            "source": "rust-block-buffer",
+            "source_version": "0.10.4-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": [
+          {
+            "package": "librust-block-buffer-dev",
+            "version": "0.10.4-1",
+            "source": "rust-block-buffer",
+            "source_version": "0.10.4-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-block-buffer-dev",
+            "version": "0.10.4-1",
+            "source": "rust-block-buffer",
+            "source_version": "0.10.4-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-block-buffer-dev",
+            "version": "0.10.4-1",
+            "source": "rust-block-buffer",
+            "source_version": "0.10.4-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-block-buffer-dev",
+            "version": "0.10.4-1",
+            "source": "rust-block-buffer",
+            "source_version": "0.10.4-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ]
+      },
+      {
+        "name": "cfg-if",
+        "version": "1.0.4",
+        "features": [],
+        "rust_version": "1.32",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-cfg-if-dev",
+            "version": "1.0.0-1+b2",
+            "source": "rust-cfg-if",
+            "source_version": "1.0.0-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-cfg-if-dev",
+            "version": "1.0.0-1+b2",
+            "source": "rust-cfg-if",
+            "source_version": "1.0.0-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-cfg-if-dev",
+            "version": "1.0.0-1+b2",
+            "source": "rust-cfg-if",
+            "source_version": "1.0.0-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-cfg-if-dev",
+            "version": "1.0.0-1+b2",
+            "source": "rust-cfg-if",
+            "source_version": "1.0.0-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-cfg-if-0.1-dev",
+            "version": "0.1.10-3",
+            "source": "rust-cfg-if-0.1",
+            "source_version": "0.1.10-3",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-cfg-if-0.1-dev",
+            "version": "0.1.10-3",
+            "source": "rust-cfg-if-0.1",
+            "source_version": "0.1.10-3",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-cfg-if-0.1-dev",
+            "version": "0.1.10-3",
+            "source": "rust-cfg-if-0.1",
+            "source_version": "0.1.10-3",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "clap",
+        "version": "4.6.6",
+        "features": [
+          "color",
+          "default",
+          "derive",
+          "error-context",
+          "help",
+          "std",
+          "suggestions",
+          "usage"
+        ],
+        "rust_version": "1.85",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-clap-dev",
+            "version": "4.5.23-1",
+            "source": "rust-clap",
+            "source_version": "4.5.23-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-clap-dev",
+            "version": "4.5.23-1",
+            "source": "rust-clap",
+            "source_version": "4.5.23-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-clap-dev",
+            "version": "4.5.23-1",
+            "source": "rust-clap",
+            "source_version": "4.5.23-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-clap-dev",
+            "version": "4.5.23-1",
+            "source": "rust-clap",
+            "source_version": "4.5.23-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-clap-2-dev",
+            "version": "2.34.0-6",
+            "source": "rust-clap-2",
+            "source_version": "2.34.0-6",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-clap-2-dev",
+            "version": "2.34.0-6",
+            "source": "rust-clap-2",
+            "source_version": "2.34.0-6",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-clap-2-dev",
+            "version": "2.34.0-6",
+            "source": "rust-clap-2",
+            "source_version": "2.34.0-6",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-clap-3-dev",
+            "version": "3.2.25-10",
+            "source": "rust-clap-3",
+            "source_version": "3.2.25-10",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-clap-3-dev",
+            "version": "3.2.25-10",
+            "source": "rust-clap-3",
+            "source_version": "3.2.25-10",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-clap-3-dev",
+            "version": "3.2.25-10",
+            "source": "rust-clap-3",
+            "source_version": "3.2.25-10",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "clap_builder",
+        "version": "4.6.6",
+        "features": [
+          "color",
+          "error-context",
+          "help",
+          "std",
+          "suggestions",
+          "usage"
+        ],
+        "rust_version": "1.85",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-clap-builder-dev",
+            "version": "4.5.23-1",
+            "source": "rust-clap-builder",
+            "source_version": "4.5.23-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-clap-builder-dev",
+            "version": "4.5.23-1",
+            "source": "rust-clap-builder",
+            "source_version": "4.5.23-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-clap-builder-dev",
+            "version": "4.5.23-1",
+            "source": "rust-clap-builder",
+            "source_version": "4.5.23-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-clap-builder-dev",
+            "version": "4.5.23-1",
+            "source": "rust-clap-builder",
+            "source_version": "4.5.23-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "clap_derive",
+        "version": "4.6.4",
+        "features": [
+          "default"
+        ],
+        "rust_version": "1.85",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-clap-derive-dev",
+            "version": "4.5.18-1",
+            "source": "rust-clap-derive",
+            "source_version": "4.5.18-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-clap-derive-dev",
+            "version": "4.5.18-1",
+            "source": "rust-clap-derive",
+            "source_version": "4.5.18-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-clap-derive-dev",
+            "version": "4.5.18-1",
+            "source": "rust-clap-derive",
+            "source_version": "4.5.18-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-clap-derive-dev",
+            "version": "4.5.18-1",
+            "source": "rust-clap-derive",
+            "source_version": "4.5.18-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-clap-derive-3-dev",
+            "version": "3.2.25-2",
+            "source": "rust-clap-derive-3",
+            "source_version": "3.2.25-2",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-clap-derive-3-dev",
+            "version": "3.2.25-2",
+            "source": "rust-clap-derive-3",
+            "source_version": "3.2.25-2",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-clap-derive-3-dev",
+            "version": "3.2.25-2",
+            "source": "rust-clap-derive-3",
+            "source_version": "3.2.25-2",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "clap_lex",
+        "version": "1.1.0",
+        "features": [],
+        "rust_version": "1.85",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-clap-lex-dev",
+            "version": "0.7.4-1",
+            "source": "rust-clap-lex",
+            "source_version": "0.7.4-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-clap-lex-dev",
+            "version": "0.7.4-1",
+            "source": "rust-clap-lex",
+            "source_version": "0.7.4-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-clap-lex-dev",
+            "version": "0.7.4-1",
+            "source": "rust-clap-lex",
+            "source_version": "0.7.4-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-clap-lex-dev",
+            "version": "0.7.4-1",
+            "source": "rust-clap-lex",
+            "source_version": "0.7.4-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "colorchoice",
+        "version": "1.0.5",
+        "features": [],
+        "rust_version": "1.66.0",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-colorchoice-dev",
+            "version": "1.0.0-1+b3",
+            "source": "rust-colorchoice",
+            "source_version": "1.0.0-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-colorchoice-dev",
+            "version": "1.0.0-1+b3",
+            "source": "rust-colorchoice",
+            "source_version": "1.0.0-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-colorchoice-dev",
+            "version": "1.0.0-1+b3",
+            "source": "rust-colorchoice",
+            "source_version": "1.0.0-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-colorchoice-dev",
+            "version": "1.0.0-1+b3",
+            "source": "rust-colorchoice",
+            "source_version": "1.0.0-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "cpufeatures",
+        "version": "0.2.17",
+        "features": [],
+        "rust_version": null,
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "ae9baa7beea910273c2f384c2a6b721fb7bd02bda3436074a1072e4ee689f985"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-cpufeatures-dev",
+            "version": "0.2.16-1",
+            "source": "rust-cpufeatures",
+            "source_version": "0.2.16-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-cpufeatures-dev",
+            "version": "0.2.16-1",
+            "source": "rust-cpufeatures",
+            "source_version": "0.2.16-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-cpufeatures-dev",
+            "version": "0.2.16-1",
+            "source": "rust-cpufeatures",
+            "source_version": "0.2.16-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-cpufeatures-dev",
+            "version": "0.2.16-1",
+            "source": "rust-cpufeatures",
+            "source_version": "0.2.16-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "crc32fast",
+        "version": "1.5.2",
+        "features": [
+          "std"
+        ],
+        "rust_version": "1.63",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "61d383b05b87d78f94d2937e2580cce47226d17823c0430fbcad09596537efcf"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-crc32fast-dev",
+            "version": "1.4.2-1",
+            "source": "rust-crc32fast",
+            "source_version": "1.4.2-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-crc32fast-dev",
+            "version": "1.4.2-1",
+            "source": "rust-crc32fast",
+            "source_version": "1.4.2-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-crc32fast-dev",
+            "version": "1.4.2-1",
+            "source": "rust-crc32fast",
+            "source_version": "1.4.2-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-crc32fast-dev",
+            "version": "1.4.2-1",
+            "source": "rust-crc32fast",
+            "source_version": "1.4.2-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "crypto-common",
+        "version": "0.1.7",
+        "features": [
+          "std"
+        ],
+        "rust_version": null,
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "3521672491a3479422d5fe1aca6645dd2984090f85da6e5205abfb18fb7a6897"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-crypto-common-dev",
+            "version": "0.1.6-1+b2",
+            "source": "rust-crypto-common",
+            "source_version": "0.1.6-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-crypto-common-dev",
+            "version": "0.1.6-1+b2",
+            "source": "rust-crypto-common",
+            "source_version": "0.1.6-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-crypto-common-dev",
+            "version": "0.1.6-1+b2",
+            "source": "rust-crypto-common",
+            "source_version": "0.1.6-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-crypto-common-dev",
+            "version": "0.1.6-1+b2",
+            "source": "rust-crypto-common",
+            "source_version": "0.1.6-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "digest",
+        "version": "0.10.7",
+        "features": [
+          "alloc",
+          "block-buffer",
+          "core-api",
+          "default",
+          "std"
+        ],
+        "rust_version": null,
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "9e0dfd2dd4173a530e238cb6adb37aa78c34c6bc7444e0e10c1ab5d8881f63ba"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-digest-dev",
+            "version": "0.10.7-2+b2",
+            "source": "rust-digest",
+            "source_version": "0.10.7-2",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-digest-dev",
+            "version": "0.10.7-2+b2",
+            "source": "rust-digest",
+            "source_version": "0.10.7-2",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-digest-dev",
+            "version": "0.10.7-2+b2",
+            "source": "rust-digest",
+            "source_version": "0.10.7-2",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-digest-dev",
+            "version": "0.10.7-2+b2",
+            "source": "rust-digest",
+            "source_version": "0.10.7-2",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": [
+          {
+            "package": "librust-digest-dev",
+            "version": "0.10.7-2+b2",
+            "source": "rust-digest",
+            "source_version": "0.10.7-2",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-digest-dev",
+            "version": "0.10.7-2+b2",
+            "source": "rust-digest",
+            "source_version": "0.10.7-2",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-digest-dev",
+            "version": "0.10.7-2+b2",
+            "source": "rust-digest",
+            "source_version": "0.10.7-2",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-digest-dev",
+            "version": "0.10.7-2+b2",
+            "source": "rust-digest",
+            "source_version": "0.10.7-2",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ]
+      },
+      {
+        "name": "equivalent",
+        "version": "1.0.2",
+        "features": [],
+        "rust_version": "1.6",
+        "license": "Apache-2.0 OR MIT",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "7365cc8878a1d7ce155a58c4ca09c3d7a6be413efa5334a80ea842912b669349"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-equivalent-dev",
+            "version": "1.0.1-1+b2",
+            "source": "rust-equivalent",
+            "source_version": "1.0.1-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-equivalent-dev",
+            "version": "1.0.1-1+b2",
+            "source": "rust-equivalent",
+            "source_version": "1.0.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-equivalent-dev",
+            "version": "1.0.1-1+b2",
+            "source": "rust-equivalent",
+            "source_version": "1.0.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-equivalent-dev",
+            "version": "1.0.1-1+b2",
+            "source": "rust-equivalent",
+            "source_version": "1.0.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "fastrand",
+        "version": "2.5.0",
+        "features": [
+          "alloc",
+          "default",
+          "std"
+        ],
+        "rust_version": "1.63",
+        "license": "Apache-2.0 OR MIT",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-fastrand-dev",
+            "version": "2.1.1-1",
+            "source": "rust-fastrand",
+            "source_version": "2.1.1-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-fastrand-dev",
+            "version": "2.1.1-1",
+            "source": "rust-fastrand",
+            "source_version": "2.1.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-fastrand-dev",
+            "version": "2.1.1-1",
+            "source": "rust-fastrand",
+            "source_version": "2.1.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-fastrand-dev",
+            "version": "2.1.1-1",
+            "source": "rust-fastrand",
+            "source_version": "2.1.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "filetime",
+        "version": "0.2.29",
+        "features": [],
+        "rust_version": "1.75.0",
+        "license": "MIT/Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-filetime-dev",
+            "version": "0.2.24-1",
+            "source": "rust-filetime",
+            "source_version": "0.2.24-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-filetime-dev",
+            "version": "0.2.24-1",
+            "source": "rust-filetime",
+            "source_version": "0.2.24-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-filetime-dev",
+            "version": "0.2.24-1",
+            "source": "rust-filetime",
+            "source_version": "0.2.24-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-filetime-dev",
+            "version": "0.2.24-1",
+            "source": "rust-filetime",
+            "source_version": "0.2.24-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "flate2",
+        "version": "1.1.10",
+        "features": [
+          "any_impl",
+          "default",
+          "miniz_oxide",
+          "runtime_detection",
+          "rust_backend"
+        ],
+        "rust_version": "1.67.0",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "025436edff4cfcdde17a5811fdea78892d8482efd1abdec5a17872d07a4f2112"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-flate2-dev",
+            "version": "1.1.0-1",
+            "source": "rust-flate2",
+            "source_version": "1.1.0-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-flate2-dev",
+            "version": "1.1.0-1",
+            "source": "rust-flate2",
+            "source_version": "1.1.0-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-flate2-dev",
+            "version": "1.1.0-1",
+            "source": "rust-flate2",
+            "source_version": "1.1.0-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-flate2-dev",
+            "version": "1.1.0-1",
+            "source": "rust-flate2",
+            "source_version": "1.1.0-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "fs2",
+        "version": "0.4.3",
+        "features": [],
+        "rust_version": null,
+        "license": "MIT/Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "7b63ecd5f1902af1b63729947373683c32745c16a10e8e6292e2e2dcd7e90ae0"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-fs2-dev",
+            "version": "0.4.3-1+b2",
+            "source": "rust-fs2",
+            "source_version": "0.4.3-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-fs2-dev",
+            "version": "0.4.3-1+b2",
+            "source": "rust-fs2",
+            "source_version": "0.4.3-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-fs2-dev",
+            "version": "0.4.3-1+b2",
+            "source": "rust-fs2",
+            "source_version": "0.4.3-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-fs2-dev",
+            "version": "0.4.3-1+b2",
+            "source": "rust-fs2",
+            "source_version": "0.4.3-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": [
+          {
+            "package": "librust-fs2-dev",
+            "version": "0.4.3-1+b2",
+            "source": "rust-fs2",
+            "source_version": "0.4.3-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-fs2-dev",
+            "version": "0.4.3-1+b2",
+            "source": "rust-fs2",
+            "source_version": "0.4.3-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-fs2-dev",
+            "version": "0.4.3-1+b2",
+            "source": "rust-fs2",
+            "source_version": "0.4.3-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-fs2-dev",
+            "version": "0.4.3-1+b2",
+            "source": "rust-fs2",
+            "source_version": "0.4.3-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ]
+      },
+      {
+        "name": "generic-array",
+        "version": "0.14.7",
+        "features": [
+          "more_lengths"
+        ],
+        "rust_version": null,
+        "license": "MIT",
+        "license_files": [
+          {
+            "name": "LICENSE",
+            "sha256": "c09aae9d3c77b531f56351a9947bc7446511d6b025b3255312d3e3442a9a7583"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-generic-array-dev",
+            "version": "0.14.7-1+b2",
+            "source": "rust-generic-array",
+            "source_version": "0.14.7-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-generic-array-dev",
+            "version": "0.14.7-1+b2",
+            "source": "rust-generic-array",
+            "source_version": "0.14.7-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-generic-array-dev",
+            "version": "0.14.7-1+b2",
+            "source": "rust-generic-array",
+            "source_version": "0.14.7-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-generic-array-dev",
+            "version": "0.14.7-1+b2",
+            "source": "rust-generic-array",
+            "source_version": "0.14.7-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": [
+          {
+            "package": "librust-generic-array-dev",
+            "version": "0.14.7-1+b2",
+            "source": "rust-generic-array",
+            "source_version": "0.14.7-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-generic-array-dev",
+            "version": "0.14.7-1+b2",
+            "source": "rust-generic-array",
+            "source_version": "0.14.7-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-generic-array-dev",
+            "version": "0.14.7-1+b2",
+            "source": "rust-generic-array",
+            "source_version": "0.14.7-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-generic-array-dev",
+            "version": "0.14.7-1+b2",
+            "source": "rust-generic-array",
+            "source_version": "0.14.7-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ]
+      },
+      {
+        "name": "getrandom",
+        "version": "0.4.3",
+        "features": [],
+        "rust_version": "1.85",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "aaff376532ea30a0cd5330b9502ad4a4c8bf769c539c87ffe78819d188a18ebf"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "523a42c25d245dde9c015f882cec7f4555aad883382a6cf19b4b7d9b2cd5419b"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-getrandom-dev",
+            "version": "0.2.15-1",
+            "source": "rust-getrandom",
+            "source_version": "0.2.15-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-getrandom-dev",
+            "version": "0.2.15-1",
+            "source": "rust-getrandom",
+            "source_version": "0.2.15-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-getrandom-dev",
+            "version": "0.2.15-1",
+            "source": "rust-getrandom",
+            "source_version": "0.2.15-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-getrandom-dev",
+            "version": "0.2.15-1",
+            "source": "rust-getrandom",
+            "source_version": "0.2.15-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "hashbrown",
+        "version": "0.17.1",
+        "features": [],
+        "rust_version": "1.85.0",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "ff8f68cb076caf8cefe7a6430d4ac086ce6af2ca8ce2c4e5a2004d4552ef52a2"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-hashbrown-dev",
+            "version": "0.14.5-5",
+            "source": "rust-hashbrown",
+            "source_version": "0.14.5-5",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-hashbrown-dev",
+            "version": "0.14.5-5",
+            "source": "rust-hashbrown",
+            "source_version": "0.14.5-5",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-hashbrown-dev",
+            "version": "0.14.5-5",
+            "source": "rust-hashbrown",
+            "source_version": "0.14.5-5",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-hashbrown-dev",
+            "version": "0.14.5-5",
+            "source": "rust-hashbrown",
+            "source_version": "0.14.5-5",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "heck",
+        "version": "0.5.0",
+        "features": [],
+        "rust_version": "1.56",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "7b63ecd5f1902af1b63729947373683c32745c16a10e8e6292e2e2dcd7e90ae0"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-heck-dev",
+            "version": "0.4.1-1+b2",
+            "source": "rust-heck",
+            "source_version": "0.4.1-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-heck-dev",
+            "version": "0.4.1-1+b2",
+            "source": "rust-heck",
+            "source_version": "0.4.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-heck-dev",
+            "version": "0.4.1-1+b2",
+            "source": "rust-heck",
+            "source_version": "0.4.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-heck-dev",
+            "version": "0.4.1-1+b2",
+            "source": "rust-heck",
+            "source_version": "0.4.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "indexmap",
+        "version": "2.14.0",
+        "features": [
+          "default",
+          "serde",
+          "std"
+        ],
+        "rust_version": "1.85",
+        "license": "Apache-2.0 OR MIT",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "ecc269ef87fd38a1d98e30bfac9ba964a9dbd9315c3770fed98d4d7cb5882055"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-indexmap-dev",
+            "version": "2.7.0-1",
+            "source": "rust-indexmap",
+            "source_version": "2.7.0-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-indexmap-dev",
+            "version": "2.7.0-1",
+            "source": "rust-indexmap",
+            "source_version": "2.7.0-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-indexmap-dev",
+            "version": "2.7.0-1",
+            "source": "rust-indexmap",
+            "source_version": "2.7.0-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-indexmap-dev",
+            "version": "2.7.0-1",
+            "source": "rust-indexmap",
+            "source_version": "2.7.0-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "is_terminal_polyfill",
+        "version": "1.70.2",
+        "features": [
+          "default"
+        ],
+        "rust_version": "1.70.0",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-is-terminal-polyfill-dev",
+            "version": "1.70.1-1+b2",
+            "source": "rust-is-terminal-polyfill",
+            "source_version": "1.70.1-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-is-terminal-polyfill-dev",
+            "version": "1.70.1-1+b2",
+            "source": "rust-is-terminal-polyfill",
+            "source_version": "1.70.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-is-terminal-polyfill-dev",
+            "version": "1.70.1-1+b2",
+            "source": "rust-is-terminal-polyfill",
+            "source_version": "1.70.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-is-terminal-polyfill-dev",
+            "version": "1.70.1-1+b2",
+            "source": "rust-is-terminal-polyfill",
+            "source_version": "1.70.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "itoa",
+        "version": "1.0.18",
+        "features": [],
+        "rust_version": "1.68",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-itoa-dev",
+            "version": "1.0.14-1",
+            "source": "rust-itoa",
+            "source_version": "1.0.14-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-itoa-dev",
+            "version": "1.0.14-1",
+            "source": "rust-itoa",
+            "source_version": "1.0.14-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-itoa-dev",
+            "version": "1.0.14-1",
+            "source": "rust-itoa",
+            "source_version": "1.0.14-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-itoa-dev",
+            "version": "1.0.14-1",
+            "source": "rust-itoa",
+            "source_version": "1.0.14-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "libc",
+        "version": "0.2.189",
+        "features": [
+          "default",
+          "std"
+        ],
+        "rust_version": "1.65",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "123a331b5dbf04c30097fa43b8f858bc85df671fe776de498d01f3d6b7c1f69e"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-libc-dev",
+            "version": "0.2.169-1",
+            "source": "rust-libc",
+            "source_version": "0.2.169-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-libc-dev",
+            "version": "0.2.169-1",
+            "source": "rust-libc",
+            "source_version": "0.2.169-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-libc-dev",
+            "version": "0.2.169-1",
+            "source": "rust-libc",
+            "source_version": "0.2.169-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-libc-dev",
+            "version": "0.2.169-1",
+            "source": "rust-libc",
+            "source_version": "0.2.169-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "linux-raw-sys",
+        "version": "0.12.1",
+        "features": [
+          "auxvec",
+          "elf",
+          "errno",
+          "general",
+          "ioctl",
+          "no_std"
+        ],
+        "rust_version": "1.63",
+        "license": "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT",
+        "license_files": [
+          {
+            "name": "COPYRIGHT",
+            "sha256": "3290ae0fbc9ddb77d2239121d710f0bb9d31b3b4744e6d97fe01e652b4c1870b"
+          },
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+          },
+          {
+            "name": "LICENSE-Apache-2.0_WITH_LLVM-exception",
+            "sha256": "268872b9816f90fd8e85db5a28d33f8150ebb8dd016653fb39ef1f94f2686bc5"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-linux-raw-sys-dev",
+            "version": "0.4.14-1",
+            "source": "rust-linux-raw-sys",
+            "source_version": "0.4.14-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-linux-raw-sys-dev",
+            "version": "0.4.14-1",
+            "source": "rust-linux-raw-sys",
+            "source_version": "0.4.14-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-linux-raw-sys-dev",
+            "version": "0.4.14-1",
+            "source": "rust-linux-raw-sys",
+            "source_version": "0.4.14-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-linux-raw-sys-dev",
+            "version": "0.4.14-1",
+            "source": "rust-linux-raw-sys",
+            "source_version": "0.4.14-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "memchr",
+        "version": "2.8.3",
+        "features": [
+          "alloc",
+          "std"
+        ],
+        "rust_version": "1.61",
+        "license": "Unlicense OR MIT",
+        "license_files": [
+          {
+            "name": "COPYING",
+            "sha256": "01c266bced4a434da0051174d6bee16a4c82cf634e2679b6155d40d75012390f"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "0f96a83840e146e43c0ec96a22ec1f392e0680e6c1226e6f3ba87e0740af850f"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-memchr-dev",
+            "version": "2.7.4-1",
+            "source": "rust-memchr",
+            "source_version": "2.7.4-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-memchr-dev",
+            "version": "2.7.4-1",
+            "source": "rust-memchr",
+            "source_version": "2.7.4-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-memchr-dev",
+            "version": "2.7.4-1",
+            "source": "rust-memchr",
+            "source_version": "2.7.4-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-memchr-dev",
+            "version": "2.7.4-1",
+            "source": "rust-memchr",
+            "source_version": "2.7.4-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "miniz_oxide",
+        "version": "0.9.1",
+        "features": [
+          "default",
+          "simd",
+          "simd-adler32",
+          "with-alloc"
+        ],
+        "rust_version": null,
+        "license": "MIT OR Zlib OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE",
+            "sha256": "4108245a1f2df9d4e94df8abed5b4ba0759bb2f9b40a6b939f1be141077ae50b"
+          },
+          {
+            "name": "LICENSE-APACHE.md",
+            "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+          },
+          {
+            "name": "LICENSE-MIT.md",
+            "sha256": "799e9ca9d179295ef372f25d3769cdda7d25bb2668add6a6a1e22d1e4c678b8d"
+          },
+          {
+            "name": "LICENSE-ZLIB.md",
+            "sha256": "0a54e647fe54104658b5e563c04c6f9edf251710e47bce692e0bd990a4ddaa39"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-miniz-oxide-dev",
+            "version": "0.7.1-2",
+            "source": "rust-miniz-oxide",
+            "source_version": "0.7.1-2",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-miniz-oxide-dev",
+            "version": "0.7.1-2",
+            "source": "rust-miniz-oxide",
+            "source_version": "0.7.1-2",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-miniz-oxide-dev",
+            "version": "0.7.1-2",
+            "source": "rust-miniz-oxide",
+            "source_version": "0.7.1-2",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-miniz-oxide-dev",
+            "version": "0.7.1-2",
+            "source": "rust-miniz-oxide",
+            "source_version": "0.7.1-2",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "once_cell",
+        "version": "1.21.4",
+        "features": [
+          "alloc",
+          "race",
+          "std"
+        ],
+        "rust_version": "1.65",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-once-cell-dev",
+            "version": "1.20.2-1",
+            "source": "rust-once-cell",
+            "source_version": "1.20.2-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-once-cell-dev",
+            "version": "1.20.2-1",
+            "source": "rust-once-cell",
+            "source_version": "1.20.2-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-once-cell-dev",
+            "version": "1.20.2-1",
+            "source": "rust-once-cell",
+            "source_version": "1.20.2-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-once-cell-dev",
+            "version": "1.20.2-1",
+            "source": "rust-once-cell",
+            "source_version": "1.20.2-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "proc-macro2",
+        "version": "1.0.107",
+        "features": [
+          "default",
+          "proc-macro"
+        ],
+        "rust_version": "1.71",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-proc-macro2-dev",
+            "version": "1.0.92-1+b1",
+            "source": "rust-proc-macro2",
+            "source_version": "1.0.92-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-proc-macro2-dev",
+            "version": "1.0.92-1+b1",
+            "source": "rust-proc-macro2",
+            "source_version": "1.0.92-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-proc-macro2-dev",
+            "version": "1.0.92-1+b1",
+            "source": "rust-proc-macro2",
+            "source_version": "1.0.92-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-proc-macro2-dev",
+            "version": "1.0.92-1+b1",
+            "source": "rust-proc-macro2",
+            "source_version": "1.0.92-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "quote",
+        "version": "1.0.47",
+        "features": [
+          "default",
+          "proc-macro"
+        ],
+        "rust_version": "1.71",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-quote-dev",
+            "version": "1.0.40-1",
+            "source": "rust-quote",
+            "source_version": "1.0.40-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-quote-dev",
+            "version": "1.0.40-1",
+            "source": "rust-quote",
+            "source_version": "1.0.40-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-quote-dev",
+            "version": "1.0.40-1",
+            "source": "rust-quote",
+            "source_version": "1.0.40-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-quote-dev",
+            "version": "1.0.40-1",
+            "source": "rust-quote",
+            "source_version": "1.0.40-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "rustix",
+        "version": "1.1.4",
+        "features": [
+          "alloc",
+          "default",
+          "fs",
+          "std"
+        ],
+        "rust_version": "1.63",
+        "license": "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT",
+        "license_files": [
+          {
+            "name": "COPYRIGHT",
+            "sha256": "377c2e7c53250cc5905c0b0532d35973392af16ffb9596a41d99d202cf3617c9"
+          },
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+          },
+          {
+            "name": "LICENSE-Apache-2.0_WITH_LLVM-exception",
+            "sha256": "268872b9816f90fd8e85db5a28d33f8150ebb8dd016653fb39ef1f94f2686bc5"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-rustix-dev",
+            "version": "0.38.37-4",
+            "source": "rust-rustix",
+            "source_version": "0.38.37-4",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-rustix-dev",
+            "version": "0.38.37-4",
+            "source": "rust-rustix",
+            "source_version": "0.38.37-4",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-rustix-dev",
+            "version": "0.38.37-4",
+            "source": "rust-rustix",
+            "source_version": "0.38.37-4",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-rustix-dev",
+            "version": "0.38.37-4",
+            "source": "rust-rustix",
+            "source_version": "0.38.37-4",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "serde",
+        "version": "1.0.229",
+        "features": [
+          "default",
+          "derive",
+          "serde_derive",
+          "std"
+        ],
+        "rust_version": "1.56",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-serde-dev",
+            "version": "1.0.217-1",
+            "source": "rust-serde",
+            "source_version": "1.0.217-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-serde-dev",
+            "version": "1.0.217-1",
+            "source": "rust-serde",
+            "source_version": "1.0.217-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-serde-dev",
+            "version": "1.0.217-1",
+            "source": "rust-serde",
+            "source_version": "1.0.217-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-serde-dev",
+            "version": "1.0.217-1",
+            "source": "rust-serde",
+            "source_version": "1.0.217-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "serde_core",
+        "version": "1.0.229",
+        "features": [
+          "result",
+          "std"
+        ],
+        "rust_version": "1.56",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "serde_derive",
+        "version": "1.0.229",
+        "features": [
+          "default"
+        ],
+        "rust_version": "1.71",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-serde-derive-dev",
+            "version": "1.0.217-1",
+            "source": "rust-serde-derive",
+            "source_version": "1.0.217-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-serde-derive-dev",
+            "version": "1.0.217-1",
+            "source": "rust-serde-derive",
+            "source_version": "1.0.217-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-serde-derive-dev",
+            "version": "1.0.217-1",
+            "source": "rust-serde-derive",
+            "source_version": "1.0.217-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-serde-derive-dev",
+            "version": "1.0.217-1",
+            "source": "rust-serde-derive",
+            "source_version": "1.0.217-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "serde_json",
+        "version": "1.0.151",
+        "features": [
+          "default",
+          "std"
+        ],
+        "rust_version": "1.71",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-serde-json-dev",
+            "version": "1.0.139-1",
+            "source": "rust-serde-json",
+            "source_version": "1.0.139-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-serde-json-dev",
+            "version": "1.0.139-1",
+            "source": "rust-serde-json",
+            "source_version": "1.0.139-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-serde-json-dev",
+            "version": "1.0.139-1",
+            "source": "rust-serde-json",
+            "source_version": "1.0.139-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-serde-json-dev",
+            "version": "1.0.139-1",
+            "source": "rust-serde-json",
+            "source_version": "1.0.139-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "serde_spanned",
+        "version": "0.6.9",
+        "features": [
+          "serde"
+        ],
+        "rust_version": "1.66",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-serde-spanned-dev",
+            "version": "0.6.7-1",
+            "source": "rust-serde-spanned",
+            "source_version": "0.6.7-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-serde-spanned-dev",
+            "version": "0.6.7-1",
+            "source": "rust-serde-spanned",
+            "source_version": "0.6.7-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-serde-spanned-dev",
+            "version": "0.6.7-1",
+            "source": "rust-serde-spanned",
+            "source_version": "0.6.7-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-serde-spanned-dev",
+            "version": "0.6.7-1",
+            "source": "rust-serde-spanned",
+            "source_version": "0.6.7-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "sha2",
+        "version": "0.10.9",
+        "features": [
+          "default",
+          "std"
+        ],
+        "rust_version": null,
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "b4eb00df6e2a4d22518fcaa6a2b4646f249b3a3c9814509b22bd2091f1392ff1"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-sha2-dev",
+            "version": "0.10.8-1+b2",
+            "source": "rust-sha2",
+            "source_version": "0.10.8-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-sha2-dev",
+            "version": "0.10.8-1+b2",
+            "source": "rust-sha2",
+            "source_version": "0.10.8-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-sha2-dev",
+            "version": "0.10.8-1+b2",
+            "source": "rust-sha2",
+            "source_version": "0.10.8-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-sha2-dev",
+            "version": "0.10.8-1+b2",
+            "source": "rust-sha2",
+            "source_version": "0.10.8-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "simd-adler32",
+        "version": "0.3.10",
+        "features": [],
+        "rust_version": null,
+        "license": "MIT",
+        "license_files": [
+          {
+            "name": "LICENSE.md",
+            "sha256": "42a35170233e83e18856792e748de4c1ce4a63b2afce9a370c89ef3fe23f9f2d"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-simd-adler32-dev",
+            "version": "0.3.7-1+b2",
+            "source": "rust-simd-adler32",
+            "source_version": "0.3.7-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-simd-adler32-dev",
+            "version": "0.3.7-1+b2",
+            "source": "rust-simd-adler32",
+            "source_version": "0.3.7-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-simd-adler32-dev",
+            "version": "0.3.7-1+b2",
+            "source": "rust-simd-adler32",
+            "source_version": "0.3.7-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-simd-adler32-dev",
+            "version": "0.3.7-1+b2",
+            "source": "rust-simd-adler32",
+            "source_version": "0.3.7-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "strsim",
+        "version": "0.11.1",
+        "features": [],
+        "rust_version": "1.56",
+        "license": "MIT",
+        "license_files": [
+          {
+            "name": "LICENSE",
+            "sha256": "1e697ce8d21401fbf1bddd9b5c3fd4c4c79ae1e3bdf51f81761c85e11d5a89cd"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-strsim-dev",
+            "version": "0.11.1-1",
+            "source": "rust-strsim",
+            "source_version": "0.11.1-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-strsim-dev",
+            "version": "0.11.1-1",
+            "source": "rust-strsim",
+            "source_version": "0.11.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-strsim-dev",
+            "version": "0.11.1-1",
+            "source": "rust-strsim",
+            "source_version": "0.11.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-strsim-dev",
+            "version": "0.11.1-1",
+            "source": "rust-strsim",
+            "source_version": "0.11.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-strsim-0.10-dev",
+            "version": "0.10.0-4",
+            "source": "rust-strsim-0.10",
+            "source_version": "0.10.0-4",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-strsim-0.10-dev",
+            "version": "0.10.0-4",
+            "source": "rust-strsim-0.10",
+            "source_version": "0.10.0-4",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-strsim-0.10-dev",
+            "version": "0.10.0-4",
+            "source": "rust-strsim-0.10",
+            "source_version": "0.10.0-4",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": [
+          {
+            "package": "librust-strsim-dev",
+            "version": "0.11.1-1",
+            "source": "rust-strsim",
+            "source_version": "0.11.1-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-strsim-dev",
+            "version": "0.11.1-1",
+            "source": "rust-strsim",
+            "source_version": "0.11.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-strsim-dev",
+            "version": "0.11.1-1",
+            "source": "rust-strsim",
+            "source_version": "0.11.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-strsim-dev",
+            "version": "0.11.1-1",
+            "source": "rust-strsim",
+            "source_version": "0.11.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ]
+      },
+      {
+        "name": "syn",
+        "version": "3.0.4",
+        "features": [
+          "clone-impls",
+          "default",
+          "derive",
+          "full",
+          "parsing",
+          "printing",
+          "proc-macro"
+        ],
+        "rust_version": "1.71",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-syn-dev",
+            "version": "2.0.98-1",
+            "source": "rust-syn",
+            "source_version": "2.0.98-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-syn-dev",
+            "version": "2.0.98-1",
+            "source": "rust-syn",
+            "source_version": "2.0.98-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-syn-dev",
+            "version": "2.0.98-1",
+            "source": "rust-syn",
+            "source_version": "2.0.98-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-syn-dev",
+            "version": "2.0.98-1",
+            "source": "rust-syn",
+            "source_version": "2.0.98-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-syn-1-dev",
+            "version": "1.0.109-3",
+            "source": "rust-syn-1",
+            "source_version": "1.0.109-3",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-syn-1-dev",
+            "version": "1.0.109-3",
+            "source": "rust-syn-1",
+            "source_version": "1.0.109-3",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-syn-1-dev",
+            "version": "1.0.109-3",
+            "source": "rust-syn-1",
+            "source_version": "1.0.109-3",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "tambo",
+        "version": "0.13.4",
+        "features": [],
+        "rust_version": "1.80",
+        "license": "Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE",
+            "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+          }
+        ],
+        "source": null,
+        "links": null,
+        "distro_name_candidates": [],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "tar",
+        "version": "0.4.46",
+        "features": [
+          "default",
+          "xattr"
+        ],
+        "rust_version": "1.63",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "8ca6b96cea9e67c6c5c63f452c31bd396db8bd2406231fdea5d48ef462b48077"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-tar-dev",
+            "version": "0.4.43-4",
+            "source": "rust-tar",
+            "source_version": "0.4.43-4",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-tar-dev",
+            "version": "0.4.43-4",
+            "source": "rust-tar",
+            "source_version": "0.4.43-4",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-tar-dev",
+            "version": "0.4.43-4",
+            "source": "rust-tar",
+            "source_version": "0.4.43-4",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-tar-dev",
+            "version": "0.4.43-4",
+            "source": "rust-tar",
+            "source_version": "0.4.43-4",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "tempfile",
+        "version": "3.27.0",
+        "features": [
+          "default",
+          "getrandom"
+        ],
+        "rust_version": "1.63",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "8b427f5bc501764575e52ba4f9d95673cf8f6d80a86d0d06599852e1a9a20a36"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-tempfile-dev",
+            "version": "3.15.0-1",
+            "source": "rust-tempfile",
+            "source_version": "3.15.0-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-tempfile-dev",
+            "version": "3.15.0-1",
+            "source": "rust-tempfile",
+            "source_version": "3.15.0-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-tempfile-dev",
+            "version": "3.15.0-1",
+            "source": "rust-tempfile",
+            "source_version": "3.15.0-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-tempfile-dev",
+            "version": "3.15.0-1",
+            "source": "rust-tempfile",
+            "source_version": "3.15.0-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "toml",
+        "version": "0.8.23",
+        "features": [
+          "default",
+          "display",
+          "parse"
+        ],
+        "rust_version": "1.66",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-toml-dev",
+            "version": "0.8.19-1",
+            "source": "rust-toml",
+            "source_version": "0.8.19-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-toml-dev",
+            "version": "0.8.19-1",
+            "source": "rust-toml",
+            "source_version": "0.8.19-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-toml-dev",
+            "version": "0.8.19-1",
+            "source": "rust-toml",
+            "source_version": "0.8.19-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-toml-dev",
+            "version": "0.8.19-1",
+            "source": "rust-toml",
+            "source_version": "0.8.19-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-toml-0.5-dev",
+            "version": "0.5.11-4",
+            "source": "rust-toml-0.5",
+            "source_version": "0.5.11-4",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-toml-0.5-dev",
+            "version": "0.5.11-4",
+            "source": "rust-toml-0.5",
+            "source_version": "0.5.11-4",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-toml-0.5-dev",
+            "version": "0.5.11-4",
+            "source": "rust-toml-0.5",
+            "source_version": "0.5.11-4",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "toml_datetime",
+        "version": "0.6.11",
+        "features": [
+          "serde"
+        ],
+        "rust_version": "1.66",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-toml-datetime-dev",
+            "version": "0.6.8-1",
+            "source": "rust-toml-datetime",
+            "source_version": "0.6.8-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-toml-datetime-dev",
+            "version": "0.6.8-1",
+            "source": "rust-toml-datetime",
+            "source_version": "0.6.8-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-toml-datetime-dev",
+            "version": "0.6.8-1",
+            "source": "rust-toml-datetime",
+            "source_version": "0.6.8-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-toml-datetime-dev",
+            "version": "0.6.8-1",
+            "source": "rust-toml-datetime",
+            "source_version": "0.6.8-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "toml_edit",
+        "version": "0.22.27",
+        "features": [
+          "default",
+          "display",
+          "parse",
+          "serde"
+        ],
+        "rust_version": "1.66",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-toml-edit-dev",
+            "version": "0.22.22-1",
+            "source": "rust-toml-edit",
+            "source_version": "0.22.22-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-toml-edit-dev",
+            "version": "0.22.22-1",
+            "source": "rust-toml-edit",
+            "source_version": "0.22.22-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-toml-edit-dev",
+            "version": "0.22.22-1",
+            "source": "rust-toml-edit",
+            "source_version": "0.22.22-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-toml-edit-dev",
+            "version": "0.22.22-1",
+            "source": "rust-toml-edit",
+            "source_version": "0.22.22-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "toml_write",
+        "version": "0.1.2",
+        "features": [
+          "alloc",
+          "default",
+          "std"
+        ],
+        "rust_version": "1.66",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "typenum",
+        "version": "1.20.1",
+        "features": [],
+        "rust_version": "1.41.0",
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE",
+            "sha256": "db11fec9946737df39ca3898d9cd8c10ec6f6c3a884a6802b0ad0b81b4e8f23a"
+          },
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "516b24e051bf5630880ebbd55c40a25ce9552ebaf8970a53e8976eb70e522406"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "a825bd853ab71619a4923d7b4311221427848070ff44d990da39b0b274c1683f"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-typenum-dev",
+            "version": "1.17.0-3",
+            "source": "rust-typenum",
+            "source_version": "1.17.0-3",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-typenum-dev",
+            "version": "1.17.0-3",
+            "source": "rust-typenum",
+            "source_version": "1.17.0-3",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-typenum-dev",
+            "version": "1.17.0-3",
+            "source": "rust-typenum",
+            "source_version": "1.17.0-3",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-typenum-dev",
+            "version": "1.17.0-3",
+            "source": "rust-typenum",
+            "source_version": "1.17.0-3",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "unicode-ident",
+        "version": "1.0.24",
+        "features": [],
+        "rust_version": "1.71",
+        "license": "(MIT OR Apache-2.0) AND Unicode-3.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+          },
+          {
+            "name": "LICENSE-UNICODE",
+            "sha256": "f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-unicode-ident-dev",
+            "version": "1.0.13-1",
+            "source": "rust-unicode-ident",
+            "source_version": "1.0.13-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-unicode-ident-dev",
+            "version": "1.0.13-1",
+            "source": "rust-unicode-ident",
+            "source_version": "1.0.13-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-unicode-ident-dev",
+            "version": "1.0.13-1",
+            "source": "rust-unicode-ident",
+            "source_version": "1.0.13-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-unicode-ident-dev",
+            "version": "1.0.13-1",
+            "source": "rust-unicode-ident",
+            "source_version": "1.0.13-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "utf8parse",
+        "version": "0.2.2",
+        "features": [
+          "default"
+        ],
+        "rust_version": null,
+        "license": "Apache-2.0 OR MIT",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "e4c9b06fa850cb9b540a5e400e9f6394cf15efcf4098144de477d1d3dae10150"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-utf8parse-dev",
+            "version": "0.2.1-1+b2",
+            "source": "rust-utf8parse",
+            "source_version": "0.2.1-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-utf8parse-dev",
+            "version": "0.2.1-1+b2",
+            "source": "rust-utf8parse",
+            "source_version": "0.2.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-utf8parse-dev",
+            "version": "0.2.1-1+b2",
+            "source": "rust-utf8parse",
+            "source_version": "0.2.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-utf8parse-dev",
+            "version": "0.2.1-1+b2",
+            "source": "rust-utf8parse",
+            "source_version": "0.2.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "version_check",
+        "version": "0.9.5",
+        "features": [],
+        "rust_version": null,
+        "license": "MIT/Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "b7e650f3fce5c53249d1cdc608b54df156a97edd636cf9d23498d0cfe7aec63e"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-version-check-dev",
+            "version": "0.9.5-1",
+            "source": "rust-version-check",
+            "source_version": "0.9.5-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-version-check-dev",
+            "version": "0.9.5-1",
+            "source": "rust-version-check",
+            "source_version": "0.9.5-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-version-check-dev",
+            "version": "0.9.5-1",
+            "source": "rust-version-check",
+            "source_version": "0.9.5-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-version-check-dev",
+            "version": "0.9.5-1",
+            "source": "rust-version-check",
+            "source_version": "0.9.5-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": [
+          {
+            "package": "librust-version-check-dev",
+            "version": "0.9.5-1",
+            "source": "rust-version-check",
+            "source_version": "0.9.5-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-version-check-dev",
+            "version": "0.9.5-1",
+            "source": "rust-version-check",
+            "source_version": "0.9.5-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-version-check-dev",
+            "version": "0.9.5-1",
+            "source": "rust-version-check",
+            "source_version": "0.9.5-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-version-check-dev",
+            "version": "0.9.5-1",
+            "source": "rust-version-check",
+            "source_version": "0.9.5-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ]
+      },
+      {
+        "name": "winnow",
+        "version": "0.7.15",
+        "features": [
+          "alloc",
+          "default",
+          "std"
+        ],
+        "rust_version": "1.65.0",
+        "license": "MIT",
+        "license_files": [
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "cb5aedb296c5246d1f22e9099f925a65146f9f0d6b4eebba97fd27a6cdbbab2d"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-winnow-dev",
+            "version": "0.6.26-1",
+            "source": "rust-winnow",
+            "source_version": "0.6.26-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-winnow-dev",
+            "version": "0.6.26-1",
+            "source": "rust-winnow",
+            "source_version": "0.6.26-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-winnow-dev",
+            "version": "0.6.26-1",
+            "source": "rust-winnow",
+            "source_version": "0.6.26-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-winnow-dev",
+            "version": "0.6.26-1",
+            "source": "rust-winnow",
+            "source_version": "0.6.26-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "xattr",
+        "version": "1.6.1",
+        "features": [
+          "default",
+          "unsupported"
+        ],
+        "rust_version": null,
+        "license": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "name": "LICENSE-APACHE",
+            "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+          },
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "8b427f5bc501764575e52ba4f9d95673cf8f6d80a86d0d06599852e1a9a20a36"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [
+          {
+            "package": "librust-xattr-dev",
+            "version": "1.3.1-1",
+            "source": "rust-xattr",
+            "source_version": "1.3.1-1",
+            "suite": "trixie"
+          },
+          {
+            "package": "librust-xattr-dev",
+            "version": "1.3.1-1",
+            "source": "rust-xattr",
+            "source_version": "1.3.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-xattr-dev",
+            "version": "1.3.1-1",
+            "source": "rust-xattr",
+            "source_version": "1.3.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          },
+          {
+            "package": "librust-xattr-dev",
+            "version": "1.3.1-1",
+            "source": "rust-xattr",
+            "source_version": "1.3.1-1",
+            "suite": "trixie",
+            "identity": "versioned-name candidate only"
+          }
+        ],
+        "exact_locked_version_candidates": []
+      },
+      {
+        "name": "zmij",
+        "version": "1.0.23",
+        "features": [],
+        "rust_version": "1.71",
+        "license": "MIT",
+        "license_files": [
+          {
+            "name": "LICENSE-MIT",
+            "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+          }
+        ],
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "links": null,
+        "distro_name_candidates": [],
+        "exact_locked_version_candidates": []
+      }
+    ],
+    "limits": [
+      "Not a compiler-unit proof, target build or source-package qualification",
+      "Distro names/Provides are candidates until source identity/features/API are tested",
+      "License declarations/files are evidence, not DFSG clearance",
+      "No build or lintian execution available"
+    ],
+    "no_exact_lock_version_candidate": [
+      "adler2",
+      "anstream",
+      "anstyle",
+      "anstyle-parse",
+      "anstyle-query",
+      "anyhow",
+      "bitflags",
+      "cfg-if",
+      "clap",
+      "clap_builder",
+      "clap_derive",
+      "clap_lex",
+      "colorchoice",
+      "cpufeatures",
+      "crc32fast",
+      "crypto-common",
+      "equivalent",
+      "fastrand",
+      "filetime",
+      "flate2",
+      "getrandom",
+      "hashbrown",
+      "heck",
+      "indexmap",
+      "is_terminal_polyfill",
+      "itoa",
+      "libc",
+      "linux-raw-sys",
+      "memchr",
+      "miniz_oxide",
+      "once_cell",
+      "proc-macro2",
+      "quote",
+      "rustix",
+      "serde",
+      "serde_core",
+      "serde_derive",
+      "serde_json",
+      "serde_spanned",
+      "sha2",
+      "simd-adler32",
+      "syn",
+      "tar",
+      "tempfile",
+      "toml",
+      "toml_datetime",
+      "toml_edit",
+      "toml_write",
+      "typenum",
+      "unicode-ident",
+      "utf8parse",
+      "winnow",
+      "xattr",
+      "zmij"
+    ]
+  }
+}
