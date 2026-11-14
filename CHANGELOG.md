@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.0](https://github.com/intigraph/tambo/compare/v0.13.4...v0.14.0) (2026-11-13)
+
+
+### Features
+
+* **skills:** publish native pendants and sync pinned profiles ([#276](https://github.com/intigraph/tambo/issues/276)) ([b5f668e](https://github.com/intigraph/tambo/commit/b5f668e5eb739f904d96568bf9807929d80ecc2c))
+
 ## [0.13.4](https://github.com/intigraph/tambo/compare/v0.13.3...v0.13.4) (2026-11-11)
 
 
