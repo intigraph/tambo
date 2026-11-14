@@ -2,6 +2,8 @@ name: Stack table drift
 
 on:
   push:
+    branches: [main]
+    tags: ['**']
     paths:
       - README.md
       - docs/stack-table.md
@@ -20,6 +22,11 @@ on:
   schedule:
     - cron: '23 8 * * *'
   workflow_dispatch:
+
+# Supersede only the same PR; main, tags, schedule and dispatch stay independent.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
