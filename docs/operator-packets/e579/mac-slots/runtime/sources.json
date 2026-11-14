@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "platform": "macos",
+  "architecture": "arm64",
+  "python": {
+    "version": "3.12.16",
+    "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.12.16%2B20261026-aarch64-apple-darwin-install_only.tar.gz",
+    "sha256": "fbf4afef53c2a6b72bb741bc06d5671a9dfaf87bd84e5aa73ac9b3d0d589f14e"
+  },
+  "shantytown": {
+    "version": "0.15.1",
+    "commit": "371cb4e20a564ee4207f3097bda31066eeca9f33",
+    "url": "https://codeload.github.com/intigraph/shantytown/tar.gz/371cb4e20a564ee4207f3097bda31066eeca9f33",
+    "sha256": "8b415b9ecd43f9080943e3dcc6986cb87e9e4b20cf0c5bc1ef1c916cfd2116a8"
+  },
+  "seeds": {
+    "version": "0.14.0",
+    "url": "https://github.com/intigraph/seeds/releases/download/seeds-ai-v0.14.0/sd-seeds-ai-v0.14.0-aarch64-apple-darwin.tar.gz",
+    "sha256": "74a996635b7ece44ef896581b0689ed85d1a7b7c307334927a19a1a04c1e779a"
+  }
+}
