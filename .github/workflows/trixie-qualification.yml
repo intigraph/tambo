@@ -1,0 +1,43 @@
+name: Frozen trixie package qualification
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: trixie-qualification
+  cancel-in-progress: false
+jobs:
+  trixie-amd64:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    container:
+      image: debian:trixie@sha256:2dc419c6d7fe3dad0a2f9fd469c34cc90b0f9ba642d8fde837fe3d7d34a0e7f1
+      options: --cpus 2 --memory 4g --pids-limit 512
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: eebd1f548725403a845d60f1841f2dbfc4fd4a29
+          path: qualification-source
+          persist-credentials: false
+      - name: Verify frozen inputs and qualify the selected release features
+        uses: ./.github/actions/trixie-qualification
+      - name: Remove build tree and record absence
+        if: always()
+        shell: bash
+        run: |
+          set -eu
+          mkdir -p qualification-results
+          rm -rf -- qualification-build qualification-source
+          test ! -e qualification-source
+          test ! -e qualification-build
+          printf '%s\n' 'source/build tree absent; hosted container disposal remains runner-owned' > qualification-results/cleanup.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: trixie-amd64-qualification
+          path: qualification-results
+          retention-days: 7
+          if-no-files-found: error
