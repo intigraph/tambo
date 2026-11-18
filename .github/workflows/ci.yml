@@ -80,6 +80,8 @@ jobs:
         run: python3 scripts/test-install-bootstrap.py
       - name: Canonical release repository refusal controls
         run: python3 scripts/test-release-repository.py
+      - name: Inert frozen release candidate controls
+        run: python3 scripts/test-release-candidate.py
       - name: Registry visibility refusal controls
         run: python3 scripts/test-crate-version.py
       - name: Hosted install-method ownership and refusal controls
