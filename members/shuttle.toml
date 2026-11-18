@@ -8,7 +8,7 @@
 name = "shuttle"
 kind = "python-wheel"
 repo = "intigraph/shuttle"
-version = "0.8.1"
+version = "0.9.1"
 tag = "v{version}"
 asset = "shuttle-{version}-py3-none-any.whl"
 version_argv = ["version"]
@@ -17,7 +17,7 @@ prerequisites = ["python3"]
 profiles = ["crew", "everything"]
 
 [sha256]
-any = "1e0d48a2dbc4a8f51ce1ff248da7984d509a4e60425d6bd80d3959aa2f57e7a2"
+any = "805132fc179d97557045a79b0af914f9b562eac5d6f5a59c9070ac37ad3656ec"
 
 # Every released shuttle (0.2.0 onward) prints this line in --help.
 [[programs]]

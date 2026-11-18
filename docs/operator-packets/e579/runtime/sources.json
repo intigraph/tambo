@@ -8,10 +8,10 @@
     "sha256": "fbf4afef53c2a6b72bb741bc06d5671a9dfaf87bd84e5aa73ac9b3d0d589f14e"
   },
   "shantytown": {
-    "version": "0.10.0",
-    "commit": "dd11e1ce4a1bb63988e3df457a842cb743ea5222",
-    "url": "https://codeload.github.com/intigraph/shantytown/tar.gz/dd11e1ce4a1bb63988e3df457a842cb743ea5222",
-    "sha256": "8ac726ab3d39dfcef7b4d10f034f00870aa121f817df90d945c8656a52f1c25f"
+    "version": "0.16.0",
+    "commit": "beb5d2180a19a69b6b5a715ab4be2ab06efbdd27",
+    "url": "https://codeload.github.com/intigraph/shantytown/tar.gz/beb5d2180a19a69b6b5a715ab4be2ab06efbdd27",
+    "sha256": "a6532e60e7c78f4eca6777d17e0fb45387df3745387918b698786c547f5003f3"
   },
   "seeds": {
     "version": "0.14.0",

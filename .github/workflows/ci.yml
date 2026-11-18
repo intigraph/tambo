@@ -2,7 +2,14 @@ name: ci
 
 on:
   push:
+    branches: [main]
+    tags: ['**']
   pull_request:
+
+# Supersede only the same PR; every main and tag run keeps its own group.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -73,6 +80,8 @@ jobs:
         run: python3 scripts/test-install-bootstrap.py
       - name: Canonical release repository refusal controls
         run: python3 scripts/test-release-repository.py
+      - name: Inert frozen release candidate controls
+        run: python3 scripts/test-release-candidate.py
       - name: Registry visibility refusal controls
         run: python3 scripts/test-crate-version.py
       - name: Hosted install-method ownership and refusal controls
@@ -320,6 +329,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: python3 scripts/test-macos-controller-account-packet.py
+      - run: python3 scripts/test-macos-e579-runtime-transaction.py
       - run: python3 scripts/test-macos-principal-seeds.py
       - run: python3 scripts/test-e579-bounded-delivery.py
       - run: python3 scripts/test-macos-job-manifest-migration.py

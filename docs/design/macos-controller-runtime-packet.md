@@ -26,17 +26,17 @@ bundles its own **arm64 Python 3.12.16**, independently of `/usr/bin/python3`.
 
 - Python standalone build 20261026, native arm64 CPython 3.12.16, archive
   `fbf4afef53c2a6b72bb741bc06d5671a9dfaf87bd84e5aa73ac9b3d0d589f14e`.
-- Shantytown commit `dd11e1ce4a1bb63988e3df457a842cb743ea5222`
-  (v0.10.0), commit archive
-  `8ac726ab3d39dfcef7b4d10f034f00870aa121f817df90d945c8656a52f1c25f`.
+- Shantytown commit `beb5d2180a19a69b6b5a715ab4be2ab06efbdd27`
+  (published v0.16.0), commit archive
+  `a6532e60e7c78f4eca6777d17e0fb45387df3745387918b698786c547f5003f3`.
   The source distribution omits `scripts/st-job-launcher`, so the builder uses
   this checksum-pinned complete commit archive instead.
 - Seeds 0.14.0 native arm64 archive
   `74a996635b7ece44ef896581b0689ed85d1a7b7c307334927a19a1a04c1e779a`.
 
 The artifact manifest pin is
-`33de07c81561a45b3fd49a8f88160b9761300732cc99c16b21670d5c026acb9a`.
-It binds 1180 regular files, about 88 MB: interpreter, standard library and
+`25cadd5a13a3f8021f9fb11bedfb789e815b5cb10141962f4fdba9ca35fb85f1`.
+It binds 1220 regular files, about 88 MB: interpreter, standard library and
 native libraries, public Shantytown application, launcher, trusted `sd`, and
 licenses. Archive links are materialized from the pinned archive; output has
 no symlinks, site packages, `.pth` hooks, tests, bytecode, private settings,
@@ -97,7 +97,7 @@ that sequence; do not continue with `|| true` or delete a prepared reservation.
   --inventory docs/operator-packets/e579/catalog \
   --inventory-sha256 21d6283211c709dd3370bf558b5c2e69529a59849b63d48d5b1af1b6c7b5c10a
 "$TOOL" job-runtime --directory macos-arm64-job-runtime \
-  --manifest-sha256 33de07c81561a45b3fd49a8f88160b9761300732cc99c16b21670d5c026acb9a
+  --manifest-sha256 25cadd5a13a3f8021f9fb11bedfb789e815b5cb10141962f4fdba9ca35fb85f1
 ```
 
 The offline message explicitly says native controller/readiness is unproved.
@@ -207,7 +207,7 @@ The physical order is controller -> runtime staging as needed -> public CA
 checks -> phase-A refusal -> explicit 1b expansion -> metadata and policy ->
 own-key enrollment -> identity and negative controls -> normal Chaski retry.
 This two-phase dependency prevents a single linear unattended setup. The successor runtime pins Seeds 0.14.0 with the
-CA-file configuration and ST `dd11e1ce`, including the protected macOS `/var`
+CA-file configuration and released ST `beb5d218` (v0.16.0), including the protected macOS `/var`
 alias handling and canonical `/private/var` controller-root requirement. This
 closes the old input-pin gaps; it does not prove native lifecycle success.
 Stop before synthetic execution until this new runtime pin has completed the
@@ -220,10 +220,10 @@ unverified user tree. The staging helper retains interrupted `.pending` state.
 ```sh
 sudo /usr/bin/python3 -I scripts/macos-job-runtime-stage.py \
   --archive "$ARCHIVE" --archive-sha256 "$ARCHIVE_SHA256" \
-  --manifest-sha256 33de07c81561a45b3fd49a8f88160b9761300732cc99c16b21670d5c026acb9a
+  --manifest-sha256 25cadd5a13a3f8021f9fb11bedfb789e815b5cb10141962f4fdba9ca35fb85f1
 sudo '/Library/Application Support/Shantytown/bin/tambo-controller-e579' job-runtime \
-  --directory '/Library/Application Support/Shantytown/runtime-artifacts/33de07c81561a45b3fd49a8f88160b9761300732cc99c16b21670d5c026acb9a' \
-  --manifest-sha256 33de07c81561a45b3fd49a8f88160b9761300732cc99c16b21670d5c026acb9a --apply
+  --directory '/Library/Application Support/Shantytown/runtime-artifacts/25cadd5a13a3f8021f9fb11bedfb789e815b5cb10141962f4fdba9ca35fb85f1' \
+  --manifest-sha256 25cadd5a13a3f8021f9fb11bedfb789e815b5cb10141962f4fdba9ca35fb85f1 --apply
 ```
 
 The existing runtime installer creates missing `/usr/local/libexec` through its
