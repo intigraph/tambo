@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.0](https://github.com/intigraph/tambo/compare/v0.15.0...v0.16.0) (2026-11-19)
+
+
+### Features
+
+* **release:** add inert frozen candidate manifest contract ([#285](https://github.com/intigraph/tambo/issues/285)) ([ce85079](https://github.com/intigraph/tambo/commit/ce85079bb9ee8913c3ff22032b50d8427b7a2a47))
+
 ## [0.15.0](https://github.com/intigraph/tambo/compare/v0.14.1...v0.15.0) (2026-11-15)
 
 
