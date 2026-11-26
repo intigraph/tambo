@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.17.0](https://github.com/intigraph/tambo/compare/v0.16.0...v0.17.0) (2026-11-26)
+
+
+### Features
+
+* **doctor:** report Yupana guard state per tenant (aegis-47ca) ([673f3a4](https://github.com/intigraph/tambo/commit/673f3a49fb1d362602112c68ac79fa3b0684c945))
+* **doctor:** report Yupana guard state per tenant (aegis-47ca) ([f796ffe](https://github.com/intigraph/tambo/commit/f796ffe32e22e8a39d370cf5f98cfde8f2f9ffec))
+
 ## [0.16.0](https://github.com/intigraph/tambo/compare/v0.15.0...v0.16.0) (2026-11-19)
 
 
