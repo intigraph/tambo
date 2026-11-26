@@ -21,6 +21,9 @@ use anyhow::Result;
 
 use crate::adapter::which_all;
 
+#[path = "doctor_yupana.rs"]
+mod yupana_guard;
+
 use crate::{
     adapter,
     model::{CrewMode, Plan, Profile, QuipuFlavor, State, ToolName},
@@ -245,6 +248,9 @@ pub fn diagnose(scope: &Scope) -> Vec<Finding> {
         }
     }
     findings.extend(check_mcp(scope));
+    if scope.tools.contains(&ToolName::Yupana) {
+        findings.extend(yupana_guard::check(path.as_deref()));
+    }
     findings
 }
 
