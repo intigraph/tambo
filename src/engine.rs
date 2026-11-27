@@ -27,6 +27,16 @@ struct ImportResult {
     promotion: ImportPromotion,
 }
 
+/// The bundle's `REVISION` says nothing about the `camayoc` CLI a shell runs,
+/// so a stale CLI is reported as NOT converged (aegis-mecge2.12).
+fn check_camayoc_cli(path: Option<&std::ffi::OsStr>) -> Result<()> {
+    let home = std::env::var_os("HOME").map(std::path::PathBuf::from);
+    if crate::adapter::camayoc_cli_check(path, home.as_deref())?.is_empty() {
+        println!("camayoc: note: no `camayoc` CLI on PATH or in ~/.local/bin");
+    }
+    Ok(())
+}
+
 /// What `apply` should do about an installed tool whose version is not the one
 /// this Tambo build reviewed (aegis-5ctwu3).
 ///
@@ -394,6 +404,9 @@ fn consume_shares(plan: &Plan, state: &mut State, state_path: &Path) -> Result<(
 /// note, not a failure: it runs the same build.
 fn check_path_resolution(name: crate::model::ToolName) -> Result<()> {
     let path = std::env::var_os("PATH");
+    if name == crate::model::ToolName::Camayoc {
+        check_camayoc_cli(path.as_deref())?;
+    }
     for &program in crate::adapter::programs(name) {
         match crate::adapter::path_resolution(program, path.as_deref()) {
             crate::adapter::PathResolution::Managed => {}
@@ -790,6 +803,9 @@ pub fn update(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
     {
         crate::package::brew_refresh()?;
     }
+    // A stale `camayoc` CLI must fail update, but not skip later members or
+    // drop the state of a bundle that did install; it fails at the end.
+    let mut camayoc_cli: Option<anyhow::Error> = None;
     for &name in &plan.tools {
         let adapter = adapter_for_plan(name, plan)?;
         if name == crate::model::ToolName::Quipu && plan.external_quipu {
@@ -824,6 +840,9 @@ pub fn update(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
             if name == crate::model::ToolName::Quipu {
                 crate::adapter::ensure_existing_quipu_alias()?;
             }
+            if name == crate::model::ToolName::Camayoc {
+                camayoc_cli = check_camayoc_cli(std::env::var_os("PATH").as_deref()).err();
+            }
             println!("{}: current", name.as_str());
             continue;
         }
@@ -852,6 +871,9 @@ pub fn update(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
         adapter
             .verify()
             .with_context(|| format!("{} verification after update", name.as_str()))?;
+        if name == crate::model::ToolName::Camayoc {
+            camayoc_cli = check_camayoc_cli(std::env::var_os("PATH").as_deref()).err();
+        }
         state.tools.insert(
             name.as_str().to_owned(),
             ToolState {
@@ -876,6 +898,9 @@ pub fn update(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
                 emission::queue_transition(state_path, name, "updated", &runtime.version)?;
             }
         }
+    }
+    if let Some(error) = camayoc_cli {
+        return Err(error);
     }
     Ok(state)
 }

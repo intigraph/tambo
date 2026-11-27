@@ -409,7 +409,7 @@ esac
     fs::create_dir_all(camayoc.join("ontology")).unwrap();
     fs::write(
         camayoc.join("REVISION"),
-        "724b0a8dc191167da968285c677a8868a44e16a3\n",
+        "78e59e036605b974f958781e611fdacfef47964f\n",
     )
     .unwrap();
     // Behaves like the real bootstrap when nothing answers: starts a server process
@@ -4323,7 +4323,7 @@ exit 2
         fs::create_dir_all(root.path().join("camayoc")).unwrap();
         fs::write(
             root.path().join("camayoc/REVISION"),
-            "724b0a8dc191167da968285c677a8868a44e16a3",
+            "78e59e036605b974f958781e611fdacfef47964f",
         )
         .unwrap();
         let mut cmd = command(root.path(), &bin);
@@ -4403,7 +4403,7 @@ exit 2
     fs::create_dir_all(root.path().join("camayoc")).unwrap();
     fs::write(
         root.path().join("camayoc/REVISION"),
-        "724b0a8dc191167da968285c677a8868a44e16a3",
+        "78e59e036605b974f958781e611fdacfef47964f",
     )
     .unwrap();
     assert!(!bin.join("quipu").exists());
@@ -4529,7 +4529,7 @@ exit 2
         fs::create_dir_all(root.path().join("camayoc")).unwrap();
         fs::write(
             root.path().join("camayoc/REVISION"),
-            "724b0a8dc191167da968285c677a8868a44e16a3",
+            "78e59e036605b974f958781e611fdacfef47964f",
         )
         .unwrap();
         let mut cmd = command(root.path(), &bin);
@@ -4758,4 +4758,68 @@ fn skip_install_refuses_unknown_bobbin_version_without_replacing_it() {
         .failure()
         .stderr(predicate::str::contains("refuses to converge"));
     assert_eq!(fs::read(bin.join("bobbin")).unwrap(), before);
+}
+
+// aegis-mecge2.12: the macOS consumer runs `update` under launchd, whose PATH
+// omits ~/.local/bin, and recorded members-converged over a stale uv-installed
+// camayoc. Update must fail with the reason, after converging every member and
+// recording state, instead of reporting the stale CLI as absent or current.
+#[test]
+fn update_fails_on_stale_uv_camayoc_off_path_after_finishing_other_members() {
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    fake_tool(&bin, "quipu", "echo 'quipu 0.14.1'");
+    fake_tool(&bin, "quipu-server", "echo 'quipu-server 0.14.1'");
+    fake_tool(
+        &bin,
+        "brew",
+        r#"
+case "$*" in
+ "update --quiet") exit 0;;
+ "info --json=v2 scbrown/tap/quipu")
+ printf '{"formulae":[{"full_name":"scbrown/tap/quipu","tap":"scbrown/tap","pinned":false,"versions":{"stable":"0.14.1"},"installed":[{"version":"0.14.1"}]}]}'; exit 0;;
+ info*) printf '{"formulae":[]}'; exit 0;;
+esac
+exit 2
+"#,
+    );
+    command(root.path(), &bin)
+        .args(["plan", "--profile", "retrieval"])
+        .assert()
+        .success();
+    fs::create_dir_all(root.path().join("camayoc")).unwrap();
+    fs::write(
+        root.path().join("camayoc/REVISION"),
+        "78e59e036605b974f958781e611fdacfef47964f",
+    )
+    .unwrap();
+    let uv_bin = root.path().join(".local/bin");
+    fs::create_dir_all(&uv_bin).unwrap();
+    fake_tool(&uv_bin, "camayoc", "echo 'camayoc 0.1.4'");
+    let output = command(root.path(), &bin)
+        .env("CABOODLE_BREW", bin.join("brew"))
+        .arg("update")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("camayoc NOT converged"))
+        .stderr(predicate::str::contains(
+            ".local/bin/camayoc reports `camayoc 0.1.4`",
+        ))
+        .get_output()
+        .clone();
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    // The stale CLI is reported, not an early abort: bobbin, after camayoc in
+    // the plan, still ran.
+    assert!(stdout.contains("camayoc: current"), "{stdout}");
+    assert!(stdout.contains("bobbin: current"), "{stdout}");
+
+    // Upgrading the uv copy converges.
+    fake_tool(&uv_bin, "camayoc", "echo 'camayoc 0.1.11'");
+    command(root.path(), &bin)
+        .env("CABOODLE_BREW", bin.join("brew"))
+        .arg("update")
+        .assert()
+        .success();
 }
