@@ -35,6 +35,12 @@
       },
       "reason": "Explicit command/library ABI, state/environment/configuration/provenance identity, workflow/archive identity or compatibility/negative-test control."
     },
+    "CHANGELOG.md": {
+      "lines": {
+        "64638a32c209002fac070fdff34c8542b33f0aa229ca1b90d1e8cc11bfb286a5": 1
+      },
+      "reason": "Historical release notes: release-please copies commit subjects verbatim, and the 0.17.2 entry quotes the CABOODLE_BREW test environment variable from a compatibility-ledger commit. Recorded history, not a product name in use."
+    },
     "Cargo.toml": {
       "lines": {
         "3cc7c92e14e1b3db00d7e621d8efcd71d446cc99962408c379e73e203e7dc50f": 2,
