@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.0](https://github.com/intigraph/tambo/compare/v0.17.2...v0.18.0) (2026-11-27)
+
+
+### Features
+
+* **bump:** pin the five built-ins as data and add bump-builtin (aegis-mecge2.10) ([#313](https://github.com/intigraph/tambo/issues/313)) ([251b2df](https://github.com/intigraph/tambo/commit/251b2dfed75c93a461d387d606181b9124eb188c))
+
 ## [0.17.2](https://github.com/intigraph/tambo/compare/v0.17.1...v0.17.2) (2026-11-27)
 
 
