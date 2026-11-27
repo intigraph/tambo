@@ -4270,7 +4270,7 @@ exit 2"#;
         bin.join("bobbin"),
         fake.replace(
             p("echo 'bobbin @BOBBIN@';").as_str(),
-            "echo 'bobbin @BOBBIN+2@';",
+            p("echo 'bobbin @BOBBIN+2@';").as_str(),
         ),
     )
     .unwrap();
