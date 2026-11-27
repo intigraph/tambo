@@ -237,6 +237,13 @@ if [ "${1:-}" = "callers" ]; then
   else echo 'no definition found'; fi
   exit 0
 fi
+if [ "${1:-}" = "rule-test" ]; then
+  cat >/dev/null
+  case "$*" in
+    *--projection*) echo '{"summary":{"pass":2,"fail":0,"unknown":0},"results":[]}'; exit 0 ;;
+    *) echo 'Error: No such file or directory (os error 2)' >&2; exit 1 ;;
+  esac
+fi
 exit 2
 "#,
     );

@@ -4,8 +4,9 @@ use std::{
     env,
     ffi::{OsStr, OsString},
     fs,
+    io::Write,
     path::{Path, PathBuf},
-    process::{Command, Output},
+    process::{Command, Output, Stdio},
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -1024,8 +1025,215 @@ impl Adapter for Yupana {
         if !String::from_utf8_lossy(&after.stdout).contains("tambo_yupana_caller") {
             bail!("Yupana analyzed the fixture but callers did not return its caller");
         }
-        Ok(())
+        verify_yupana_guard_engine(root.path(), &state)?;
+        verify_yupana_host_projection()
     }
+}
+
+// The guard proof, both ways (aegis-r1s WANT 3). `yupana rule-test` runs cases
+// through the pre-edit guard's own engine with no side effects. First a
+// Tambo-owned fixture projection: its block rule must fire on the canary edit
+// and stay quiet on a clean one, so a guard that blocks nothing, or blocks
+// everything, fails verify. Tambo does not choose the host's rules; it ships
+// only this canary.
+const YUPANA_CANARY_RULE: &str = "tambo_verify_canary";
+const YUPANA_CLEAN_EDIT: &str = "pub fn tambo_clean_edit() -> usize {\n    1\n}\n";
+const YUPANA_CLEAN_PATH: &str = "docs/tambo-verify-clean-edit.md";
+
+fn yupana_canary_projection() -> Value {
+    json!({
+        "version": 1,
+        "written_at": 0,
+        "endpoint": "tambo-verify-fixture",
+        "policies": [],
+        "text_rules": [{
+            "name": YUPANA_CANARY_RULE,
+            "label": "Tambo verify canary",
+            "pattern": "TAMBO-YUPANA-CANARY-[0-9a-f]{8}",
+            "tier": "block",
+            "class": "canary",
+            "exempt_path_regex": null,
+            "exempt_repos": [],
+            "exempt_line_marker": null,
+            "rationale": "Tambo verify fixture: proves the guard engine blocks and passes."
+        }]
+    })
+}
+
+fn yupana_canary_cases() -> Value {
+    json!([
+        {
+            "rule": YUPANA_CANARY_RULE,
+            "text": "const LEAK: &str = \"TAMBO-YUPANA-CANARY-0a1b2c3d\";\n",
+            "path": "src/tambo_verify_blocked_edit.rs",
+            "expect": "match"
+        },
+        {
+            "rule": YUPANA_CANARY_RULE,
+            "text": YUPANA_CLEAN_EDIT,
+            "path": "src/tambo_verify_clean_edit.rs",
+            "expect": "no-match"
+        }
+    ])
+}
+
+fn verify_yupana_guard_engine(root: &Path, state: &Path) -> Result<()> {
+    let projection = root.join("canary-projection.json");
+    fs::write(
+        &projection,
+        serde_json::to_vec(&yupana_canary_projection())?,
+    )?;
+    let cases = yupana_canary_cases();
+    let report = yupana_rule_test(root, Some((&projection, state)), &cases)?;
+    require_rule_test_passed(&report, 2).context(
+        "Yupana guard engine: the canary edit must be blocked and the clean edit must pass",
+    )?;
+    println!("yupana guard engine: canary edit blocked, clean edit passed (rule-test)");
+    Ok(())
+}
+
+// Then the host's own projection, the file the pre-edit hook serves from: every
+// projected text rule must be loaded and must let the clean edit through. A
+// host with no readable projection is said, not hidden; `tambo doctor` reports
+// why per tenant.
+fn verify_yupana_host_projection() -> Result<()> {
+    let cwd = env::current_dir().context("current directory for Yupana rule-test")?;
+    let probe = match yupana_rule_test(&cwd, None, &json!([])) {
+        Ok(report) => report,
+        Err(error) => {
+            println!(
+                "yupana host projection: not proven ({error:#}); see `tambo doctor` for guard state"
+            );
+            return Ok(());
+        }
+    };
+    let path = probe
+        .pointer("/projection/path")
+        .and_then(Value::as_str)
+        .context("yupana rule-test reported no projection path")?;
+    let raw = fs::read(path).with_context(|| format!("read Yupana projection {path}"))?;
+    let projection: Value =
+        serde_json::from_slice(&raw).with_context(|| format!("parse Yupana projection {path}"))?;
+    let cases = yupana_clean_cases(&projection);
+    if cases.is_empty() {
+        println!("yupana host projection: {path} projects no text rules; nothing to prove");
+        return Ok(());
+    }
+    let report = yupana_rule_test(&cwd, None, &Value::Array(cases.clone()))?;
+    require_rule_test_passed(&report, cases.len()).with_context(|| {
+        format!("Yupana host projection {path}: every projected rule must pass a clean edit")
+    })?;
+    println!(
+        "yupana host projection: {} projected text rule(s) loaded, clean edit passed ({path})",
+        cases.len()
+    );
+    Ok(())
+}
+
+fn yupana_clean_cases(projection: &Value) -> Vec<Value> {
+    projection
+        .get("text_rules")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|rule| rule.get("name").and_then(Value::as_str))
+        .map(|name| {
+            json!({
+                "rule": name,
+                "text": YUPANA_CLEAN_EDIT,
+                "path": YUPANA_CLEAN_PATH,
+                "expect": "no-match"
+            })
+        })
+        .collect()
+}
+
+// `isolated` carries a projection file and state directory; without it the
+// host's own environment selects the projection the hook serves from.
+fn yupana_rule_test(cwd: &Path, isolated: Option<(&Path, &Path)>, cases: &Value) -> Result<Value> {
+    let mut command = Command::new("yupana");
+    command
+        .args(["rule-test", "--json", "--cases", "-"])
+        .current_dir(cwd)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    if let Some((projection, state)) = isolated {
+        let home = cwd.join("home");
+        fs::create_dir_all(&home)?;
+        command
+            .arg("--projection")
+            .arg(projection)
+            .env("HOME", home)
+            .env("XDG_STATE_HOME", state);
+    }
+    let mut child = command.spawn().context("run yupana rule-test")?;
+    let sent = child
+        .stdin
+        .take()
+        .context("yupana rule-test stdin")?
+        .write_all(cases.to_string().as_bytes());
+    // A rule-test that exits before reading (no projection, say) closes the
+    // pipe; its stderr below is the finding, not the broken pipe.
+    if let Err(error) = sent {
+        if error.kind() != std::io::ErrorKind::BrokenPipe {
+            return Err(error).context("send cases to yupana rule-test");
+        }
+    }
+    let result = child
+        .wait_with_output()
+        .context("wait for yupana rule-test")?;
+    match serde_json::from_slice::<Value>(&result.stdout) {
+        Ok(report) if report.get("summary").is_some() => Ok(report),
+        _ => bail!(
+            "yupana rule-test produced no report ({}): {}",
+            result.status,
+            String::from_utf8_lossy(&result.stderr).trim()
+        ),
+    }
+}
+
+fn require_rule_test_passed(report: &Value, expected: usize) -> Result<()> {
+    let count = |key: &str| {
+        report
+            .pointer(&format!("/summary/{key}"))
+            .and_then(Value::as_u64)
+            .unwrap_or(0)
+    };
+    let (pass, fail, unknown) = (count("pass"), count("fail"), count("unknown"));
+    if pass == expected as u64 && fail == 0 && unknown == 0 {
+        return Ok(());
+    }
+    let mut detail = Vec::new();
+    for result in report
+        .get("results")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+    {
+        let outcome = result.get("outcome").and_then(Value::as_str).unwrap_or("?");
+        if outcome != "pass" {
+            detail.push(format!(
+                "{} expected {} got {}{}",
+                result.get("rule").and_then(Value::as_str).unwrap_or("?"),
+                result.get("expect").and_then(Value::as_str).unwrap_or("?"),
+                outcome,
+                result
+                    .get("reason")
+                    .and_then(Value::as_str)
+                    .map(|reason| format!(" ({reason})"))
+                    .unwrap_or_default()
+            ));
+        }
+    }
+    bail!(
+        "rule-test: {pass} pass, {fail} fail, {unknown} unknown of {expected} case(s); {}",
+        if detail.is_empty() {
+            "no per-case detail".to_owned()
+        } else {
+            detail.join("; ")
+        }
+    )
 }
 
 fn yupana_release_target() -> Result<&'static str> {
@@ -1692,6 +1900,63 @@ fn verify_checksum(archive: &Path, sums: &Path) -> Result<()> {
 #[cfg(test)]
 mod yupana_release_tests {
     use super::*;
+
+    #[test]
+    #[ignore = "runs the installed yupana against the host's projection"]
+    fn live_guard_proof_against_installed_yupana() {
+        let root = tempfile::tempdir().unwrap();
+        verify_yupana_guard_engine(root.path(), &root.path().join("state")).unwrap();
+        verify_yupana_host_projection().unwrap();
+    }
+
+    #[test]
+    fn rule_test_reports_pass_only_when_every_case_passes() {
+        let ok = json!({"summary": {"pass": 2, "fail": 0, "unknown": 0}});
+        require_rule_test_passed(&ok, 2).unwrap();
+        // A guard that blocks nothing: the canary case fails.
+        let blind = json!({
+            "summary": {"pass": 1, "fail": 1, "unknown": 0},
+            "results": [{"rule": YUPANA_CANARY_RULE, "expect": "match", "outcome": "fail"}]
+        });
+        let error = format!("{:#}", require_rule_test_passed(&blind, 2).unwrap_err());
+        assert!(
+            error.contains("tambo_verify_canary expected match got fail"),
+            "{error}"
+        );
+        // A rule missing from the projection is unknown, never a pass.
+        let missing = json!({
+            "summary": {"pass": 0, "fail": 0, "unknown": 1},
+            "results": [{"rule": "r", "expect": "no-match", "outcome": "unknown",
+                         "reason": "rule is not in the projection"}]
+        });
+        let error = format!("{:#}", require_rule_test_passed(&missing, 1).unwrap_err());
+        assert!(error.contains("rule is not in the projection"), "{error}");
+        // Fewer passes than cases sent is not a proof.
+        assert!(require_rule_test_passed(&json!({"summary": {"pass": 1}}), 2).is_err());
+    }
+
+    #[test]
+    fn canary_cases_prove_both_ways_and_clean_cases_cover_every_rule() {
+        let cases = yupana_canary_cases();
+        let expects: Vec<_> = cases
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|case| case["expect"].as_str().unwrap())
+            .collect();
+        assert_eq!(expects, ["match", "no-match"]);
+        let projection = yupana_canary_projection();
+        assert_eq!(projection["text_rules"][0]["tier"], "block");
+        assert_eq!(projection["text_rules"][0]["name"], YUPANA_CANARY_RULE);
+
+        let host = json!({"text_rules": [{"name": "a"}, {"name": "b"}, {"label": "unnamed"}]});
+        let clean = yupana_clean_cases(&host);
+        assert_eq!(clean.len(), 2);
+        assert!(clean
+            .iter()
+            .all(|case| case["expect"] == "no-match" && case["text"] == YUPANA_CLEAN_EDIT));
+        assert!(yupana_clean_cases(&json!({})).is_empty());
+    }
 
     #[test]
     fn published_platforms_resolve_and_missing_platforms_refuse() {
