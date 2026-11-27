@@ -791,6 +791,14 @@ impl Plan {
                 ));
             }
         }
+        // The guard posture belongs to Yupana; a host that does not install
+        // Yupana has no guard for Tambo to converge, so the selected plan must
+        // not carry one into validate() (review finding on tambo#309).
+        if !self.tools.contains(&ToolName::Yupana) && self.yupana_guard.take().is_some() {
+            excluded.push(format!(
+                "yupana_guard: NOT APPLIED on host profile {host}; yupana is excluded there"
+            ));
+        }
         Ok((self, excluded))
     }
 }
@@ -992,6 +1000,44 @@ mod host_profile_tests {
         selected.validate().unwrap();
         let (unchanged, _) = excluding.for_host(None).unwrap();
         assert!(unchanged.tools.contains(&tool));
+    }
+
+    #[test]
+    fn a_selected_plan_without_yupana_never_carries_the_guard() {
+        let mut excluding = plan();
+        assert!(excluding.tools.contains(&ToolName::Yupana));
+        excluding.yupana_guard = Some(YupanaGuard {
+            mode: YupanaMode::Enforce,
+            off_reason: None,
+        });
+        excluding.host_profiles[0].excluded_tools = vec![ExcludedTool {
+            tool: ToolName::Yupana,
+            owner: "its own release lane".into(),
+        }];
+        // Today a built-in cannot be excluded, so the full plan is refused
+        // before any host is selected; review of tambo#309 asked that the
+        // guard never outlive Yupana in a selected plan regardless.
+        let refused = excluding.validate().unwrap_err().to_string();
+        assert!(
+            refused.contains("must be a selected stack member"),
+            "{refused}"
+        );
+        let (selected, lines) = excluding.clone().for_host(Some("mac")).unwrap();
+        assert!(!selected.tools.contains(&ToolName::Yupana));
+        assert!(selected.yupana_guard.is_none());
+        assert!(
+            lines
+                .iter()
+                .any(|l| l.starts_with("yupana_guard: NOT APPLIED")),
+            "{lines:?}"
+        );
+        // Whatever else refuses a plan without a built-in, it is never the
+        // guard: the profile check names the real problem.
+        let refused = selected.validate().unwrap_err().to_string();
+        assert!(!refused.contains("[yupana_guard]"), "{refused}");
+        // Without the host profile the guard stays.
+        let (unchanged, _) = excluding.for_host(None).unwrap();
+        assert!(unchanged.yupana_guard.is_some());
     }
 
     #[test]

@@ -93,11 +93,25 @@ pub fn write_mode(path: &Path, guard: &YupanaGuard) -> Result<()> {
             .set_prefix(format!("{kept}{}", mode_comment(guard)));
     }
 
-    let parent = path.parent().context("bobbin config path has no parent")?;
+    // Replace the file the operator actually keeps: follow a symlinked config
+    // to its target (so the link survives) and keep the original permissions.
+    let target = if path.exists() {
+        fs::canonicalize(path).with_context(|| format!("resolve {}", path.display()))?
+    } else {
+        path.to_path_buf()
+    };
+    let parent = target
+        .parent()
+        .context("bobbin config path has no parent")?;
     fs::create_dir_all(parent).with_context(|| format!("create {}", parent.display()))?;
-    let temp = path.with_extension("toml.tambo-tmp");
+    let temp = target.with_extension("toml.tambo-tmp");
     fs::write(&temp, document.to_string()).with_context(|| format!("write {}", temp.display()))?;
-    fs::rename(&temp, path).with_context(|| format!("atomically replace {}", path.display()))?;
+    if let Ok(original) = fs::metadata(&target) {
+        fs::set_permissions(&temp, original.permissions())
+            .with_context(|| format!("keep the permissions of {}", target.display()))?;
+    }
+    fs::rename(&temp, &target)
+        .with_context(|| format!("atomically replace {}", target.display()))?;
 
     let read_back: toml::Value = toml::from_str(&fs::read_to_string(path)?)
         .with_context(|| format!("re-read {}", path.display()))?;
@@ -384,6 +398,34 @@ mod tests {
         assert!(plan.tools.contains(&ToolName::Yupana));
         plan.yupana_guard = Some(guard(mode, None));
         plan
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn write_mode_keeps_a_symlinked_config_and_its_permissions() {
+        use std::os::unix::fs::{symlink, PermissionsExt};
+        let root = tempfile::tempdir().unwrap();
+        let real = root.path().join("dotfiles/bobbin.toml");
+        fs::create_dir_all(real.parent().unwrap()).unwrap();
+        fs::write(&real, "[yupana.policy]\nmode = \"off\"\n").unwrap();
+        fs::set_permissions(&real, fs::Permissions::from_mode(0o600)).unwrap();
+        let link = root.path().join("bobbin/config.toml");
+        fs::create_dir_all(link.parent().unwrap()).unwrap();
+        symlink(&real, &link).unwrap();
+
+        write_mode(&link, &guard(YupanaMode::Enforce, None)).unwrap();
+
+        assert!(fs::symlink_metadata(&link)
+            .unwrap()
+            .file_type()
+            .is_symlink());
+        assert!(fs::read_to_string(&real)
+            .unwrap()
+            .contains("mode = \"enforce\""));
+        assert_eq!(
+            fs::metadata(&real).unwrap().permissions().mode() & 0o777,
+            0o600
+        );
     }
 
     #[test]
