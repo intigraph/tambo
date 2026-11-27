@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.17.2](https://github.com/intigraph/tambo/compare/v0.17.1...v0.17.2) (2026-11-27)
+
+
+### Bug Fixes
+
+* **brew:** bound each brew step and restore the keg link on a hang (aegis-f0ne) ([d202a71](https://github.com/intigraph/tambo/commit/d202a714752002b07cebf4cc45d6bce63106b056))
+* **brew:** bound each brew step and restore the keg link on a hang (aegis-f0ne) ([d4ffd1c](https://github.com/intigraph/tambo/commit/d4ffd1c0b0547c3d907174ffcff1a0eba1a9ea81))
+* **brew:** keep brew in tambo's group, share one brew budget, relink on success (aegis-f0ne review) ([837fb4f](https://github.com/intigraph/tambo/commit/837fb4fae38d4f23cf16a03f97e068e3511f85da))
+* **brew:** never kill a reused pid as a known brew descendant (aegis-f0ne review) ([0c5d916](https://github.com/intigraph/tambo/commit/0c5d916ff1caca83e0372c9033e67baa10db2976))
+* **brew:** report a spent budget, fail on a failed relink, kill reparented descendants (aegis-f0ne review) ([228eba7](https://github.com/intigraph/tambo/commit/228eba7fd638f634610aa91fabd47fc32e15d3c9))
+* **compat:** count the CABOODLE_BREW test env lines in the legacy-name ledger (aegis-f0ne) ([6be4bf8](https://github.com/intigraph/tambo/commit/6be4bf81528aea1f67fa3a1249e3aa2f42b34508))
+
 ## [0.17.1](https://github.com/intigraph/tambo/compare/v0.17.0...v0.17.1) (2026-11-27)
 
 
