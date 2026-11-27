@@ -159,7 +159,7 @@ Remote stores need their own endpoint and issued credentials.
 After installing Quipu and Camayoc, bring deployment outcomes and change history
 into the same governed memory. Camayoc supports CDEvents on CloudEvents from
 Actions, Ansible, Terraform and native producers; see the
-[delivery emitter catalog](https://github.com/intigraph/camayoc/blob/main/catalog/README.md).
+[delivery emitter catalog](https://github.com/intigraph/camayoc/tree/main/catalog).
 Adapter setup and event coverage are separate from installing the stack.
 Tambo does not enable deployment emitters or prove DORA coverage.
 The four metrics need recorded deployment and change history for the selected
