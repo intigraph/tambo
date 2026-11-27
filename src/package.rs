@@ -313,21 +313,24 @@ pub fn brew_converge(tool: ToolName, upgrade: bool) -> anyhow::Result<()> {
 /// Link the installed keg again if an interrupted brew step left it unlinked.
 /// Returns what it found and did, for the error message.
 fn restore_link(brew: &std::ffi::OsStr, formula: &str) -> String {
-    restore_link_with(brew, formula)
+    match restore_link_with(brew, formula) {
+        Ok(text) | Err(text) => text,
+    }
 }
 
 /// Link `tool`'s installed keg when brew reports it unlinked (aegis-f0ne):
 /// an earlier interrupted step leaves the keg installed but off PATH, and a
-/// later `brew upgrade` preserves that state. Returns what was done.
-#[must_use]
-pub fn brew_relink(tool: ToolName) -> String {
+/// later `brew upgrade` preserves that state. `Ok` says what was done; `Err`
+/// says why the keg is still not linked, so the caller can fail the member
+/// with that text rather than reach an opaque verify error (eph-review-07aef5).
+pub fn brew_relink(tool: ToolName) -> Result<String, String> {
     match (brew_formula(tool), brew_program()) {
         (Some(formula), Some(brew)) => restore_link_with(&brew, formula),
-        _ => "no stack formula or brew".into(),
+        _ => Err("no stack formula or brew".into()),
     }
 }
 
-fn restore_link_with(brew: &std::ffi::OsStr, formula: &str) -> String {
+fn restore_link_with(brew: &std::ffi::OsStr, formula: &str) -> Result<String, String> {
     let full = format!("{STACK_TAP}/{formula}");
     let read = || -> Option<(Option<String>, Option<String>)> {
         let done = crate::brew_bound::run(
@@ -342,13 +345,15 @@ fn restore_link_with(brew: &std::ffi::OsStr, formula: &str) -> String {
         link_state(&done.stdout, formula)
     };
     let Some((installed, linked)) = read() else {
-        return format!("keg link state for {full} is UNKNOWN (brew info unreadable)");
+        return Err(format!(
+            "keg link state for {full} is UNKNOWN (brew info unreadable)"
+        ));
     };
     let Some(installed) = installed else {
-        return format!("no {full} keg is installed");
+        return Err(format!("no {full} keg is installed"));
     };
     if let Some(linked) = linked {
-        return format!("keg {linked} is still linked");
+        return Ok(format!("keg {linked} is still linked"));
     }
     match crate::brew_bound::run(
         brew,
@@ -357,17 +362,21 @@ fn restore_link_with(brew: &std::ffi::OsStr, formula: &str) -> String {
         crate::brew_bound::Bound::Repair,
     ) {
         Ok(Ok(done)) if done.status.success() => match read() {
-            Some((_, Some(linked))) => format!("relinked keg {linked}"),
-            _ => format!("`brew link {full}` ran but keg {installed} is still NOT linked"),
+            Some((_, Some(linked))) => Ok(format!("relinked keg {linked}")),
+            _ => Err(format!(
+                "`brew link {full}` ran but keg {installed} is still NOT linked"
+            )),
         },
-        Ok(Ok(done)) => format!(
+        Ok(Ok(done)) => Err(format!(
             "keg {installed} is NOT linked; `brew link {full}` failed ({})",
             done.status
-        ),
-        Ok(Err(timed_out)) => {
-            format!("keg {installed} is NOT linked; `brew link {full}` {timed_out}")
-        }
-        Err(error) => format!("keg {installed} is NOT linked; `brew link {full}`: {error}"),
+        )),
+        Ok(Err(timed_out)) => Err(format!(
+            "keg {installed} is NOT linked; `brew link {full}` {timed_out}"
+        )),
+        Err(error) => Err(format!(
+            "keg {installed} is NOT linked; `brew link {full}`: {error}"
+        )),
     }
 }
 

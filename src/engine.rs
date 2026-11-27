@@ -616,6 +616,21 @@ fn package_owned_status(name: crate::model::ToolName, desired: &str) -> Option<(
 /// verified version when brew delivered (or already holds) the tool, `None` to
 /// fall back to the other lanes (the release download when the tap is older
 /// than the pin). Never downgrades.
+/// Link an unlinked keg, or fail the member with why it is still unlinked:
+/// verify would otherwise fail opaquely on the missing command.
+fn relink_or_fail(
+    name: crate::model::ToolName,
+    relink: fn(crate::model::ToolName) -> std::result::Result<String, String>,
+) -> Result<()> {
+    match relink(name) {
+        Ok(done) => {
+            println!("{}: keg was not linked; {done}", name.as_str());
+            Ok(())
+        }
+        Err(why) => anyhow::bail!("{} brew keg is not linked: {why}", name.as_str()),
+    }
+}
+
 fn brew_update(
     name: crate::model::ToolName,
     adapter: &dyn crate::adapter::Adapter,
@@ -669,11 +684,7 @@ fn brew_update(
                 );
                 if channel.unlinked {
                     // aegis-f0ne: an interrupted brew step left the keg off PATH.
-                    println!(
-                        "{}: keg was not linked; {}",
-                        name.as_str(),
-                        brew_relink(name)
-                    );
+                    relink_or_fail(name, brew_relink)?;
                 }
                 return brew_version(adapter, &installed).map(Some);
             }
@@ -703,11 +714,7 @@ fn brew_update(
     if after.unlinked {
         // aegis-f0ne: `brew upgrade` keeps an unlinked keg unlinked, so a
         // successful delivery can still leave the tool off PATH.
-        println!(
-            "{}: keg was not linked; {}",
-            name.as_str(),
-            brew_relink(name)
-        );
+        relink_or_fail(name, brew_relink)?;
     }
     let receipt = after.installed.context("brew receipt after delivery")?;
     if !matches!(

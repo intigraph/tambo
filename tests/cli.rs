@@ -4246,6 +4246,94 @@ exit 2"#;
 }
 
 #[test]
+fn spent_brew_budget_caps_a_step_and_still_relinks() {
+    // eph-review-07aef5: all ordinary brew steps share one budget, and the
+    // link repair runs outside it. A 5s budget must cap a hung upgrade even
+    // though the per-step bound is 120s, and the keg must still be linked.
+    let brew_body = r#"echo "$*" >> "$HOME/brew.log"
+linked() { if [ -f "$HOME/linked" ]; then printf '"0.31.0"'; else printf null; fi; }
+case "$*" in
+ "update --quiet") exit 0;;
+ "info --json=v2 scbrown/tap/bobbin")
+   printf '{"formulae":[{"full_name":"scbrown/tap/bobbin","tap":"scbrown/tap","pinned":false,"linked_keg":%s,"versions":{"stable":"0.32.0"},"installed":[{"version":"0.31.0"}]}]}' "$(linked)"; exit 0;;
+ "upgrade scbrown/tap/bobbin") rm -f "$HOME/linked"; exec sleep 300;;
+ "link scbrown/tap/bobbin") touch "$HOME/linked"; exit 0;;
+ info*) printf '{"formulae":[]}'; exit 0;;
+esac
+exit 2"#;
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    command(root.path(), &bin)
+        .args(["plan", "--profile", "retrieval"])
+        .assert()
+        .success();
+    fs::write(root.path().join("linked"), "").unwrap();
+    fake_tool(root.path(), "brew", brew_body);
+    let started = std::time::Instant::now();
+    let output = command(root.path(), &bin)
+        .env("CABOODLE_BREW", root.path().join("brew"))
+        .env("TAMBO_BREW_STEP_TIMEOUT_SECS", "120")
+        .env("TAMBO_BREW_BUDGET_SECS", "5")
+        .arg("update")
+        .output()
+        .unwrap();
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "{stderr}");
+    // Far under the 120s step bound: the budget, not the step, ended it.
+    assert!(
+        started.elapsed() < std::time::Duration::from_secs(60),
+        "{stderr}"
+    );
+    let first = stderr
+        .lines()
+        .find(|line| line.starts_with("Error: "))
+        .unwrap_or_default();
+    assert!(
+        first.starts_with("Error: bobbin brew delivery timed out after "),
+        "{stderr}"
+    );
+    assert!(first.contains("relinked keg 0.31.0"), "{stderr}");
+    assert!(root.path().join("linked").exists(), "keg left unlinked");
+}
+
+#[test]
+fn current_unlinked_keg_that_will_not_link_fails_the_member_by_name() {
+    // eph-review-07aef5: a relink that fails must fail the member with its
+    // reason, not continue to an opaque `bobbin init` ENOENT in verify.
+    let brew_body = r#"echo "$*" >> "$HOME/brew.log"
+case "$*" in
+ "update --quiet") exit 0;;
+ "info --json=v2 scbrown/tap/bobbin")
+   printf '{"formulae":[{"full_name":"scbrown/tap/bobbin","tap":"scbrown/tap","pinned":false,"linked_keg":null,"versions":{"stable":"0.32.0"},"installed":[{"version":"0.32.0"}]}]}'; exit 0;;
+ "link scbrown/tap/bobbin") echo "Error: Could not symlink bin/bobbin" >&2; exit 1;;
+ info*) printf '{"formulae":[]}'; exit 0;;
+esac
+exit 2"#;
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    command(root.path(), &bin)
+        .args(["plan", "--profile", "retrieval"])
+        .assert()
+        .success();
+    fake_tool(root.path(), "brew", brew_body);
+    let output = command(root.path(), &bin)
+        .env("CABOODLE_BREW", root.path().join("brew"))
+        .arg("update")
+        .output()
+        .unwrap();
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "{stderr}");
+    assert!(
+        stderr.contains("Error: bobbin brew keg is not linked: keg 0.32.0 is NOT linked; `brew link scbrown/tap/bobbin` failed"),
+        "{stderr}"
+    );
+}
+
+#[test]
 fn brew_stable_refresh_preserves_pins_and_refuses_failed_delivery() {
     let brew_body = r#"echo "$*" >> "$HOME/brew.log"
 case "$*" in
