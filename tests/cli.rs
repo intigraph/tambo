@@ -4125,6 +4125,75 @@ esac
 }
 
 #[test]
+fn hung_brew_upgrade_is_killed_relinked_and_named() {
+    // aegis-f0ne: on the Mac, `brew upgrade` unlinks the old keg and then hangs
+    // in an `mdfind` that runs in its own process group. Tambo must bound the
+    // step, kill that grandchild too, link the previous keg again and name the
+    // member in a line the Mac consumer can parse.
+    let brew_body = r#"echo "$*" >> "$HOME/brew.log"
+linked() { if [ -f "$HOME/linked" ]; then printf '"0.31.0"'; else printf null; fi; }
+case "$*" in
+ "update --quiet") exit 0;;
+ "info --json=v2 scbrown/tap/bobbin")
+   printf '{"formulae":[{"full_name":"scbrown/tap/bobbin","tap":"scbrown/tap","pinned":false,"linked_keg":%s,"versions":{"stable":"0.32.0"},"installed":[{"version":"0.31.0"}]}]}' "$(linked)"; exit 0;;
+ "upgrade scbrown/tap/bobbin")
+   rm -f "$HOME/linked"
+   perl -e 'setpgrp(0,0); exec "sleep", "300"' &
+   echo $! > "$HOME/mdfind.pid"
+   wait; exit 0;;
+ "link scbrown/tap/bobbin") touch "$HOME/linked"; exit 0;;
+ info*) printf '{"formulae":[]}'; exit 0;;
+esac
+exit 2"#;
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    command(root.path(), &bin)
+        .args(["plan", "--profile", "retrieval"])
+        .assert()
+        .success();
+    fs::write(root.path().join("linked"), "").unwrap();
+    fake_tool(root.path(), "brew", brew_body);
+    let started = std::time::Instant::now();
+    let output = command(root.path(), &bin)
+        .env("CABOODLE_BREW", root.path().join("brew"))
+        .env("TAMBO_BREW_STEP_TIMEOUT_SECS", "2")
+        .arg("update")
+        .output()
+        .unwrap();
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "{stderr}");
+    assert!(started.elapsed() < std::time::Duration::from_secs(60));
+    let first = stderr
+        .lines()
+        .find(|line| line.starts_with("Error: "))
+        .unwrap_or_default();
+    assert!(
+        first.starts_with("Error: bobbin brew delivery timed out after 2s (killed "),
+        "{stderr}"
+    );
+    assert!(
+        first.contains("relinked the previous keg 0.31.0"),
+        "{stderr}"
+    );
+    assert!(root.path().join("linked").exists(), "keg left unlinked");
+    let log = fs::read_to_string(root.path().join("brew.log")).unwrap();
+    assert!(log.contains("link scbrown/tap/bobbin"), "{log}");
+    let orphan: i32 = fs::read_to_string(root.path().join("mdfind.pid"))
+        .unwrap()
+        .trim()
+        .parse()
+        .unwrap();
+    let alive = std::process::Command::new("kill")
+        .args(["-0", &orphan.to_string()])
+        .status()
+        .unwrap()
+        .success();
+    assert!(!alive, "the own-group grandchild survived");
+}
+
+#[test]
 fn brew_stable_refresh_preserves_pins_and_refuses_failed_delivery() {
     let brew_body = r#"echo "$*" >> "$HOME/brew.log"
 case "$*" in

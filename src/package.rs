@@ -236,11 +236,16 @@ fn channel_from_json(bytes: &[u8], formula: &str) -> anyhow::Result<Option<BrewC
 /// unreadable/stale channel must not be silently reported as converged.
 pub fn brew_refresh() -> anyhow::Result<()> {
     let brew = brew_program().ok_or_else(|| anyhow::anyhow!("brew is not available"))?;
-    let status = Command::new(brew).args(["update", "--quiet"]).status()?;
-    if !status.success() {
-        anyhow::bail!("brew update failed ({status})");
+    match crate::brew_bound::run(
+        &brew,
+        ["update", "--quiet"],
+        crate::brew_bound::Output::Inherit,
+        crate::brew_bound::step_timeout(),
+    )? {
+        Ok(done) if done.status.success() => Ok(()),
+        Ok(done) => anyhow::bail!("brew update failed ({})", done.status),
+        Err(timed_out) => anyhow::bail!("brew update {timed_out}"),
     }
-    Ok(())
 }
 
 pub fn brew_channel(tool: ToolName) -> anyhow::Result<Option<BrewChannel>> {
@@ -248,10 +253,15 @@ pub fn brew_channel(tool: ToolName) -> anyhow::Result<Option<BrewChannel>> {
         return Ok(None);
     };
     let brew = brew_program().ok_or_else(|| anyhow::anyhow!("brew is not available"))?;
-    let out = Command::new(brew)
-        .args(["info", "--json=v2", &format!("{STACK_TAP}/{formula}")])
-        .env("HOMEBREW_NO_AUTO_UPDATE", "1")
-        .output()?;
+    let out = match crate::brew_bound::run(
+        &brew,
+        ["info", "--json=v2", &format!("{STACK_TAP}/{formula}")],
+        crate::brew_bound::Output::Capture,
+        crate::brew_bound::step_timeout(),
+    )? {
+        Ok(done) => done,
+        Err(timed_out) => anyhow::bail!("brew channel read for {formula} {timed_out}"),
+    };
     if !out.status.success() {
         anyhow::bail!("brew channel read failed for {formula} ({})", out.status);
     }
@@ -260,18 +270,103 @@ pub fn brew_channel(tool: ToolName) -> anyhow::Result<Option<BrewChannel>> {
 
 /// Install or upgrade a member from the stack tap. Brew runs as the user (no
 /// root), so Tambo drives it directly (aegis-6f1 ruling).
+///
+/// The step is bounded (aegis-f0ne). When it fails or times out, the keg brew
+/// had already unlinked is linked again, so the previous version stays on PATH,
+/// and the error names the member. Its first line is
+/// `<tool> brew delivery timed out after <N>s ...`, which the Mac consumer
+/// reports as a member timeout.
 pub fn brew_converge(tool: ToolName, upgrade: bool) -> anyhow::Result<()> {
     let formula = brew_formula(tool).ok_or_else(|| anyhow::anyhow!("no stack formula"))?;
     let brew = brew_program().ok_or_else(|| anyhow::anyhow!("brew is not available"))?;
     let verb = if upgrade { "upgrade" } else { "install" };
-    let status = Command::new(&brew)
-        .args([verb, &format!("{STACK_TAP}/{formula}")])
-        .env("HOMEBREW_NO_AUTO_UPDATE", "1")
-        .status()?;
-    if !status.success() {
-        anyhow::bail!("brew {verb} {STACK_TAP}/{formula} failed ({status})");
+    let full = format!("{STACK_TAP}/{formula}");
+    match crate::brew_bound::run(
+        &brew,
+        [verb, full.as_str()],
+        crate::brew_bound::Output::Inherit,
+        crate::brew_bound::step_timeout(),
+    )? {
+        Ok(done) if done.status.success() => Ok(()),
+        Ok(done) => {
+            let link = restore_link(&brew, formula);
+            anyhow::bail!("brew {verb} {full} failed ({}); {link}", done.status)
+        }
+        Err(timed_out) => {
+            let link = restore_link(&brew, formula);
+            anyhow::bail!(
+                "{} brew delivery {timed_out} during `brew {verb} {full}`; {link}",
+                tool.as_str()
+            )
+        }
     }
-    Ok(())
+}
+
+/// Link the installed keg again if an interrupted brew step left it unlinked.
+/// Returns what it found and did, for the error message.
+fn restore_link(brew: &std::ffi::OsStr, formula: &str) -> String {
+    let full = format!("{STACK_TAP}/{formula}");
+    let timeout = crate::brew_bound::step_timeout();
+    let read = || -> Option<(Option<String>, Option<String>)> {
+        let done = crate::brew_bound::run(
+            brew,
+            ["info", "--json=v2", full.as_str()],
+            crate::brew_bound::Output::Capture,
+            timeout,
+        )
+        .ok()?
+        .ok()?;
+        done.status.success().then_some(())?;
+        link_state(&done.stdout, formula)
+    };
+    let Some((installed, linked)) = read() else {
+        return format!("keg link state for {full} is UNKNOWN (brew info unreadable)");
+    };
+    let Some(installed) = installed else {
+        return format!("no {full} keg is installed");
+    };
+    if let Some(linked) = linked {
+        return format!("keg {linked} is still linked");
+    }
+    match crate::brew_bound::run(
+        brew,
+        ["link", full.as_str()],
+        crate::brew_bound::Output::Inherit,
+        timeout,
+    ) {
+        Ok(Ok(done)) if done.status.success() => match read() {
+            Some((_, Some(linked))) => format!("relinked the previous keg {linked}"),
+            _ => format!("`brew link {full}` ran but keg {installed} is still NOT linked"),
+        },
+        Ok(Ok(done)) => format!(
+            "keg {installed} is NOT linked; `brew link {full}` failed ({})",
+            done.status
+        ),
+        Ok(Err(timed_out)) => {
+            format!("keg {installed} is NOT linked; `brew link {full}` {timed_out}")
+        }
+        Err(error) => format!("keg {installed} is NOT linked; `brew link {full}`: {error}"),
+    }
+}
+
+/// The installed and linked versions of exactly `<STACK_TAP>/<formula>`.
+fn link_state(json: &[u8], formula: &str) -> Option<(Option<String>, Option<String>)> {
+    let info: serde_json::Value = serde_json::from_slice(json).ok()?;
+    let wanted = format!("{STACK_TAP}/{formula}");
+    let entry = info.get("formulae")?.as_array()?.iter().find(|entry| {
+        entry.get("full_name").and_then(serde_json::Value::as_str) == Some(wanted.as_str())
+    })?;
+    let installed = entry
+        .get("installed")?
+        .as_array()?
+        .first()
+        .and_then(|receipt| receipt.get("version")?.as_str())
+        .map(str::to_owned);
+    let linked = entry
+        .get("linked_keg")
+        .and_then(serde_json::Value::as_str)
+        .map(str::to_owned);
+    Some((installed, linked))
 }
 
 /// How a package-owned tool stands against its reviewed pin.
