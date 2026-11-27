@@ -186,7 +186,7 @@ where
     let mut child = command.spawn()?;
     // Descendants seen while the step runs, with their groups, so a process
     // whose parent exits before a timeout is still found (eph-review-07aef5).
-    let mut known: Vec<(u32, u32)> = Vec::new();
+    let mut known: Vec<Known> = Vec::new();
     let mut polls: u32 = 0;
     loop {
         if let Some(status) = child.try_wait()? {
@@ -214,17 +214,54 @@ where
     }
 }
 
-/// Add `root`'s current descendants, with their process groups, to `known`.
-fn remember_descendants(root: u32, table: &[Row], known: &mut Vec<(u32, u32)>) {
+/// One process seen as a descendant of a brew step. Pid, group AND start
+/// time identify it, so a pid the kernel reuses for an unrelated process
+/// never matches (eph-review-fc24ee).
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct Known {
+    pid: u32,
+    pgid: u32,
+    start: String,
+}
+
+impl Known {
+    fn of(row: &Row) -> Self {
+        Self {
+            pid: row.pid,
+            pgid: row.pgid,
+            start: row.start.clone(),
+        }
+    }
+
+    fn is(&self, row: &Row) -> bool {
+        self.pid == row.pid && self.pgid == row.pgid && self.start == row.start
+    }
+}
+
+/// Prune exited entries from `known`, then add `root`'s current descendants.
+/// An entry stays only while the same process (pid, group and start time)
+/// is still in the table.
+fn remember_descendants(root: u32, table: &[Row], known: &mut Vec<Known>) {
+    known.retain(|entry| table.iter().any(|row| entry.is(row)));
     let mut frontier = children_of(table, root);
     while let Some(pid) = frontier.pop() {
         if let Some(row) = table.iter().find(|row| row.pid == pid) {
-            if !known.contains(&(row.pid, row.pgid)) {
-                known.push((row.pid, row.pgid));
+            if !known.iter().any(|entry| entry.is(row)) {
+                known.push(Known::of(row));
             }
         }
         frontier.extend(children_of(table, pid));
     }
+}
+
+/// Earlier descendants that are now reparented to init: the very process
+/// seen before (pid, group and start time all still equal), parent 1.
+fn reparented(table: &[Row], known: &[Known]) -> Vec<u32> {
+    table
+        .iter()
+        .filter(|row| row.ppid == 1 && known.iter().any(|entry| entry.is(row)))
+        .map(|row| row.pid)
+        .collect()
 }
 
 /// SIGKILL `root` and every descendant, in any process group. Never signals
@@ -233,10 +270,11 @@ fn remember_descendants(root: u32, table: &[Row], known: &mut Vec<(u32, u32)>) {
 ///
 /// A descendant whose parent already exited has been reparented to init and
 /// is no longer anyone's child (eph-review-07aef5). Two rules still find it:
-/// it was seen as a descendant earlier (`known`, matched on pid AND group so
-/// a reused pid is not killed) and now has parent 1, or it shares the
+/// it was seen as a descendant earlier (`known`, matched on pid, group and
+/// start time at kill time, so a reused pid is not killed) and now has
+/// parent 1, or it shares the
 /// process group of a live descendant, other than Tambo's own group.
-fn kill_tree(root: u32, known: &[(u32, u32)]) -> usize {
+fn kill_tree(root: u32, known: &[Known]) -> usize {
     // SAFETY: getpgrp only reads this process's group id.
     let ours = u32::try_from(unsafe { libc::getpgrp() }).unwrap_or(0);
     // Freeze the tree first so nothing forks a new child between the listing
@@ -255,14 +293,9 @@ fn kill_tree(root: u32, known: &[(u32, u32)]) -> usize {
         }
         // Earlier descendants, now reparented to init.
         frontier.extend(
-            table
-                .iter()
-                .filter(|row| {
-                    row.ppid == 1
-                        && known.contains(&(row.pid, row.pgid))
-                        && !seen.contains(&row.pid)
-                })
-                .map(|row| row.pid),
+            reparented(&table, known)
+                .into_iter()
+                .filter(|pid| !seen.contains(pid)),
         );
         // Processes in a descendant's own group that are not yet seen.
         let groups: Vec<u32> = table
@@ -299,13 +332,15 @@ struct Row {
     pid: u32,
     ppid: u32,
     pgid: u32,
+    /// `ps` lstart, e.g. `Fri Nov 27 17:05:53 2026`.
+    start: String,
 }
 
 /// Every process with its parent and group, from `ps` (portable across macOS
 /// and Linux; `/proc` is absent on the Mac).
 fn process_table() -> Vec<Row> {
     let Ok(out) = Command::new("/bin/ps")
-        .args(["-A", "-o", "pid=,ppid=,pgid="])
+        .args(["-A", "-o", "pid=,ppid=,pgid=,lstart="])
         .output()
     else {
         return Vec::new();
@@ -318,10 +353,15 @@ fn parse_table(listing: &str) -> Vec<Row> {
         .lines()
         .filter_map(|line| {
             let mut fields = line.split_whitespace();
-            Some(Row {
-                pid: fields.next()?.parse().ok()?,
-                ppid: fields.next()?.parse().ok()?,
-                pgid: fields.next()?.parse().ok()?,
+            let pid = fields.next()?.parse().ok()?;
+            let ppid = fields.next()?.parse().ok()?;
+            let pgid = fields.next()?.parse().ok()?;
+            let start = fields.collect::<Vec<_>>().join(" ");
+            (!start.is_empty()).then_some(Row {
+                pid,
+                ppid,
+                pgid,
+                start,
             })
         })
         .collect()
@@ -341,12 +381,43 @@ mod tests {
 
     #[test]
     fn children_are_read_from_a_ps_listing() {
-        let listing =
-            "  1     0  1\n 10     1 10\n 11    10 10\n 12    10 12\n garbage\n 13 10 10\n";
+        let t = "Fri Nov 27 17:05:53 2026";
+        let listing = format!(
+            "  1     0  1 {t}\n 10     1 10 {t}\n 11    10 10 {t}\n 12    10 12 {t}\n garbage\n 13 10 10 {t}\n 14 10 10\n"
+        );
+        let listing = listing.as_str();
         let table = parse_table(listing);
         assert_eq!(children_of(&table, 10), vec![11, 12, 13]);
         assert!(children_of(&table, 99).is_empty());
         assert_eq!(table.iter().find(|r| r.pid == 12).unwrap().pgid, 12);
+        assert_eq!(table.iter().find(|r| r.pid == 12).unwrap().start, t);
+        // A row without a start time is not trusted.
+        assert!(table.iter().all(|r| r.pid != 14));
+    }
+
+    #[test]
+    fn a_reused_pid_is_never_killed_as_a_known_descendant() {
+        // eph-review-fc24ee: pid 50 was brew's descendant in group 50 and
+        // exited; the kernel reused 50 for an unrelated process that happens
+        // to have parent 1 and group 50. Only the start time tells them apart.
+        let row = |pid, ppid, pgid, start: &str| Row {
+            pid,
+            ppid,
+            pgid,
+            start: start.into(),
+        };
+        let seen_then = row(50, 40, 50, "Fri Nov 27 17:00:00 2026");
+        let mut known = Vec::new();
+        remember_descendants(40, &[row(40, 9, 9, "x"), seen_then], &mut known);
+        assert_eq!(known.len(), 1);
+        let reused = [row(50, 1, 50, "Fri Nov 27 17:04:00 2026")];
+        assert!(reparented(&reused, &known).is_empty());
+        // The very process, reparented, is still found.
+        let same = [row(50, 1, 50, "Fri Nov 27 17:00:00 2026")];
+        assert_eq!(reparented(&same, &known), vec![50]);
+        // A sample without it prunes it, so a later reuse cannot match.
+        remember_descendants(40, &reused, &mut known);
+        assert!(known.is_empty());
     }
 
     #[test]
