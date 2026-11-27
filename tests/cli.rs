@@ -409,7 +409,7 @@ esac
     fs::create_dir_all(camayoc.join("ontology")).unwrap();
     fs::write(
         camayoc.join("REVISION"),
-        "724b0a8dc191167da968285c677a8868a44e16a3\n",
+        "78e59e036605b974f958781e611fdacfef47964f\n",
     )
     .unwrap();
     // Behaves like the real bootstrap when nothing answers: starts a server process
@@ -4323,7 +4323,7 @@ exit 2
         fs::create_dir_all(root.path().join("camayoc")).unwrap();
         fs::write(
             root.path().join("camayoc/REVISION"),
-            "724b0a8dc191167da968285c677a8868a44e16a3",
+            "78e59e036605b974f958781e611fdacfef47964f",
         )
         .unwrap();
         let mut cmd = command(root.path(), &bin);
@@ -4403,7 +4403,7 @@ exit 2
     fs::create_dir_all(root.path().join("camayoc")).unwrap();
     fs::write(
         root.path().join("camayoc/REVISION"),
-        "724b0a8dc191167da968285c677a8868a44e16a3",
+        "78e59e036605b974f958781e611fdacfef47964f",
     )
     .unwrap();
     assert!(!bin.join("quipu").exists());
@@ -4529,7 +4529,7 @@ exit 2
         fs::create_dir_all(root.path().join("camayoc")).unwrap();
         fs::write(
             root.path().join("camayoc/REVISION"),
-            "724b0a8dc191167da968285c677a8868a44e16a3",
+            "78e59e036605b974f958781e611fdacfef47964f",
         )
         .unwrap();
         let mut cmd = command(root.path(), &bin);

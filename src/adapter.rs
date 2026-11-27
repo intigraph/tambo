@@ -1365,10 +1365,13 @@ fn ensure_bobbin_link(link: &Path, target: &Path) -> Result<()> {
     Ok(())
 }
 
-// Official v0.1.6 source release; keep revision, release asset and digest paired.
-const CAMAYOC_REVISION: &str = "724b0a8dc191167da968285c677a8868a44e16a3";
+// Official v0.1.11 source release; keep version, revision, release asset and
+// digest paired. Digest is the release's SHA256SUMS line, re-derived by hashing
+// the downloaded asset (aegis-mecge2.12).
+pub(crate) const CAMAYOC_VERSION: &str = "0.1.11";
+const CAMAYOC_REVISION: &str = "78e59e036605b974f958781e611fdacfef47964f";
 const CAMAYOC_ARCHIVE_SHA256: &str =
-    "59128dc3e23a5631caad18066e4b1610983d00c7733498198b69f5c2be484909";
+    "51309e02f6b0563a18e7e297bed711a2bd962681d46d2eb33cedbc46f0b03571";
 
 pub(crate) fn camayoc_root() -> Result<PathBuf> {
     if let Some(path) = env::var_os("CABOODLE_CAMAYOC_ROOT") {
@@ -1388,7 +1391,9 @@ fn install_camayoc_bundle() -> Result<()> {
     let download = tempfile::tempdir().context("create Camayoc download directory")?;
     let archive = download.path().join("camayoc.tar.gz");
     download_https(
-        "https://github.com/intigraph/camayoc/releases/download/v0.1.6/camayoc-v0.1.6.tar.gz",
+        &format!(
+            "https://github.com/intigraph/camayoc/releases/download/v{CAMAYOC_VERSION}/camayoc-v{CAMAYOC_VERSION}.tar.gz"
+        ),
         &archive,
     )?;
     if crate::embedding::sha256_file(&archive)? != CAMAYOC_ARCHIVE_SHA256 {
@@ -1410,6 +1415,53 @@ fn install_camayoc_bundle() -> Result<()> {
     fs::write(root.join("REVISION"), format!("{CAMAYOC_REVISION}\n"))
         .context("write installed Camayoc revision")?;
     Ok(())
+}
+
+/// The `camayoc` CLI a shell runs, held against the reviewed bundle (aegis-mecge2.12).
+///
+/// Tambo installs the Camayoc SOURCE BUNDLE and reads its version from the
+/// bundle's own `REVISION` file. The `camayoc`/`cy` CLI is installed by other
+/// means (`uv tool install`), so nothing compared it with the pin: on the Mac
+/// `~/.local/bin/camayoc` answered 0.1.4 while `tambo update` printed
+/// "camayoc: current" and the consumer recorded members-converged. A CLI on
+/// PATH that reports any other release, or cannot say, is NOT converged.
+///
+/// `Ok(None)`: no `camayoc` on PATH. `Ok(Some(path))`: PATH runs the reviewed
+/// release.
+pub fn camayoc_cli_check(path: Option<&OsStr>) -> Result<Option<PathBuf>> {
+    let Some(runs) = which_all("camayoc", path).into_iter().next() else {
+        return Ok(None);
+    };
+    let reported = runs
+        .to_str()
+        .context("camayoc CLI path is not UTF-8")
+        .and_then(read_version);
+    let reported = match reported {
+        Ok(reported) => reported,
+        Err(error) => bail!(
+            "camayoc NOT converged: PATH runs {} but its version is unreadable ({error:#}); \
+             the reviewed Camayoc release is v{CAMAYOC_VERSION}",
+            runs.display()
+        ),
+    };
+    let version = reported
+        .lines()
+        .next()
+        .unwrap_or_default()
+        .trim()
+        .strip_prefix("camayoc ")
+        .map(|v| v.trim().trim_start_matches('v'));
+    if version == Some(CAMAYOC_VERSION) {
+        return Ok(Some(runs));
+    }
+    bail!(
+        "camayoc NOT converged: PATH runs {} which reports `{}`, but the reviewed Camayoc \
+         release is v{CAMAYOC_VERSION}. Tambo installs the Camayoc bundle, not this CLI; \
+         upgrade it (`uv tool install --force git+https://github.com/intigraph/camayoc@v{CAMAYOC_VERSION}`) \
+         or remove the stale copy",
+        runs.display(),
+        reported.trim()
+    )
 }
 
 fn verify_camayoc_first_ingest(root: &Path, server: &str, auth: &Path) -> Result<()> {
@@ -1895,6 +1947,60 @@ mod flavor_tests {
 mod tests {
     use super::ensure_bobbin_link;
     use std::{fs, os::unix::fs::symlink};
+
+    fn fake_camayoc(dir: &std::path::Path, script: &str) {
+        use std::os::unix::fs::PermissionsExt;
+        let program = dir.join("camayoc");
+        fs::write(&program, script).unwrap();
+        fs::set_permissions(&program, fs::Permissions::from_mode(0o755)).unwrap();
+    }
+
+    // aegis-mecge2.12: the Mac's ~/.local/bin/camayoc answered 0.1.4 while the
+    // bundle REVISION matched, and Tambo called that converged.
+    #[test]
+    fn stale_camayoc_cli_on_path_is_not_converged() {
+        let dir = tempfile::tempdir().unwrap();
+        fake_camayoc(dir.path(), "#!/bin/sh\necho 'camayoc 0.1.4'\n");
+        let error = super::camayoc_cli_check(Some(dir.path().as_os_str()))
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("camayoc NOT converged"), "{error}");
+        assert!(error.contains("camayoc 0.1.4"), "{error}");
+        assert!(
+            error.contains(&format!("v{}", super::CAMAYOC_VERSION)),
+            "{error}"
+        );
+    }
+
+    #[test]
+    fn reviewed_camayoc_cli_on_path_is_converged() {
+        let dir = tempfile::tempdir().unwrap();
+        fake_camayoc(
+            dir.path(),
+            &format!("#!/bin/sh\necho 'camayoc {}'\n", super::CAMAYOC_VERSION),
+        );
+        let runs = super::camayoc_cli_check(Some(dir.path().as_os_str())).unwrap();
+        assert_eq!(runs, Some(dir.path().join("camayoc")));
+    }
+
+    #[test]
+    fn unreadable_camayoc_cli_version_is_not_converged() {
+        let dir = tempfile::tempdir().unwrap();
+        fake_camayoc(dir.path(), "#!/bin/sh\nexit 3\n");
+        let error = super::camayoc_cli_check(Some(dir.path().as_os_str()))
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("version is unreadable"), "{error}");
+    }
+
+    #[test]
+    fn absent_camayoc_cli_is_only_a_note() {
+        let dir = tempfile::tempdir().unwrap();
+        assert_eq!(
+            super::camayoc_cli_check(Some(dir.path().as_os_str())).unwrap(),
+            None
+        );
+    }
 
     #[test]
     fn failed_commands_preserve_both_diagnostic_streams_and_status() {
