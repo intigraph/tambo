@@ -30,8 +30,9 @@ struct ImportResult {
 /// The bundle's `REVISION` says nothing about the `camayoc` CLI a shell runs,
 /// so a stale CLI is reported as NOT converged (aegis-mecge2.12).
 fn check_camayoc_cli(path: Option<&std::ffi::OsStr>) -> Result<()> {
-    if crate::adapter::camayoc_cli_check(path)?.is_none() {
-        println!("camayoc: note: the `camayoc` CLI is not on PATH");
+    let home = std::env::var_os("HOME").map(std::path::PathBuf::from);
+    if crate::adapter::camayoc_cli_check(path, home.as_deref())?.is_empty() {
+        println!("camayoc: note: no `camayoc` CLI on PATH or in ~/.local/bin");
     }
     Ok(())
 }
@@ -802,6 +803,9 @@ pub fn update(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
     {
         crate::package::brew_refresh()?;
     }
+    // A stale `camayoc` CLI must fail update, but not skip later members or
+    // drop the state of a bundle that did install; it fails at the end.
+    let mut camayoc_cli: Option<anyhow::Error> = None;
     for &name in &plan.tools {
         let adapter = adapter_for_plan(name, plan)?;
         if name == crate::model::ToolName::Quipu && plan.external_quipu {
@@ -837,7 +841,7 @@ pub fn update(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
                 crate::adapter::ensure_existing_quipu_alias()?;
             }
             if name == crate::model::ToolName::Camayoc {
-                check_camayoc_cli(std::env::var_os("PATH").as_deref())?;
+                camayoc_cli = check_camayoc_cli(std::env::var_os("PATH").as_deref()).err();
             }
             println!("{}: current", name.as_str());
             continue;
@@ -868,7 +872,7 @@ pub fn update(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
             .verify()
             .with_context(|| format!("{} verification after update", name.as_str()))?;
         if name == crate::model::ToolName::Camayoc {
-            check_camayoc_cli(std::env::var_os("PATH").as_deref())?;
+            camayoc_cli = check_camayoc_cli(std::env::var_os("PATH").as_deref()).err();
         }
         state.tools.insert(
             name.as_str().to_owned(),
@@ -894,6 +898,9 @@ pub fn update(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
                 emission::queue_transition(state_path, name, "updated", &runtime.version)?;
             }
         }
+    }
+    if let Some(error) = camayoc_cli {
+        return Err(error);
     }
     Ok(state)
 }

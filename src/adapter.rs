@@ -1417,51 +1417,68 @@ fn install_camayoc_bundle() -> Result<()> {
     Ok(())
 }
 
-/// The `camayoc` CLI a shell runs, held against the reviewed bundle (aegis-mecge2.12).
+/// The `camayoc` CLIs a shell runs, held against the reviewed bundle (aegis-mecge2.12).
 ///
 /// Tambo installs the Camayoc SOURCE BUNDLE and reads its version from the
 /// bundle's own `REVISION` file. The `camayoc`/`cy` CLI is installed by other
 /// means (`uv tool install`), so nothing compared it with the pin: on the Mac
 /// `~/.local/bin/camayoc` answered 0.1.4 while `tambo update` printed
-/// "camayoc: current" and the consumer recorded members-converged. A CLI on
-/// PATH that reports any other release, or cannot say, is NOT converged.
+/// "camayoc: current" and the consumer recorded members-converged.
 ///
-/// `Ok(None)`: no `camayoc` on PATH. `Ok(Some(path))`: PATH runs the reviewed
-/// release.
-pub fn camayoc_cli_check(path: Option<&OsStr>) -> Result<Option<PathBuf>> {
-    let Some(runs) = which_all("camayoc", path).into_iter().next() else {
-        return Ok(None);
-    };
-    let reported = runs
-        .to_str()
-        .context("camayoc CLI path is not UTF-8")
-        .and_then(read_version);
-    let reported = match reported {
-        Ok(reported) => reported,
-        Err(error) => bail!(
-            "camayoc NOT converged: PATH runs {} but its version is unreadable ({error:#}); \
-             the reviewed Camayoc release is v{CAMAYOC_VERSION}",
-            runs.display()
-        ),
-    };
-    let version = reported
+/// Probed: the first `camayoc` on `path`, and `<home>/.local/bin/camayoc`
+/// (uv's tool bin) even when `path` omits it, because a launchd job's PATH
+/// usually does and a stale copy there is still what a login shell runs. Each
+/// probe must report `camayoc <CAMAYOC_VERSION>` (the CLI's real `--version`
+/// line); any other release, or no readable version, is NOT converged.
+///
+/// Returns the probed paths; empty means no `camayoc` CLI was found at all.
+pub fn camayoc_cli_check(path: Option<&OsStr>, home: Option<&Path>) -> Result<Vec<PathBuf>> {
+    let mut probes: Vec<PathBuf> = which_all("camayoc", path).into_iter().take(1).collect();
+    if let Some(uv_bin) = home.map(|home| home.join(".local/bin/camayoc")) {
+        let same = |seen: &PathBuf| {
+            seen.canonicalize()
+                .ok()
+                .is_some_and(|seen| uv_bin.canonicalize().ok() == Some(seen))
+        };
+        if is_executable(&uv_bin) && !probes.iter().any(same) {
+            probes.push(uv_bin);
+        }
+    }
+    for runs in &probes {
+        let reported = runs
+            .to_str()
+            .context("camayoc CLI path is not UTF-8")
+            .and_then(read_version);
+        let reported = match reported {
+            Ok(reported) => reported,
+            Err(error) => bail!(
+                "camayoc NOT converged: {} has an unreadable version ({error:#}); \
+                 the reviewed Camayoc release is v{CAMAYOC_VERSION}",
+                runs.display()
+            ),
+        };
+        if camayoc_cli_version(&reported) != Some(CAMAYOC_VERSION) {
+            bail!(
+                "camayoc NOT converged: {} reports `{}`, but the reviewed Camayoc \
+                 release is v{CAMAYOC_VERSION}. Tambo installs the Camayoc bundle, not this CLI; \
+                 upgrade it (`uv tool install --force git+https://github.com/intigraph/camayoc@v{CAMAYOC_VERSION}`) \
+                 or remove the stale copy",
+                runs.display(),
+                reported.trim()
+            );
+        }
+    }
+    Ok(probes)
+}
+
+/// `camayoc --version` prints `camayoc 0.1.11` (argparse `%(prog)s <version>`).
+fn camayoc_cli_version(reported: &str) -> Option<&str> {
+    reported
         .lines()
-        .next()
-        .unwrap_or_default()
+        .next()?
         .trim()
         .strip_prefix("camayoc ")
-        .map(|v| v.trim().trim_start_matches('v'));
-    if version == Some(CAMAYOC_VERSION) {
-        return Ok(Some(runs));
-    }
-    bail!(
-        "camayoc NOT converged: PATH runs {} which reports `{}`, but the reviewed Camayoc \
-         release is v{CAMAYOC_VERSION}. Tambo installs the Camayoc bundle, not this CLI; \
-         upgrade it (`uv tool install --force git+https://github.com/intigraph/camayoc@v{CAMAYOC_VERSION}`) \
-         or remove the stale copy",
-        runs.display(),
-        reported.trim()
-    )
+        .map(|v| v.trim().trim_start_matches('v'))
 }
 
 fn verify_camayoc_first_ingest(root: &Path, server: &str, auth: &Path) -> Result<()> {
@@ -1961,7 +1978,7 @@ mod tests {
     fn stale_camayoc_cli_on_path_is_not_converged() {
         let dir = tempfile::tempdir().unwrap();
         fake_camayoc(dir.path(), "#!/bin/sh\necho 'camayoc 0.1.4'\n");
-        let error = super::camayoc_cli_check(Some(dir.path().as_os_str()))
+        let error = super::camayoc_cli_check(Some(dir.path().as_os_str()), None)
             .unwrap_err()
             .to_string();
         assert!(error.contains("camayoc NOT converged"), "{error}");
@@ -1972,33 +1989,69 @@ mod tests {
         );
     }
 
+    // The launchd consumer's PATH omits ~/.local/bin; the stale uv copy there
+    // must still fail the check rather than read as "absent".
     #[test]
-    fn reviewed_camayoc_cli_on_path_is_converged() {
-        let dir = tempfile::tempdir().unwrap();
+    fn stale_uv_camayoc_off_path_is_not_converged() {
+        let home = tempfile::tempdir().unwrap();
+        let uv_bin = home.path().join(".local/bin");
+        fs::create_dir_all(&uv_bin).unwrap();
+        fake_camayoc(&uv_bin, "#!/bin/sh\necho 'camayoc 0.1.4'\n");
+        let empty = tempfile::tempdir().unwrap();
+        let error = super::camayoc_cli_check(Some(empty.path().as_os_str()), Some(home.path()))
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("camayoc NOT converged"), "{error}");
+        assert!(error.contains(".local/bin/camayoc"), "{error}");
+    }
+
+    // A current CLI first on PATH does not hide a stale uv copy.
+    #[test]
+    fn current_path_camayoc_does_not_hide_stale_uv_copy() {
+        let home = tempfile::tempdir().unwrap();
+        let uv_bin = home.path().join(".local/bin");
+        fs::create_dir_all(&uv_bin).unwrap();
+        fake_camayoc(&uv_bin, "#!/bin/sh\necho 'camayoc 0.1.4'\n");
+        let path_dir = tempfile::tempdir().unwrap();
         fake_camayoc(
-            dir.path(),
+            path_dir.path(),
             &format!("#!/bin/sh\necho 'camayoc {}'\n", super::CAMAYOC_VERSION),
         );
-        let runs = super::camayoc_cli_check(Some(dir.path().as_os_str())).unwrap();
-        assert_eq!(runs, Some(dir.path().join("camayoc")));
+        assert!(
+            super::camayoc_cli_check(Some(path_dir.path().as_os_str()), Some(home.path())).is_err()
+        );
+    }
+
+    #[test]
+    fn reviewed_camayoc_cli_is_converged_once_when_path_and_uv_agree() {
+        let home = tempfile::tempdir().unwrap();
+        let uv_bin = home.path().join(".local/bin");
+        fs::create_dir_all(&uv_bin).unwrap();
+        // The exact line the released v0.1.11 CLI prints for --version.
+        fake_camayoc(&uv_bin, "#!/bin/sh\necho 'camayoc 0.1.11'\n");
+        assert_eq!(super::CAMAYOC_VERSION, "0.1.11");
+        let runs = super::camayoc_cli_check(Some(uv_bin.as_os_str()), Some(home.path())).unwrap();
+        assert_eq!(runs, vec![uv_bin.join("camayoc")]);
     }
 
     #[test]
     fn unreadable_camayoc_cli_version_is_not_converged() {
         let dir = tempfile::tempdir().unwrap();
         fake_camayoc(dir.path(), "#!/bin/sh\nexit 3\n");
-        let error = super::camayoc_cli_check(Some(dir.path().as_os_str()))
+        let error = super::camayoc_cli_check(Some(dir.path().as_os_str()), None)
             .unwrap_err()
             .to_string();
-        assert!(error.contains("version is unreadable"), "{error}");
+        assert!(error.contains("unreadable version"), "{error}");
     }
 
     #[test]
     fn absent_camayoc_cli_is_only_a_note() {
         let dir = tempfile::tempdir().unwrap();
-        assert_eq!(
-            super::camayoc_cli_check(Some(dir.path().as_os_str())).unwrap(),
-            None
+        let home = tempfile::tempdir().unwrap();
+        assert!(
+            super::camayoc_cli_check(Some(dir.path().as_os_str()), Some(home.path()))
+                .unwrap()
+                .is_empty()
         );
     }
 
