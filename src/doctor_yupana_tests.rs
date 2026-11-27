@@ -183,34 +183,33 @@ fn tenants_default_to_yupanas_own() {
 }
 
 #[test]
-fn tambo_auth_proof_turns_unproven_into_proven_and_a_failed_proof_stays_warn() {
-    let base = || {
-        guard_findings(
-            Some("worker"),
-            &status("enforce", USER_CONFIG, "configured_acceptance_unproven"),
-            Some(HOOKS_BOTH),
-            &everywhere,
-        )
-    };
-    let mut proven = base();
-    apply_auth_proof(
-        &mut proven,
-        &Ok("http://quipu.svc, credential file".to_owned()),
+fn tambo_auth_proof_is_a_host_line_and_never_rewrites_a_tenant_line() {
+    let proven = host_auth_finding(&Ok("http://quipu.svc, credential file".to_owned()));
+    assert_eq!(proven.subject, HOST_AUTH_SUBJECT);
+    assert_eq!(proven.level, Level::Ok, "{proven:#?}");
+    assert!(
+        proven.detail.starts_with("proven at host level:"),
+        "{}",
+        proven.detail
     );
-    let auth = proven
-        .iter()
-        .find(|f| f.subject.ends_with(" quipu auth"))
-        .unwrap();
-    assert_eq!(auth.level, Level::Ok, "{auth:#?}");
-    assert!(auth.detail.starts_with("proven:"), "{}", auth.detail);
-    assert!(auth.detail.contains("configured_acceptance_unproven"));
+    assert!(proven.detail.contains("not a tenant that resolves another"));
 
-    let mut failed = base();
-    apply_auth_proof(&mut failed, &Err("HTTP 401".to_owned()));
-    let auth = failed
+    let failed = host_auth_finding(&Err("HTTP 401".to_owned()));
+    assert_eq!(failed.level, Level::Warn);
+    assert!(failed.detail.contains("UNPROVEN") && failed.detail.contains("HTTP 401"));
+
+    // The tenant's own line is unchanged by any proof: still warn, still
+    // yupana's own state.
+    let tenant = guard_findings(
+        Some("worker"),
+        &status("enforce", USER_CONFIG, "configured_acceptance_unproven"),
+        Some(HOOKS_BOTH),
+        &everywhere,
+    );
+    let auth = tenant
         .iter()
         .find(|f| f.subject.ends_with(" quipu auth"))
         .unwrap();
     assert_eq!(auth.level, Level::Warn);
-    assert!(auth.detail.contains("Tambo's proof failed too: HTTP 401"));
+    assert!(auth.detail.starts_with("configured_acceptance_unproven"));
 }

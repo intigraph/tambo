@@ -30,6 +30,9 @@ pub(crate) fn yupana_guard_findings(path: Option<&std::ffi::OsStr>) -> Vec<Findi
     yupana_guard::check(path)
 }
 
+/// Subject of Tambo's host-level Quipu credential proof among those findings.
+pub(crate) const YUPANA_HOST_AUTH: &str = yupana_guard::HOST_AUTH_SUBJECT;
+
 use crate::{
     adapter,
     model::{CrewMode, Plan, Profile, QuipuFlavor, State, ToolName},

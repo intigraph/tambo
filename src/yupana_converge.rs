@@ -14,15 +14,19 @@
 //! nothing here writes rules or scopes.
 
 use std::{
+    ffi::OsString,
     fs,
-    path::Path,
+    path::{Path, PathBuf},
     process::{Command, Stdio},
 };
 
 use anyhow::{bail, Context, Result};
 use toml_edit::{value, DocumentMut, Item, Table};
 
-use crate::model::{Plan, ToolName, YupanaGuard, YupanaMode};
+use crate::{
+    doctor::{Finding, Level},
+    model::{Plan, ToolName, YupanaGuard, YupanaMode},
+};
 
 /// Comment Tambo writes above the mode it owns, so a reader of the bobbin
 /// config can see where the value came from and why.
@@ -74,9 +78,19 @@ pub fn write_mode(path: &Path, guard: &YupanaGuard) -> Result<()> {
     let policy = document["yupana"]["policy"]
         .as_table_mut()
         .context("[yupana.policy] must be a TOML table")?;
+    // Keep any operator comment above `mode`; replace only the line Tambo owns.
+    let kept: String = policy
+        .key("mode")
+        .and_then(|key| key.leaf_decor().prefix())
+        .and_then(|prefix| prefix.as_str())
+        .unwrap_or_default()
+        .split_inclusive('\n')
+        .filter(|line| !line.trim_start().starts_with("# tambo:"))
+        .collect();
     policy.insert("mode", value(guard.mode.as_str()));
     if let Some(mut key) = policy.key_mut("mode") {
-        key.leaf_decor_mut().set_prefix(mode_comment(guard));
+        key.leaf_decor_mut()
+            .set_prefix(format!("{kept}{}", mode_comment(guard)));
     }
 
     let parent = path.parent().context("bobbin config path has no parent")?;
@@ -143,8 +157,8 @@ pub fn hook_install_invocations(st: bool, claude: bool, codex: bool) -> Vec<Vec<
         .collect()
 }
 
-fn yupana(args: &[&str]) -> Result<String> {
-    let out = Command::new("yupana")
+fn run_yupana(program: &Path, args: &[&str]) -> Result<String> {
+    let out = Command::new(program)
         .args(args)
         .stdin(Stdio::null())
         .output()
@@ -160,91 +174,360 @@ fn yupana(args: &[&str]) -> Result<String> {
     Ok(String::from_utf8_lossy(&out.stdout).trim().to_owned())
 }
 
+/// What convergence needs from the host, so the decision logic is testable
+/// without touching the real HOME, PATH or Quipu.
+pub(crate) trait Host {
+    fn config_path(&self) -> Result<PathBuf>;
+    fn on_path(&self, program: &str) -> bool;
+    fn yupana(&self, args: &[&str]) -> Result<String>;
+    /// The read-back: the same findings `tambo doctor` prints.
+    fn guard_findings(&self) -> Vec<Finding>;
+}
+
+struct LiveHost {
+    path: Option<OsString>,
+}
+
+impl Host for LiveHost {
+    fn config_path(&self) -> Result<PathBuf> {
+        crate::configuration::default_path()
+    }
+    fn on_path(&self, program: &str) -> bool {
+        !crate::adapter::which_all(program, self.path.as_deref()).is_empty()
+    }
+    fn yupana(&self, args: &[&str]) -> Result<String> {
+        run_yupana(Path::new("yupana"), args)
+    }
+    fn guard_findings(&self) -> Vec<Finding> {
+        crate::doctor::yupana_guard_findings(self.path.as_deref())
+    }
+}
+
 /// Converge Yupana to the plan's guard posture and print what happened.
 /// A plan without `[yupana_guard]` changes nothing and says so.
 pub fn converge(plan: &Plan) -> Result<()> {
+    let host = LiveHost {
+        path: std::env::var_os("PATH"),
+    };
+    for line in converge_on(plan, &host)? {
+        println!("{line}");
+    }
+    Ok(())
+}
+
+/// The convergence decision. Returns the report lines on success; any
+/// shortfall is an error naming every problem (the lines printed so far are
+/// part of it). The mode is written first and is NOT rolled back when a later
+/// step fails: the plan's mode is the intended state, and the error says the
+/// rest of the guard is not there yet.
+pub(crate) fn converge_on(plan: &Plan, host: &dyn Host) -> Result<Vec<String>> {
+    let mut lines = Vec::new();
     if !plan.tools.contains(&ToolName::Yupana) {
-        return Ok(());
+        return Ok(lines);
     }
     let Some(guard) = &plan.yupana_guard else {
-        println!(
+        lines.push(
             "yupana guard: WARN the plan records no [yupana_guard]; policy mode, hooks and the Quipu \
              projection were NOT converged. Record `[yupana_guard] mode = \"advise\"|\"enforce\"` (or \
              \"off\" with off_reason) in the reviewed plan; `tambo doctor` reports the current state"
+                .to_owned(),
         );
-        return Ok(());
+        return Ok(lines);
     };
-    let path = std::env::var_os("PATH");
-    let on_path = |program: &str| !crate::adapter::which_all(program, path.as_deref()).is_empty();
     let mut failures = Vec::new();
 
-    let config = crate::configuration::default_path()?;
+    let config = host.config_path()?;
     write_mode(&config, guard)?;
-    match guard.off_reason.as_deref() {
-        Some(reason) => println!(
+    lines.push(match guard.off_reason.as_deref() {
+        Some(reason) => format!(
             "yupana policy mode: off, recorded in {} (reason: {reason})",
             config.display()
         ),
-        None => println!(
+        None => format!(
             "yupana policy mode: {} recorded in {}",
             guard.mode.as_str(),
             config.display()
         ),
-    }
+    });
 
-    let invocations = hook_install_invocations(on_path("st"), on_path("claude"), on_path("codex"));
+    let invocations = hook_install_invocations(
+        host.on_path("st"),
+        host.on_path("claude"),
+        host.on_path("codex"),
+    );
     if invocations.is_empty() {
-        println!("yupana hooks: no harness (claude, codex) on PATH; none installed");
+        lines.push("yupana hooks: no harness (claude, codex) on PATH; none installed".to_owned());
     }
     for args in invocations {
-        match yupana(&args) {
-            Ok(_) => println!("yupana {}: ok", args.join(" ")),
+        match host.yupana(&args) {
+            Ok(_) => lines.push(format!("yupana {}: ok", args.join(" "))),
             Err(error) => failures.push(format!("{error:#}")),
         }
     }
 
-    match yupana(&["refresh-projection"]) {
-        Ok(_) => println!("yupana refresh-projection: ok"),
+    match host.yupana(&["refresh-projection"]) {
+        Ok(_) => lines.push("yupana refresh-projection: ok".to_owned()),
         Err(error) => failures.push(format!("{error:#}")),
     }
 
-    match configured_quipu_endpoint() {
-        None => failures.push(
-            "yupana quipu auth: UNPROVEN, no [yupana.quipu].endpoint in the bobbin config and no QUIPU_SERVER"
-                .to_owned(),
-        ),
-        Some(endpoint) => match crate::quipu_credential::verify(&endpoint) {
-            Ok(source) => println!("yupana quipu auth: PROVEN at {endpoint} ({source})"),
-            Err(error) => failures.push(format!("yupana quipu auth: UNPROVEN at {endpoint}: {error:#}")),
-        },
-    }
-
-    for finding in crate::doctor::yupana_guard_findings(path.as_deref()) {
+    // Read back through doctor's own check. That check also carries Tambo's
+    // credential proof, once, as a separate host-level line. Yupana itself
+    // never reports a tenant's auth as accepted, so a tenant's `quipu auth`
+    // warn is tolerated only beside a proven host line, and is still printed
+    // as WARN so nobody reads it as per-tenant proof.
+    let findings = host.guard_findings();
+    let host_proven = findings
+        .iter()
+        .any(|f| f.subject == crate::doctor::YUPANA_HOST_AUTH && f.level == Level::Ok);
+    for finding in findings {
         let level = match finding.level {
-            crate::doctor::Level::Ok => "ok",
-            crate::doctor::Level::Warn => "WARN",
-            crate::doctor::Level::Fail => "FAIL",
+            Level::Ok => "ok",
+            Level::Warn => "WARN",
+            Level::Fail => "FAIL",
         };
-        println!("{}: {level}: {}", finding.subject, finding.detail);
-        if finding.level != crate::doctor::Level::Ok {
+        let tolerated =
+            host_proven && finding.level == Level::Warn && finding.subject.ends_with(" quipu auth");
+        let note = if tolerated {
+            " (not blocking: proven at host level only; yupana cannot attest per-tenant acceptance)"
+        } else {
+            ""
+        };
+        lines.push(format!(
+            "{}: {level}: {}{note}",
+            finding.subject, finding.detail
+        ));
+        if finding.level != Level::Ok && !tolerated {
             failures.push(format!("{}: {}", finding.subject, finding.detail));
         }
     }
 
     if !failures.is_empty() {
         bail!(
-            "Yupana is installed but not in the plan's guard state ({} problem(s)):\n{}\nRun `tambo doctor` for the full guard report.",
+            "{}\nYupana is installed but not in the plan's guard state ({} problem(s)); \
+             [yupana.policy].mode is already written as {}:\n{}\nRun `tambo doctor` for the full guard report.",
+            lines.join("\n"),
             failures.len(),
+            guard.mode.as_str(),
             failures.join("\n")
         );
     }
-    println!("yupana guard: converged to mode {}", guard.mode.as_str());
-    Ok(())
+    lines.push(format!(
+        "yupana guard: converged to mode {}",
+        guard.mode.as_str()
+    ));
+    Ok(lines)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::model::Profile;
+    use std::cell::RefCell;
+
+    struct FakeHost {
+        config: PathBuf,
+        present: Vec<&'static str>,
+        failing: Vec<&'static str>,
+        findings: Vec<Finding>,
+        calls: RefCell<Vec<String>>,
+    }
+
+    impl Host for FakeHost {
+        fn config_path(&self) -> Result<PathBuf> {
+            Ok(self.config.clone())
+        }
+        fn on_path(&self, program: &str) -> bool {
+            self.present.contains(&program)
+        }
+        fn yupana(&self, args: &[&str]) -> Result<String> {
+            let call = args.join(" ");
+            self.calls.borrow_mut().push(call.clone());
+            if self.failing.iter().any(|f| call.contains(f)) {
+                bail!("`yupana {call}` failed (exit status: 1): boom");
+            }
+            Ok(String::new())
+        }
+        fn guard_findings(&self) -> Vec<Finding> {
+            self.findings.clone()
+        }
+    }
+
+    fn finding(level: Level, subject: &str) -> Finding {
+        Finding {
+            level,
+            subject: subject.to_owned(),
+            detail: "detail".to_owned(),
+        }
+    }
+
+    fn healthy() -> Vec<Finding> {
+        vec![
+            finding(Level::Ok, "yupana guard"),
+            finding(Level::Warn, "yupana guard quipu auth"),
+            finding(Level::Ok, "yupana guard hooks claude"),
+            finding(Level::Ok, crate::doctor::YUPANA_HOST_AUTH),
+        ]
+    }
+
+    fn host(root: &Path, findings: Vec<Finding>) -> FakeHost {
+        FakeHost {
+            config: root.join("bobbin/config.toml"),
+            present: vec!["claude", "codex"],
+            failing: Vec::new(),
+            findings,
+            calls: RefCell::new(Vec::new()),
+        }
+    }
+
+    fn guarded(mode: YupanaMode) -> Plan {
+        let mut plan = Plan::for_profile(Profile::Everything);
+        assert!(plan.tools.contains(&ToolName::Yupana));
+        plan.yupana_guard = Some(guard(mode, None));
+        plan
+    }
+
+    #[test]
+    fn converge_without_a_guard_only_warns_and_touches_nothing() {
+        let root = tempfile::tempdir().unwrap();
+        let fake = host(root.path(), Vec::new());
+        let plan = Plan::for_profile(Profile::Everything);
+        let lines = converge_on(&plan, &fake).unwrap();
+        assert!(
+            lines[0].contains("WARN the plan records no [yupana_guard]"),
+            "{lines:?}"
+        );
+        assert!(fake.calls.borrow().is_empty());
+        assert!(!fake.config.exists());
+    }
+
+    #[test]
+    fn converge_succeeds_only_with_a_clean_read_back_and_a_proven_host() {
+        let root = tempfile::tempdir().unwrap();
+        let fake = host(root.path(), healthy());
+        let lines = converge_on(&guarded(YupanaMode::Enforce), &fake).unwrap();
+        assert_eq!(
+            *fake.calls.borrow(),
+            vec![
+                "hooks install --no-st --harness claude",
+                "hooks install --no-st --harness codex",
+                "refresh-projection",
+            ]
+        );
+        let body = fs::read_to_string(&fake.config).unwrap();
+        assert!(body.contains("mode = \"enforce\""), "{body}");
+        let auth = lines
+            .iter()
+            .find(|l| l.starts_with("yupana guard quipu auth"))
+            .unwrap();
+        assert!(
+            auth.contains("WARN") && auth.contains("proven at host level only"),
+            "{auth}"
+        );
+        assert_eq!(
+            lines.last().unwrap(),
+            "yupana guard: converged to mode enforce"
+        );
+    }
+
+    #[test]
+    fn unproven_host_auth_fails_convergence_and_tenant_auth_is_not_excused() {
+        let root = tempfile::tempdir().unwrap();
+        let mut findings = healthy();
+        findings.pop();
+        findings.push(finding(Level::Warn, crate::doctor::YUPANA_HOST_AUTH));
+        let error = converge_on(&guarded(YupanaMode::Advise), &host(root.path(), findings))
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("2 problem(s)"), "{error}");
+        assert!(error.contains("yupana guard quipu auth: detail"), "{error}");
+        assert!(
+            error.contains("mode is already written as advise"),
+            "{error}"
+        );
+    }
+
+    #[test]
+    fn any_doctor_warn_or_fail_and_any_hook_failure_fail_convergence() {
+        for (level, subject) in [
+            (Level::Warn, "yupana guard hooks codex"),
+            (Level::Fail, "yupana guard"),
+        ] {
+            let root = tempfile::tempdir().unwrap();
+            let mut findings = healthy();
+            findings.push(finding(level, subject));
+            let error = converge_on(&guarded(YupanaMode::Enforce), &host(root.path(), findings))
+                .unwrap_err()
+                .to_string();
+            assert!(error.contains(&format!("{subject}: detail")), "{error}");
+        }
+        let root = tempfile::tempdir().unwrap();
+        let mut fake = host(root.path(), healthy());
+        fake.failing = vec!["--harness codex"];
+        let error = converge_on(&guarded(YupanaMode::Enforce), &fake)
+            .unwrap_err()
+            .to_string();
+        assert!(
+            error.contains("hooks install --no-st --harness codex` failed"),
+            "{error}"
+        );
+        // A later failure does not skip the remaining steps.
+        assert!(fake
+            .calls
+            .borrow()
+            .contains(&"refresh-projection".to_owned()));
+    }
+
+    #[test]
+    fn st_present_installs_once_through_st() {
+        let root = tempfile::tempdir().unwrap();
+        let mut fake = host(root.path(), healthy());
+        fake.present = vec!["st", "claude", "codex"];
+        converge_on(&guarded(YupanaMode::Enforce), &fake).unwrap();
+        assert_eq!(
+            *fake.calls.borrow(),
+            vec!["hooks install", "refresh-projection"]
+        );
+    }
+
+    #[test]
+    fn live_runner_surfaces_a_failing_yupana_and_its_stderr() {
+        let root = tempfile::tempdir().unwrap();
+        let fake = root.path().join("yupana");
+        crate::test_exec::write_executable(
+            &fake,
+            "#!/bin/sh\nif [ \"$1\" = refresh-projection ]; then echo 'quipu 401' >&2; exit 3; fi\necho \"ran $*\"\n",
+        );
+        assert_eq!(
+            run_yupana(&fake, &["hooks", "status"]).unwrap(),
+            "ran hooks status"
+        );
+        let error = run_yupana(&fake, &["refresh-projection"])
+            .unwrap_err()
+            .to_string();
+        assert!(
+            error.contains("`yupana refresh-projection` failed") && error.contains("quipu 401"),
+            "{error}"
+        );
+    }
+
+    #[test]
+    fn operator_comment_above_mode_survives_and_ours_is_replaced() {
+        let root = tempfile::tempdir().unwrap();
+        let path = root.path().join("config.toml");
+        fs::write(
+            &path,
+            "[yupana.policy]\n# operator: keep advise until rules settle\nmode = \"advise\"\n",
+        )
+        .unwrap();
+        write_mode(&path, &guard(YupanaMode::Enforce, None)).unwrap();
+        write_mode(&path, &guard(YupanaMode::Enforce, None)).unwrap();
+        let body = fs::read_to_string(&path).unwrap();
+        assert!(
+            body.contains("# operator: keep advise until rules settle\n# tambo:"),
+            "{body}"
+        );
+        assert_eq!(body.matches("# tambo:").count(), 1, "{body}");
+    }
 
     fn guard(mode: YupanaMode, reason: Option<&str>) -> YupanaGuard {
         YupanaGuard {
