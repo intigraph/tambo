@@ -9,15 +9,21 @@
 //! lasted. The consumer's own deadline then killed everything and left the keg
 //! unlinked.
 //!
-//! Every brew step therefore runs in its own process group under a bound. On
-//! timeout Tambo kills the whole descendant tree, not only the group: brew's
-//! `mdfind` runs in a process group of its own and survived a group kill as an
-//! orphan. The caller then restores the previous keg's link and names the
+//! Every brew step therefore runs under a bound. On timeout Tambo kills brew's
+//! whole descendant tree, found through `ps`, because brew's `mdfind` runs in
+//! a process group of its own and survived a group kill as an orphan. Brew
+//! itself stays in Tambo's process group, so a supervisor that group-kills
+//! Tambo also kills brew. The caller then restores the keg's link and names the
 //! member.
+//!
+//! Two bounds apply. Each step gets at most `TAMBO_BREW_STEP_TIMEOUT_SECS`
+//! (240s). All ordinary steps of one Tambo process share
+//! `TAMBO_BREW_BUDGET_SECS` (600s), which stays under the Mac consumer's 900s
+//! member budget. Link repair after a failure is not charged to that budget.
+//! Each repair step gets 30s, so a spent budget still leaves the keg linked.
 
 use std::{
     ffi::OsStr,
-    os::unix::process::CommandExt,
     process::{Command, ExitStatus, Stdio},
     time::{Duration, Instant},
 };
@@ -26,14 +32,50 @@ use std::{
 /// seconds; the Mac consumer gives the whole member update 900s.
 pub const DEFAULT_STEP_TIMEOUT: Duration = Duration::from_secs(240);
 
-/// The step bound, overridable for tests and slow hosts.
-#[must_use]
-pub fn step_timeout() -> Duration {
-    std::env::var("TAMBO_BREW_STEP_TIMEOUT_SECS")
+/// Default total for all ordinary brew steps of one Tambo process.
+pub const DEFAULT_BUDGET: Duration = Duration::from_secs(600);
+
+/// Bound for each link-repair step after a failure.
+pub const REPAIR_TIMEOUT: Duration = Duration::from_secs(30);
+
+fn seconds(name: &str, default: Duration) -> Duration {
+    std::env::var(name)
         .ok()
         .and_then(|raw| raw.trim().parse::<u64>().ok())
         .filter(|secs| *secs > 0)
-        .map_or(DEFAULT_STEP_TIMEOUT, Duration::from_secs)
+        .map_or(default, Duration::from_secs)
+}
+
+/// The per-step bound, overridable for tests and slow hosts.
+#[must_use]
+pub fn step_timeout() -> Duration {
+    seconds("TAMBO_BREW_STEP_TIMEOUT_SECS", DEFAULT_STEP_TIMEOUT)
+}
+
+/// When this process's brew budget ends. The clock starts at the first brew step.
+fn budget_end() -> Instant {
+    static END: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
+    *END.get_or_init(|| Instant::now() + seconds("TAMBO_BREW_BUDGET_SECS", DEFAULT_BUDGET))
+}
+
+/// Which bound a step runs under.
+#[derive(Clone, Copy)]
+pub enum Bound {
+    /// An ordinary step: the step bound, capped by what is left of the budget.
+    Step,
+    /// Link repair after a failure: a fixed short bound outside the budget.
+    Repair,
+}
+
+impl Bound {
+    fn timeout(self) -> Duration {
+        match self {
+            Bound::Step => {
+                step_timeout().min(budget_end().saturating_duration_since(Instant::now()))
+            }
+            Bound::Repair => REPAIR_TIMEOUT,
+        }
+    }
 }
 
 /// A brew step that did not finish within its bound.
@@ -74,8 +116,28 @@ pub enum Output {
     Capture,
 }
 
-/// Run `program args` with `HOMEBREW_NO_AUTO_UPDATE=1` under `timeout`.
+/// Run `program args` with `HOMEBREW_NO_AUTO_UPDATE=1` under `bound`.
 pub fn run<I, S>(
+    program: &OsStr,
+    args: I,
+    output: Output,
+    bound: Bound,
+) -> anyhow::Result<Result<Finished, TimedOut>>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    let timeout = bound.timeout();
+    if timeout.is_zero() {
+        return Ok(Err(TimedOut {
+            elapsed: Duration::ZERO,
+            killed: 0,
+        }));
+    }
+    run_for(program, args, output, timeout)
+}
+
+fn run_for<I, S>(
     program: &OsStr,
     args: I,
     output: Output,
@@ -90,10 +152,9 @@ where
     command
         .args(args)
         .env("HOMEBREW_NO_AUTO_UPDATE", "1")
-        .stdin(Stdio::null())
-        // A group of its own, so a timeout can signal brew and its children
-        // without signalling Tambo or whoever supervises Tambo.
-        .process_group(0);
+        // Brew stays in Tambo's process group (eph-review-1d484a): a
+        // supervisor that group-kills Tambo must take brew with it.
+        .stdin(Stdio::null());
     // A file, not a pipe: a full pipe would block brew and look like a hang.
     let mut captured = match output {
         Output::Capture => {
@@ -126,8 +187,9 @@ where
     }
 }
 
-/// SIGKILL `root`, every descendant (in any process group) and `root`'s
-/// group. Returns how many distinct processes were signalled.
+/// SIGKILL `root` and every descendant, in any process group. Never signals
+/// a process group: brew shares Tambo's. Returns how many processes were
+/// signalled.
 fn kill_tree(root: u32) -> usize {
     // Freeze the tree first so nothing forks a new child between the listing
     // and the kill. A stopped process cannot fork.
@@ -143,12 +205,6 @@ fn kill_tree(root: u32) -> usize {
     }
     for pid in &seen {
         signal(*pid, libc::SIGKILL);
-    }
-    if let Ok(group) = libc::pid_t::try_from(root) {
-        // SAFETY: killpg only sends a signal; a vanished group is ESRCH.
-        unsafe {
-            libc::killpg(group, libc::SIGKILL);
-        }
     }
     seen.len()
 }
@@ -198,8 +254,28 @@ mod tests {
     }
 
     #[test]
+    fn brew_stays_in_tambos_process_group() {
+        // eph-review-1d484a: a supervisor that group-kills Tambo must take
+        // brew with it, so a step must not start a process group of its own.
+        let done = run_for(
+            OsStr::new("/bin/sh"),
+            ["-c", "ps -o pgid= -p $$"],
+            Output::Capture,
+            Duration::from_secs(10),
+        )
+        .unwrap()
+        .unwrap();
+        // SAFETY: getpgrp only reads this process's group id.
+        let ours = unsafe { libc::getpgrp() };
+        assert_eq!(
+            String::from_utf8_lossy(&done.stdout).trim(),
+            ours.to_string()
+        );
+    }
+
+    #[test]
     fn a_finished_step_returns_its_captured_output() {
-        let done = run(
+        let done = run_for(
             OsStr::new("/bin/sh"),
             ["-c", "echo hello; exit 3"],
             Output::Capture,
@@ -220,7 +296,7 @@ mod tests {
             "perl -e 'setpgrp(0,0); exec \"sleep\", \"300\"' & echo $! > {}; wait",
             pidfile.display()
         );
-        let timed_out = run(
+        let timed_out = run_for(
             OsStr::new("/bin/sh"),
             ["-c", &script],
             Output::Inherit,
@@ -244,8 +320,10 @@ mod tests {
             std::thread::sleep(Duration::from_millis(50));
         }
         assert!(!alive, "the own-group grandchild survived the timeout");
-        assert!(timed_out
-            .to_string()
-            .starts_with("timed out after 0s (killed "));
+        let text = timed_out.to_string();
+        assert!(
+            text.starts_with("timed out after ") && text.contains("s (killed "),
+            "{text}"
+        );
     }
 }

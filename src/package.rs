@@ -184,6 +184,9 @@ pub struct BrewChannel {
     pub installed: Option<String>,
     pub stable: String,
     pub pinned: bool,
+    /// Brew reported `linked_keg: null` for an installed keg: it is off PATH.
+    /// A missing key (older brew, fixtures) is not read as unlinked.
+    pub unlinked: bool,
 }
 
 fn channel_from_json(bytes: &[u8], formula: &str) -> anyhow::Result<Option<BrewChannel>> {
@@ -225,10 +228,15 @@ fn channel_from_json(bytes: &[u8], formula: &str) -> anyhow::Result<Option<BrewC
                 .context("brew installed version")
         })
         .transpose()?;
+    let unlinked = installed.is_some()
+        && entry
+            .get("linked_keg")
+            .is_some_and(serde_json::Value::is_null);
     Ok(Some(BrewChannel {
         installed,
         stable,
         pinned,
+        unlinked,
     }))
 }
 
@@ -240,7 +248,7 @@ pub fn brew_refresh() -> anyhow::Result<()> {
         &brew,
         ["update", "--quiet"],
         crate::brew_bound::Output::Inherit,
-        crate::brew_bound::step_timeout(),
+        crate::brew_bound::Bound::Step,
     )? {
         Ok(done) if done.status.success() => Ok(()),
         Ok(done) => anyhow::bail!("brew update failed ({})", done.status),
@@ -257,7 +265,7 @@ pub fn brew_channel(tool: ToolName) -> anyhow::Result<Option<BrewChannel>> {
         &brew,
         ["info", "--json=v2", &format!("{STACK_TAP}/{formula}")],
         crate::brew_bound::Output::Capture,
-        crate::brew_bound::step_timeout(),
+        crate::brew_bound::Bound::Step,
     )? {
         Ok(done) => done,
         Err(timed_out) => anyhow::bail!("brew channel read for {formula} {timed_out}"),
@@ -285,7 +293,7 @@ pub fn brew_converge(tool: ToolName, upgrade: bool) -> anyhow::Result<()> {
         &brew,
         [verb, full.as_str()],
         crate::brew_bound::Output::Inherit,
-        crate::brew_bound::step_timeout(),
+        crate::brew_bound::Bound::Step,
     )? {
         Ok(done) if done.status.success() => Ok(()),
         Ok(done) => {
@@ -305,14 +313,28 @@ pub fn brew_converge(tool: ToolName, upgrade: bool) -> anyhow::Result<()> {
 /// Link the installed keg again if an interrupted brew step left it unlinked.
 /// Returns what it found and did, for the error message.
 fn restore_link(brew: &std::ffi::OsStr, formula: &str) -> String {
+    restore_link_with(brew, formula)
+}
+
+/// Link `tool`'s installed keg when brew reports it unlinked (aegis-f0ne):
+/// an earlier interrupted step leaves the keg installed but off PATH, and a
+/// later `brew upgrade` preserves that state. Returns what was done.
+#[must_use]
+pub fn brew_relink(tool: ToolName) -> String {
+    match (brew_formula(tool), brew_program()) {
+        (Some(formula), Some(brew)) => restore_link_with(&brew, formula),
+        _ => "no stack formula or brew".into(),
+    }
+}
+
+fn restore_link_with(brew: &std::ffi::OsStr, formula: &str) -> String {
     let full = format!("{STACK_TAP}/{formula}");
-    let timeout = crate::brew_bound::step_timeout();
     let read = || -> Option<(Option<String>, Option<String>)> {
         let done = crate::brew_bound::run(
             brew,
             ["info", "--json=v2", full.as_str()],
             crate::brew_bound::Output::Capture,
-            timeout,
+            crate::brew_bound::Bound::Repair,
         )
         .ok()?
         .ok()?;
@@ -332,10 +354,10 @@ fn restore_link(brew: &std::ffi::OsStr, formula: &str) -> String {
         brew,
         ["link", full.as_str()],
         crate::brew_bound::Output::Inherit,
-        timeout,
+        crate::brew_bound::Bound::Repair,
     ) {
         Ok(Ok(done)) if done.status.success() => match read() {
-            Some((_, Some(linked))) => format!("relinked the previous keg {linked}"),
+            Some((_, Some(linked))) => format!("relinked keg {linked}"),
             _ => format!("`brew link {full}` ran but keg {installed} is still NOT linked"),
         },
         Ok(Ok(done)) => format!(
@@ -500,7 +522,8 @@ mod channel_tests {
             Some(BrewChannel {
                 installed: Some("0.28.0".into()),
                 stable: "0.29.0".into(),
-                pinned: true
+                pinned: true,
+                unlinked: false
             })
         );
         assert_eq!(channel_from_json(&bytes, "quipu").unwrap(), None);

@@ -4169,14 +4169,13 @@ exit 2"#;
         .lines()
         .find(|line| line.starts_with("Error: "))
         .unwrap_or_default();
+    // The elapsed seconds depend on the runner; the shape and member do not.
     assert!(
-        first.starts_with("Error: bobbin brew delivery timed out after 2s (killed "),
+        first.starts_with("Error: bobbin brew delivery timed out after "),
         "{stderr}"
     );
-    assert!(
-        first.contains("relinked the previous keg 0.31.0"),
-        "{stderr}"
-    );
+    assert!(first.contains("s (killed "), "{stderr}");
+    assert!(first.contains("relinked keg 0.31.0"), "{stderr}");
     assert!(root.path().join("linked").exists(), "keg left unlinked");
     let log = fs::read_to_string(root.path().join("brew.log")).unwrap();
     assert!(log.contains("link scbrown/tap/bobbin"), "{log}");
@@ -4191,6 +4190,59 @@ exit 2"#;
         .unwrap()
         .success();
     assert!(!alive, "the own-group grandchild survived");
+}
+
+#[test]
+fn current_but_unlinked_brew_keg_is_linked_again() {
+    // aegis-f0ne review: the Mac kept bobbin's keg installed but unlinked after
+    // an interrupted step, and a later `brew upgrade` preserved that. A current
+    // keg that brew reports as `linked_keg: null` is linked, not left off PATH.
+    let brew_body = r#"echo "$*" >> "$HOME/brew.log"
+linked() { if [ -f "$HOME/linked" ]; then printf '"0.32.0"'; else printf null; fi; }
+case "$*" in
+ "update --quiet") exit 0;;
+ "info --json=v2 scbrown/tap/bobbin")
+   printf '{"formulae":[{"full_name":"scbrown/tap/bobbin","tap":"scbrown/tap","pinned":false,"linked_keg":%s,"versions":{"stable":"0.32.0"},"installed":[{"version":"0.32.0"}]}]}' "$(linked)"; exit 0;;
+ "link scbrown/tap/bobbin") touch "$HOME/linked"; exit 0;;
+ info*) printf '{"formulae":[]}'; exit 0;;
+esac
+exit 2"#;
+    let root = tempfile::tempdir().unwrap();
+    let bin = root.path().join("bin");
+    fs::create_dir(&bin).unwrap();
+    install_fakes(root.path(), &bin);
+    command(root.path(), &bin)
+        .args(["plan", "--profile", "retrieval"])
+        .assert()
+        .success();
+    let fake = fs::read_to_string(bin.join("bobbin")).unwrap();
+    fs::write(
+        bin.join("bobbin"),
+        fake.replace("echo 'bobbin 0.30.0';", "echo 'bobbin 0.32.0';"),
+    )
+    .unwrap();
+    fake_tool(root.path(), "brew", brew_body);
+    let output = command(root.path(), &bin)
+        .env("CABOODLE_BREW", root.path().join("brew"))
+        .arg("update")
+        .output()
+        .unwrap();
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("bobbin: keg was not linked; relinked keg 0.32.0"),
+        "{stdout}{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(root.path().join("linked").exists());
+    let log = fs::read_to_string(root.path().join("brew.log")).unwrap();
+    assert_eq!(
+        log.lines()
+            .filter(|l| *l == "link scbrown/tap/bobbin")
+            .count(),
+        1,
+        "{log}"
+    );
+    assert!(!log.contains("upgrade scbrown/tap/bobbin"), "{log}");
 }
 
 #[test]

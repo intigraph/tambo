@@ -621,7 +621,7 @@ fn brew_update(
     adapter: &dyn crate::adapter::Adapter,
 ) -> Result<Option<String>> {
     use crate::package::{
-        brew_channel, brew_converge, brew_formula, brew_program, standing, Standing,
+        brew_channel, brew_converge, brew_formula, brew_program, brew_relink, standing, Standing,
     };
     if brew_formula(name).is_none() || brew_program().is_none() {
         return Ok(None);
@@ -667,6 +667,14 @@ fn brew_update(
                     installed,
                     channel.stable
                 );
+                if channel.unlinked {
+                    // aegis-f0ne: an interrupted brew step left the keg off PATH.
+                    println!(
+                        "{}: keg was not linked; {}",
+                        name.as_str(),
+                        brew_relink(name)
+                    );
+                }
                 return brew_version(adapter, &installed).map(Some);
             }
             Standing::Unknown => {
@@ -691,10 +699,17 @@ fn brew_update(
             brew_converge(name, false)?;
         }
     }
-    let receipt = brew_channel(name)?
-        .context("brew channel after delivery")?
-        .installed
-        .context("brew receipt after delivery")?;
+    let after = brew_channel(name)?.context("brew channel after delivery")?;
+    if after.unlinked {
+        // aegis-f0ne: `brew upgrade` keeps an unlinked keg unlinked, so a
+        // successful delivery can still leave the tool off PATH.
+        println!(
+            "{}: keg was not linked; {}",
+            name.as_str(),
+            brew_relink(name)
+        );
+    }
+    let receipt = after.installed.context("brew receipt after delivery")?;
     if !matches!(
         standing(&receipt, &stable),
         Standing::Current | Standing::Ahead
