@@ -317,6 +317,24 @@ enum Commands {
         #[arg(long)]
         probe_wrapper: Option<PathBuf>,
     },
+    /// Maintainers: re-pin a built-in tool (quipu, bobbin, yupana, desire-path
+    /// or camayoc) in builtins/pins.toml to its published release, re-deriving
+    /// each recorded digest and the tag's commit (review and merge the result)
+    #[cfg(unix)]
+    BumpBuiltin {
+        /// The built-in tool to re-pin
+        tool: String,
+        /// The pin file to rewrite
+        #[arg(long, default_value = "builtins/pins.toml")]
+        pins: PathBuf,
+        /// Release tag to pin instead of the latest stable release
+        #[arg(long)]
+        tag: Option<String>,
+        /// Run every execution of the new, unreviewed release as
+        /// `<wrapper> <program> <args...>`, e.g. a sandbox (aegis-uy26l7)
+        #[arg(long)]
+        probe_wrapper: Option<PathBuf>,
+    },
     /// Track a published binary release for one tool in an existing reviewed plan
     #[cfg(unix)]
     UpdateRelease {
@@ -1127,6 +1145,40 @@ fn main() -> Result<()> {
                 }
             }
         }
+        #[cfg(unix)]
+        Commands::BumpBuiltin {
+            tool,
+            pins,
+            tag,
+            probe_wrapper,
+        } => match caboodle::builtin_bump::bump(
+            &pins,
+            &tool,
+            tag.as_deref(),
+            probe_wrapper.as_deref(),
+        )? {
+            caboodle::builtin_bump::Outcome::Current { version } => {
+                println!(
+                    "{}: {tool} already pins {version}; nothing written",
+                    pins.display()
+                );
+            }
+            caboodle::builtin_bump::Outcome::Bumped {
+                from,
+                to,
+                revision,
+                digests,
+            } => {
+                println!("{}: {tool} {from} -> {to}", pins.display());
+                if let Some(revision) = revision {
+                    println!("  revision {revision}");
+                }
+                for (target, digest) in digests {
+                    println!("  {target} {digest}");
+                }
+                println!("review the diff and open a PR; it ships in the next Tambo release");
+            }
+        },
         #[cfg(unix)]
         Commands::UpdateRelease {
             plan,

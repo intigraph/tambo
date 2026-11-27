@@ -17,7 +17,8 @@ use crate::model::{QuipuFlavor, ToolName};
 mod manifest;
 mod quipu_alias;
 pub(crate) use manifest::{
-    find_program, identify_member, prove_release, release_target, single_program, stage, verify_at,
+    find_program, hermetic_via, identify_member, prove_release, release_target, single_program,
+    stage, verify_at,
 };
 
 pub trait Adapter {
@@ -354,7 +355,8 @@ struct Quipu {
     external: Option<(PathBuf, PathBuf)>,
 }
 
-const QUIPU_VERSION: &str = "0.9.0";
+const QUIPU_VERSION: crate::builtin_pins::Pin =
+    crate::builtin_pins::Pin(|| &crate::builtin_pins::pin("quipu").version);
 
 /// The reviewed feature set per flavor. Both flavors build the identical
 /// pinned revision — only the feature list differs — so choosing `lancedb`
@@ -741,7 +743,7 @@ fn quipu_install_args(flavor: QuipuFlavor) -> [&'static str; 8] {
         "install",
         "quipu-ai",
         "--version",
-        QUIPU_VERSION,
+        &QUIPU_VERSION,
         "--locked",
         "--features",
         quipu_features(flavor),
@@ -784,7 +786,8 @@ struct Yupana;
 struct DesirePath;
 
 struct Camayoc;
-const BOBBIN_VERSION: &str = "0.30.0";
+const BOBBIN_VERSION: crate::builtin_pins::Pin =
+    crate::builtin_pins::Pin(|| &crate::builtin_pins::pin("bobbin").version);
 
 impl Adapter for Camayoc {
     fn name(&self) -> ToolName {
@@ -971,7 +974,8 @@ impl Adapter for Bobbin {
     }
 }
 
-const YUPANA_VERSION: &str = "0.19.4";
+const YUPANA_VERSION: crate::builtin_pins::Pin =
+    crate::builtin_pins::Pin(|| &crate::builtin_pins::pin("yupana").version);
 
 impl Adapter for Yupana {
     fn name(&self) -> ToolName {
@@ -1034,22 +1038,18 @@ fn yupana_release_target() -> Result<&'static str> {
 
 // Digests of the published v0.19.4 archives, recomputed from the downloaded
 // archives and verified against SHA256SUMS and each .sha256.
-fn yupana_release_for(arch: &str, os: &str) -> Result<(&'static str, &'static str)> {
-    match (arch, os) {
-        ("x86_64", "linux") => Ok((
-            "x86_64-linux-gnu",
-            "3111542bbb3e1da6fe0f452cf729a7c3bdb0787f8b64cb87b92cde130e6a2db7",
-        )),
-        ("aarch64", "macos") => Ok((
-            "aarch64-apple-darwin",
-            "f3768ab3d661996c5ac7ec12d30c513687062823ae44b04d1d3229dc04c2b76b",
-        )),
-        ("x86_64", "macos") => Ok((
-            "x86_64-apple-darwin",
-            "01d0337ed3e26b0cc6ac833b41ba933ad8c852cb859249a9381b421881e86044",
-        )),
+pub(crate) fn yupana_release_for(arch: &str, os: &str) -> Result<(&'static str, &'static str)> {
+    let target = match (arch, os) {
+        ("x86_64", "linux") => "x86_64-linux-gnu",
+        ("aarch64", "macos") => "aarch64-apple-darwin",
+        ("x86_64", "macos") => "x86_64-apple-darwin",
         _ => bail!("Yupana v{YUPANA_VERSION} has no checksummed Tambo release for {arch}-{os}"),
-    }
+    };
+    let checksum = crate::builtin_pins::pin("yupana")
+        .sha256
+        .get(target)
+        .with_context(|| format!("Yupana v{YUPANA_VERSION} pins no digest for {target}"))?;
+    Ok((target, checksum))
 }
 
 fn fetch_yupana_release(target: &str, checksum: &str, root: &Path) -> Result<()> {
@@ -1130,8 +1130,20 @@ fn desire_path_program() -> Result<PathBuf> {
     Ok(PathBuf::from(home).join(".local/bin/dp"))
 }
 
-const DESIRE_PATH_REVISION: &str = "06812336fda6a6fd3fe4cbcae2d50a303e95a024";
-const DESIRE_PATH_VERSION: &str = "v0.10.0";
+const DESIRE_PATH_REVISION: crate::builtin_pins::Pin =
+    crate::builtin_pins::Pin(|| revision("desire-path"));
+/// The tag, `v<version>`: dp reports its version with the prefix.
+const DESIRE_PATH_VERSION: crate::builtin_pins::Pin = crate::builtin_pins::Pin(|| {
+    static TAG: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    TAG.get_or_init(|| crate::builtin_pins::pin("desire-path").tag_name())
+});
+
+fn revision(tool: &str) -> &'static str {
+    crate::builtin_pins::pin(tool)
+        .revision
+        .as_deref()
+        .unwrap_or_else(|| panic!("{tool} pins no revision"))
+}
 
 impl Adapter for DesirePath {
     fn name(&self) -> ToolName {
@@ -1259,7 +1271,7 @@ fn bobbin_result_count(stdout: &[u8]) -> Result<u64> {
         .context("bobbin search JSON omitted numeric count")
 }
 
-fn bobbin_release_target() -> Result<&'static str> {
+pub(crate) fn bobbin_release_target() -> Result<&'static str> {
     match (env::consts::ARCH, env::consts::OS) {
         ("x86_64", "linux") => Ok("x86_64-unknown-linux-gnu"),
         ("aarch64", "linux") => Ok("aarch64-unknown-linux-gnu"),
@@ -1365,13 +1377,15 @@ fn ensure_bobbin_link(link: &Path, target: &Path) -> Result<()> {
     Ok(())
 }
 
-// Official v0.1.11 source release; keep version, revision, release asset and
-// digest paired. Digest is the release's SHA256SUMS line, re-derived by hashing
-// the downloaded asset (aegis-mecge2.12).
-pub(crate) const CAMAYOC_VERSION: &str = "0.1.11";
-const CAMAYOC_REVISION: &str = "78e59e036605b974f958781e611fdacfef47964f";
-const CAMAYOC_ARCHIVE_SHA256: &str =
-    "51309e02f6b0563a18e7e297bed711a2bd962681d46d2eb33cedbc46f0b03571";
+// The reviewed source release; version, revision, release asset and digest
+// stay paired in builtins/pins.toml, moved only by `tambo bump-builtin camayoc`
+// (aegis-mecge2.10). The digest is the release's SHA256SUMS line, re-derived by
+// hashing the downloaded asset.
+pub(crate) const CAMAYOC_VERSION: crate::builtin_pins::Pin =
+    crate::builtin_pins::Pin(|| &crate::builtin_pins::pin("camayoc").version);
+const CAMAYOC_REVISION: crate::builtin_pins::Pin = crate::builtin_pins::Pin(|| revision("camayoc"));
+const CAMAYOC_ARCHIVE_SHA256: crate::builtin_pins::Pin =
+    crate::builtin_pins::Pin(|| &crate::builtin_pins::pin("camayoc").sha256["any"]);
 
 pub(crate) fn camayoc_root() -> Result<PathBuf> {
     if let Some(path) = env::var_os("CABOODLE_CAMAYOC_ROOT") {
@@ -1380,7 +1394,7 @@ pub(crate) fn camayoc_root() -> Result<PathBuf> {
     let home = env::var_os("HOME").context("HOME is required to install Camayoc")?;
     Ok(PathBuf::from(home)
         .join(".local/share/caboodle/camayoc")
-        .join(CAMAYOC_REVISION))
+        .join(&*CAMAYOC_REVISION))
 }
 
 fn install_camayoc_bundle() -> Result<()> {
@@ -1457,7 +1471,7 @@ pub fn camayoc_cli_check(path: Option<&OsStr>, home: Option<&Path>) -> Result<Ve
                 runs.display()
             ),
         };
-        if camayoc_cli_version(&reported) != Some(CAMAYOC_VERSION) {
+        if camayoc_cli_version(&reported) != Some(&*CAMAYOC_VERSION) {
             bail!(
                 "camayoc NOT converged: {} reports `{}`, but the reviewed Camayoc \
                  release is v{CAMAYOC_VERSION}. Tambo installs the Camayoc bundle, not this CLI; \
@@ -2027,9 +2041,11 @@ mod tests {
         let home = tempfile::tempdir().unwrap();
         let uv_bin = home.path().join(".local/bin");
         fs::create_dir_all(&uv_bin).unwrap();
-        // The exact line the released v0.1.11 CLI prints for --version.
-        fake_camayoc(&uv_bin, "#!/bin/sh\necho 'camayoc 0.1.11'\n");
-        assert_eq!(super::CAMAYOC_VERSION, "0.1.11");
+        // The exact line the released CLI prints for --version, at the pin.
+        fake_camayoc(
+            &uv_bin,
+            &format!("#!/bin/sh\necho 'camayoc {}'\n", super::CAMAYOC_VERSION),
+        );
         let runs = super::camayoc_cli_check(Some(uv_bin.as_os_str()), Some(home.path())).unwrap();
         assert_eq!(runs, vec![uv_bin.join("camayoc")]);
     }

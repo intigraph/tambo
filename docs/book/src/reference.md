@@ -130,6 +130,7 @@ The table covers the current source tree; published binaries may lag new command
 | `update-release` | Unix release update; `--tool`, `--check`, `--plan`, `--state`. Quipu tracks a reviewed paired archive pin; Camayoc/Shantytown refuse without checksummed publications. |
 | `update-self` | Unix self-update; `--check`, `--state`. |
 | `bump-member` | Maintainers: re-pin a `members/*.toml` to its published release; manifest argument, `--tag`, `--probe-wrapper`. |
+| `bump-builtin` | Maintainers: re-pin a built-in tool (`quipu`, `bobbin`, `yupana`, `desire-path`, `camayoc`) in `builtins/pins.toml` to its published release, re-deriving recorded digests and the tag commit; tool argument, `--pins`, `--tag`, `--probe-wrapper`.
 | `project-settings` | Rig registration; `--root`, `--agent`, `--registry`; or `--policy-only` with `--plan`, `--output`. |
 | `verify-questions` | Execute intent questions; `--plan`, `--db`. |
 | `render-observability` | Generate reviewable artifacts; `--plan`, `--targets`, `--output`. |

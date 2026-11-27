@@ -20,16 +20,23 @@ use crate::members::Manifest;
 use crate::release_update::{checksum, hash, stable_version};
 
 #[derive(Deserialize)]
-struct Release {
-    tag_name: String,
+pub(crate) struct Release {
+    pub(crate) tag_name: String,
     draft: bool,
     prerelease: bool,
-    assets: Vec<Asset>,
+    pub(crate) assets: Vec<Asset>,
 }
 
 #[derive(Deserialize)]
-struct Asset {
-    name: String,
+pub(crate) struct Asset {
+    pub(crate) name: String,
+}
+
+impl Release {
+    /// Exactly one asset is named `name`.
+    pub(crate) fn has(&self, name: &str) -> bool {
+        self.assets.iter().filter(|a| a.name == name).count() == 1
+    }
 }
 
 /// What a bump did.
@@ -47,18 +54,19 @@ pub enum Outcome {
 
 /// The version a release `tag` carries under the manifest's tag template.
 fn version_of(manifest: &Manifest, tag: &str) -> Result<String> {
-    let (before, after) = manifest
-        .tag
+    version_from_tag(&manifest.tag, tag)
+}
+
+/// The version a release `tag` carries under the tag `template`.
+pub(crate) fn version_from_tag(template: &str, tag: &str) -> Result<String> {
+    let (before, after) = template
         .split_once("{version}")
         .context("tag template has no {version}")?;
     let version = tag
         .strip_prefix(before)
         .and_then(|rest| rest.strip_suffix(after))
         .with_context(|| {
-            format!(
-                "release tag {tag:?} does not match the manifest's tag template {:?}",
-                manifest.tag
-            )
+            format!("release tag {tag:?} does not match the manifest's tag template {template:?}")
         })?;
     // A tag `vv1.2.3` under `v{version}` would otherwise record `v1.2.3`
     // (malcolm N2): the recovered version must itself start with a digit.
@@ -70,6 +78,11 @@ fn version_of(manifest: &Manifest, tag: &str) -> Result<String> {
 }
 
 fn release(manifest: &Manifest, tag: Option<&str>) -> Result<Release> {
+    published_release(&manifest.repo, tag)
+}
+
+/// The latest stable release of `repo`, or its release `tag`.
+pub(crate) fn published_release(repo: &str, tag: Option<&str>) -> Result<Release> {
     let path = match tag {
         Some(tag) => {
             if tag.is_empty()
@@ -84,8 +97,7 @@ fn release(manifest: &Manifest, tag: Option<&str>) -> Result<Release> {
         None => "latest".to_owned(),
     };
     let raw = crate::release_update::release_metadata(&format!(
-        "https://api.github.com/repos/{}/releases/{path}",
-        manifest.repo
+        "https://api.github.com/repos/{repo}/releases/{path}"
     ))?;
     let release: Release = serde_json::from_str(&raw).context("parse published release")?;
     if release.draft || release.prerelease {
@@ -118,7 +130,7 @@ pub fn bump(path: &Path, tag: Option<&str>, probe_wrapper: Option<&Path>) -> Res
     }
     let mut next = current.clone();
     next.version = version.clone();
-    let has = |name: &str| release.assets.iter().filter(|a| a.name == name).count() == 1;
+    let has = |name: &str| release.has(name);
     if !has(&next.sums_asset) {
         bail!(
             "{}: release {} lacks a unique {}",
