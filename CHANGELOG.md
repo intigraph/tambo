@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.17.1](https://github.com/intigraph/tambo/compare/v0.17.0...v0.17.1) (2026-11-27)
+
+
+### Bug Fixes
+
+* **camayoc:** pin v0.1.11 and report a stale camayoc CLI as NOT converged (aegis-mecge2.12) ([f2861eb](https://github.com/intigraph/tambo/commit/f2861eb58632d44785d575090c201ab1705a0b9c))
+* **camayoc:** pin v0.1.11 and report a stale camayoc CLI as NOT converged (aegis-mecge2.12) ([4ea513d](https://github.com/intigraph/tambo/commit/4ea513dcc0d5833e515f34b67aa5116e5ab7950a))
+* **camayoc:** probe ~/.local/bin off PATH and defer the stale-CLI failure in update (aegis-mecge2.12) ([5aedaed](https://github.com/intigraph/tambo/commit/5aedaed4b2190044e84cc3de45978c5741af5c72))
+* **share:** surface the failing tool's stderr when a publish command fails ([#307](https://github.com/intigraph/tambo/issues/307)) ([1a709e5](https://github.com/intigraph/tambo/commit/1a709e591f83a0eca37df40dde0b1ac25d042893))
+* **yupana:** pin reviewed Yupana to released v0.19.4 (aegis-r1s) ([321e088](https://github.com/intigraph/tambo/commit/321e088a46dff5451c73a0599ce44207b86dc6cd))
+* **yupana:** pin reviewed Yupana to released v0.19.4 (aegis-r1s) ([3ebe37f](https://github.com/intigraph/tambo/commit/3ebe37fb3496d6022ef04aae71ca467a8d6f1826))
+
 ## [0.17.0](https://github.com/intigraph/tambo/compare/v0.16.0...v0.17.0) (2026-11-26)
 
 
