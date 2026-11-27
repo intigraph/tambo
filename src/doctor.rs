@@ -24,6 +24,12 @@ use crate::adapter::which_all;
 #[path = "doctor_yupana.rs"]
 mod yupana_guard;
 
+/// The per-tenant Yupana guard findings `tambo doctor` prints, for the
+/// install/update read-back (aegis-r1s WANT 1).
+pub(crate) fn yupana_guard_findings(path: Option<&std::ffi::OsStr>) -> Vec<Finding> {
+    yupana_guard::check(path)
+}
+
 use crate::{
     adapter,
     model::{CrewMode, Plan, Profile, QuipuFlavor, State, ToolName},

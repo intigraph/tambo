@@ -34,8 +34,8 @@
       "kind": "interface",
       "source": "src/model.rs",
       "subject": "http://aegis.gastown.local/ontology/code/tambo/src%2Fmodel.rs",
-      "summary": "The serialized Plan schema defines profiles, ordered tools, optional shares and destination database, intended-use contracts and host exclusions. Unknown plan fields are rejected.",
-      "source_sha256": "f381cb75867932d242fe1121c2cb6f754f0cc38499ee2075e09b466b25ff57e1",
+      "summary": "The serialized Plan schema defines profiles, ordered tools, optional shares and destination database, intended-use contracts, host exclusions and the reviewed Yupana guard mode (off only with a recorded reason). Unknown plan fields are rejected.",
+      "source_sha256": "21f345df78ef539aad1cadb882ef98cb06cf01f40e2865985d6e75bafadfa8af",
       "properties": {
         "interfaceKind": "file-format",
         "publicName": "caboodle-plan.toml Plan and JSON State"

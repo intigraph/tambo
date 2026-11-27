@@ -271,8 +271,51 @@ fn run(args: &[&str], tenant: Option<&str>) -> Option<String> {
         .then(|| String::from_utf8_lossy(&out.stdout).into_owned())
 }
 
+/// `yupana status` never claims acceptance (it reports at best
+/// `configured_acceptance_unproven`). Tambo proves it with an authenticated
+/// Quipu read; fold that proof into the per-tenant auth findings.
+pub(super) fn apply_auth_proof(findings: &mut [Finding], proof: &Result<String, String>) {
+    for finding in findings
+        .iter_mut()
+        .filter(|f| f.level == Level::Warn && f.subject.ends_with(" quipu auth"))
+    {
+        match proof {
+            Ok(how) => {
+                finding.level = Level::Ok;
+                finding.detail = format!(
+                    "proven: Tambo's authenticated Quipu read was accepted ({how}); yupana itself reports {}",
+                    finding.detail.split(':').next().unwrap_or("unproven")
+                );
+            }
+            Err(why) => {
+                finding.detail = format!("{}; Tambo's proof failed too: {why}", finding.detail)
+            }
+        }
+    }
+}
+
+fn auth_proof() -> Result<String, String> {
+    let endpoint = crate::yupana_converge::configured_quipu_endpoint().ok_or_else(|| {
+        "no [yupana.quipu].endpoint in the bobbin config and no QUIPU_SERVER".to_owned()
+    })?;
+    crate::quipu_credential::verify(&endpoint)
+        .map(|source| format!("{endpoint}, credential {source}"))
+        .map_err(|error| format!("{endpoint}: {error:#}"))
+}
+
 /// Live check: run yupana for each tenant.
 pub(super) fn check(path: Option<&std::ffi::OsStr>) -> Vec<Finding> {
+    let mut findings = check_tenants(path);
+    if findings
+        .iter()
+        .any(|f| f.level == Level::Warn && f.subject.ends_with(" quipu auth"))
+    {
+        apply_auth_proof(&mut findings, &auth_proof());
+    }
+    findings
+}
+
+fn check_tenants(path: Option<&std::ffi::OsStr>) -> Vec<Finding> {
     if crate::adapter::which_all("yupana", path).is_empty() {
         return vec![unknown("yupana guard", "yupana is not on PATH")];
     }

@@ -312,6 +312,9 @@ pub fn apply(plan: &Plan, state_path: &Path, skip_install: bool) -> Result<State
     }
     load_vocabulary(plan)?;
     consume_shares(plan, &mut state, state_path)?;
+    // Last, so st (crew) and every other step have run: leave Yupana guarding
+    // as the plan records, not merely installed (aegis-r1s WANT 1).
+    crate::yupana_converge::converge(plan).context("yupana guard convergence step")?;
     Ok(state)
 }
 
@@ -877,6 +880,7 @@ pub fn update(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
             }
         }
     }
+    crate::yupana_converge::converge(plan).context("yupana guard convergence step")?;
     Ok(state)
 }
 

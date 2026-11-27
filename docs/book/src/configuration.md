@@ -25,6 +25,10 @@ The plan's schema rejects unknown keys.
 | `intent` | Intended-use contract described below. |
 | `embedding_model.destination` | Directory for the model artifacts. |
 | `embedding_model.artifacts` | Array of entries, each with `name`, HTTPS `url` and `sha256`. |
+| `yupana_guard.mode` | Reviewed Yupana edit-guard mode: `off`, `advise` or `enforce`. When set, `tambo install` and `tambo update` converge Yupana: they write `[yupana.policy].mode` to Bobbin's config, install Yupana's hooks for every present harness (through st when it is present), refresh the Quipu policy projection, prove the Quipu credential, and read the guard back as `tambo doctor` does. Any shortfall fails the command. |
+| `yupana_guard.off_reason` | Required with `mode = "off"` and refused otherwise, so turning the guard off is always a recorded choice. |
+
+A plan that installs Yupana without `[yupana_guard]` leaves the guard state alone and prints a warning saying so.
 
 Crew ownership fields must match the selected mode. Do not hand-edit them into
 an alternative routing scheme. [Profiles](profiles.md) explains the contracts.
