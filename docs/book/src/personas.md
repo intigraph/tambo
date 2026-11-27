@@ -86,7 +86,7 @@ The `everything` profile is a broader tool selection, not an all-services
 production deployment. Check the generated plan and each tool's proof boundary.
 
 Next: [the stack and its proofs](stack.md), [profiles](profiles.md),
-[Camayoc's delivery catalog](https://github.com/intigraph/camayoc/blob/main/catalog/README.md).
+[Camayoc's delivery catalog](https://github.com/intigraph/camayoc/tree/main/catalog).
 
 ## An individual organizing projects and decisions
 

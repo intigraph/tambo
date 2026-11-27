@@ -181,3 +181,35 @@ fn tenants_default_to_yupanas_own() {
         vec![Some("worker".to_owned()), Some("sattler".to_owned())]
     );
 }
+
+#[test]
+fn tambo_auth_proof_is_a_host_line_and_never_rewrites_a_tenant_line() {
+    let proven = host_auth_finding(&Ok("http://quipu.svc, credential file".to_owned()));
+    assert_eq!(proven.subject, HOST_AUTH_SUBJECT);
+    assert_eq!(proven.level, Level::Ok, "{proven:#?}");
+    assert!(
+        proven.detail.starts_with("proven at host level:"),
+        "{}",
+        proven.detail
+    );
+    assert!(proven.detail.contains("not a tenant that resolves another"));
+
+    let failed = host_auth_finding(&Err("HTTP 401".to_owned()));
+    assert_eq!(failed.level, Level::Warn);
+    assert!(failed.detail.contains("UNPROVEN") && failed.detail.contains("HTTP 401"));
+
+    // The tenant's own line is unchanged by any proof: still warn, still
+    // yupana's own state.
+    let tenant = guard_findings(
+        Some("worker"),
+        &status("enforce", USER_CONFIG, "configured_acceptance_unproven"),
+        Some(HOOKS_BOTH),
+        &everywhere,
+    );
+    let auth = tenant
+        .iter()
+        .find(|f| f.subject.ends_with(" quipu auth"))
+        .unwrap();
+    assert_eq!(auth.level, Level::Warn);
+    assert!(auth.detail.starts_with("configured_acceptance_unproven"));
+}

@@ -322,6 +322,13 @@ pub fn apply(plan: &Plan, state_path: &Path, skip_install: bool) -> Result<State
     }
     load_vocabulary(plan)?;
     consume_shares(plan, &mut state, state_path)?;
+    // Last, so st (crew) and every other step have run: leave Yupana guarding
+    // as the plan records, not merely installed (aegis-r1s WANT 1). This runs
+    // under --skip-install too, on purpose: that flag means "the binaries come
+    // from an external package manager", not "leave the host unconfigured",
+    // exactly like the hook-bundle registration above. Converging writes only
+    // configuration (the bobbin config's mode, Yupana's hooks, the projection).
+    crate::yupana_converge::converge(plan).context("yupana guard convergence step")?;
     Ok(state)
 }
 
@@ -921,9 +928,14 @@ pub fn update(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
             }
         }
     }
+    // Converge Yupana even when the camayoc CLI check failed, so a stale
+    // camayoc does not also leave the edit guard unconverged; the deferred
+    // camayoc failure still wins the exit.
+    let converged = crate::yupana_converge::converge(plan).context("yupana guard convergence step");
     if let Some(error) = camayoc_cli {
         return Err(error);
     }
+    converged?;
     Ok(state)
 }
 

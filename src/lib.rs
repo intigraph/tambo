@@ -47,3 +47,4 @@ pub mod quipu_mcp;
 #[cfg(all(test, unix))]
 mod test_exec;
 pub mod vocabulary;
+pub mod yupana_converge;

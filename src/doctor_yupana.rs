@@ -271,8 +271,58 @@ fn run(args: &[&str], tenant: Option<&str>) -> Option<String> {
         .then(|| String::from_utf8_lossy(&out.stdout).into_owned())
 }
 
-/// Live check: run yupana for each tenant.
+/// Subject of Tambo's own Quipu credential proof. It is a HOST-level line:
+/// one authenticated read with the credential this process resolves
+/// (QUIPU_AUTH_TOKEN > QUIPU_AUTH_TOKEN_FILE > ~/.config/quipu/token) against
+/// the endpoint the bobbin config names. It does not prove any tenant whose
+/// yupana resolves another credential or endpoint, so it never rewrites a
+/// tenant's own `quipu auth` line.
+pub(crate) const HOST_AUTH_SUBJECT: &str = "yupana quipu auth (host)";
+
+/// `yupana status` never claims acceptance (it reports at best
+/// `configured_acceptance_unproven`). Tambo's host-level proof is reported as
+/// its own finding beside the tenant lines, which stay `warn`.
+pub(super) fn host_auth_finding(proof: &Result<String, String>) -> Finding {
+    match proof {
+        Ok(how) => Finding::new(
+            Level::Ok,
+            HOST_AUTH_SUBJECT,
+            format!(
+                "proven at host level: Tambo's authenticated Quipu read was accepted ({how}); \
+                 this covers this host's credential and endpoint only, not a tenant that resolves another"
+            ),
+        ),
+        Err(why) => Finding::new(
+            Level::Warn,
+            HOST_AUTH_SUBJECT,
+            format!("UNPROVEN: Tambo's authenticated Quipu read failed: {why}"),
+        ),
+    }
+}
+
+fn auth_proof() -> Result<String, String> {
+    let endpoint = crate::yupana_converge::configured_quipu_endpoint().ok_or_else(|| {
+        "no [yupana.quipu].endpoint in the bobbin config and no QUIPU_SERVER".to_owned()
+    })?;
+    crate::quipu_credential::verify(&endpoint)
+        .map(|source| format!("{endpoint}, credential {source}"))
+        .map_err(|error| format!("{endpoint}: {error:#}"))
+}
+
+/// Live check: run yupana for each tenant, then (when any tenant's auth is
+/// unproven) add Tambo's host-level proof as a separate line.
 pub(super) fn check(path: Option<&std::ffi::OsStr>) -> Vec<Finding> {
+    let mut findings = check_tenants(path);
+    if findings
+        .iter()
+        .any(|f| f.level == Level::Warn && f.subject.ends_with(" quipu auth"))
+    {
+        findings.push(host_auth_finding(&auth_proof()));
+    }
+    findings
+}
+
+fn check_tenants(path: Option<&std::ffi::OsStr>) -> Vec<Finding> {
     if crate::adapter::which_all("yupana", path).is_empty() {
         return vec![unknown("yupana guard", "yupana is not on PATH")];
     }

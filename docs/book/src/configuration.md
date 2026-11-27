@@ -25,6 +25,16 @@ The plan's schema rejects unknown keys.
 | `intent` | Intended-use contract described below. |
 | `embedding_model.destination` | Directory for the model artifacts. |
 | `embedding_model.artifacts` | Array of entries, each with `name`, HTTPS `url` and `sha256`. |
+| `yupana_guard.mode` | Reviewed Yupana edit-guard mode: `off`, `advise` or `enforce`. When set, `tambo install` and `tambo update` converge Yupana: they write `[yupana.policy].mode` to Bobbin's config, install Yupana's hooks for every present harness (through st when it is present), refresh the Quipu policy projection, prove the Quipu credential, and read the guard back as `tambo doctor` does. Any shortfall fails the command; the mode it already wrote stays written, and the error says which steps are missing. |
+| `yupana_guard.off_reason` | Required with `mode = "off"` and refused otherwise, so turning the guard off is always a recorded choice. |
+
+A plan that installs Yupana without `[yupana_guard]` leaves the guard state alone and prints a warning saying so. `tambo apply --skip-install` converges the guard too: it writes configuration only, not binaries. A host profile that excludes Yupana drops `[yupana_guard]` for that host and says so. The mode write keeps a symlinked Bobbin config as a link and keeps the file's permissions.
+
+Yupana never reports a tenant's Quipu auth as accepted, so Tambo proves the
+credential itself and reports it as a separate `yupana quipu auth (host)` line.
+That proof covers this host's credential and endpoint only. Each tenant's own
+`quipu auth` line stays a warning; install and update tolerate it only beside a
+proven host line.
 
 Crew ownership fields must match the selected mode. Do not hand-edit them into
 an alternative routing scheme. [Profiles](profiles.md) explains the contracts.

@@ -8,7 +8,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/tambo/README.md",
       "summary": "Tambo installs and verifies the knowledge-tool stack from a reviewable plan. The transition retains the caboodle command and existing plan/state paths; publication and installed verification remain separate.",
-      "source_sha256": "2f0fa6066a5d0401c3a19f15b3be6544a5296f6ac17c5e99b855d726b0cc7422",
+      "source_sha256": "99c350dd881c928a69d796e5deeeb709c3e95f6f5aea6d89c37975a0c57c0c45",
       "type": "Concept"
     },
     {
@@ -34,8 +34,8 @@
       "kind": "interface",
       "source": "src/model.rs",
       "subject": "http://aegis.gastown.local/ontology/code/tambo/src%2Fmodel.rs",
-      "summary": "The serialized Plan schema defines profiles, ordered tools, optional shares and destination database, intended-use contracts and host exclusions. Unknown plan fields are rejected.",
-      "source_sha256": "f381cb75867932d242fe1121c2cb6f754f0cc38499ee2075e09b466b25ff57e1",
+      "summary": "The serialized Plan schema defines profiles, ordered tools, optional shares and destination database, intended-use contracts, host exclusions and the reviewed Yupana guard mode (off only with a recorded reason). Unknown plan fields are rejected.",
+      "source_sha256": "b509d04dc2a4caee1434e837261b78e10cbed616d40f3d1ba9db02f3646b8b93",
       "properties": {
         "interfaceKind": "file-format",
         "publicName": "caboodle-plan.toml Plan and JSON State"
@@ -72,7 +72,7 @@
       "source": "README.md",
       "subject": "http://aegis.gastown.local/ontology/doc/tambo/README.md",
       "summary": "Start with the local single-user quickstart and its verified-tool success checks before selecting remote service mode.",
-      "source_sha256": "2f0fa6066a5d0401c3a19f15b3be6544a5296f6ac17c5e99b855d726b0cc7422",
+      "source_sha256": "99c350dd881c928a69d796e5deeeb709c3e95f6f5aea6d89c37975a0c57c0c45",
       "properties": {
         "startHereOrder": 1,
         "glossaryTerm": "https://scbrown.github.io/quechua/ns#Tool"
@@ -83,7 +83,7 @@
       "source": "docs/book/src/configuration.md",
       "subject": "http://aegis.gastown.local/ontology/doc/tambo/docs%2Fbook%2Fsrc%2Fconfiguration.md",
       "summary": "Read the TOML plan, JSON progress state and explicit remote credential boundaries before changing installation targets or endpoint configuration.",
-      "source_sha256": "d3c1787b1dc8f169c709a30be52b6f3929d5e08251c624df0032f62f214b72eb",
+      "source_sha256": "26a9bd8b2cc3b01e2a33063ff248efa6d3356836838a7d9d93fc0c6179d5a11a",
       "properties": {
         "startHereOrder": 2
       }

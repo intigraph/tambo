@@ -311,6 +311,54 @@ pub struct Plan {
     /// Per-host exclusions selected with `--host-profile` (aegis-fv4).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub host_profiles: Vec<HostProfile>,
+    /// The reviewed Yupana edit-guard posture for this host (aegis-r1s WANT 1).
+    /// When set, install and update converge Yupana to it: policy mode written
+    /// to the bobbin config, hooks installed for every present harness, the
+    /// Quipu policy projection refreshed and the Quipu credential proven.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub yupana_guard: Option<YupanaGuard>,
+}
+
+/// Yupana's `[yupana.policy].mode` values.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum YupanaMode {
+    Off,
+    Advise,
+    Enforce,
+}
+
+impl YupanaMode {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Off => "off",
+            Self::Advise => "advise",
+            Self::Enforce => "enforce",
+        }
+    }
+}
+
+/// The plan's recorded Yupana guard choice. `off` is allowed only with a
+/// reason, so "not guarding" is always an explicit, recorded choice.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct YupanaGuard {
+    pub mode: YupanaMode,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub off_reason: Option<String>,
+}
+
+impl YupanaGuard {
+    fn validate(&self) -> Result<()> {
+        match (self.mode, self.off_reason.as_deref().map(str::trim)) {
+            (YupanaMode::Off, None | Some("")) => bail!(
+                "[yupana_guard] mode = \"off\" requires a non-empty off_reason: not guarding must be an explicit recorded choice"
+            ),
+            (YupanaMode::Off, Some(reason)) => require_safe_text("yupana_guard.off_reason", reason),
+            (_, Some(_)) => bail!("[yupana_guard] off_reason is only valid with mode = \"off\""),
+            (_, None) => Ok(()),
+        }
+    }
 }
 
 /// A host on which another lane owns part of the plan. Selecting it drops
@@ -580,6 +628,7 @@ impl Plan {
             embedding_model: None,
             quipu_mcp: None,
             host_profiles: Vec::new(),
+            yupana_guard: None,
         }
     }
 
@@ -649,6 +698,12 @@ impl Plan {
                 bail!("[quipu_mcp] requires a profile that installs quipu");
             }
             mcp.validate()?;
+        }
+        if let Some(guard) = &self.yupana_guard {
+            if !self.tools.contains(&ToolName::Yupana) {
+                bail!("[yupana_guard] requires a profile that installs yupana");
+            }
+            guard.validate()?;
         }
         match (self.profile, &self.crew) {
             (Profile::Crew, Some(crew)) => crew.validate()?,
@@ -735,6 +790,14 @@ impl Plan {
                     entry.owner
                 ));
             }
+        }
+        // The guard posture belongs to Yupana; a host that does not install
+        // Yupana has no guard for Tambo to converge, so the selected plan must
+        // not carry one into validate() (review finding on tambo#309).
+        if !self.tools.contains(&ToolName::Yupana) && self.yupana_guard.take().is_some() {
+            excluded.push(format!(
+                "yupana_guard: NOT APPLIED on host profile {host}; yupana is excluded there"
+            ));
         }
         Ok((self, excluded))
     }
@@ -856,7 +919,9 @@ mod self_test_question_tests {
 
 #[cfg(test)]
 mod host_profile_tests {
-    use super::{CrewMode, ExcludedTool, HostProfile, Plan, Profile, ToolName};
+    use super::{
+        CrewMode, ExcludedTool, HostProfile, Plan, Profile, ToolName, YupanaGuard, YupanaMode,
+    };
 
     fn plan() -> Plan {
         let mut plan = Plan::for_profile(Profile::Everything);
@@ -867,6 +932,49 @@ mod host_profile_tests {
             excluded_tools: Vec::new(),
         }];
         plan
+    }
+
+    #[test]
+    fn yupana_guard_off_needs_a_reason_and_round_trips_through_toml() {
+        let mut plan = plan();
+        plan.yupana_guard = Some(YupanaGuard {
+            mode: YupanaMode::Off,
+            off_reason: None,
+        });
+        assert!(plan
+            .validate()
+            .unwrap_err()
+            .to_string()
+            .contains("off_reason"));
+        plan.yupana_guard = Some(YupanaGuard {
+            mode: YupanaMode::Enforce,
+            off_reason: Some("why".into()),
+        });
+        assert!(plan.validate().is_err());
+        plan.yupana_guard = Some(YupanaGuard {
+            mode: YupanaMode::Off,
+            off_reason: Some("lab host without agents".into()),
+        });
+        plan.validate().unwrap();
+        let body = toml::to_string_pretty(&plan).unwrap();
+        assert!(body.contains("[yupana_guard]"), "{body}");
+        let back: Plan = toml::from_str(&body).unwrap();
+        assert_eq!(back.yupana_guard, plan.yupana_guard);
+        let parsed: YupanaGuard = toml::from_str("mode = \"enforce\"\n").unwrap();
+        assert_eq!(parsed.mode, YupanaMode::Enforce);
+        assert!(toml::from_str::<YupanaGuard>("mode = \"block\"\n").is_err());
+    }
+
+    #[test]
+    fn yupana_guard_requires_yupana_in_the_plan() {
+        let mut plan = Plan::for_profile(Profile::Everything);
+        plan.crew = Plan::for_crew(CrewMode::Both).crew;
+        plan.tools.retain(|tool| *tool != ToolName::Yupana);
+        plan.yupana_guard = Some(YupanaGuard {
+            mode: YupanaMode::Advise,
+            off_reason: None,
+        });
+        assert!(plan.validate().is_err());
     }
 
     #[test]
@@ -892,6 +1000,44 @@ mod host_profile_tests {
         selected.validate().unwrap();
         let (unchanged, _) = excluding.for_host(None).unwrap();
         assert!(unchanged.tools.contains(&tool));
+    }
+
+    #[test]
+    fn a_selected_plan_without_yupana_never_carries_the_guard() {
+        let mut excluding = plan();
+        assert!(excluding.tools.contains(&ToolName::Yupana));
+        excluding.yupana_guard = Some(YupanaGuard {
+            mode: YupanaMode::Enforce,
+            off_reason: None,
+        });
+        excluding.host_profiles[0].excluded_tools = vec![ExcludedTool {
+            tool: ToolName::Yupana,
+            owner: "its own release lane".into(),
+        }];
+        // Today a built-in cannot be excluded, so the full plan is refused
+        // before any host is selected; review of tambo#309 asked that the
+        // guard never outlive Yupana in a selected plan regardless.
+        let refused = excluding.validate().unwrap_err().to_string();
+        assert!(
+            refused.contains("must be a selected stack member"),
+            "{refused}"
+        );
+        let (selected, lines) = excluding.clone().for_host(Some("mac")).unwrap();
+        assert!(!selected.tools.contains(&ToolName::Yupana));
+        assert!(selected.yupana_guard.is_none());
+        assert!(
+            lines
+                .iter()
+                .any(|l| l.starts_with("yupana_guard: NOT APPLIED")),
+            "{lines:?}"
+        );
+        // Whatever else refuses a plan without a built-in, it is never the
+        // guard: the profile check names the real problem.
+        let refused = selected.validate().unwrap_err().to_string();
+        assert!(!refused.contains("[yupana_guard]"), "{refused}");
+        // Without the host profile the guard stays.
+        let (unchanged, _) = excluding.for_host(None).unwrap();
+        assert!(unchanged.yupana_guard.is_some());
     }
 
     #[test]
