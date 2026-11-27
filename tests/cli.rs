@@ -23,6 +23,16 @@ fn p(text: &str) -> String {
         .replace("@DP@", &get("desire-path", "version"))
         .replace("@BOBBIN@", &get("bobbin", "version"))
         .replace("@YUPANA@", &get("yupana", "version"));
+    // `@BOBBIN_NEXT@`: the next patch release after the bobbin pin.
+    let next = {
+        let mut parts: Vec<u64> = get("bobbin", "version")
+            .split('.')
+            .map(|n| n.parse().unwrap())
+            .collect();
+        parts[2] += 1;
+        format!("{}.{}.{}", parts[0], parts[1], parts[2])
+    };
+    let text = text.replace("@BOBBIN_NEXT@", &next);
     // `@BOBBIN+N@`: N minor versions above the bobbin pin, for tests that need
     // a release ahead of whatever is pinned.
     let bobbin = get("bobbin", "version");
@@ -2146,16 +2156,16 @@ fn release_fixture(root: &Path, bin: &Path, broken: bool, bad_checksum: bool) {
     let stage = root.join("release-stage");
     fs::create_dir(&stage).unwrap();
     let body = if broken {
-        "#!/bin/sh\nif [ \"$1\" = --version ]; then echo 'bobbin 0.30.1'; exit 0; fi\nexit 9\n"
+        p("#!/bin/sh\nif [ \"$1\" = --version ]; then echo 'bobbin @BOBBIN_NEXT@'; exit 0; fi\nexit 9\n").as_str()
             .to_owned()
     } else {
         fs::read_to_string(bin.join("bobbin"))
             .unwrap()
-            .replace(p("@BOBBIN@").as_str(), "0.30.1")
+            .replace(p("@BOBBIN@").as_str(), p("@BOBBIN_NEXT@").as_str())
     };
     fs::write(stage.join("bobbin"), body).unwrap();
     fs::set_permissions(stage.join("bobbin"), fs::Permissions::from_mode(0o755)).unwrap();
-    let archive = root.join("bobbin-v0.30.1-x86_64-unknown-linux-gnu.tar.gz");
+    let archive = root.join(p("bobbin-v@BOBBIN_NEXT@-x86_64-unknown-linux-gnu.tar.gz").as_str());
     assert!(std::process::Command::new("tar")
         .args(["-czf"])
         .arg(&archive)
@@ -2173,10 +2183,12 @@ fn release_fixture(root: &Path, bin: &Path, broken: bool, bad_checksum: bool) {
     };
     fs::write(
         root.join("SHA256SUMS.txt"),
-        format!("{digest}  bobbin-v0.30.1-x86_64-unknown-linux-gnu.tar.gz\n"),
+        p(&format!(
+            "{digest}  bobbin-v@BOBBIN_NEXT@-x86_64-unknown-linux-gnu.tar.gz\n"
+        )),
     )
     .unwrap();
-    fs::write(root.join("latest.json"), r#"{"tag_name":"v0.30.1","draft":false,"prerelease":false,"assets":[{"name":"bobbin-v0.30.1-x86_64-unknown-linux-gnu.tar.gz"},{"name":"SHA256SUMS.txt"}]}"#).unwrap();
+    fs::write(root.join("latest.json"), p(r#"{"tag_name":"v@BOBBIN_NEXT@","draft":false,"prerelease":false,"assets":[{"name":"bobbin-v@BOBBIN_NEXT@-x86_64-unknown-linux-gnu.tar.gz"},{"name":"SHA256SUMS.txt"}]}"#).as_str()).unwrap();
     fake_tool(
         bin,
         "curl",
@@ -2192,7 +2204,7 @@ done
 case "$url" in
   */releases/latest) cat "$HOME/latest.json" ;;
   */SHA256SUMS.txt) cp "$HOME/SHA256SUMS.txt" "$output" ;;
-  */bobbin-v0.30.1-x86_64-unknown-linux-gnu.tar.gz) cp "$HOME/bobbin-v0.30.1-x86_64-unknown-linux-gnu.tar.gz" "$output" ;;
+  */bobbin-v@BOBBIN_NEXT@-x86_64-unknown-linux-gnu.tar.gz) cp "$HOME/bobbin-v@BOBBIN_NEXT@-x86_64-unknown-linux-gnu.tar.gz" "$output" ;;
   *) echo "unexpected URL" >&2; exit 99 ;;
 esac
 "#,
@@ -2215,9 +2227,11 @@ fn published_release_update_ignores_stale_pin_and_keeps_backup() {
         .args(["update-release", "--tool", "bobbin"])
         .assert()
         .success()
-        .stdout(predicate::str::contains("installed and verified v0.30.1"));
+        .stdout(predicate::str::contains(
+            p("installed and verified v@BOBBIN_NEXT@").as_str(),
+        ));
     let state = fs::read_to_string(root.path().join(".caboodle/state.json")).unwrap();
-    assert!(state.contains("0.30.1"));
+    assert!(state.contains(p("@BOBBIN_NEXT@").as_str()));
     let backups: Vec<_> = fs::read_dir(root.path().join(".caboodle/release-backups/bobbin"))
         .unwrap()
         .collect();
@@ -2316,7 +2330,7 @@ fn reviewed_pin_update_cannot_undo_newer_published_binary() {
     let bin = root.path().join("bin");
     fs::create_dir(&bin).unwrap();
     release_fixture(root.path(), &bin, false, false);
-    fake_tool(&bin, "bobbin", "echo 'bobbin 0.30.1'");
+    fake_tool(&bin, "bobbin", p("echo 'bobbin @BOBBIN_NEXT@'").as_str());
     let before = fs::read(bin.join("bobbin")).unwrap();
     command(root.path(), &bin)
         .arg("update")
@@ -2337,11 +2351,12 @@ fn published_release_missing_assets_and_ambiguous_identity_never_install() {
         if mode == "missing" {
             fs::write(
                 root.path().join("latest.json"),
-                r#"{"tag_name":"v0.30.1","draft":false,"prerelease":false,"assets":[]}"#,
+                p(r#"{"tag_name":"v@BOBBIN_NEXT@","draft":false,"prerelease":false,"assets":[]}"#)
+                    .as_str(),
             )
             .unwrap();
         } else if mode == "equal" {
-            fake_tool(&bin, "bobbin", "echo 'bobbin 0.30.1'");
+            fake_tool(&bin, "bobbin", p("echo 'bobbin @BOBBIN_NEXT@'").as_str());
         } else if mode == "unreadable" {
             fake_tool(&bin, "bobbin", "echo 'bobbin unknown'");
         }
@@ -2362,8 +2377,8 @@ fn published_release_missing_assets_and_ambiguous_identity_never_install() {
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 fn local_source_builds_refuse_equal_releases_but_accept_newer_ones() {
     for (base, suffix, check) in [
-        ("0.30.1", "abcdef012345", false),
-        ("0.30.1", "abcdef012345.dirty", true),
+        (p("@BOBBIN_NEXT@").as_str(), "abcdef012345", false),
+        (p("@BOBBIN_NEXT@").as_str(), "abcdef012345.dirty", true),
         (p("@BOBBIN@").as_str(), "abcdef012345", false),
         (p("@BOBBIN@").as_str(), "abcdef012345.dirty", false),
     ] {
@@ -2383,7 +2398,7 @@ fn local_source_builds_refuse_equal_releases_but_accept_newer_ones() {
         if check {
             cmd.arg("--check");
         }
-        if base == "0.30.1" {
+        if base == p("@BOBBIN_NEXT@").as_str() {
             cmd.assert()
                 .failure()
                 .stderr(predicate::str::contains("local source build installed"));
@@ -3002,7 +3017,9 @@ fn release_download_recovers_visibly_from_server_and_transport_errors() {
                     .and(predicate::str::contains("retrying in 1s"))
                     .and(predicate::str::contains("succeeded on attempt 2/3")),
             )
-            .stdout(predicate::str::contains("installed and verified v0.30.1"));
+            .stdout(predicate::str::contains(
+                p("installed and verified v@BOBBIN_NEXT@").as_str(),
+            ));
         assert_eq!(
             fs::read_to_string(root.path().join("attempts")).unwrap(),
             "2"
