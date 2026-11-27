@@ -184,6 +184,9 @@ pub struct BrewChannel {
     pub installed: Option<String>,
     pub stable: String,
     pub pinned: bool,
+    /// Brew reported `linked_keg: null` for an installed keg: it is off PATH.
+    /// A missing key (older brew, fixtures) is not read as unlinked.
+    pub unlinked: bool,
 }
 
 fn channel_from_json(bytes: &[u8], formula: &str) -> anyhow::Result<Option<BrewChannel>> {
@@ -225,10 +228,15 @@ fn channel_from_json(bytes: &[u8], formula: &str) -> anyhow::Result<Option<BrewC
                 .context("brew installed version")
         })
         .transpose()?;
+    let unlinked = installed.is_some()
+        && entry
+            .get("linked_keg")
+            .is_some_and(serde_json::Value::is_null);
     Ok(Some(BrewChannel {
         installed,
         stable,
         pinned,
+        unlinked,
     }))
 }
 
@@ -236,11 +244,16 @@ fn channel_from_json(bytes: &[u8], formula: &str) -> anyhow::Result<Option<BrewC
 /// unreadable/stale channel must not be silently reported as converged.
 pub fn brew_refresh() -> anyhow::Result<()> {
     let brew = brew_program().ok_or_else(|| anyhow::anyhow!("brew is not available"))?;
-    let status = Command::new(brew).args(["update", "--quiet"]).status()?;
-    if !status.success() {
-        anyhow::bail!("brew update failed ({status})");
+    match crate::brew_bound::run(
+        &brew,
+        ["update", "--quiet"],
+        crate::brew_bound::Output::Inherit,
+        crate::brew_bound::Bound::Step,
+    )? {
+        Ok(done) if done.status.success() => Ok(()),
+        Ok(done) => anyhow::bail!("brew update failed ({})", done.status),
+        Err(timed_out) => anyhow::bail!("brew update {timed_out}"),
     }
-    Ok(())
 }
 
 pub fn brew_channel(tool: ToolName) -> anyhow::Result<Option<BrewChannel>> {
@@ -248,10 +261,15 @@ pub fn brew_channel(tool: ToolName) -> anyhow::Result<Option<BrewChannel>> {
         return Ok(None);
     };
     let brew = brew_program().ok_or_else(|| anyhow::anyhow!("brew is not available"))?;
-    let out = Command::new(brew)
-        .args(["info", "--json=v2", &format!("{STACK_TAP}/{formula}")])
-        .env("HOMEBREW_NO_AUTO_UPDATE", "1")
-        .output()?;
+    let out = match crate::brew_bound::run(
+        &brew,
+        ["info", "--json=v2", &format!("{STACK_TAP}/{formula}")],
+        crate::brew_bound::Output::Capture,
+        crate::brew_bound::Bound::Step,
+    )? {
+        Ok(done) => done,
+        Err(timed_out) => anyhow::bail!("brew channel read for {formula} {timed_out}"),
+    };
     if !out.status.success() {
         anyhow::bail!("brew channel read failed for {formula} ({})", out.status);
     }
@@ -260,18 +278,126 @@ pub fn brew_channel(tool: ToolName) -> anyhow::Result<Option<BrewChannel>> {
 
 /// Install or upgrade a member from the stack tap. Brew runs as the user (no
 /// root), so Tambo drives it directly (aegis-6f1 ruling).
+///
+/// The step is bounded (aegis-f0ne). When it fails or times out, the keg brew
+/// had already unlinked is linked again, so the previous version stays on PATH,
+/// and the error names the member. Its first line is
+/// `<tool> brew delivery timed out after <N>s ...`, which the Mac consumer
+/// reports as a member timeout.
 pub fn brew_converge(tool: ToolName, upgrade: bool) -> anyhow::Result<()> {
     let formula = brew_formula(tool).ok_or_else(|| anyhow::anyhow!("no stack formula"))?;
     let brew = brew_program().ok_or_else(|| anyhow::anyhow!("brew is not available"))?;
     let verb = if upgrade { "upgrade" } else { "install" };
-    let status = Command::new(&brew)
-        .args([verb, &format!("{STACK_TAP}/{formula}")])
-        .env("HOMEBREW_NO_AUTO_UPDATE", "1")
-        .status()?;
-    if !status.success() {
-        anyhow::bail!("brew {verb} {STACK_TAP}/{formula} failed ({status})");
+    let full = format!("{STACK_TAP}/{formula}");
+    match crate::brew_bound::run(
+        &brew,
+        [verb, full.as_str()],
+        crate::brew_bound::Output::Inherit,
+        crate::brew_bound::Bound::Step,
+    )? {
+        Ok(done) if done.status.success() => Ok(()),
+        Ok(done) => {
+            let link = restore_link(&brew, formula);
+            anyhow::bail!("brew {verb} {full} failed ({}); {link}", done.status)
+        }
+        Err(timed_out) => {
+            let link = restore_link(&brew, formula);
+            anyhow::bail!(
+                "{} brew delivery {timed_out} during `brew {verb} {full}`; {link}",
+                tool.as_str()
+            )
+        }
     }
-    Ok(())
+}
+
+/// Link the installed keg again if an interrupted brew step left it unlinked.
+/// Returns what it found and did, for the error message.
+fn restore_link(brew: &std::ffi::OsStr, formula: &str) -> String {
+    match restore_link_with(brew, formula) {
+        Ok(text) | Err(text) => text,
+    }
+}
+
+/// Link `tool`'s installed keg when brew reports it unlinked (aegis-f0ne):
+/// an earlier interrupted step leaves the keg installed but off PATH, and a
+/// later `brew upgrade` preserves that state. `Ok` says what was done; `Err`
+/// says why the keg is still not linked, so the caller can fail the member
+/// with that text rather than reach an opaque verify error (eph-review-07aef5).
+pub fn brew_relink(tool: ToolName) -> Result<String, String> {
+    match (brew_formula(tool), brew_program()) {
+        (Some(formula), Some(brew)) => restore_link_with(&brew, formula),
+        _ => Err("no stack formula or brew".into()),
+    }
+}
+
+fn restore_link_with(brew: &std::ffi::OsStr, formula: &str) -> Result<String, String> {
+    let full = format!("{STACK_TAP}/{formula}");
+    let read = || -> Option<(Option<String>, Option<String>)> {
+        let done = crate::brew_bound::run(
+            brew,
+            ["info", "--json=v2", full.as_str()],
+            crate::brew_bound::Output::Capture,
+            crate::brew_bound::Bound::Repair,
+        )
+        .ok()?
+        .ok()?;
+        done.status.success().then_some(())?;
+        link_state(&done.stdout, formula)
+    };
+    let Some((installed, linked)) = read() else {
+        return Err(format!(
+            "keg link state for {full} is UNKNOWN (brew info unreadable)"
+        ));
+    };
+    let Some(installed) = installed else {
+        return Err(format!("no {full} keg is installed"));
+    };
+    if let Some(linked) = linked {
+        return Ok(format!("keg {linked} is still linked"));
+    }
+    match crate::brew_bound::run(
+        brew,
+        ["link", full.as_str()],
+        crate::brew_bound::Output::Inherit,
+        crate::brew_bound::Bound::Repair,
+    ) {
+        Ok(Ok(done)) if done.status.success() => match read() {
+            Some((_, Some(linked))) => Ok(format!("relinked keg {linked}")),
+            _ => Err(format!(
+                "`brew link {full}` ran but keg {installed} is still NOT linked"
+            )),
+        },
+        Ok(Ok(done)) => Err(format!(
+            "keg {installed} is NOT linked; `brew link {full}` failed ({})",
+            done.status
+        )),
+        Ok(Err(timed_out)) => Err(format!(
+            "keg {installed} is NOT linked; `brew link {full}` {timed_out}"
+        )),
+        Err(error) => Err(format!(
+            "keg {installed} is NOT linked; `brew link {full}`: {error}"
+        )),
+    }
+}
+
+/// The installed and linked versions of exactly `<STACK_TAP>/<formula>`.
+fn link_state(json: &[u8], formula: &str) -> Option<(Option<String>, Option<String>)> {
+    let info: serde_json::Value = serde_json::from_slice(json).ok()?;
+    let wanted = format!("{STACK_TAP}/{formula}");
+    let entry = info.get("formulae")?.as_array()?.iter().find(|entry| {
+        entry.get("full_name").and_then(serde_json::Value::as_str) == Some(wanted.as_str())
+    })?;
+    let installed = entry
+        .get("installed")?
+        .as_array()?
+        .first()
+        .and_then(|receipt| receipt.get("version")?.as_str())
+        .map(str::to_owned);
+    let linked = entry
+        .get("linked_keg")
+        .and_then(serde_json::Value::as_str)
+        .map(str::to_owned);
+    Some((installed, linked))
 }
 
 /// How a package-owned tool stands against its reviewed pin.
@@ -405,7 +531,8 @@ mod channel_tests {
             Some(BrewChannel {
                 installed: Some("0.28.0".into()),
                 stable: "0.29.0".into(),
-                pinned: true
+                pinned: true,
+                unlinked: false
             })
         );
         assert_eq!(channel_from_json(&bytes, "quipu").unwrap(), None);
