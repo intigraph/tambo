@@ -816,3 +816,42 @@ fn resume_refuses_a_table_header_above_the_reviewed_lines() {
     lifecycle::apply(&directory, &mut owner).unwrap();
     assert_eq!(phase(&directory), "applied");
 }
+#[test]
+fn a_prior_bundle_listed_with_default_harnesses_snapshots_and_a_real_edit_refuses() {
+    // aegis-9uq.1 Mac apply: st listed the untouched prior bobbin bundle's
+    // harness-less hooks with all four harnesses (agy included), and the
+    // snapshot check refused it as "owner registry changed during snapshot".
+    for edited in [false, true] {
+        let temp = tempfile::tempdir().unwrap();
+        let (directory, mut owner) = prepare(temp.path());
+        let plan = lifecycle::load(&directory).unwrap();
+        let file = json!({"schema":"st.hook-bundle/1","name":"bobbin","version":"prior","owner":"producer","roles":["*"],
+            "hooks":[{"event":"UserPromptSubmit","command":"bobbin hook old"},
+                     {"event":"SessionStart","command":"bobbin hook start","harnesses":["claude"]}]});
+        fs::create_dir_all(plan.root.join("hook-bundles")).unwrap();
+        fs::write(
+            plan.root.join("hook-bundles/bobbin.json"),
+            serde_json::to_vec(&file).unwrap(),
+        )
+        .unwrap();
+        let mut listed = file.clone();
+        listed["hooks"][0]["harnesses"] = json!(["claude", "codex", "opencode", "agy"]);
+        if edited {
+            // The file changed between listing and read: still refuses.
+            listed["hooks"][0]["command"] = json!("bobbin hook other");
+        }
+        owner.registry.push(listed);
+        let result = lifecycle::apply(&directory, &mut owner);
+        if edited {
+            let why = result.unwrap_err().to_string();
+            assert!(
+                why.contains("owner registry changed during snapshot"),
+                "{why}"
+            );
+            assert!(!directory.join("registry-before.json").exists());
+        } else {
+            result.unwrap();
+            assert_eq!(phase(&directory), "applied");
+        }
+    }
+}

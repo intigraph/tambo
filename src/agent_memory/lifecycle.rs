@@ -432,6 +432,24 @@ fn normalized(bundle: &Value) -> Value {
         "hooks":bundle["hooks"].as_array().map(|rows| rows.iter().map(|r| json!({
             "event":r["event"],"command":r["command"],"matcher":r["matcher"],"timeout":r["timeout"],"harnesses":r.get("harnesses").cloned().unwrap_or_else(|| json!(["claude","codex","opencode"]))})).collect::<Vec<_>>())})
 }
+/// The registered file with each hook's absent `harnesses` taken from the
+/// owner's listing of the same hook: the owner fills that default itself (st
+/// added agy to it), so only the fields the file actually states are compared
+/// with the listing (aegis-9uq.1: the Mac apply refused an untouched prior
+/// bobbin bundle as "owner registry changed during snapshot").
+fn as_listed(file: &Value, listed: &Value) -> Value {
+    let mut out = file.clone();
+    if let Some(hooks) = out["hooks"].as_array_mut() {
+        for (i, hook) in hooks.iter_mut().enumerate() {
+            if hook.get("harnesses").is_none() {
+                if let Some(h) = listed["hooks"].get(i).and_then(|l| l.get("harnesses")) {
+                    hook["harnesses"] = h.clone();
+                }
+            }
+        }
+    }
+    out
+}
 /// The bundle as the owner registry holds it on disk, for drift checks. The
 /// owner's `hooks list` fills defaults (a hook with no `harnesses` is listed
 /// with every harness the owner supports, which grew when st learned agy), so
@@ -636,7 +654,7 @@ pub fn apply(directory: &Path, runner: &mut impl Runner) -> Result<()> {
                 let raw = read(&plan.root.join("hook-bundles").join(format!("{name}.json")))?
                     .context("exact prior bundle unavailable; no lossless rollback")?;
                 let value: Value = serde_json::from_str(&raw)?;
-                if normalized(&value) != normalized(prior) {
+                if normalized(&as_listed(&value, prior)) != normalized(prior) {
                     bail!("owner registry changed during snapshot");
                 }
                 if let Some(slot) = snapshot.iter_mut().find(|r| r["name"] == wanted["name"]) {
