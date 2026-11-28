@@ -591,3 +591,161 @@ fn reapply_takes_fresh_skill_directory_ownership_after_restore() {
     assert!(user_dir.is_dir());
     assert!(!temp.path().join("codex/skills/camayoc-memory").exists());
 }
+fn interrupted(temp: &Path) -> (PathBuf, Owner, PathBuf, String) {
+    let (directory, mut owner) = prepare(temp);
+    let path = owner.root.join("shantytown.toml");
+    let before = fs::read_to_string(&path).unwrap();
+    owner.fail_register = true;
+    assert!(lifecycle::apply(&directory, &mut owner).is_err());
+    owner.fail_register = false;
+    (directory, owner, path, before)
+}
+fn phase(directory: &Path) -> Value {
+    serde_json::from_slice::<Value>(&fs::read(directory.join("state.json")).unwrap()).unwrap()
+        ["phase"]
+        .clone()
+}
+#[test]
+fn interrupted_apply_resumes_over_operator_edits_and_restore_keeps_them() {
+    // aegis-9uq.1: the Mac plan stuck in "applying" because shantytown.toml
+    // gained unrelated operator lines; apply and restore both refused forever.
+    let temp = tempfile::tempdir().unwrap();
+    let (directory, mut owner, path, before) = interrupted(temp.path());
+    assert_eq!(phase(&directory), "applying");
+    let applied = fs::read_to_string(&path).unwrap();
+    assert_ne!(applied, before);
+    // Operator lines around AND between the reviewed lines (the Mac shape).
+    let added: Vec<&str> = applied
+        .split_inclusive('\n')
+        .filter(|l| !before.split_inclusive('\n').any(|b| b == *l))
+        .collect();
+    assert!(added.len() >= 2, "fixture inserts too few lines to split");
+    let split = applied.replacen(added[0], &format!("{}# between\n", added[0]), 1);
+    let edited = format!("# operator edit\n{split}[later]\nkey = 1\n");
+    fs::write(&path, &edited).unwrap();
+    lifecycle::apply(&directory, &mut owner).unwrap();
+    assert_eq!(phase(&directory), "applied");
+    assert_eq!(fs::read_to_string(&path).unwrap(), edited);
+    assert!(directory.join("rebased-changes.json").exists());
+    lifecycle::restore(&directory, &mut owner).unwrap();
+    let expected: String = edited
+        .split_inclusive('\n')
+        .filter(|l| !added.contains(l))
+        .collect();
+    assert!(expected.contains("# between\n") && expected.contains("[later]\n"));
+    assert_eq!(fs::read_to_string(&path).unwrap(), expected);
+}
+#[test]
+fn resume_refuses_when_the_reviewed_lines_were_edited_or_are_ambiguous() {
+    let temp = tempfile::tempdir().unwrap();
+    let (directory, mut owner, path, before) = interrupted(temp.path());
+    let applied = fs::read_to_string(&path).unwrap();
+    let added: Vec<&str> = applied
+        .split_inclusive('\n')
+        .filter(|l| !before.split_inclusive('\n').any(|b| b == *l))
+        .collect();
+    assert!(!added.is_empty());
+    // A reviewed line changed: no rebase, no write.
+    let changed = applied.replacen(added[0], "TAMPERED = 1\n", 1);
+    fs::write(&path, &changed).unwrap();
+    assert!(lifecycle::apply(&directory, &mut owner).is_err());
+    assert_eq!(fs::read_to_string(&path).unwrap(), changed);
+    // The reviewed block twice: ambiguous, no rebase.
+    let twice = format!("{applied}{}", added.concat());
+    fs::write(&path, &twice).unwrap();
+    assert!(lifecycle::apply(&directory, &mut owner).is_err());
+    assert_eq!(fs::read_to_string(&path).unwrap(), twice);
+    // The reviewed lines out of order: no rebase.
+    if added.len() >= 2 {
+        let swapped = applied
+            .replacen(added[0], "@@A@@\n", 1)
+            .replacen(added[1], added[0], 1)
+            .replacen("@@A@@\n", added[1], 1);
+        fs::write(&path, &swapped).unwrap();
+        assert!(lifecycle::apply(&directory, &mut owner).is_err());
+        assert_eq!(fs::read_to_string(&path).unwrap(), swapped);
+    }
+    assert!(!directory.join("rebased-changes.json").exists());
+    assert_eq!(phase(&directory), "applying");
+}
+#[test]
+fn a_plan_never_started_still_refuses_edits_since_review() {
+    let temp = tempfile::tempdir().unwrap();
+    let (directory, mut owner) = prepare(temp.path());
+    let path = owner.root.join("shantytown.toml");
+    let edited = format!("# operator\n{}", fs::read_to_string(&path).unwrap());
+    fs::write(&path, &edited).unwrap();
+    assert!(lifecycle::apply(&directory, &mut owner).is_err());
+    assert_eq!(fs::read_to_string(&path).unwrap(), edited);
+}
+#[test]
+fn owner_listing_default_harnesses_are_not_a_bundle_change() {
+    // st's hooks list now fills a hook's absent harnesses with every harness it
+    // supports (agy included); the registered file is unchanged (aegis-9uq.1).
+    let temp = tempfile::tempdir().unwrap();
+    let (directory, mut owner) = prepare(temp.path());
+    lifecycle::apply(&directory, &mut owner).unwrap();
+    let mut expanded = 0;
+    for bundle in owner.registry.iter_mut() {
+        for hook in bundle["hooks"].as_array_mut().unwrap() {
+            if hook.get("harnesses").is_none() {
+                hook["harnesses"] = json!(["claude", "codex", "opencode", "agy"]);
+                expanded += 1;
+            }
+        }
+    }
+    assert!(
+        expanded > 0,
+        "fixture has no default-harness hook to expand"
+    );
+    lifecycle::apply(&directory, &mut owner).unwrap();
+    assert_eq!(phase(&directory), "applied");
+    lifecycle::restore(&directory, &mut owner).unwrap();
+    // A real edit to the registered file still refuses.
+    lifecycle::apply(&directory, &mut owner).unwrap();
+    let file = owner
+        .root
+        .join("hook-bundles")
+        .join(format!("{BUNDLE_NAME}.json"));
+    let mut raw: Value = serde_json::from_slice(&fs::read(&file).unwrap()).unwrap();
+    raw["hooks"][0]["command"] = json!("operator-edited");
+    fs::write(&file, serde_json::to_vec(&raw).unwrap()).unwrap();
+    assert!(lifecycle::restore(&directory, &mut owner).is_err());
+}
+#[test]
+fn a_hook_on_an_unapplied_plan_leaves_a_capture_off_marker_that_evidence_names() {
+    let temp = tempfile::tempdir().unwrap();
+    let (directory, mut owner) = prepare(temp.path());
+    assert_eq!(hooks::run(&directory, "claude", "Stop"), 0);
+    let marker: Value =
+        serde_json::from_slice(&fs::read(directory.join(hooks::CAPTURE_OFF)).unwrap()).unwrap();
+    assert!(marker["reason"].as_str().unwrap().contains("not applied"));
+    assert_eq!(marker["event"], "Stop");
+    let why = hooks::evidence(&directory, "claude", "Stop")
+        .unwrap_err()
+        .to_string();
+    assert!(why.starts_with("capture off: "), "{why}");
+    lifecycle::apply(&directory, &mut owner).unwrap();
+    hooks::record(&directory, "claude", "Stop", "session", 0).unwrap();
+    assert!(!directory.join(hooks::CAPTURE_OFF).exists());
+    assert!(hooks::evidence(&directory, "claude", "Stop").unwrap() > 0.0);
+}
+#[test]
+fn restore_of_an_interrupted_plan_removes_only_the_reviewed_lines() {
+    // The roll-back path for a stale plan (installed tool schemas moved on):
+    // restore must work over operator edits too, keeping them.
+    let temp = tempfile::tempdir().unwrap();
+    let (directory, mut owner, path, before) = interrupted(temp.path());
+    let applied = fs::read_to_string(&path).unwrap();
+    let edited = format!("{applied}# operator after\n");
+    fs::write(&path, &edited).unwrap();
+    owner.wrong_tools = true;
+    assert!(lifecycle::apply(&directory, &mut owner).is_err());
+    assert_eq!(fs::read_to_string(&path).unwrap(), edited);
+    lifecycle::restore(&directory, &mut owner).unwrap();
+    assert_eq!(phase(&directory), "restored");
+    assert_eq!(
+        fs::read_to_string(&path).unwrap(),
+        format!("{before}# operator after\n")
+    );
+}
