@@ -27,7 +27,7 @@ probe = { asset = "quipu-{tag}-{target}.tar.gz", sums_asset = "{asset}.sha256" }
 [bobbin]
 repo = "intigraph/bobbin"
 tag = "v{version}"
-version = "0.30.0"
+version = "0.38.0"
 program = "bobbin"
 probe = { asset = "bobbin-{tag}-{target}.tar.gz", sums_asset = "SHA256SUMS.txt" }
 
