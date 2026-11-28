@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "artifact": "macos-arm64-job-runtime.tar.gz",
+  "manifest_sha256": "c8e9ef3ff02162781a3f172c7ea443ee13a60bbca60fb4bf0ea060cca3d3279d",
+  "archive_sha256": "921d2520d1ea3f0944985a119950913e63050233b6b9d6e3c86eb337799b59f0",
+  "files": 1213,
+  "native_acceptance": false
+}
