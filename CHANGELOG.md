@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.18.1](https://github.com/intigraph/tambo/compare/v0.18.0...v0.18.1) (2026-11-28)
+
+
+### Bug Fixes
+
+* **memory:** refuse a rebase across a TOML table header (aegis-9uq.1) ([#323](https://github.com/intigraph/tambo/issues/323)) ([622f3a8](https://github.com/intigraph/tambo/commit/622f3a8298378108c319fcf8bd3703dc9f28b6bf))
+* **memory:** refuse a rebase under a table header inserted above the block (aegis-9uq.1) ([#324](https://github.com/intigraph/tambo/issues/324)) ([a791f39](https://github.com/intigraph/tambo/commit/a791f399e9ac29fe567790563c0c55e2752d858a))
+* **memory:** resume an interrupted apply over operator edits; make capture-off loud ([#321](https://github.com/intigraph/tambo/issues/321)) ([de5b105](https://github.com/intigraph/tambo/commit/de5b1051856aa0ee59b9f975fa64355a2af3c740))
+
 ## [0.18.0](https://github.com/intigraph/tambo/compare/v0.17.2...v0.18.0) (2026-11-27)
 
 
