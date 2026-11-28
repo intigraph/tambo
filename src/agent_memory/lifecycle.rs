@@ -472,8 +472,8 @@ fn lines(text: &str) -> Vec<&str> {
 /// only when the reviewed change is ONE block of inserted lines and every
 /// inserted line is present exactly once in the current bytes, in the reviewed
 /// order (operators may have added lines around or between them; measured on
-/// the Mac plan), and no line between them opens a TOML table (`[`), and the nearest table header
-/// above them is the one they were reviewed under. The new before is the current file without those lines, so a
+/// the Mac plan), and no line between them opens a TOML table (`[`), and the table headers
+/// above them are exactly the ones they were reviewed under. The new before is the current file without those lines, so a
 /// later restore removes only the reviewed lines and keeps the operator's
 /// edits; the new after is the current file. Anything else refuses.
 fn rebase(change: &Change, now: &str) -> Option<Change> {
@@ -515,15 +515,17 @@ fn rebase(change: &Change, now: &str) -> Option<Change> {
         return None;
     }
     // So would a header inserted above the block: the reviewed lines must still
-    // sit under the table they were reviewed under (malcolm, tambo#323 F2).
-    let header = |ls: &[&str], end: usize| {
+    // sit under the table they were reviewed under (malcolm, tambo#323 F2). The
+    // whole header list is compared, not only the nearest one, because an extra
+    // repeated `[[array]]` header reads the same but opens a new element (F4).
+    let headers = |ls: &[&str], end: usize| -> Vec<String> {
         ls[..end]
             .iter()
-            .rev()
-            .find(|l| l.trim_start().starts_with('['))
+            .filter(|l| l.trim_start().starts_with('['))
             .map(|l| l.trim().to_string())
+            .collect()
     };
-    if header(&current, first) != header(&after, prefix) {
+    if headers(&current, first) != headers(&after, prefix) {
         return None;
     }
     let kept: String = current
@@ -916,4 +918,25 @@ pub fn check_existing_redirect(paths: &[PathBuf]) -> Result<()> {
         }
     }
     Ok(())
+}
+#[cfg(test)]
+mod rebase_tests {
+    use super::*;
+    fn change(before: &str, after: &str) -> Change {
+        Change {
+            path: PathBuf::from("t.toml"),
+            before: Some(before.into()),
+            after: after.into(),
+        }
+    }
+    #[test]
+    fn a_repeated_array_header_above_the_block_refuses() {
+        // malcolm, tambo#324 F4: an extra "[[a]]" above the block has the same
+        // text as the reviewed nearest header but opens a new element.
+        let c = change("[[a]]\nx = 1\n", "[[a]]\nx = 1\nnew = 2\n");
+        assert!(rebase(&c, "[[a]]\nx = 1\n[[a]]\nnew = 2\n").is_none());
+        // Control: an operator comment in the same place still rebases.
+        let r = rebase(&c, "[[a]]\nx = 1\n# note\nnew = 2\n").unwrap();
+        assert_eq!(r.before.as_deref(), Some("[[a]]\nx = 1\n# note\n"));
+    }
 }
