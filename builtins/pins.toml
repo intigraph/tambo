@@ -49,8 +49,8 @@ x86_64-linux-gnu = "3111542bbb3e1da6fe0f452cf729a7c3bdb0787f8b64cb87b92cde130e6a
 [desire-path]
 repo = "intigraph/desire-path"
 tag = "v{version}"
-version = "0.10.0"
-revision = "06812336fda6a6fd3fe4cbcae2d50a303e95a024"
+version = "0.12.2"
+revision = "0c9e18b7363aff8acfefb2a1fb0515c3a0fe9461"
 
 # The Camayoc SOURCE bundle: version, revision, asset and digest stay paired.
 [camayoc]
