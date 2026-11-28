@@ -20,7 +20,7 @@
 [quipu]
 repo = "intigraph/quipu"
 tag = "quipu-ai-v{version}"
-version = "0.9.0"
+version = "0.19.5"
 program = "quipu"
 probe = { asset = "quipu-{tag}-{target}.tar.gz", sums_asset = "{asset}.sha256" }
 
