@@ -20,29 +20,29 @@
 [quipu]
 repo = "intigraph/quipu"
 tag = "quipu-ai-v{version}"
-version = "0.9.0"
+version = "0.19.5"
 program = "quipu"
 probe = { asset = "quipu-{tag}-{target}.tar.gz", sums_asset = "{asset}.sha256" }
 
 [bobbin]
 repo = "intigraph/bobbin"
 tag = "v{version}"
-version = "0.30.0"
+version = "0.38.0"
 program = "bobbin"
 probe = { asset = "bobbin-{tag}-{target}.tar.gz", sums_asset = "SHA256SUMS.txt" }
 
 [yupana]
 repo = "intigraph/yupana"
 tag = "v{version}"
-version = "0.19.4"
+version = "0.20.0"
 asset = "yupana-{tag}-{target}.tar.gz"
 sums_asset = "SHA256SUMS"
 program = "yupana"
 
 [yupana.sha256]
-aarch64-apple-darwin = "f3768ab3d661996c5ac7ec12d30c513687062823ae44b04d1d3229dc04c2b76b"
-x86_64-apple-darwin = "01d0337ed3e26b0cc6ac833b41ba933ad8c852cb859249a9381b421881e86044"
-x86_64-linux-gnu = "3111542bbb3e1da6fe0f452cf729a7c3bdb0787f8b64cb87b92cde130e6a2db7"
+aarch64-apple-darwin = "c46aa20bab15aaa5414fe2a7068d24e9108d1019f2f9c878c1f06c0fc450e9bf"
+x86_64-apple-darwin = "b5ed39a1787b9433c64f02f67335c71f4ce79ad0b8447a3b26b6114b0f6796b4"
+x86_64-linux-gnu = "0df096a419957fcf907c7f2edc62d2a798ddf3103274a3fef8504a72596864de"
 
 # Built from source at `revision` with `go install`; the release has no
 # Tambo-consumed binary, so the bump proves the tag's commit, not an executable.
