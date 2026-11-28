@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.2](https://github.com/intigraph/tambo/compare/v0.18.1...v0.18.2) (2026-11-28)
+
+
+### Bug Fixes
+
+* **memory:** snapshot a prior bundle against the owner's listed harness default (aegis-9uq.1) ([#326](https://github.com/intigraph/tambo/issues/326)) ([a756b76](https://github.com/intigraph/tambo/commit/a756b76a3e8c8b1698b06a8ad77de8ec64db9be5))
+
 ## [0.18.1](https://github.com/intigraph/tambo/compare/v0.18.0...v0.18.1) (2026-11-28)
 
 
