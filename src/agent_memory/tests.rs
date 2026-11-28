@@ -821,7 +821,10 @@ fn a_prior_bundle_listed_with_default_harnesses_snapshots_and_a_real_edit_refuse
     // aegis-9uq.1 Mac apply: st listed the untouched prior bobbin bundle's
     // harness-less hooks with all four harnesses (agy included), and the
     // snapshot check refused it as "owner registry changed during snapshot".
-    for edited in [false, true] {
+    // "narrower" (malcolm, tambo#326): a listing narrower than the default must
+    // not be copied over the file's absent field; it is a real change.
+    for case in ["default", "edited", "narrower"] {
+        let edited = case != "default";
         let temp = tempfile::tempdir().unwrap();
         let (directory, mut owner) = prepare(temp.path());
         let plan = lifecycle::load(&directory).unwrap();
@@ -836,9 +839,12 @@ fn a_prior_bundle_listed_with_default_harnesses_snapshots_and_a_real_edit_refuse
         .unwrap();
         let mut listed = file.clone();
         listed["hooks"][0]["harnesses"] = json!(["claude", "codex", "opencode", "agy"]);
-        if edited {
+        if case == "edited" {
             // The file changed between listing and read: still refuses.
             listed["hooks"][0]["command"] = json!("bobbin hook other");
+        }
+        if case == "narrower" {
+            listed["hooks"][0]["harnesses"] = json!(["claude"]);
         }
         owner.registry.push(listed);
         let result = lifecycle::apply(&directory, &mut owner);
