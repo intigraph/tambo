@@ -472,7 +472,7 @@ fn lines(text: &str) -> Vec<&str> {
 /// only when the reviewed change is ONE block of inserted lines and every
 /// inserted line is present exactly once in the current bytes, in the reviewed
 /// order (operators may have added lines around or between them; measured on
-/// the Mac plan). The new before is the current file without those lines, so a
+/// the Mac plan), and no line between them opens a TOML table (`[`). The new before is the current file without those lines, so a
 /// later restore removes only the reviewed lines and keeps the operator's
 /// edits; the new after is the current file. Anything else refuses.
 fn rebase(change: &Change, now: &str) -> Option<Change> {
@@ -503,6 +503,15 @@ fn rebase(change: &Change, now: &str) -> Option<Change> {
             return None;
         }
         at.push(hits[0]);
+    }
+    // A TOML table header between reviewed lines would move the later ones into
+    // another table while read-back still matched (malcolm, tambo#321 review).
+    let (first, last) = (*at.first()?, *at.last()?);
+    if (first..=last)
+        .filter(|i| !at.contains(i))
+        .any(|i| current[i].trim_start().starts_with('['))
+    {
+        return None;
     }
     let kept: String = current
         .iter()
