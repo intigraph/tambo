@@ -472,7 +472,8 @@ fn lines(text: &str) -> Vec<&str> {
 /// only when the reviewed change is ONE block of inserted lines and every
 /// inserted line is present exactly once in the current bytes, in the reviewed
 /// order (operators may have added lines around or between them; measured on
-/// the Mac plan), and no line between them opens a TOML table (`[`). The new before is the current file without those lines, so a
+/// the Mac plan), and no line between them opens a TOML table (`[`), and the nearest table header
+/// above them is the one they were reviewed under. The new before is the current file without those lines, so a
 /// later restore removes only the reviewed lines and keeps the operator's
 /// edits; the new after is the current file. Anything else refuses.
 fn rebase(change: &Change, now: &str) -> Option<Change> {
@@ -511,6 +512,18 @@ fn rebase(change: &Change, now: &str) -> Option<Change> {
         .filter(|i| !at.contains(i))
         .any(|i| current[i].trim_start().starts_with('['))
     {
+        return None;
+    }
+    // So would a header inserted above the block: the reviewed lines must still
+    // sit under the table they were reviewed under (malcolm, tambo#323 F2).
+    let header = |ls: &[&str], end: usize| {
+        ls[..end]
+            .iter()
+            .rev()
+            .find(|l| l.trim_start().starts_with('['))
+            .map(|l| l.trim().to_string())
+    };
+    if header(&current, first) != header(&after, prefix) {
         return None;
     }
     let kept: String = current

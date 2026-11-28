@@ -769,6 +769,7 @@ fn resume_refuses_a_table_header_between_the_reviewed_lines() {
             "{header}"
         );
         assert_eq!(fs::read_to_string(&path).unwrap(), split);
+        assert!(!directory.join("rebased-changes.json").exists());
         assert!(
             lifecycle::restore(&directory, &mut owner).is_err(),
             "{header}"
@@ -778,6 +779,40 @@ fn resume_refuses_a_table_header_between_the_reviewed_lines() {
     // A non-header operator line in the same place still rebases.
     let split = applied.replacen(added[0], &format!("{}# note\n", added[0]), 1);
     fs::write(&path, &split).unwrap();
+    lifecycle::apply(&directory, &mut owner).unwrap();
+    assert_eq!(phase(&directory), "applied");
+}
+#[test]
+fn resume_refuses_a_table_header_above_the_reviewed_lines() {
+    // malcolm's tambo#323 F2: "[other]" inserted just above the block moves
+    // every reviewed line into another table; each line is still present once
+    // and in order, so only the nearest-header check catches it.
+    let temp = tempfile::tempdir().unwrap();
+    let (directory, mut owner, path, before) = interrupted(temp.path());
+    let applied = fs::read_to_string(&path).unwrap();
+    let added: Vec<&str> = applied
+        .split_inclusive('\n')
+        .filter(|l| !before.split_inclusive('\n').any(|b| b == *l))
+        .collect();
+    assert!(!added.is_empty());
+    for header in ["[other]\n", "  [[array]]\n"] {
+        let moved = applied.replacen(added[0], &format!("{header}{}", added[0]), 1);
+        fs::write(&path, &moved).unwrap();
+        assert!(
+            lifecycle::apply(&directory, &mut owner).is_err(),
+            "{header}"
+        );
+        assert_eq!(fs::read_to_string(&path).unwrap(), moved);
+        assert!(!directory.join("rebased-changes.json").exists());
+        assert!(
+            lifecycle::restore(&directory, &mut owner).is_err(),
+            "{header}"
+        );
+        assert_eq!(fs::read_to_string(&path).unwrap(), moved);
+    }
+    // A comment in the same place keeps the table and still rebases.
+    let moved = applied.replacen(added[0], &format!("# note\n{}", added[0]), 1);
+    fs::write(&path, &moved).unwrap();
     lifecycle::apply(&directory, &mut owner).unwrap();
     assert_eq!(phase(&directory), "applied");
 }
