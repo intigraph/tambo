@@ -427,10 +427,41 @@ fn existing(plan: &Plan, runner: &mut impl Runner) -> Result<Vec<Value>> {
         .context("owner returned no bundles")?
         .clone())
 }
+/// What an absent `harnesses` field means in a registered bundle.
+const DEFAULT_HARNESSES: [&str; 3] = ["claude", "codex", "opencode"];
 fn normalized(bundle: &Value) -> Value {
     json!({"name":bundle["name"],"version":bundle["version"],"owner":bundle["owner"],"roles":bundle["roles"],
         "hooks":bundle["hooks"].as_array().map(|rows| rows.iter().map(|r| json!({
-            "event":r["event"],"command":r["command"],"matcher":r["matcher"],"timeout":r["timeout"],"harnesses":r.get("harnesses").cloned().unwrap_or_else(|| json!(["claude","codex","opencode"]))})).collect::<Vec<_>>())})
+            "event":r["event"],"command":r["command"],"matcher":r["matcher"],"timeout":r["timeout"],"harnesses":r.get("harnesses").cloned().unwrap_or_else(|| json!(DEFAULT_HARNESSES))})).collect::<Vec<_>>())})
+}
+/// The registered file with each hook's absent `harnesses` taken from the
+/// owner's listing of the same hook: the owner fills that default itself (st
+/// added agy to it), so only the fields the file actually states are compared
+/// with the listing (aegis-9uq.1: the Mac apply refused an untouched prior
+/// bobbin bundle as "owner registry changed during snapshot").
+fn as_listed(file: &Value, listed: &Value) -> Value {
+    // Only a WIDER default is the owner's own fill: a listing narrower than the
+    // file's absent-means-every-harness default is a real change and must
+    // still compare unequal (malcolm, tambo#326).
+    let default = DEFAULT_HARNESSES;
+    let mut out = file.clone();
+    if let Some(hooks) = out["hooks"].as_array_mut() {
+        // Hooks pair by index. A listing that reorders, adds or drops hooks
+        // pairs the wrong rows, and normalized() then differs, so that fails closed.
+        for (i, hook) in hooks.iter_mut().enumerate() {
+            if hook.get("harnesses").is_none() {
+                if let Some(h) = listed["hooks"].get(i).and_then(|l| l.get("harnesses")) {
+                    let widens = h
+                        .as_array()
+                        .is_some_and(|names| default.iter().all(|d| names.iter().any(|n| n == d)));
+                    if widens {
+                        hook["harnesses"] = h.clone();
+                    }
+                }
+            }
+        }
+    }
+    out
 }
 /// The bundle as the owner registry holds it on disk, for drift checks. The
 /// owner's `hooks list` fills defaults (a hook with no `harnesses` is listed
@@ -636,7 +667,7 @@ pub fn apply(directory: &Path, runner: &mut impl Runner) -> Result<()> {
                 let raw = read(&plan.root.join("hook-bundles").join(format!("{name}.json")))?
                     .context("exact prior bundle unavailable; no lossless rollback")?;
                 let value: Value = serde_json::from_str(&raw)?;
-                if normalized(&value) != normalized(prior) {
+                if normalized(&as_listed(&value, prior)) != normalized(prior) {
                     bail!("owner registry changed during snapshot");
                 }
                 if let Some(slot) = snapshot.iter_mut().find(|r| r["name"] == wanted["name"]) {
