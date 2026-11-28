@@ -58,7 +58,7 @@ Apply can resume after an interrupted operation. On resume (phase `applying`),
 a configuration file edited since review is accepted only when the reviewed
 change is one block of inserted lines and each of those lines is still present
 exactly once, in the reviewed order (operators may have added lines around or
-between them). The change is then rebased onto the current bytes and recorded in
+between them, but never a TOML table header, a line starting with `[`). The change is then rebased onto the current bytes and recorded in
 `rebased-changes.json` in the plan directory (`plan.json` is never rewritten).
 Restore applies the same rule: it removes only the reviewed lines and keeps the
 operator's edits. Any other edit still refuses. A plan whose reviewed Camayoc

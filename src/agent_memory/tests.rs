@@ -749,3 +749,35 @@ fn restore_of_an_interrupted_plan_removes_only_the_reviewed_lines() {
         format!("{before}# operator after\n")
     );
 }
+#[test]
+fn resume_refuses_a_table_header_between_the_reviewed_lines() {
+    // malcolm's tambo#321 finding: "[other]" between reviewed lines would move
+    // the later ones out of their table while read-back still passed.
+    let temp = tempfile::tempdir().unwrap();
+    let (directory, mut owner, path, before) = interrupted(temp.path());
+    let applied = fs::read_to_string(&path).unwrap();
+    let added: Vec<&str> = applied
+        .split_inclusive('\n')
+        .filter(|l| !before.split_inclusive('\n').any(|b| b == *l))
+        .collect();
+    assert!(added.len() >= 2, "fixture inserts too few lines to split");
+    for header in ["[other]\n", "  [[array]]\n"] {
+        let split = applied.replacen(added[0], &format!("{}{header}", added[0]), 1);
+        fs::write(&path, &split).unwrap();
+        assert!(
+            lifecycle::apply(&directory, &mut owner).is_err(),
+            "{header}"
+        );
+        assert_eq!(fs::read_to_string(&path).unwrap(), split);
+        assert!(
+            lifecycle::restore(&directory, &mut owner).is_err(),
+            "{header}"
+        );
+        assert_eq!(fs::read_to_string(&path).unwrap(), split);
+    }
+    // A non-header operator line in the same place still rebases.
+    let split = applied.replacen(added[0], &format!("{}# note\n", added[0]), 1);
+    fs::write(&path, &split).unwrap();
+    lifecycle::apply(&directory, &mut owner).unwrap();
+    assert_eq!(phase(&directory), "applied");
+}
