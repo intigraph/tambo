@@ -43,7 +43,7 @@ def remote_readme(repo: str) -> bytes:
     """Fetch only the fixed public repository set, with time and size bounds."""
     if repo not in REPOS:
         raise ValueError("repository is outside the stack table audit")
-    url = f"https://raw.githubusercontent.com/scbrown/{repo}/main/README.md"
+    url = f"https://raw.githubusercontent.com/intigraph/{repo}/main/README.md"
     request = Request(url, headers={"User-Agent": "caboodle-stack-table-check"})
     with urlopen(request, timeout=10) as response:
         data = response.read(MAX_BYTES + 1)
