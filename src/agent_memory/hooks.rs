@@ -73,9 +73,18 @@ fn receipt_path(directory: &Path, harness: &str, event: &str) -> Result<std::pat
         .join(format!("{harness}-{event}.json")))
 }
 fn applied_at(directory: &Path) -> Result<f64> {
-    let state: Value = serde_json::from_slice(&fs::read(directory.join("state.json"))?)?;
+    let state: Value = match fs::read(directory.join("state.json")) {
+        Ok(bytes) => serde_json::from_slice(&bytes).context("memory plan state is unreadable")?,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            bail!("memory plan is not applied (never applied)")
+        }
+        Err(e) => return Err(e).context("memory plan state is unreadable"),
+    };
     if state["schema"] != 1 || state["phase"] != "applied" {
-        bail!("memory plan is not applied");
+        bail!(
+            "memory plan is not applied (phase {})",
+            state["phase"].as_str().unwrap_or("unknown")
+        );
     }
     state["at"]
         .as_f64()
@@ -99,6 +108,8 @@ pub fn record(
     }
     let path = receipt_path(directory, harness, event)?;
     let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs_f64();
+    // A receipt means this hook captured; the gate is open again.
+    let _ = fs::remove_file(directory.join(CAPTURE_OFF));
     private_write(
         &path,
         &serde_json::to_vec(
@@ -107,7 +118,45 @@ pub fn record(
         )?,
     )
 }
+/// Durable record that the memory hook ran but captured nothing because its
+/// gate refused (aegis-9uq.1: a plan stuck in "applying" made every hook exit 0
+/// silently for 23 days). `evidence` reports it by name, so the hook check
+/// sees "capture off" instead of an anonymous missing receipt.
+pub const CAPTURE_OFF: &str = "capture-off.json";
+fn capture_off(directory: &Path, harness: &str, event: &str, why: &anyhow::Error) {
+    let reason: String = format!("{why:#}").chars().take(200).collect();
+    eprintln!(
+        "tambo memory hook: capture off: {reason} (plan {})",
+        directory.display()
+    );
+    let path = directory.join(CAPTURE_OFF);
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs_f64())
+        .unwrap_or(0.0);
+    let first = fs::read(&path)
+        .ok()
+        .and_then(|b| serde_json::from_slice::<Value>(&b).ok())
+        .and_then(|v| v["first_seen"].as_f64())
+        .unwrap_or(now);
+    let _ = private_write(
+        &path,
+        &serde_json::to_vec(&json!({"schema":1,"reason":reason,"harness":harness,
+            "event":event,"first_seen":first,"last_seen":now}))
+        .unwrap_or_default(),
+    );
+}
 pub fn evidence(directory: &Path, harness: &str, event: &str) -> Result<f64> {
+    if let Ok(bytes) = fs::read(directory.join(CAPTURE_OFF)) {
+        let marker: Value = serde_json::from_slice(&bytes).unwrap_or(Value::Null);
+        bail!(
+            "capture off: {} (since {}, last {} {})",
+            marker["reason"].as_str().unwrap_or("unreadable marker"),
+            marker["first_seen"].as_f64().unwrap_or(0.0) as i64,
+            marker["harness"].as_str().unwrap_or("?"),
+            marker["event"].as_str().unwrap_or("?")
+        );
+    }
     let plan = load(directory)?;
     let path = receipt_path(directory, harness, event)?;
     let meta = fs::symlink_metadata(&path)?;
@@ -169,8 +218,16 @@ pub(crate) fn producer_calls(
 /// text. A child failure/timeout is fail-open and cannot create success evidence.
 pub fn run(directory: &Path, harness: &str, event: &str) -> i32 {
     fn inner(directory: &Path, harness: &str, event: &str) -> Result<i32> {
-        let plan = load(directory)?;
-        applied_at(directory)?;
+        // The gate: nothing is captured unless the plan is applied. A refusal
+        // keeps the exit code (a memory hook never blocks the agent) but is
+        // loud: one stderr line and a durable marker (aegis-9uq.1).
+        let plan = match load(directory).and_then(|p| applied_at(directory).map(|_| p)) {
+            Ok(plan) => plan,
+            Err(why) => {
+                capture_off(directory, harness, event, &why);
+                return Ok(0);
+            }
+        };
         if event == "PreToolUse" && plan.redirect_mode == super::RedirectMode::Off {
             return Ok(0);
         }
@@ -225,5 +282,8 @@ pub fn run(directory: &Path, harness: &str, event: &str) -> i32 {
             0
         })
     }
-    inner(directory, harness, event).unwrap_or(0)
+    inner(directory, harness, event).unwrap_or_else(|why| {
+        eprintln!("tambo memory hook: {why:#}");
+        0
+    })
 }

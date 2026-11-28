@@ -43,10 +43,10 @@ The table below is the shared project roster, not a list installed by every prof
 
 | repo | what it is |
 |---|---|
-| [shantytown](https://github.com/scbrown/shantytown) | a small harness for running a crew of coding agents |
-| [creel](https://github.com/scbrown/creel) | parallel agent bursts, entirely in the browser |
-| [shanty](https://github.com/scbrown/shanty) | a terminal multiplexer wrapper that makes tmux feel like home |
-| [quechua](https://github.com/scbrown/quechua) | the stack's shared vocabulary; Tambo pins a release by digest and loads it into Quipu ([catalog](https://scbrown.github.io/quechua/ns)) |
+| [shantytown](https://github.com/intigraph/shantytown) | a small harness for running a crew of coding agents |
+| [creel](https://github.com/intigraph/creel) | parallel agent bursts, entirely in the browser |
+| [shanty](https://github.com/intigraph/shanty) | a terminal multiplexer wrapper that makes tmux feel like home |
+| [quechua](https://github.com/intigraph/quechua) | the stack's shared vocabulary; Tambo pins a release by digest and loads it into Quipu ([catalog](https://scbrown.github.io/quechua/ns)) |
 
 See [the corpus](corpus.md) for share import and [profiles](profiles.md) for
 which tools each selection installs.

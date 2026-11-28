@@ -213,7 +213,7 @@ pub fn verify(directory: &Path, runner: &mut impl lifecycle::Runner) -> Result<V
     if state.as_ref().map(|s| &s["phase"]) != Some(&json!("applied")) {
         drift.push("memory plan is not applied".to_string());
     }
-    for change in &plan.changes {
+    for change in &lifecycle::changes(directory, &plan).unwrap_or_else(|_| plan.changes.clone()) {
         if std::fs::read_to_string(&change.path).ok().as_deref() != Some(change.after.as_str()) {
             drift.push(format!(
                 "configured file differs: {}",
