@@ -114,9 +114,12 @@ together when changing outcome-first row wording.
 2. **Every link resolves.** A link checker (lychee or equivalent) runs in
    pre-commit and in CI, and it must cover the book links. Links into the
    book point at the **live Pages URL**
-   (`https://scbrown.github.io/<repo>/<page>.html`), not at
+   (`https://intigraph.github.io/<repo>/<page>.html`), not at
    `docs/book/src/<page>.md` GitHub source — now that all six stack books
-   serve on Pages (naf4p4 re-audit, 2026-09-25; aegis-ison65). A repo whose
+   serve on Pages (naf4p4 re-audit, 2026-09-25; aegis-ison65). The books moved
+   with their repositories to the `intigraph` organization: on 2026-11-27 the
+   old `scbrown.github.io/<repo>/` address returned 404 for every stack book
+   except Tambo's, so a link to it is a dead link. A repo whose
    Pages site does not yet serve is the exception, not the rule: point at
    GitHub source only until Pages is checked to return 200, never assumed.
    (yupana's Pages site returned 404 on 2026-09-24, which is why this rule
