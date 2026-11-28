@@ -432,6 +432,80 @@ fn normalized(bundle: &Value) -> Value {
         "hooks":bundle["hooks"].as_array().map(|rows| rows.iter().map(|r| json!({
             "event":r["event"],"command":r["command"],"matcher":r["matcher"],"timeout":r["timeout"],"harnesses":r.get("harnesses").cloned().unwrap_or_else(|| json!(["claude","codex","opencode"]))})).collect::<Vec<_>>())})
 }
+/// The bundle as the owner registry holds it on disk, for drift checks. The
+/// owner's `hooks list` fills defaults (a hook with no `harnesses` is listed
+/// with every harness the owner supports, which grew when st learned agy), so
+/// comparing listings flagged an untouched bundle as changed (aegis-9uq.1).
+/// The registered file keeps absent fields absent; the listing is the fallback.
+fn registered(plan: &Plan, listed: &Value) -> Result<Value> {
+    let name = listed["name"]
+        .as_str()
+        .context("owner bundle name missing")?;
+    if !name.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-') {
+        bail!("invalid bundle name");
+    }
+    match read(&plan.root.join("hook-bundles").join(format!("{name}.json")))? {
+        Some(raw) => Ok(serde_json::from_str(&raw)?),
+        None => Ok(listed.clone()),
+    }
+}
+const REBASED: &str = "rebased-changes.json";
+/// The plan's changes, with any target rebased on resume (see `rebase`)
+/// replaced by its recorded before/after. plan.json itself is never rewritten.
+pub fn changes(directory: &Path, plan: &Plan) -> Result<Vec<Change>> {
+    let mut out = plan.changes.clone();
+    if let Some(text) = read(&directory.join(REBASED))? {
+        let rebased: Vec<Change> = serde_json::from_str(&text)?;
+        for r in rebased {
+            match out.iter_mut().find(|c| c.path == r.path) {
+                Some(slot) => *slot = r,
+                None => bail!("rebased change is outside this plan: {}", r.path.display()),
+            }
+        }
+    }
+    Ok(out)
+}
+fn lines(text: &str) -> Vec<&str> {
+    text.split_inclusive('\n').collect()
+}
+/// Resume an interrupted apply over a target edited since review (aegis-9uq.1):
+/// only when the reviewed change is ONE contiguous block of inserted lines and
+/// that exact block is present exactly once in the current bytes. The new
+/// before is the current file without the block, so a later restore keeps the
+/// operator's edits; the new after is the current file. Anything else refuses.
+fn rebase(change: &Change, now: &str) -> Option<Change> {
+    let before = lines(change.before.as_deref()?);
+    let after = lines(&change.after);
+    let prefix = before
+        .iter()
+        .zip(&after)
+        .take_while(|(a, b)| a == b)
+        .count();
+    let suffix = before[prefix..]
+        .iter()
+        .rev()
+        .zip(after[prefix..].iter().rev())
+        .take_while(|(a, b)| a == b)
+        .count();
+    if prefix + suffix != before.len() || after.len() <= before.len() {
+        return None;
+    }
+    let block = &after[prefix..after.len() - suffix];
+    let current = lines(now);
+    let at: Vec<usize> = (0..=current.len().saturating_sub(block.len()))
+        .filter(|&i| current.len() >= block.len() && current[i..i + block.len()] == *block)
+        .collect();
+    if at.len() != 1 {
+        return None;
+    }
+    let mut kept = current[..at[0]].concat();
+    kept.push_str(&current[at[0] + block.len()..].concat());
+    Some(Change {
+        path: change.path.clone(),
+        before: Some(kept),
+        after: now.to_string(),
+    })
+}
 fn journal(directory: &Path, phase: &str) -> Result<()> {
     private_write(
         &directory.join("state.json"),
@@ -545,14 +619,15 @@ pub fn apply(directory: &Path, runner: &mut impl Runner) -> Result<()> {
         if serde_json::from_slice::<Value>(&fs::read(&path)?)? != *wanted {
             bail!("staged bundle differs from reviewed plan");
         }
-        if let Some(now) = current.iter().find(|r| r["name"] == wanted["name"]) {
-            if normalized(now) != normalized(wanted)
+        if let Some(listed) = current.iter().find(|r| r["name"] == wanted["name"]) {
+            let now = registered(&plan, listed)?;
+            if normalized(&now) != normalized(wanted)
                 && prior
                     .iter()
                     .find(|r| r["name"] == wanted["name"])
                     .map(normalized)
                     .as_ref()
-                    != Some(&normalized(now))
+                    != Some(&normalized(&now))
             {
                 bail!("registered bundle changed since plan application");
             }
@@ -560,13 +635,30 @@ pub fn apply(directory: &Path, runner: &mut impl Runner) -> Result<()> {
     }
     exact_bundles(&plan, directory, &current, &prior)?;
     // Every target is checked before the first write, including on resume.
-    for c in &plan.changes {
+    // An interrupted apply (phase "applying") may resume over a target edited
+    // since review when the reviewed lines are still present (`rebase`).
+    let resuming = read(&directory.join("state.json"))?
+        .and_then(|text| serde_json::from_str::<Value>(&text).ok())
+        .is_some_and(|state| state["phase"] == "applying");
+    let mut changes = changes(directory, &plan)?;
+    let mut rebased = Vec::new();
+    for c in changes.iter_mut() {
         let now = read(&c.path)?;
         if now != c.before && now.as_deref() != Some(c.after.as_str()) {
-            bail!(
-                "configuration changed since plan review: {}",
-                c.path.display()
-            );
+            match now
+                .as_deref()
+                .filter(|_| resuming)
+                .and_then(|n| rebase(c, n))
+            {
+                Some(r) => {
+                    *c = r;
+                    rebased.push(c.clone());
+                }
+                None => bail!(
+                    "configuration changed since plan review: {}",
+                    c.path.display()
+                ),
+            }
         }
     }
     for args in [
@@ -607,8 +699,19 @@ pub fn apply(directory: &Path, runner: &mut impl Runner) -> Result<()> {
             .collect();
         private_write(&created, &serde_json::to_vec(&missing)?)?;
     }
+    if !rebased.is_empty() {
+        let mut all: Vec<Change> = match read(&directory.join(REBASED))? {
+            Some(text) => serde_json::from_str(&text)?,
+            None => Vec::new(),
+        };
+        for r in rebased {
+            all.retain(|c| c.path != r.path);
+            all.push(r);
+        }
+        private_write(&directory.join(REBASED), &serde_json::to_vec_pretty(&all)?)?;
+    }
     journal(directory, "applying")?;
-    for c in &plan.changes {
+    for c in &changes {
         if read(&c.path)?.as_deref() != Some(c.after.as_str()) {
             private_write(&c.path, c.after.as_bytes())?;
         }
@@ -635,7 +738,7 @@ pub fn apply(directory: &Path, runner: &mut impl Runner) -> Result<()> {
     {
         bail!("settings owner returned no verified nonempty registration receipt");
     }
-    for c in &plan.changes {
+    for c in &changes {
         if read(&c.path)?.as_deref() != Some(c.after.as_str()) {
             bail!("configuration read-back differs");
         }
@@ -669,7 +772,8 @@ pub fn restore(directory: &Path, runner: &mut impl Runner) -> Result<()> {
         &fs::read(directory.join("registry-before.json")).context("plan was never applied")?,
     )?;
     let current = existing(&plan, runner)?;
-    for c in &plan.changes {
+    let changes = changes(directory, &plan)?;
+    for c in &changes {
         let now = read(&c.path)?;
         if now != c.before && now.as_deref() != Some(c.after.as_str()) {
             bail!(
@@ -679,10 +783,11 @@ pub fn restore(directory: &Path, runner: &mut impl Runner) -> Result<()> {
         }
     }
     for wanted in &plan.bundles {
-        if let Some(now) = current.iter().find(|r| r["name"] == wanted["name"]) {
+        if let Some(listed) = current.iter().find(|r| r["name"] == wanted["name"]) {
+            let now = registered(&plan, listed)?;
             let prior = saved.iter().find(|r| r["name"] == wanted["name"]);
-            if normalized(now) != normalized(wanted)
-                && prior.map(normalized).as_ref() != Some(&normalized(now))
+            if normalized(&now) != normalized(wanted)
+                && prior.map(normalized).as_ref() != Some(&normalized(&now))
             {
                 bail!("registered bundle changed; restore refused");
             }
@@ -714,7 +819,7 @@ pub fn restore(directory: &Path, runner: &mut impl Runner) -> Result<()> {
             st(&plan, &["ops", "hooks", "unregister", name], runner)?;
         }
     }
-    for c in &plan.changes {
+    for c in &changes {
         if read(&c.path)? == c.before {
             continue;
         }
