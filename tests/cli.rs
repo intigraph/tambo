@@ -4080,7 +4080,23 @@ fn doctor_checks_the_tambo_entry_point_and_preserves_legacy_compatibility() {
         .stdout(predicate::str::contains("warn tambo on PATH: PATH runs"))
         .stdout(predicate::str::contains("tambo 0.0.1 (stale0000000)"));
     // Copy the owned candidate; do not put a stub behind a real executable link.
-    fs::copy(assert_cmd::cargo::cargo_bin("tambo"), bin.join("tambo")).unwrap();
+    // Copy then rename, and wait until the copy runs: on Linux a fork in another
+    // test thread can still hold the copy's write fd, so the first exec fails with
+    // ETXTBSY and doctor reports "version unreadable" (main 3e801421, run 46097724887).
+    let staged = bin.join(".tambo.copy");
+    fs::copy(assert_cmd::cargo::cargo_bin("tambo"), &staged).unwrap();
+    fs::rename(&staged, bin.join("tambo")).unwrap();
+    let runs = (0..50).any(|_| {
+        let ok = std::process::Command::new(bin.join("tambo"))
+            .arg("--version")
+            .output()
+            .is_ok_and(|o| o.status.success());
+        if !ok {
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+        ok
+    });
+    assert!(runs, "copied tambo never became executable");
     command_named(root.path(), &bin, "tambo")
         .arg("doctor")
         .assert()
