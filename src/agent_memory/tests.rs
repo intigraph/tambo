@@ -614,17 +614,26 @@ fn interrupted_apply_resumes_over_operator_edits_and_restore_keeps_them() {
     assert_eq!(phase(&directory), "applying");
     let applied = fs::read_to_string(&path).unwrap();
     assert_ne!(applied, before);
-    let edited = format!("# operator edit\n{applied}[later]\nkey = 1\n");
+    // Operator lines around AND between the reviewed lines (the Mac shape).
+    let added: Vec<&str> = applied
+        .split_inclusive('\n')
+        .filter(|l| !before.split_inclusive('\n').any(|b| b == *l))
+        .collect();
+    assert!(added.len() >= 2, "fixture inserts too few lines to split");
+    let split = applied.replacen(added[0], &format!("{}# between\n", added[0]), 1);
+    let edited = format!("# operator edit\n{split}[later]\nkey = 1\n");
     fs::write(&path, &edited).unwrap();
     lifecycle::apply(&directory, &mut owner).unwrap();
     assert_eq!(phase(&directory), "applied");
     assert_eq!(fs::read_to_string(&path).unwrap(), edited);
     assert!(directory.join("rebased-changes.json").exists());
     lifecycle::restore(&directory, &mut owner).unwrap();
-    assert_eq!(
-        fs::read_to_string(&path).unwrap(),
-        format!("# operator edit\n{before}[later]\nkey = 1\n")
-    );
+    let expected: String = edited
+        .split_inclusive('\n')
+        .filter(|l| !added.contains(l))
+        .collect();
+    assert!(expected.contains("# between\n") && expected.contains("[later]\n"));
+    assert_eq!(fs::read_to_string(&path).unwrap(), expected);
 }
 #[test]
 fn resume_refuses_when_the_reviewed_lines_were_edited_or_are_ambiguous() {
@@ -646,6 +655,16 @@ fn resume_refuses_when_the_reviewed_lines_were_edited_or_are_ambiguous() {
     fs::write(&path, &twice).unwrap();
     assert!(lifecycle::apply(&directory, &mut owner).is_err());
     assert_eq!(fs::read_to_string(&path).unwrap(), twice);
+    // The reviewed lines out of order: no rebase.
+    if added.len() >= 2 {
+        let swapped = applied
+            .replacen(added[0], "@@A@@\n", 1)
+            .replacen(added[1], added[0], 1)
+            .replacen("@@A@@\n", added[1], 1);
+        fs::write(&path, &swapped).unwrap();
+        assert!(lifecycle::apply(&directory, &mut owner).is_err());
+        assert_eq!(fs::read_to_string(&path).unwrap(), swapped);
+    }
     assert!(!directory.join("rebased-changes.json").exists());
     assert_eq!(phase(&directory), "applying");
 }
@@ -710,4 +729,23 @@ fn a_hook_on_an_unapplied_plan_leaves_a_capture_off_marker_that_evidence_names()
     hooks::record(&directory, "claude", "Stop", "session", 0).unwrap();
     assert!(!directory.join(hooks::CAPTURE_OFF).exists());
     assert!(hooks::evidence(&directory, "claude", "Stop").unwrap() > 0.0);
+}
+#[test]
+fn restore_of_an_interrupted_plan_removes_only_the_reviewed_lines() {
+    // The roll-back path for a stale plan (installed tool schemas moved on):
+    // restore must work over operator edits too, keeping them.
+    let temp = tempfile::tempdir().unwrap();
+    let (directory, mut owner, path, before) = interrupted(temp.path());
+    let applied = fs::read_to_string(&path).unwrap();
+    let edited = format!("{applied}# operator after\n");
+    fs::write(&path, &edited).unwrap();
+    owner.wrong_tools = true;
+    assert!(lifecycle::apply(&directory, &mut owner).is_err());
+    assert_eq!(fs::read_to_string(&path).unwrap(), edited);
+    lifecycle::restore(&directory, &mut owner).unwrap();
+    assert_eq!(phase(&directory), "restored");
+    assert_eq!(
+        fs::read_to_string(&path).unwrap(),
+        format!("{before}# operator after\n")
+    );
 }

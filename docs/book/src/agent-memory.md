@@ -56,11 +56,14 @@ Bobbin's prompt hook, with no second retrieval hook.
 
 Apply can resume after an interrupted operation. On resume (phase `applying`),
 a configuration file edited since review is accepted only when the reviewed
-change is one block of inserted lines and that exact block is still present
-exactly once; the change is then rebased onto the current bytes and recorded in
-`rebased-changes.json` in the plan directory (`plan.json` is never rewritten),
-so restore removes only the reviewed lines and keeps the operator's edits. Any
-other edit still refuses. Bundle drift is judged from the registered bundle file,
+change is one block of inserted lines and each of those lines is still present
+exactly once, in the reviewed order (operators may have added lines around or
+between them). The change is then rebased onto the current bytes and recorded in
+`rebased-changes.json` in the plan directory (`plan.json` is never rewritten).
+Restore applies the same rule: it removes only the reviewed lines and keeps the
+operator's edits. Any other edit still refuses. A plan whose reviewed Camayoc
+tool catalog no longer matches the installed one cannot resume; restore it and
+plan again. Bundle drift is judged from the registered bundle file,
 not from the owner's listing, which fills default fields such as `harnesses`.
 Restore accepts only the
 original or planned bytes and bundles, preserves intervening user edits by

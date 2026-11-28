@@ -469,10 +469,12 @@ fn lines(text: &str) -> Vec<&str> {
     text.split_inclusive('\n').collect()
 }
 /// Resume an interrupted apply over a target edited since review (aegis-9uq.1):
-/// only when the reviewed change is ONE contiguous block of inserted lines and
-/// that exact block is present exactly once in the current bytes. The new
-/// before is the current file without the block, so a later restore keeps the
-/// operator's edits; the new after is the current file. Anything else refuses.
+/// only when the reviewed change is ONE block of inserted lines and every
+/// inserted line is present exactly once in the current bytes, in the reviewed
+/// order (operators may have added lines around or between them; measured on
+/// the Mac plan). The new before is the current file without those lines, so a
+/// later restore removes only the reviewed lines and keeps the operator's
+/// edits; the new after is the current file. Anything else refuses.
 fn rebase(change: &Change, now: &str) -> Option<Change> {
     let before = lines(change.before.as_deref()?);
     let after = lines(&change.after);
@@ -492,14 +494,22 @@ fn rebase(change: &Change, now: &str) -> Option<Change> {
     }
     let block = &after[prefix..after.len() - suffix];
     let current = lines(now);
-    let at: Vec<usize> = (0..=current.len().saturating_sub(block.len()))
-        .filter(|&i| current.len() >= block.len() && current[i..i + block.len()] == *block)
-        .collect();
-    if at.len() != 1 {
-        return None;
+    let mut at = Vec::with_capacity(block.len());
+    for line in block {
+        let hits: Vec<usize> = (0..current.len())
+            .filter(|&i| current[i] == *line)
+            .collect();
+        if hits.len() != 1 || at.last().is_some_and(|&last| hits[0] <= last) {
+            return None;
+        }
+        at.push(hits[0]);
     }
-    let mut kept = current[..at[0]].concat();
-    kept.push_str(&current[at[0] + block.len()..].concat());
+    let kept: String = current
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| !at.contains(i))
+        .map(|(_, l)| *l)
+        .collect();
     Some(Change {
         path: change.path.clone(),
         before: Some(kept),
@@ -772,14 +782,19 @@ pub fn restore(directory: &Path, runner: &mut impl Runner) -> Result<()> {
         &fs::read(directory.join("registry-before.json")).context("plan was never applied")?,
     )?;
     let current = existing(&plan, runner)?;
-    let changes = changes(directory, &plan)?;
-    for c in &changes {
+    // A target edited since this plan wrote it is restored by removing only the
+    // reviewed lines (`rebase`), keeping the operator's edits (aegis-9uq.1).
+    let mut changes = changes(directory, &plan)?;
+    for c in changes.iter_mut() {
         let now = read(&c.path)?;
         if now != c.before && now.as_deref() != Some(c.after.as_str()) {
-            bail!(
-                "preserve edited configuration; restore refused: {}",
-                c.path.display()
-            );
+            match now.as_deref().and_then(|n| rebase(c, n)) {
+                Some(r) => *c = r,
+                None => bail!(
+                    "preserve edited configuration; restore refused: {}",
+                    c.path.display()
+                ),
+            }
         }
     }
     for wanted in &plan.bundles {
