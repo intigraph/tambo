@@ -89,7 +89,7 @@ with an absent control, reader-path retrieval, and an idempotent replay.
 Use `--skip-install` when package installation belongs to another system; the
 version and functional checks still run.
 
-Yupana installs from its checksum-pinned v0.16.2 release and proves `callers` on
+Yupana installs from its checksum-pinned v0.19.4 release and proves `callers` on
 an isolated fixture repository. Tambo builds Desire Path from the revision its `v0.10.0` tag names (`0681233`), stamps
 that identity into `dp version`, and proves an isolated ingest/list round trip. Neither
 verification can write into the user's normal Yupana state or Desire Path DB.
@@ -130,6 +130,7 @@ The table covers the current source tree; published binaries may lag new command
 | `update-release` | Unix release update; `--tool`, `--check`, `--plan`, `--state`. Quipu tracks a reviewed paired archive pin; Camayoc/Shantytown refuse without checksummed publications. |
 | `update-self` | Unix self-update; `--check`, `--state`. |
 | `bump-member` | Maintainers: re-pin a `members/*.toml` to its published release; manifest argument, `--tag`, `--probe-wrapper`. |
+| `bump-builtin` | Maintainers: re-pin a built-in tool (`quipu`, `bobbin`, `yupana`, `desire-path`, `camayoc`) in `builtins/pins.toml` to its published release, re-deriving recorded digests and the tag commit; tool argument, `--pins`, `--tag`, `--probe-wrapper`.
 | `project-settings` | Rig registration; `--root`, `--agent`, `--registry`; or `--policy-only` with `--plan`, `--output`. |
 | `verify-questions` | Execute intent questions; `--plan`, `--db`. |
 | `render-observability` | Generate reviewable artifacts; `--plan`, `--targets`, `--output`. |

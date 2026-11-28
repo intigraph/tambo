@@ -702,7 +702,7 @@ pub(crate) fn find_program(dir: &Path, name: &str) -> Option<std::path::PathBuf>
 /// XDG dirs inside `root`, PATH and the locale passed through, nothing else. A
 /// member that reads its store location from the environment would otherwise
 /// write the verify marker into the user's live store (malcolm B2).
-fn hermetic_via(
+pub(crate) fn hermetic_via(
     root: &Path,
     wrapper: Option<&Path>,
     argv: &[String],

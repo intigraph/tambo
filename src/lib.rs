@@ -2,6 +2,9 @@ pub mod adapter;
 #[cfg(unix)]
 pub mod agent_memory;
 pub mod apt_owned;
+pub mod brew_bound;
+pub mod builtin_bump;
+pub mod builtin_pins;
 pub mod configuration;
 pub mod crew;
 pub mod doctor;

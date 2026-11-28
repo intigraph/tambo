@@ -27,6 +27,16 @@ struct ImportResult {
     promotion: ImportPromotion,
 }
 
+/// The bundle's `REVISION` says nothing about the `camayoc` CLI a shell runs,
+/// so a stale CLI is reported as NOT converged (aegis-mecge2.12).
+fn check_camayoc_cli(path: Option<&std::ffi::OsStr>) -> Result<()> {
+    let home = std::env::var_os("HOME").map(std::path::PathBuf::from);
+    if crate::adapter::camayoc_cli_check(path, home.as_deref())?.is_empty() {
+        println!("camayoc: note: no `camayoc` CLI on PATH or in ~/.local/bin");
+    }
+    Ok(())
+}
+
 /// What `apply` should do about an installed tool whose version is not the one
 /// this Tambo build reviewed (aegis-5ctwu3).
 ///
@@ -394,6 +404,9 @@ fn consume_shares(plan: &Plan, state: &mut State, state_path: &Path) -> Result<(
 /// note, not a failure: it runs the same build.
 fn check_path_resolution(name: crate::model::ToolName) -> Result<()> {
     let path = std::env::var_os("PATH");
+    if name == crate::model::ToolName::Camayoc {
+        check_camayoc_cli(path.as_deref())?;
+    }
     for &program in crate::adapter::programs(name) {
         match crate::adapter::path_resolution(program, path.as_deref()) {
             crate::adapter::PathResolution::Managed => {}
@@ -603,12 +616,27 @@ fn package_owned_status(name: crate::model::ToolName, desired: &str) -> Option<(
 /// verified version when brew delivered (or already holds) the tool, `None` to
 /// fall back to the other lanes (the release download when the tap is older
 /// than the pin). Never downgrades.
+/// Link an unlinked keg, or fail the member with why it is still unlinked:
+/// verify would otherwise fail opaquely on the missing command.
+fn relink_or_fail(
+    name: crate::model::ToolName,
+    relink: fn(crate::model::ToolName) -> std::result::Result<String, String>,
+) -> Result<()> {
+    match relink(name) {
+        Ok(done) => {
+            println!("{}: keg was not linked; {done}", name.as_str());
+            Ok(())
+        }
+        Err(why) => anyhow::bail!("{} brew keg is not linked: {why}", name.as_str()),
+    }
+}
+
 fn brew_update(
     name: crate::model::ToolName,
     adapter: &dyn crate::adapter::Adapter,
 ) -> Result<Option<String>> {
     use crate::package::{
-        brew_channel, brew_converge, brew_formula, brew_program, standing, Standing,
+        brew_channel, brew_converge, brew_formula, brew_program, brew_relink, standing, Standing,
     };
     if brew_formula(name).is_none() || brew_program().is_none() {
         return Ok(None);
@@ -654,6 +682,10 @@ fn brew_update(
                     installed,
                     channel.stable
                 );
+                if channel.unlinked {
+                    // aegis-f0ne: an interrupted brew step left the keg off PATH.
+                    relink_or_fail(name, brew_relink)?;
+                }
                 return brew_version(adapter, &installed).map(Some);
             }
             Standing::Unknown => {
@@ -678,10 +710,13 @@ fn brew_update(
             brew_converge(name, false)?;
         }
     }
-    let receipt = brew_channel(name)?
-        .context("brew channel after delivery")?
-        .installed
-        .context("brew receipt after delivery")?;
+    let after = brew_channel(name)?.context("brew channel after delivery")?;
+    if after.unlinked {
+        // aegis-f0ne: `brew upgrade` keeps an unlinked keg unlinked, so a
+        // successful delivery can still leave the tool off PATH.
+        relink_or_fail(name, brew_relink)?;
+    }
+    let receipt = after.installed.context("brew receipt after delivery")?;
     if !matches!(
         standing(&receipt, &stable),
         Standing::Current | Standing::Ahead
@@ -790,6 +825,9 @@ pub fn update(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
     {
         crate::package::brew_refresh()?;
     }
+    // A stale `camayoc` CLI must fail update, but not skip later members or
+    // drop the state of a bundle that did install; it fails at the end.
+    let mut camayoc_cli: Option<anyhow::Error> = None;
     for &name in &plan.tools {
         let adapter = adapter_for_plan(name, plan)?;
         if name == crate::model::ToolName::Quipu && plan.external_quipu {
@@ -824,6 +862,9 @@ pub fn update(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
             if name == crate::model::ToolName::Quipu {
                 crate::adapter::ensure_existing_quipu_alias()?;
             }
+            if name == crate::model::ToolName::Camayoc {
+                camayoc_cli = check_camayoc_cli(std::env::var_os("PATH").as_deref()).err();
+            }
             println!("{}: current", name.as_str());
             continue;
         }
@@ -852,6 +893,9 @@ pub fn update(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
         adapter
             .verify()
             .with_context(|| format!("{} verification after update", name.as_str()))?;
+        if name == crate::model::ToolName::Camayoc {
+            camayoc_cli = check_camayoc_cli(std::env::var_os("PATH").as_deref()).err();
+        }
         state.tools.insert(
             name.as_str().to_owned(),
             ToolState {
@@ -876,6 +920,9 @@ pub fn update(plan: &Plan, state_path: &Path, evidence: &CrewEvidence) -> Result
                 emission::queue_transition(state_path, name, "updated", &runtime.version)?;
             }
         }
+    }
+    if let Some(error) = camayoc_cli {
+        return Err(error);
     }
     Ok(state)
 }

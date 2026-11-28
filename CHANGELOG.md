@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.18.0](https://github.com/intigraph/tambo/compare/v0.17.2...v0.18.0) (2026-11-27)
+
+
+### Features
+
+* **bump:** pin the five built-ins as data and add bump-builtin (aegis-mecge2.10) ([#313](https://github.com/intigraph/tambo/issues/313)) ([251b2df](https://github.com/intigraph/tambo/commit/251b2dfed75c93a461d387d606181b9124eb188c))
+
+## [0.17.2](https://github.com/intigraph/tambo/compare/v0.17.1...v0.17.2) (2026-11-27)
+
+
+### Bug Fixes
+
+* **brew:** bound each brew step and restore the keg link on a hang (aegis-f0ne) ([d202a71](https://github.com/intigraph/tambo/commit/d202a714752002b07cebf4cc45d6bce63106b056))
+* **brew:** bound each brew step and restore the keg link on a hang (aegis-f0ne) ([d4ffd1c](https://github.com/intigraph/tambo/commit/d4ffd1c0b0547c3d907174ffcff1a0eba1a9ea81))
+* **brew:** keep brew in tambo's group, share one brew budget, relink on success (aegis-f0ne review) ([837fb4f](https://github.com/intigraph/tambo/commit/837fb4fae38d4f23cf16a03f97e068e3511f85da))
+* **brew:** never kill a reused pid as a known brew descendant (aegis-f0ne review) ([0c5d916](https://github.com/intigraph/tambo/commit/0c5d916ff1caca83e0372c9033e67baa10db2976))
+* **brew:** report a spent budget, fail on a failed relink, kill reparented descendants (aegis-f0ne review) ([228eba7](https://github.com/intigraph/tambo/commit/228eba7fd638f634610aa91fabd47fc32e15d3c9))
+* **compat:** count the CABOODLE_BREW test env lines in the legacy-name ledger (aegis-f0ne) ([6be4bf8](https://github.com/intigraph/tambo/commit/6be4bf81528aea1f67fa3a1249e3aa2f42b34508))
+
+## [0.17.1](https://github.com/intigraph/tambo/compare/v0.17.0...v0.17.1) (2026-11-27)
+
+
+### Bug Fixes
+
+* **camayoc:** pin v0.1.11 and report a stale camayoc CLI as NOT converged (aegis-mecge2.12) ([f2861eb](https://github.com/intigraph/tambo/commit/f2861eb58632d44785d575090c201ab1705a0b9c))
+* **camayoc:** pin v0.1.11 and report a stale camayoc CLI as NOT converged (aegis-mecge2.12) ([4ea513d](https://github.com/intigraph/tambo/commit/4ea513dcc0d5833e515f34b67aa5116e5ab7950a))
+* **camayoc:** probe ~/.local/bin off PATH and defer the stale-CLI failure in update (aegis-mecge2.12) ([5aedaed](https://github.com/intigraph/tambo/commit/5aedaed4b2190044e84cc3de45978c5741af5c72))
+* **share:** surface the failing tool's stderr when a publish command fails ([#307](https://github.com/intigraph/tambo/issues/307)) ([1a709e5](https://github.com/intigraph/tambo/commit/1a709e591f83a0eca37df40dde0b1ac25d042893))
+* **yupana:** pin reviewed Yupana to released v0.19.4 (aegis-r1s) ([321e088](https://github.com/intigraph/tambo/commit/321e088a46dff5451c73a0599ce44207b86dc6cd))
+* **yupana:** pin reviewed Yupana to released v0.19.4 (aegis-r1s) ([3ebe37f](https://github.com/intigraph/tambo/commit/3ebe37fb3496d6022ef04aae71ca467a8d6f1826))
+
 ## [0.17.0](https://github.com/intigraph/tambo/compare/v0.16.0...v0.17.0) (2026-11-26)
 
 

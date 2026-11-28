@@ -1,0 +1,65 @@
+# Reviewed release pins for Tambo's five built-in stack tools (aegis-mecge2.10).
+#
+# `build` embeds this file; `src/builtin_pins.rs` holds the schema and its tests
+# validate it. Move a pin with `tambo bump-builtin <tool>`, never by hand: the
+# bump reads the published release, re-derives every recorded digest by
+# hashing the downloaded asset against the release's published sums, resolves
+# `revision` from the release tag's commit, and refuses a downgrade.
+#
+# Each section:
+#   repo        GitHub owner/name the release is read from
+#   tag         release tag template; `{version}` is the pinned version
+#   version     the pinned release (digits only; the tag adds any prefix)
+#   revision    the tag's commit, for tools built or installed from source
+#   asset       asset name template (`{version}`, `{tag}`, `{target}`)
+#   sums_asset  the release's checksum file covering `asset`
+#   [sha256]    published digest per pinned target (`any` for one asset)
+#   program     executable proved by `bump-builtin` before a pin is recorded
+#   probe       asset holding `program` for the host target, with its sums file
+
+[quipu]
+repo = "intigraph/quipu"
+tag = "quipu-ai-v{version}"
+version = "0.9.0"
+program = "quipu"
+probe = { asset = "quipu-{tag}-{target}.tar.gz", sums_asset = "{asset}.sha256" }
+
+[bobbin]
+repo = "intigraph/bobbin"
+tag = "v{version}"
+version = "0.30.0"
+program = "bobbin"
+probe = { asset = "bobbin-{tag}-{target}.tar.gz", sums_asset = "SHA256SUMS.txt" }
+
+[yupana]
+repo = "intigraph/yupana"
+tag = "v{version}"
+version = "0.19.4"
+asset = "yupana-{tag}-{target}.tar.gz"
+sums_asset = "SHA256SUMS"
+program = "yupana"
+
+[yupana.sha256]
+aarch64-apple-darwin = "f3768ab3d661996c5ac7ec12d30c513687062823ae44b04d1d3229dc04c2b76b"
+x86_64-apple-darwin = "01d0337ed3e26b0cc6ac833b41ba933ad8c852cb859249a9381b421881e86044"
+x86_64-linux-gnu = "3111542bbb3e1da6fe0f452cf729a7c3bdb0787f8b64cb87b92cde130e6a2db7"
+
+# Built from source at `revision` with `go install`; the release has no
+# Tambo-consumed binary, so the bump proves the tag's commit, not an executable.
+[desire-path]
+repo = "intigraph/desire-path"
+tag = "v{version}"
+version = "0.10.0"
+revision = "06812336fda6a6fd3fe4cbcae2d50a303e95a024"
+
+# The Camayoc SOURCE bundle: version, revision, asset and digest stay paired.
+[camayoc]
+repo = "intigraph/camayoc"
+tag = "v{version}"
+version = "0.1.11"
+revision = "78e59e036605b974f958781e611fdacfef47964f"
+asset = "camayoc-{tag}.tar.gz"
+sums_asset = "SHA256SUMS"
+
+[camayoc.sha256]
+any = "51309e02f6b0563a18e7e297bed711a2bd962681d46d2eb33cedbc46f0b03571"
