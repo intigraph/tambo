@@ -54,7 +54,18 @@ Bobbin retains an existing positive knowledge budget; an absent budget defaults
 to 15 percent. A zero or invalid budget refuses the plan. Recall remains in
 Bobbin's prompt hook, with no second retrieval hook.
 
-Apply can resume after an interrupted operation. Restore accepts only the
+Apply can resume after an interrupted operation. On resume (phase `applying`),
+a configuration file edited since review is accepted only when the reviewed
+change is one block of inserted lines and each of those lines is still present
+exactly once, in the reviewed order (operators may have added lines around or
+between them, but never a TOML table header, a line starting with `[`). The change is then rebased onto the current bytes and recorded in
+`rebased-changes.json` in the plan directory (`plan.json` is never rewritten).
+Restore applies the same rule: it removes only the reviewed lines and keeps the
+operator's edits. Any other edit still refuses. A plan whose reviewed Camayoc
+tool catalog no longer matches the installed one cannot resume; restore it and
+plan again. Bundle drift is judged from the registered bundle file,
+not from the owner's listing, which fills default fields such as `harnesses`.
+Restore accepts only the
 original or planned bytes and bundles, preserves intervening user edits by
 refusing them, and restores the exact prior bundles including evidence fields.
 Empty memory
@@ -73,7 +84,10 @@ does not require every fleet member to restart. Configuration alone cannot pass.
 
 The memory wrapper delegates to Camayoc and records only plan, harness, event,
 session, completion time and exit code. Ordinary hook failures exit zero; an
-intentional memory redirect may return two. Claude has a SessionEnd event.
+intentional memory redirect may return two. A hook whose plan is not applied
+captures nothing: it still exits zero, but it writes one `capture off` line to
+stderr and a `capture-off.json` marker in the plan directory, and `tambo memory
+evidence` then fails with `capture off: <reason>` until a later receipt clears it. Claude has a SessionEnd event.
 Codex delegates bounded session-end capture from Stop because its owner does
 not support SessionEnd. SessionStart attempts offline replay through `cy flush
 --hook`. A receipt from an earlier apply or a restored plan is insufficient.
